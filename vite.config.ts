@@ -9,6 +9,20 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  
+  build: {
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom"],
+          pdf: ["jspdf", "html2canvas", "dompurify"],
+
+        }
+      }
+    }
+  },
+
   server: {
     host: '0.0.0.0',  // Permite acesso externo (necessário para sandbox)
     port: 8080,        // Porta padrão para preview
