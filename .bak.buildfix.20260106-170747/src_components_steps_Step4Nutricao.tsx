@@ -291,7 +291,7 @@ export function Step4Nutricao() {
         <CardContent>
           <Label className="text-sm sm:text-base">Abordagem</Label>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <Select value={estrategia} onValueChange={(v: string) => setEstrategia(v as typeof estrategia)}>
+          <Select value={estrategia} onValueChange={(v: unknown) => setEstrategia(v)}>
             <SelectTrigger className="mt-2">
               <SelectValue />
             </SelectTrigger>

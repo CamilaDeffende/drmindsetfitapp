@@ -23,7 +23,6 @@ export function Step6Saude() {
 
   const doresSelecionadas = watch('dores', [])
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = (data: any) => {
     const saude: SaudeContexto = {
       doresArticulares: data.dores || [],

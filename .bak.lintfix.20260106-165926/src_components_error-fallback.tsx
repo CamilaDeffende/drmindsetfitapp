@@ -25,7 +25,7 @@ ${errorInfo?.componentStack || 'N/A'}`;
       await navigator.clipboard.writeText(errorText);
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
-    } catch {
+    } catch (err) {
       // Se falhar (iframe), usar postMessage para pai copiar
       try {
         window.parent.postMessage({
@@ -35,7 +35,7 @@ ${errorInfo?.componentStack || 'N/A'}`;
         
         setCopied(true);
         setTimeout(() => setCopied(false), 3000);
-      } catch {
+      } catch (postMessageErr) {
         // Fallback final: textarea + execCommand
         try {
           const textArea = document.createElement('textarea');
@@ -49,8 +49,8 @@ ${errorInfo?.componentStack || 'N/A'}`;
           
           setCopied(true);
           setTimeout(() => setCopied(false), 3000);
-        } catch {
-          console.error('Failed to copy');
+        } catch (fallbackErr) {
+          console.error('Failed to copy:', fallbackErr);
           alert('Não foi possível copiar automaticamente. Copie o texto manualmente.');
         }
       }

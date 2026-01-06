@@ -85,7 +85,8 @@ export function Step2Avaliacao() {
                        Number(data.subescapular) + Number(data.abdominal) + Number(data.supraIliaca) + Number(data.coxa)
 
     let densidadeCorporal: number
-    let percentualGordura: number = 0
+    const percentualGordura: number
+
     if (sexo === 'masculino') {
       densidadeCorporal = 1.112 - (0.00043499 * somaDobras) + (0.00000055 * Math.pow(somaDobras, 2)) - (0.00028826 * (state.perfil?.idade || 30))
     } else {

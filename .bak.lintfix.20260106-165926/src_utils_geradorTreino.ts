@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { DivisaoTreinoConfig, PlanejamentoTreino, TreinoDia, Exercicio, PerfilUsuario, NivelTreino } from '@/types'
 
 // Base de dados de exercícios

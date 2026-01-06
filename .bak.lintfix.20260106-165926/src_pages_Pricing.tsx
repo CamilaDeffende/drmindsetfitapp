@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
@@ -56,7 +55,7 @@ export function Pricing() {
       // Redirecionar para checkout Stripe
       const stripe = await stripePromise
       if (stripe) {
-        // @ts-expect-error - redirectToCheckout existe mas TypeScript não reconhece na versão atual
+        // @ts-ignore - redirectToCheckout existe mas TypeScript não reconhece na versão atual
         const { error } = await stripe.redirectToCheckout({ sessionId })
 
         if (error) {

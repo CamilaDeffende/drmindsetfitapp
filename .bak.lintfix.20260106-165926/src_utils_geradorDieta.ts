@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ALIMENTOS_TACO, type Alimento } from '@/data/alimentos-taco'
 import type { PlanejamentoNutricional, Macronutrientes, Refeicao, AlimentoRefeicao, EstrategiaNutricional, Restricao, TipoRefeicao } from '@/types'
 

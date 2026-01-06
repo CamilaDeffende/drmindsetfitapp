@@ -50,7 +50,7 @@ ${errorInfo?.componentStack || 'N/A'}`;
           setCopied(true);
           setTimeout(() => setCopied(false), 3000);
         } catch {
-          console.error('Failed to copy');
+          console.error('Failed to copy:', err);
           alert('Não foi possível copiar automaticamente. Copie o texto manualmente.');
         }
       }
