@@ -4,6 +4,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { FitnessSuiteDemo } from "./features/fitness-suite";
 
 // Páginas Públicas
 import { Login } from '@/pages/Login'
@@ -22,8 +23,10 @@ import { Report } from '@/pages/Report'
 import { EditDiet } from '@/pages/EditDiet'
 
 function App() {
-  return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+  const __suite = new URLSearchParams(window.location.search).get("suite") === "1";
+
+  return __suite ? <FitnessSuiteDemo /> : (
+<ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <AuthProvider>
         <DrMindSetfitProvider>
           <BrowserRouter>
