@@ -1,9 +1,9 @@
+import { jsPDF } from "jspdf";
 /**
  * Sistema completo de exportação de PDF
  * Inclui todos os dados: perfil, métricas, planos ativos (dieta e treino), cargas registradas
  */
 
-import { jsPDF } from 'jspdf'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { DrMindSetfitState } from '@/types'

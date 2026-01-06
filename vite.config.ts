@@ -4,22 +4,7 @@ import { defineConfig } from "vite"
 
 export default defineConfig({
   
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id) return;
-          if (id.includes("node_modules")) {
-            if (id.includes("react")) return "react-vendor";
-            if (id.includes("recharts")) return "charts";
-            if (id.includes("html2canvas") || id.includes("dompurify")) return "pdf";
-            return "vendor";
-          }
-        }
-      }
-    }
-  },
-plugins: [react()],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
