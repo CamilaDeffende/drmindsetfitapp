@@ -1,0 +1,19 @@
+{
+  "name": "Dr. MindSetFit Premium",
+  "short_name": "MindSetFit",
+  "description": "App Premium de Fitness com GPS, Nutrição e Treino",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#0095FF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["health", "fitness", "lifestyle"],
+  "screenshots": []
+}

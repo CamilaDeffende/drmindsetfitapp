@@ -1,0 +1,335 @@
+import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { useNavigate } from 'react-router-dom'
+import {
+  FileText,
+  Calendar,
+  Target,
+  UtensilsCrossed,
+  Dumbbell,
+  Activity,
+  Download,
+  ArrowLeft,
+  Clock,
+  TrendingUp
+} from 'lucide-react'
+import { format, differenceInDays } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+
+export function Report() {
+  const { state } = useDrMindSetfit()
+  const navigate = useNavigate()
+
+  if (!state.concluido) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <Card className="w-full max-w-md mx-4 glass-effect neon-border">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
+            <p className="text-gray-400 mb-6">Finalize o questionário para ver seu relatório completo</p>
+            <Button onClick={() => navigate('/')} className="w-full glow-blue">
+              Iniciar Agora
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const dietaAtiva = state.dietaAtiva
+  const treinoAtivo = state.treinoAtivo
+
+  // Calcular dias do plano
+  const diasDieta = dietaAtiva ? differenceInDays(new Date(dietaAtiva.dataFim), new Date(dietaAtiva.dataInicio)) : 0
+  const diasTreino = treinoAtivo ? differenceInDays(new Date(treinoAtivo.dataFim), new Date(treinoAtivo.dataInicio)) : 0
+
+  const exportarPDF = async () => {
+    try {
+      const { exportarPDFCompleto } = await import('@/lib/exportar-pdf')
+      await exportarPDFCompleto(state, 0, 0, 0)
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error)
+      alert('Erro ao gerar PDF. Tente novamente.')
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 glass-effect border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-neon">Relatório Completo</h1>
+              <p className="text-xs text-gray-400">Seu planejamento detalhado</p>
+            </div>
+            <Button variant="ghost" size="icon" onClick={exportarPDF} className="glow-green">
+              <Download className="w-5 h-5 text-green-400" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Card de Resumo Geral */}
+        <Card className="glass-effect neon-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-400" />
+              Resumo do Seu Protocolo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm text-gray-400">Objetivo</span>
+                </div>
+                <p className="text-lg font-bold text-blue-400 capitalize">
+                  {state.perfil?.objetivo || 'Não definido'}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-4 h-4 text-green-400" />
+                  <span className="text-sm text-gray-400">Duração Dieta</span>
+                </div>
+                <p className="text-lg font-bold text-green-400">
+                  {diasDieta} dias ({Math.floor(diasDieta / 7)} semanas)
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm text-gray-400">Duração Treino</span>
+                </div>
+                <p className="text-lg font-bold text-purple-400">
+                  {diasTreino} dias ({Math.floor(diasTreino / 7)} semanas)
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-white/10">
+              <div className="text-center">
+                <p className="text-xs text-gray-400">Idade</p>
+                <p className="text-lg font-bold">{state.perfil?.idade} anos</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-400">Peso Atual</p>
+                <p className="text-lg font-bold">{state.perfil?.pesoAtual} kg</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-400">Altura</p>
+                <p className="text-lg font-bold">{state.perfil?.altura} cm</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-400">IMC</p>
+                <p className="text-lg font-bold">{state.avaliacao?.imc.toFixed(1)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Plano Nutricional Detalhado */}
+        {dietaAtiva && (
+          <Card className="glass-effect border-green-500/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UtensilsCrossed className="w-5 h-5 text-green-400" />
+                Plano Nutricional - {diasDieta} Dias
+              </CardTitle>
+              <p className="text-sm text-gray-400">
+                {format(new Date(dietaAtiva.dataInicio), "dd 'de' MMMM", { locale: ptBR })} até{' '}
+                {format(new Date(dietaAtiva.dataFim), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Macros Diários */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <p className="text-xs text-gray-400 mb-1">Calorias</p>
+                  <p className="text-2xl font-bold text-blue-400">{dietaAtiva.nutricao.macros.calorias}</p>
+                  <p className="text-xs text-gray-500">kcal/dia</p>
+                </div>
+                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                  <p className="text-xs text-gray-400 mb-1">Proteínas</p>
+                  <p className="text-2xl font-bold text-red-400">{dietaAtiva.nutricao.macros.proteina}g</p>
+                  <p className="text-xs text-gray-500">por dia</p>
+                </div>
+                <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                  <p className="text-xs text-gray-400 mb-1">Carboidratos</p>
+                  <p className="text-2xl font-bold text-yellow-400">{dietaAtiva.nutricao.macros.carboidratos}g</p>
+                  <p className="text-xs text-gray-500">por dia</p>
+                </div>
+                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                  <p className="text-xs text-gray-400 mb-1">Gorduras</p>
+                  <p className="text-2xl font-bold text-purple-400">{dietaAtiva.nutricao.macros.gorduras}g</p>
+                  <p className="text-xs text-gray-500">por dia</p>
+                </div>
+              </div>
+
+              {/* Refeições Diárias */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <UtensilsCrossed className="w-4 h-4 text-green-400" />
+                  Refeições do Dia (Repetir por {diasDieta} dias)
+                </h3>
+                {dietaAtiva.nutricao.refeicoes.map((refeicao, idx) => (
+                  <div key={idx} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-semibold capitalize">{refeicao.nome}</h4>
+                        <p className="text-xs text-gray-400">{refeicao.horario}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-blue-400">
+                          {refeicao.alimentos.reduce((acc, a) => acc + a.calorias, 0).toFixed(0)} kcal
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {refeicao.alimentos.map((alimento, aIdx) => (
+                        <div key={aIdx} className="flex items-center justify-between text-sm p-2 rounded bg-black/20">
+                          <div className="flex-1">
+                            <p className="font-medium">{alimento.nome}</p>
+                            <p className="text-xs text-gray-500">{alimento.gramas}g</p>
+                          </div>
+                          <div className="flex gap-4 text-xs">
+                            <span className="text-red-400">{alimento.proteinas.toFixed(1)}g P</span>
+                            <span className="text-yellow-400">{alimento.carboidratos.toFixed(1)}g C</span>
+                            <span className="text-purple-400">{alimento.gorduras.toFixed(1)}g G</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button onClick={() => navigate('/nutrition')} className="w-full glow-green">
+                Editar Minha Dieta
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Plano de Treino Detalhado */}
+        {treinoAtivo && (
+          <Card className="glass-effect border-blue-500/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Dumbbell className="w-5 h-5 text-blue-400" />
+                Plano de Treino - {diasTreino} Dias
+              </CardTitle>
+              <p className="text-sm text-gray-400">
+                {format(new Date(treinoAtivo.dataInicio), "dd 'de' MMMM", { locale: ptBR })} até{' '}
+                {format(new Date(treinoAtivo.dataFim), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Info do Treino */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <p className="text-xs text-gray-400 mb-1">Divisão</p>
+                  <p className="text-xl font-bold text-blue-400">{treinoAtivo.treino.divisao.tipo}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                  <p className="text-xs text-gray-400 mb-1">Frequência</p>
+                  <p className="text-xl font-bold text-green-400">{treinoAtivo.treino.frequencia}x/semana</p>
+                </div>
+                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                  <p className="text-xs text-gray-400 mb-1">Intensidade</p>
+                  <p className="text-xl font-bold text-purple-400 capitalize">{treinoAtivo.treino.divisao.intensidade}</p>
+                </div>
+              </div>
+
+              {/* Treinos por Dia */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-400" />
+                  Treinos Semanais (Ciclo completo por {Math.floor(diasTreino / 7)} semanas)
+                </h3>
+                {treinoAtivo.treino.treinos.map((treino, idx) => (
+                  <div key={idx} className="p-4 rounded-lg bg-white/5 border border-white/10">
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-lg">{treino.dia}</h4>
+                      <p className="text-sm text-gray-400">
+                        {treino.grupamentos.join(', ')} • Volume: {treino.volumeTotal} séries
+                      </p>
+                    </div>
+                    <div className="space-y-3">
+                      {treino.exercicios.map((ex, exIdx) => (
+                        <div key={exIdx} className="p-3 rounded-lg bg-black/30 border border-white/5">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="font-medium">{ex.exercicio.nome}</p>
+                              <p className="text-xs text-gray-500">{ex.exercicio.grupoMuscular}</p>
+                            </div>
+                            <div className="text-right text-sm">
+                              <p className="font-bold text-blue-400">{ex.series}x{ex.repeticoes}</p>
+                              <p className="text-xs text-gray-400">{ex.descanso}s descanso</p>
+                            </div>
+                          </div>
+                          {ex.observacoes && (
+                            <p className="text-xs text-gray-400 italic mt-2">{ex.observacoes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button onClick={() => navigate('/treino')} className="w-full glow-blue">
+                Ir para Treino Ativo
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Metabolismo e Dados Corporais */}
+        {state.metabolismo && (
+          <Card className="glass-effect border-yellow-500/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-yellow-400" />
+                Dados Metabólicos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                  <p className="text-xs text-gray-400 mb-1">TMB</p>
+                  <p className="text-2xl font-bold text-yellow-400">{state.metabolismo.tmb}</p>
+                  <p className="text-xs text-gray-500">kcal/dia</p>
+                </div>
+                <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                  <p className="text-xs text-gray-400 mb-1">GET</p>
+                  <p className="text-2xl font-bold text-orange-400">{state.metabolismo.get}</p>
+                  <p className="text-xs text-gray-500">kcal/dia</p>
+                </div>
+              </div>
+              <div className="p-4 rounded-lg bg-white/5">
+                <p className="text-sm text-gray-400 mb-2">Equação Utilizada</p>
+                <p className="font-semibold capitalize">{state.metabolismo.equacaoUtilizada}</p>
+                <p className="text-xs text-gray-500 mt-2">{state.metabolismo.justificativa}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Botão Voltar */}
+        <Button onClick={() => navigate('/dashboard')} variant="outline" className="w-full">
+          Voltar ao Dashboard
+        </Button>
+      </main>
+    </div>
+  )
+}

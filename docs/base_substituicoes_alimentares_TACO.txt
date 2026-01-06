@@ -1,0 +1,704 @@
+
+
+=== Table 11-Tabela 1 ===
+
+                                                                                                                       Energia   Proteína              Unnamed: 1 Unnamed: 2 Unnamed: 3 Lipídeos Colesterol Carbo- idrato Fibra Alimentar
+                                                                                                                                 Alimento Descrição dos alimentos     (kcal)        (g)      (g)       (mg)           (g)             (g)
+                                                                                                                      Cereais e derivados                     NaN        NaN        NaN      NaN        NaN           NaN             NaN
+                                                                                                     1            Arroz, integral, cozido                     NaN        124        2,6      1,0        NaN          25,8             2,7
+                                                                                                        2            Arroz, integral, cru                     NaN        360        7,3      1,9        NaN          77,5             4,8
+                                                                                                       3            Arroz, tipo 1, cozido                     NaN        128        2,5      0,2        NaN          28,1             1,6
+                                                                                                          4            Arroz, tipo 1, cru                     NaN        358        7,2      0,3        NaN          78,8             1,6
+                                                                                                       5            Arroz, tipo 2, cozido                     NaN        130        2,6      0,4        NaN          28,2             1,1
+                                                                                                          6            Arroz, tipo 2, cru                     NaN        358        7,2      0,3        NaN          78,9             1,7
+                                                                                                         7            Aveia, flocos, crua                     NaN        394       13,9      8,5        NaN          66,6             9,1
+                                                                                                     8            Biscoito, doce, maisena                     NaN        443        8,1     12,0        NaN          75,2             2,1
+                                                                                      9            Biscoito, doce, recheado com chocolate                     NaN        472        6,4     19,6         Tr          70,5             3,0
+                                                                                        10           Biscoito, doce, recheado com morango                     NaN        471        5,7     19,6         Tr          71,0             1,5
+                                                                                11           Biscoito, doce, wafer, recheado de chocolate                     NaN        502        5,6     24,7         Tr          67,5             1,8
+                                                                                  12           Biscoito, doce, wafer, recheado de morango                     NaN        513        4,5     26,4          1          67,4             0,8
+                                                                                            13           Biscoito, salgado, cream cracker                     NaN        432       10,1     14,4        NaN          68,7             2,5
+                                                                                                          14           Bolo, mistura para                     NaN        419        6,2      6,1         Tr          84,7             1,7
+                                                                                                         15           Bolo, pronto, aipim                     NaN        324        4,4     12,7         73          47,9             0,7
+                                                                                                     16           Bolo, pronto, chocolate                     NaN        410        6,2     18,5         77          54,7             1,4
+                                                                                                          17           Bolo, pronto, coco                     NaN        333        5,7     11,3         63          52,3             1,1
+                                                                                                         18           Bolo, pronto, milho                     NaN        311        4,8     12,4         82          45,1             0,7
+                                                                                                       19           Canjica, branca, crua                     NaN        358        7,2      1,0        NaN          78,1             5,5
+                                                                                                 20           Canjica, com leite integral                     NaN        112        2,4      1,2          1          23,6             1,2
+                                                                                             21           Cereais, milho, flocos, com sal                     NaN        370        7,3      1,6        NaN          80,8             5,3
+                                                                                             22           Cereais, milho, flocos, sem sal                     NaN        363        6,9      1,2        NaN          80,4             1,8
+                                                                                            23           Cereais, mingau, milho, infantil                     NaN        394        6,4      1,1        NaN          87,3             3,2
+                                                                       24           Cereais, mistura para vitamina, trigo, cevada e aveia                     NaN        381        8,9      2,1        NaN          81,6             5,0
+                                                                                                       25           Cereal matinal, milho                     NaN        365        7,2      1,0        NaN          83,8             4,1
+                                                                                               26           Cereal matinal, milho, açúcar                     NaN        377        4,7      0,7        NaN          88,8             2,1
+                                                                                                          27           Creme de arroz, pó                     NaN        386        7,0      1,2        NaN          83,9             1,1
+                                                                                                          28           Creme de milho, pó                     NaN        333        4,8      1,6        NaN          86,1             3,7
+                                                                                                          29           Curau, milho verde                     NaN         78        2,4      1,6          5          13,9             0,5
+                                                                                            30           Curau, milho verde, mistura para                     NaN        402        2,2     13,4        NaN          79,8             2,5
+                                                                                              31           Farinha, de arroz, enriquecida                     NaN        363        1,3      0,3        NaN          85,5             0,6
+
+
+=== Table 13-Tabela 1 ===
+
+Unnamed: 0                                Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+  Alimento                   Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+        32             Farinha, de centeio, integral     336     12,5      1,8        NaN           73,3             15,5
+        33                Farinha, de milho, amarela     351      7,2      1,5        NaN           79,1              5,5
+        34                         Farinha, de rosca     371     11,4      1,5        NaN           75,8              4,8
+        35                         Farinha, de trigo     360      9,8      1,4        NaN           75,1              2,3
+        36               Farinha, láctea, de cereais     415     11,9      5,8         11           77,8              1,9
+        37             Lasanha, massa fresca, cozida     164      5,8      1,2        NaN           32,5              1,6
+        38               Lasanha, massa fresca, crua     220      7,0      1,3        NaN           45,1              1,6
+        39                     Macarrão, instantâneo     436      8,8     17,2        NaN           62,4              5,6
+        40                      Macarrão, trigo, cru     371     10,0      1,3        NaN           77,9              2,9
+        41            Macarrão, trigo, cru, com ovos     371     10,3      2,0         18           76,6              2,3
+        42                         Milho, amido, cru     361      0,6       Tr        NaN           87,1              0,7
+        43                          Milho, fubá, cru     353      7,2      1,9        NaN           78,9              4,7
+        44                         Milho, verde, cru     138      6,6      0,6        NaN           28,6              3,9
+        45           Milho, verde, enlatado, drenado      98      3,2      2,4        NaN           17,1              4,6
+        46                    Mingau tradicional, pó     373      0,6      0,4        NaN           89,3              0,9
+        47 Pamonha, barra para cozimento, pré-cozida     171      2,6      4,8        NaN           30,7              2,4
+        48                         Pão, aveia, forma     343     12,4      5,7         Tr           59,6              6,0
+        49                              Pão, de soja     309     11,3      3,6        NaN           56,5              5,7
+        50                        Pão, glúten, forma     253     12,0      2,7        NaN           44,1              2,5
+        51                         Pão, milho, forma     292      8,3      3,1          6           56,4              4,3
+        52               Pão, trigo, forma, integral     253      9,4      3,7        NaN           49,9              6,9
+        53                       Pão, trigo, francês     300      8,0      3,1        NaN           58,6              2,3
+        54                        Pão, trigo, sovado     311      8,4      2,8         17           61,5              2,4
+        55                     Pastel, de carne, cru     289     10,7      8,8         18           42,0              1,0
+        56                   Pastel, de carne, frito     388     10,1     20,1         25           43,8              1,0
+        57                    Pastel, de queijo, cru     308      9,9      9,6         14           45,9              1,1
+        58                  Pastel, de queijo, frito     422      8,7     22,7         15           48,1              0,9
+        59                       Pastel, massa, crua     310      6,9      5,5        NaN           57,4              1,4
+        60                      Pastel, massa, frita     570      6,0     40,9        NaN           49,3              1,3
+        61         Pipoca, com óleo de soja, sem sal     448      9,9     15,9        NaN           70,3             14,3
+        62                       Polenta, pré-cozida     103      2,3      0,3        NaN           23,3              2,4
+        63                      Torrada, pão francês     377     10,5      3,3        NaN           74,6              3,4
+
+
+=== Table 15-Tabela 1 ===
+
+                                             Unnamed: 0              Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                                               Alimento Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+                       Verduras, hortaliças e derivados                     NaN     NaN      NaN      NaN        NaN            NaN              NaN
+                 64           Abóbora, cabotian, cozida                     NaN      48      1,4      0,7        NaN           10,8              2,5
+                   65           Abóbora, cabotian, crua                     NaN      39      1,7      0,5        NaN            8,4              2,2
+          66           Abóbora, menina brasileira, crua                     NaN      14      0,6       Tr        NaN            3,3              1,2
+                    67           Abóbora, moranga, crua                     NaN      12      1,0      0,1        NaN            2,7              1,7
+                68           Abóbora, moranga, refogada                     NaN      29      0,4      0,8        NaN            6,0              1,5
+                    69           Abobora, pescoço, crua                     NaN      24      0,7      0,1        NaN            6,1              2,3
+               70           Abobrinha, italiana, cozida                     NaN      15      1,1      0,2        NaN            3,0              1,6
+                 71           Abobrinha, italiana, crua                     NaN      19      1,1      0,1        NaN            4,3              1,4
+             72           Abobrinha, italiana, refogada                     NaN      24      1,1      0,8        NaN            4,2              1,4
+                 73           Abobrinha, paulista, crua                     NaN      31      0,6      0,1        NaN            7,9              2,6
+                              74           Acelga, crua                     NaN      21      1,4      0,1        NaN            4,6              1,1
+                               75           Agrião, cru                     NaN      17      2,7      0,2        NaN            2,3              2,1
+                                 76           Aipo, cru                     NaN      19      0,8      0,1        NaN            4,3              1,0
+                   77           Alface, americana, crua                     NaN       9      0,6      0,1        NaN            1,7              1,0
+                      78           Alface, crespa, crua                     NaN      11      1,3      0,2        NaN            1,7              1,8
+                        79           Alface, lisa, crua                     NaN      14      1,7      0,1        NaN            2,4              2,3
+                        80           Alface, roxa, crua                     NaN      13      0,9      0,2        NaN            2,5              2,0
+                            81           Alfavaca, crua                     NaN      29      2,7      0,5        NaN            5,2              4,1
+                                 82           Alho, cru                     NaN     113      7,0      0,2        NaN           23,9              4,3
+                            83           Alho-poró, cru                     NaN      32      1,4      0,1        NaN            6,9              2,5
+                             84           Almeirão, cru                     NaN      18      1,8      0,2        NaN            3,3              2,6
+                        85           Almeirão, refogado                     NaN      65      1,7      4,8        NaN            5,7              3,4
+                     86           Batata, baroa, cozida                     NaN      80      0,9      0,2        NaN           18,9              1,8
+                       87           Batata, baroa, crua                     NaN     101      1,0      0,2        NaN           24,0              2,1
+                      88           Batata, doce, cozida                     NaN      77      0,6      0,1        NaN           18,4              2,2
+                        89           Batata, doce, crua                     NaN     118      1,3      0,1        NaN           28,2              2,6
+90           Batata, frita, tipo chips, industrializada                     NaN     543      5,6     36,6        NaN           51,2              2,5
+                   91           Batata, inglesa, cozida                     NaN      52      1,2       Tr        NaN           11,9              1,3
+                     92           Batata, inglesa, crua                     NaN      64      1,8       Tr        NaN           14,7              1,2
+                    93           Batata, inglesa, frita                     NaN     267      5,0     13,1        NaN           35,6              8,1
+
+
+=== Table 17-Tabela 1 ===
+
+Unnamed: 0                         Unnamed: 1 Energia Unnamed: 3 Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+  Alimento            Descrição dos alimentos  (kcal)       (kJ)      (g)      (g)       (mg)            (g)              (g)
+        94             Batata, inglesa, sauté      68        284      1,3      0,9        NaN           14,1              1,4
+        95                  Berinjela, cozida      19         79      0,7      0,1        NaN            4,5              2,5
+        96                    Berinjela, crua      20         82      1,2      0,1        NaN            4,4              2,9
+        97                  Beterraba, cozida      32        135      1,3      0,1        NaN            7,2              1,9
+        98                    Beterraba, crua      49        204      1,9      0,1        NaN           11,1              3,4
+        99            Biscoito, polvilho doce     438       1831      1,3     12,2          9           80,5              1,2
+       100                   Brócolis, cozido      25        103      2,1      0,5        NaN            4,4              3,4
+       101                      Brócolis, cru      25        107      3,6      0,3        NaN            4,0              2,9
+       102                       Cará, cozido      78        325      1,5      0,1        NaN           18,9              2,6
+       103                          Cará, cru      96        400      2,3      0,1        NaN           23,0              7,3
+       104                        Caruru, cru      34        142      3,2      0,6        NaN            6,0              4,5
+       105                    Catalonha, crua      24        100      1,9      0,3        NaN            4,8              2,0
+       106                Catalonha, refogada      63        265      2,0      4,8        NaN            4,8              3,7
+       107                       Cebola, crua      39        165      1,7      0,1        NaN            8,9              2,2
+       108                    Cebolinha, crua      20         82      1,9      0,4        NaN            3,4              3,6
+       109                    Cenoura, cozida      30        125      0,8      0,2        NaN            6,7              2,6
+       110                      Cenoura, crua      34        143      1,3      0,2        NaN            7,7              3,2
+       111                     Chicória, crua      14         58      1,1      0,1        NaN            2,9              2,2
+       112                     Chuchu, cozido      19         78      0,4       Tr        NaN            4,8              1,0
+       113                        Chuchu, cru      17         71      0,7      0,1        NaN            4,1              1,3
+       114       Coentro, folhas desidratadas     309       1293     20,9     10,4        NaN           48,0             37,3
+       115              Couve, manteiga, crua      27        113      2,9      0,5        NaN            4,3              3,1
+       116          Couve, manteiga, refogada      90        378      1,7      6,6        NaN            8,7              5,7
+       117                   Couve-flor, crua      23         94      1,9      0,2        NaN            4,5              2,4
+       118                 Couve-flor, cozida      19         80      1,2      0,3        NaN            3,9              2,1
+       119     Espinafre,  Nova Zelândia, cru      16         67      2,0      0,2        NaN            2,6              2,1
+       120 Espinafre, Nova Zelândia, refogado      67        281      2,7      5,4        NaN            4,2              2,5
+       121         Farinha, de mandioca, crua     361       1510      1,6      0,3        NaN           87,9              6,4
+       122      Farinha, de mandioca, torrada     365       1528      1,2      0,3        NaN           89,2              6,5
+       123                   Farinha, de puba     360       1507      1,6      0,5        NaN           87,3              4,2
+       124                Fécula, de mandioca     331       1384      0,5      0,3        NaN           81,1              0,6
+       125                 Feijão, broto, cru      39        162      4,2      0,1        NaN            7,8              2,0
+
+
+=== Table 19-Tabela 1 ===
+
+Número do                    Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+ Alimento       Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+      126                   Inhame, cru      97      2,1      0,2        NaN           23,2              1,7
+      127                     Jiló, cru      27      1,4      0,2        NaN            6,2              4,8
+      128                Jurubeba, crua     126      4,4      3,9        NaN           23,1             23,9
+      129              Mandioca, cozida     125      0,6      0,3        NaN           30,1              1,6
+      130                Mandioca, crua     151      1,1      0,3        NaN           36,2              1,9
+      131   Mandioca, farofa, temperada     406      2,1      9,1        NaN           80,3              7,8
+      132               Mandioca, frita     300      1,4     11,2        NaN           50,3              1,9
+      133               Manjericão, cru      21      2,0      0,4        NaN            3,6              3,3
+      134                   Maxixe, cru      14      1,4      0,1        NaN            2,7              2,2
+      135         Mostarda, folha, crua      18      2,1      0,2        NaN            3,2              1,9
+      136        Nhoque, batata, cozido     181      5,9      1,9         15           36,8              1,8
+      137                     Nabo, cru      18      1,2      0,1        NaN            4,1              2,6
+      138  Palmito, juçara, em conserva      23      1,8      0,4        NaN            4,3              3,2
+      139 Palmito, pupunha, em conserva      29      2,5      0,5        NaN            5,5              2,6
+      140        Pão, de queijo, assado     363      5,1     24,6         68           34,2              0,6
+      141           Pão, de queijo, cru     295      3,6     14,0         63           38,5              1,0
+      142                   Pepino, cru      10      0,9       Tr        NaN            2,0              1,1
+      143        Pimentão, amarelo, cru      28      1,2      0,4        NaN            6,0              1,9
+      144          Pimentão, verde, cru      21      1,1      0,2        NaN            4,9              2,6
+      145       Pimentão, vermelho, cru      23      1,0      0,1        NaN            5,5              1,6
+      146                Polvilho, doce     351      0,4       Tr        NaN           86,8              0,2
+      147                   Quiabo, cru      30      1,9      0,3        NaN            6,4              4,6
+      148                 Rabanete, cru      14      1,4      0,1        NaN            2,7              2,2
+      149          Repolho, branco, cru      17      0,9      0,1        NaN            3,9              1,9
+      150            Repolho, roxo, cru      31      1,9      0,1        NaN            7,2              2,0
+      151       Repolho, roxo, refogado      42      1,8      1,2        NaN            7,6              1,8
+      152                  Rúcula, crua      13      1,8      0,1        NaN            2,2              1,7
+      153                   Salsa, crua      33      3,3      0,6        NaN            5,7              1,9
+      154   Seleta de legumes, enlatada      57      3,4      0,4        NaN           12,7              3,1
+      155                Serralha, crua      30      2,7      0,7        NaN            4,9              3,5
+      156                  Taioba, crua      34      2,9      0,9        NaN            5,4              4,5
+      157      Tomate, com semente, cru      15      1,1      0,2        NaN            3,1              1,2
+
+
+=== Table 21-Tabela 1 ===
+
+                                               Unnamed: 0                    Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                                                 Alimento       Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+                                                      158               Tomate, extrato      61      2,4      0,2        NaN           15,0              2,8
+                                                      159 Tomate, molho industrializado      38      1,4      0,9        NaN            7,7              3,1
+                                                      160                  Tomate, purê      28      1,4       Tr        NaN            6,9              1,0
+                                                      161                Tomate, salada      21      0,8       Tr        NaN            5,1              2,3
+                                                      162                   Vagem, crua      25      1,8      0,2        NaN            5,3              2,4
+                                       Frutas e derivados                           NaN     NaN      NaN      NaN        NaN            NaN              NaN
+                                163          Abacate, cru                           NaN      96      1,2      8,4        NaN            6,0              6,3
+                                164          Abacaxi, cru                           NaN      48      0,9      0,1        NaN           12,3              1,0
+                   165          Abacaxi, polpa, congelada                           NaN      31      0,5      0,1        NaN            7,8              0,3
+                                   166          Abiu, cru                           NaN      62      0,8      0,7        NaN           14,9              1,7
+167          Açaí, polpa, com xarope de guaraná e glucose                           NaN     110      0,7      3,7        NaN           21,5              1,7
+                      168          Açaí, polpa, congelada                           NaN      58      0,8      3,9        NaN            6,2              2,6
+                               169          Acerola, crua                           NaN      33      0,9      0,2        NaN            8,0              1,5
+                   170          Acerola, polpa, congelada                           NaN      22      0,6       Tr        NaN            5,5              0,7
+                     171          Ameixa, calda, enlatada                           NaN     183      0,4       Tr        NaN           46,9              0,5
+                                172          Ameixa, crua                           NaN      53      0,8       Tr        NaN           13,9              2,4
+         173          Ameixa, em calda, enlatada, drenada                           NaN     177      1,0      0,3        NaN           47,7              4,5
+                               174          Atemóia, crua                           NaN      97      1,0      0,3        NaN           25,3              2,1
+                      175          Banana, da terra, crua                           NaN     128      1,4      0,2        NaN           33,7              1,5
+                       176          Banana, doce em barra                           NaN     280      2,2      0,1        NaN           75,7              3,8
+                          177          Banana, figo, crua                           NaN     105      1,1      0,1        NaN           27,8              2,8
+                          178          Banana, maçã, crua                           NaN      87      1,8      0,1        NaN           22,3              2,6
+                        179          Banana, nanica, crua                           NaN      92      1,4      0,1        NaN           23,8              1,9
+                          180          Banana, ouro, crua                           NaN     112      1,5      0,2        NaN           29,3              2,0
+                        181          Banana, pacova, crua                           NaN      78      1,2      0,1        NaN           20,3              2,0
+                         182          Banana, prata, crua                           NaN      98      1,3      0,1        NaN           26,0              2,0
+                                  183          Cacau, cru                           NaN      74      1,0      0,1        NaN           19,4              2,2
+                             184          Cajá-Manga, cru                           NaN      46      1,3       Tr        NaN           11,4              2,6
+                      185          Cajá, polpa, congelada                           NaN      26      0,6      0,2        NaN            6,4              1,4
+                                   186          Caju, cru                           NaN      43      1,0      0,3        NaN           10,3              1,7
+                      187          Caju, polpa, congelada                           NaN      37      0,5      0,2        NaN            9,4              0,8
+
+
+=== Table 23-Tabela 1 ===
+
+Unnamed: 0                        Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+  Alimento           Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+       188  Caju, suco concentrado, envasado      45      0,4      0,2        NaN           10,7              0,6
+       189             Caqui, chocolate, cru      71      0,4      0,1        NaN           19,3              6,5
+       190                   Carambola, crua      46      0,9      0,2        NaN           11,5              2,0
+       191                   Ciriguela, crua      76      1,4      0,4        NaN           18,9              3,9
+       192                      Cupuaçu, cru      49      1,2      1,0        NaN           10,4              3,1
+       193         Cupuaçu, polpa, congelada      49      0,8      0,6        NaN           11,4              1,6
+       194                         Figo, cru      41      1,0      0,2        NaN           10,2              1,8
+       195          Figo, enlatado, em calda     184      0,6      0,2        NaN           50,3              2,0
+       196                   Fruta-pão, crua      67      1,1      0,2        NaN           17,2              5,5
+       197   Goiaba, branca, com casca, crua      52      0,9      0,5        NaN           12,4              6,3
+       198             Goiaba, doce em pasta     269      0,6      0,0        NaN           74,1              3,7
+       199              Goiaba, doce, cascão     286      0,4      0,1        NaN           78,7              4,4
+       200 Goiaba, vermelha, com casca, crua      54      1,1      0,4        NaN           13,0              6,2
+       201                    Graviola, crua      62      0,8      0,2        NaN           15,8              1,9
+       202        Graviola, polpa, congelada      38      0,6      0,1        NaN            9,8              1,2
+       203                  Jabuticaba, crua      58      0,6      0,1        NaN           15,3              2,3
+       204                        Jaca, crua      88      1,4      0,3        NaN           22,5              2,4
+       205                        Jambo, cru      27      0,9      0,1        NaN            6,5              5,1
+       206                      Jamelão, cru      41      0,5      0,1        NaN           10,6              1,8
+       207                         Kiwi, cru      51      1,3      0,6        NaN           11,5              2,7
+       208               Laranja, baía, crua      45      1,0      0,1        NaN           11,5              1,1
+       209               Laranja, baía, suco      37      0,7       Tr        NaN            8,7               Tr
+       210           Laranja, da terra, crua      51      1,1      0,2        NaN           12,9              4,0
+       211           Laranja, da terra, suco      41      0,7      0,1        NaN            9,6              1,0
+       212               Laranja, lima, crua      46      1,1      0,1        NaN           11,5              1,8
+       213               Laranja, lima, suco      39      0,7      0,1        NaN            9,2              0,4
+       214               Laranja, pêra, crua      37      1,0      0,1        NaN            8,9              0,8
+       215               Laranja, pêra, suco      33      0,7      0,1        NaN            7,6               Tr
+       216           Laranja, valência, crua      46      0,8      0,2        NaN           11,7              1,7
+       217           Laranja, valência, suco      36      0,5      0,1        NaN            8,6              0,4
+       218                Limão, cravo, suco      14      0,3       Tr        NaN            5,2               Tr
+       219               Limão, galego, suco      22      0,6      0,1        NaN            7,3               Tr
+
+
+=== Table 25-Tabela 1 ===
+
+Unnamed: 0                           Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+  Alimento              Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+       220                   Limão, tahiti, cru      32      0,9      0,1        NaN           11,1              1,2
+       221     Maçã, Argentina, com casca, crua      63      0,2      0,2        NaN           16,6              2,0
+       222          Maçã, Fuji, com casca, crua      56      0,3       Tr        NaN           15,2              1,3
+       223                        Macaúba, crua     404      2,1     40,7        NaN           13,9             13,4
+       224        Mamão, doce em calda, drenado     196      0,2      0,1        NaN           54,0              1,3
+       225                  Mamão, Formosa, cru      45      0,8      0,1        NaN           11,6              1,8
+       226                   Mamão, Papaia, cru      40      0,5      0,1        NaN           10,4              1,0
+       227  Mamão verde, doce em calda, drenado     209      0,3      0,1        NaN           57,6              1,2
+       228                   Manga, Haden, crua      64      0,4      0,3        NaN           16,7              1,6
+       229                  Manga, Palmer, crua      72      0,4      0,2        NaN           19,4              1,6
+       230              Manga, polpa, congelada      48      0,4      0,2        NaN           12,5              1,1
+       231            Manga, Tommy Atkins, crua      51      0,9      0,2        NaN           12,8              2,1
+       232                        Maracujá, cru      68      2,0      2,1        NaN           12,3              1,1
+       233           Maracujá, polpa, congelada      39      0,8      0,2        NaN            9,6              0,5
+       234 Maracujá, suco concentrado, envasado      42      0,8      0,2        NaN            9,6              0,4
+       235                       Melancia, crua      33      0,9       Tr        NaN            8,1              0,1
+       236                           Melão, cru      29      0,7       Tr        NaN            7,5              0,3
+       237              Mexerica, Murcote, crua      58      0,9      0,1        NaN           14,9              3,1
+       238                  Mexerica, Rio, crua      37      0,7      0,1        NaN            9,3              2,7
+       239                         Morango, cru      30      0,9      0,3        NaN            6,8              1,7
+       240                        Nêspera, crua      43      0,3       Tr        NaN           11,5              3,0
+       241                           Pequi, cru     205      2,3     18,0        NaN           13,0             19,0
+       242                     Pêra, Park, crua      61      0,2      0,2        NaN           16,1              3,0
+       243                 Pêra, Williams, crua      53      0,6      0,1        NaN           14,0              3,0
+       244                 Pêssego, Aurora, cru      36      0,8       Tr        NaN            9,3              1,4
+       245          Pêssego, enlatado, em calda      63      0,7       Tr        NaN           16,9              1,0
+       246                          Pinha, crua      88      1,5      0,3        NaN           22,4              3,4
+       247                        Pitanga, crua      41      0,9      0,2        NaN           10,2              3,2
+       248            Pitanga, polpa, congelada      19      0,3      0,1        NaN            4,8              0,7
+       249                           Romã, crua      56      0,4       Tr        NaN           15,1              0,4
+       250                       Tamarindo, cru     276      3,2      0,5        NaN           72,5              6,4
+       251               Tangerina, Poncã, crua      38      0,8      0,1        NaN            9,6              0,9
+
+
+=== Table 27-Tabela 1 ===
+
+                                                                   Unnamed: 0                      Unnamed: 1 Energia Proteína Unnamed: 4 Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                                                                     Alimento         Descrição dos alimentos  (kcal)      (g)        NaN      (g)       (mg)            (g)              (g)
+                                                                          252          Tangerina, Poncã, suco      36      0,5        NaN       Tr        NaN            8,8               Tr
+                                                                          253                     Tucumã, cru     262      2,1        NaN     19,1        NaN           26,5             12,7
+                                                                          254                       Umbu, cru      37      0,8        NaN       Tr        NaN            9,4              2,0
+                                                                          255          Umbu, polpa, congelada      34      0,5        NaN      0,1        NaN            8,8              1,3
+                                                                          256               Uva, Itália, crua      53      0,7        NaN      0,2        NaN           13,6              0,9
+                                                                          257                 Uva, Rubi, crua      49      0,6        NaN      0,2        NaN           12,7              0,9
+                                                                          258 Uva, suco concentrado, envasado      58       Tr        NaN       Tr        NaN           14,7              0,2
+                                                             Gorduras e óleos                             NaN     NaN      NaN        NaN      NaN        NaN            NaN              NaN
+                                                259          Azeite, de dendê                             NaN     884      NaN        NaN    100,0        NaN            NaN              NaN
+                                  260          Azeite, de oliva, extra virgem                             NaN     884      NaN        NaN    100,0        NaN            NaN              NaN
+                                               261          Manteiga, com sal                             NaN     726      0,4        NaN     82,4        201            0,1              NaN
+                                               262          Manteiga, sem sal                             NaN     758      0,4        NaN     86,0        214            0,0              NaN
+      263          Margarina, com óleo hidrogenado, com sal (65% de lipídeos)                             NaN     596       Tr        NaN     67,4        NaN            0,0              NaN
+      264          Margarina, com óleo hidrogenado, sem sal (80% de lipídeos)                             NaN     723       Tr        NaN     81,7        NaN            0,0              NaN
+ 265          Margarina, com óleo interesterificado, com sal (65%de lipídeos)                             NaN     594       Tr        NaN     67,2        NaN            0,0              NaN
+266          Margarina, com óleo interesterificado, sem sal (65% de lipídeos)                             NaN     593       Tr        NaN     67,1        NaN            0,0              NaN
+                                                 267          Óleo, de babaçu                             NaN     884      NaN        NaN    100,0        NaN            NaN              NaN
+                                                 268          Óleo, de canola                             NaN     884      NaN        NaN    100,0        NaN            NaN              NaN
+                                               269          Óleo, de girassol                             NaN     884      NaN        NaN    100,0        NaN            NaN              NaN
+                                                  270          Óleo, de milho                             NaN     884      NaN        NaN    100,0        NaN            NaN              NaN
+                                                  271          Óleo, de pequi                             NaN     884      NaN        NaN    100,0        NaN            NaN              NaN
+                                                   272          Óleo, de soja                             NaN     884      NaN        NaN    100,0        NaN            NaN              NaN
+                                                     Pescados e frutos do mar                             NaN     NaN      NaN        NaN      NaN        NaN            NaN              NaN
+                                273          Abadejo, filé, congelado, assado                             NaN     112     23,5        1,2      NaN        103            0,0              NaN
+                                 274          Abadejo, filé, congelado,cozido                             NaN      91     19,3        0,9      NaN         87            0,0              NaN
+                                   275          Abadejo, filé, congelado, cru                             NaN      59     13,1        0,4      NaN         31            0,0              NaN
+                              276          Abadejo, filé, congelado, grelhado                             NaN     130     27,6        1,3      NaN        136            0,0              NaN
+                                          277          Atum, conserva em óleo                             NaN     166     26,2        6,0      NaN         53            0,0              NaN
+                                               278          Atum, fresco, cru                             NaN     118     25,7        0,9      NaN         48            0,0              NaN
+
+
+=== Table 29-Tabela 1 ===
+
+Númeo do                                         Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+Alimento                            Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+     279                             Bacalhau, salgado, cru     136     29,0      1,3        139            0,0              NaN
+     280                        Bacalhau, salgado, refogado     140     24,0      3,6        112            1,2                *
+     281          Cação, posta, com farinha de trigo, frita     208     25,0     10,0         75            3,1              0,5
+     282                               Cação, posta, cozida     116     25,6      0,7         83            0,0              NaN
+     283                                 Cação, posta, crua      83     17,9      0,8         36            0,0              NaN
+     284                Camarão, Rio Grande, grande, cozido      90     19,0      1,0        241            0,0              NaN
+     285                   Camarão, Rio Grande, grande, cru      47     10,0      0,5        124            0,0              NaN
+     286 Camarão, Sete Barbas, sem cabeça, com casca, frito     231     18,4     15,6        283            2,9              NaN
+     287                                 Caranguejo, cozido      83     18,5      0,4         85            0,0              NaN
+     288                                       Corimba, cru     128     17,4      6,0         40            0,0              NaN
+     289                                  Corimbatá, assado     261     19,9     19,6         80            0,0              NaN
+     290                                  Corimbatá, cozido     239     20,1     16,9         75            0,0              NaN
+     291                         Corvina de água doce, crua     101     18,9      2,2         73            0,0              NaN
+     292                               Corvina do mar, crua      94     18,6      1,6         67            0,0              NaN
+     293                             Corvina grande, assada     147     26,8      3,6        117            0,0              NaN
+     294                             Corvina grande, cozida     100     23,4      2,6        123            0,0              NaN
+     295                       Dourada de água doce, fresca     131     18,8      5,6         52            0,0              NaN
+     296                            Lambari, congelado, cru     131     16,8      6,5        159            0,0              NaN
+     297                          Lambari, congelado, frito     327     28,4     22,8        246            0,0              NaN
+     298                               Lambari, fresco, cru     152     15,7      9,4        144            0,0              NaN
+     299               Manjuba, com farinha de trigo, frita     344     23,5     22,6        282           10,2              0,4
+     300                                     Manjuba, frita     349     30,1     24,5        270            0,0              NaN
+     301                              Merluza, filé, assado     122     26,6      0,9         91            0,0              NaN
+     302                                 Merluza, filé, cru      89     16,6      2,0         57            0,0              NaN
+     303                               Merluza, filé, frito     192     26,9      8,5        109            0,0              NaN
+     304                              Pescada, branca, crua     111     16,3      4,6         51            0,0              NaN
+     305                             Pescada, branca, frita     223     27,4     11,8        165            0,0              NaN
+     306         Pescada, filé, com farinha de trigo, frito     283     21,4     19,1         73            5,0               Tr
+     307                                 Pescada, filé, cru     107     16,7      4,0         65            0,0              NaN
+     308                               Pescada, filé, frito     154     28,6      3,6         81            0,0              NaN
+     309                     Pescada, filé, molho escabeche     142     11,8      8,0         43            5,0              0,8
+     310                                   Pescadinha, crua      76     15,5      1,1         84            0,0              NaN
+
+
+=== Table 31-Tabela 1 ===
+
+                                                           Unnamed: 0                                Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                                                             Alimento                   Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+                                                                  311                           Pintado, assado     192     36,5      4,0        126            0,0              NaN
+                                                                  312                              Pintado, cru      91     18,6      1,3         50            0,0              NaN
+                                                                  313                         Pintado, grelhado     152     30,8      2,3         99            0,0              NaN
+                                                                  314                            Porquinho, cru      93     20,5      0,6         49            0,0              NaN
+                                                                  315 Salmão, filé, com pele, fresco,  grelhado     229     23,9     14,0         85            0,0              NaN
+                                                                  316             Salmão, sem pele, fresco, cru     170     19,3      9,7         53            0,0              NaN
+                                                                  317        Salmão, sem pele, fresco, grelhado     243     26,1     14,5         73            0,0              NaN
+                                                                  318                          Sardinha, assada     164     32,2      3,0        109            0,0              NaN
+                                                                  319                Sardinha, conserva em óleo     285     15,9     24,0         73            0,0              NaN
+                                                                  320                           Sardinha, frita     257     33,4     12,7        103            0,0              NaN
+                                                                  321                   Sardinha, inteira, crua     114     21,1      2,7         61            0,0              NaN
+                                                                  322            Tucunaré, filé, congelado, cru      88     18,0      1,2         47            0,0              NaN
+                                                   Carnes e derivados                                       NaN     NaN      NaN      NaN        NaN            NaN              NaN
+                                              323         Apresuntado                                       NaN     129     13,5      6,7         38            2,9              NaN
+                                  324         Caldo de carne, tablete                                       NaN     241      7,8     16,6         Tr           15,1              0,6
+                                325         Caldo de galinha, tablete                                       NaN     251      6,3     20,4          2           10,6             11,8
+                       326         Carne, bovina, acém, moído, cozido                                       NaN     212     26,7     10,9        103            0,0              NaN
+                          327         Carne, bovina, acém, moído, cru                                       NaN     137     19,4      5,9         58            0,0              NaN
+                 328         Carne, bovina, acém, sem gordura, cozido                                       NaN     215     27,3     10,9        107            0,0              NaN
+                    329         Carne, bovina, acém, sem gordura, cru                                       NaN     144     20,8      6,1         53            0,0              NaN
+                         330         Carne, bovina, almôndegas, cruas                                       NaN     189     12,3     11,2         34            9,8                *
+                        331         Carne, bovina, almôndegas, fritas                                       NaN     272     18,2     15,8         36           14,3                *
+                             332         Carne, bovina, bucho, cozido                                       NaN     133     21,6      4,5        245            0,0              NaN
+                                333         Carne, bovina, bucho, cru                                       NaN     137     20,5      5,5        145            0,0              NaN
+    334         Carne, bovina, capa de contra-filé, com gordura, crua                                       NaN     217     19,2     15,0         63            0,0              NaN
+335         Carne, bovina, capa de contra-filé, com gordura, grelhada                                       NaN     312     30,7     20,0        120            0,0              NaN
+    336         Carne, bovina, capa de contra-filé, sem gordura, crua                                       NaN     131     21,5      4,3         58            0,0              NaN
+337         Carne, bovina, capa de contra-filé, sem gordura, grelhada                                       NaN     239     35,1     10,0         80            0,0              NaN
+                           338         Carne, bovina, charque, cozido                                       NaN     263     36,4     11,9        113            0,0              NaN
+                              339         Carne, bovina, charque, cru                                       NaN     249     22,7     16,8         81            0,0              NaN
+                   340         Carne, bovina, contra-filé, à milanesa                                       NaN     352     20,6     24,0         99           12,2              0,4
+
+
+=== Table 33-Tabela 1 ===
+
+Unnamed: 0                                             Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+  Alimento                                Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+       341             Carne, bovina, contra-filé de costela, cru     202     19,8     13,1         52            0,0              NaN
+       342        Carne, bovina, contra-filé de costela, grelhado     275     29,9     16,3         98            0,0              NaN
+       343           Carne, bovina, contra-filé, com gordura, cru     206     21,2     12,8         73            0,0              NaN
+       344      Carne, bovina, contra-filé, com gordura, grelhado     278     32,4     15,5        144            0,0              NaN
+       345           Carne, bovina, contra-filé, sem gordura, cru     157     24,0      6,0         59            0,0              NaN
+       346      Carne, bovina, contra-filé, sem gordura, grelhado     194     35,9      4,5        102            0,0              NaN
+       347                         Carne, bovina, costela, assada     373     28,8     27,7         95            0,0              NaN
+       348                           Carne, bovina, costela, crua     358     16,7     31,8         44            0,0              NaN
+       349         Carne, bovina, coxão duro, sem gordura, cozido     217     31,9      8,9         71            0,0              NaN
+       350            Carne, bovina, coxão duro, sem gordura, cru     148     21,5      6,2         60            0,0              NaN
+       351         Carne, bovina, coxão mole, sem gordura, cozido     219     32,4      8,9         84            0,0              NaN
+       352            Carne, bovina, coxão mole, sem gordura, cru     169     21,2      8,7         84            0,0              NaN
+       353                           Carne, bovina, cupim, assado     330     28,6     23,0         91            0,0              NaN
+       354                              Carne, bovina, cupim, cru     221     19,5     15,3         51            0,0              NaN
+       355                             Carne, bovina, fígado, cru     141     20,7      5,4        393            1,1              NaN
+       356                        Carne, bovina, fígado, grelhado     225     29,9      9,0        601            4,2              NaN
+       357          Carne, bovina, filé mingnon, sem gordura, cru     143     21,6      5,6         55            0,0              NaN
+       358     Carne, bovina, filé mingnon, sem gordura, grelhado     220     32,8      8,8        103            0,0              NaN
+       359             Carne, bovina, flanco, sem gordura, cozido     196     29,4      7,8         62            0,0              NaN
+       360                Carne, bovina, flanco, sem gordura, cru     141     20,0      6,2         50            0,0              NaN
+       361          Carne, bovina, fraldinha, com gordura, cozida     338     24,2     26,0         65            0,0              NaN
+       362            Carne, bovina, fraldinha, com gordura, crua     221     17,6     16,1         54            0,0              NaN
+       363                         Carne, bovina, lagarto, cozido     222     32,9      9,1         56            0,0              NaN
+       364                            Carne, bovina, lagarto, cru     135     20,5      5,2         56            0,0              NaN
+       365                          Carne, bovina, língua, cozida     315     21,4     24,8        105            0,0              NaN
+       366                            Carne, bovina, língua, crua     215     17,1     15,8        118            0,0              NaN
+       367                           Carne, bovina, maminha, crua     153     20,9      7,0         51            0,0              NaN
+       368                       Carne, bovina, maminha, grelhada     153     30,7      2,4         88            0,0              NaN
+       369      Carne, bovina, miolo de alcatra, sem gordura, cru     163     21,6      7,8         60            0,0              NaN
+       370 Carne, bovina, miolo de alcatra, sem gordura, grelhado     241     31,9     11,6         92            0,0              NaN
+       371            Carne, bovina, músculo, sem gordura, cozido     194     31,2      6,7         56            0,0              NaN
+       372               Carne, bovina, músculo, sem gordura, cru     142     21,6      5,5         51            0,0              NaN
+
+
+=== Table 35-Tabela 1 ===
+
+Unnamed: 0                                    Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+  Alimento                       Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+       373      Carne, bovina, paleta, com gordura, crua     159     21,4      7,5         58            0,0              NaN
+       374    Carne, bovina, paleta, sem gordura, cozida     194     29,7      7,4         56            0,0              NaN
+       375      Carne, bovina, paleta, sem gordura, crua     141     21,0      5,7         42            0,0              NaN
+       376      Carne, bovina, patinho, sem gordura, cru     133     21,7      4,5         56            0,0              NaN
+       377 Carne, bovina, patinho, sem gordura, grelhado     219     35,9      7,3        126            0,0              NaN
+       378     Carne, bovina, peito, sem gordura, cozido     338     22,2     27,0        100            0,0              NaN
+       379        Carne, bovina, peito, sem gordura, cru     259     17,6     20,4         59            0,0              NaN
+       380     Carne, bovina, picanha, com gordura, crua     213     18,8     14,7         60            0,0              NaN
+       381 Carne, bovina, picanha, com gordura, grelhada     289     26,4     19,5         92            0,0              NaN
+       382     Carne, bovina, picanha, sem gordura, crua     134     21,3      4,7         75            0,0              NaN
+       383 Carne, bovina, picanha, sem gordura, grelhada     238     31,9     11,3        100            0,0              NaN
+       384                   Carne, bovina, seca, cozida     313     26,9     21,9        100            0,0              NaN
+       385                     Carne, bovina, seca, crua     313     19,7     25,4         92            0,0              NaN
+       386                      Coxinha de frango, frita     283      9,6     11,8         15           34,5              5,0
+       387                       Croquete, de carne, cru     246     12,0     15,6         30           13,9              NaN
+       388                     Croquete, de carne, frito     347     16,9     22,7         38           18,1              NaN
+       389          Empada de frango, pré-cozida, assada     358      6,9     15,6         23           47,5              2,2
+       390                 Empada, de frango, pré-cozida     377      7,3     22,9         23           35,5              2,2
+       391                   Frango, asa, com pele, crua     213     18,1     15,1        113            0,0              NaN
+       392    Frango, caipira, inteiro, com pele, cozido     243     23,9     15,6        110            0,0              NaN
+       393    Frango, caipira, inteiro, sem pele, cozido     196     29,6      7,7        106            0,0              NaN
+       394                          Frango, coração, cru     222     12,6     18,6        159            0,0              NaN
+       395                     Frango, coração, grelhado     207     22,4     12,1        280            0,6              NaN
+       396                Frango, coxa, com pele, assada     215     28,5     10,4        145            0,1              NaN
+       397                  Frango, coxa, com pele, crua     161     17,1      9,8         97            0,0              NaN
+       398                Frango, coxa, sem pele, cozida     167     26,9      5,8        133            0,0              NaN
+       399                  Frango, coxa, sem pele, crua     120     17,8      4,9         91            0,0              NaN
+       400                           Frango, fígado, cru     106     17,6      3,5        341            0,0              NaN
+       401                      Frango, filé, à milanesa     221     28,5      7,8         84            7,5              1,1
+       402                Frango, inteiro, com pele, cru     226     16,4     17,3         85            0,0              NaN
+       403             Frango, inteiro, sem pele, assado     187     28,0      7,5        111            0,0              NaN
+       404             Frango, inteiro, sem pele, cozido     170     25,0      7,1         99            0,0              NaN
+
+
+=== Table 37-Tabela 1 ===
+
+Unnamed: 0                          Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+  Alimento             Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+       405      Frango, inteiro, sem pele, cru     129     20,6      4,6         78            0,0              NaN
+       406     Frango, peito, com pele, assado     212     33,4      7,6        109            0,0              NaN
+       407        Frango, peito, com pele, cru     149     20,8      6,7         80            0,0              NaN
+       408     Frango, peito, sem pele, cozido     163     31,5      3,2         89            0,0              NaN
+       409        Frango, peito, sem pele, cru     119     21,5      3,0         59            0,0              NaN
+       410   Frango, peito, sem pele, grelhado     159     32,0      2,5         89            0,0              NaN
+       411 Frango, sobrecoxa, com pele, assada     260     28,7     15,2        158            0,0              NaN
+       412   Frango, sobrecoxa, com pele, crua     255     15,5     20,9         88            0,0              NaN
+       413 Frango, sobrecoxa, sem pele, assada     233     29,2     12,0        145            0,0              NaN
+       414   Frango, sobrecoxa, sem pele, crua     162     17,6      9,6         84            0,0              NaN
+       415             Hambúrguer, bovino, cru     215     13,2     16,2         70            4,2                *
+       416           Hambúrguer, bovino, frito     258     20,0     17,0         49            6,3                *
+       417        Hambúrguer, bovino, grelhado     210     13,2     12,4         59           11,3                *
+       418              Lingüiça, frango, crua     218     14,2     17,4         64            0,0              NaN
+       419             Lingüiça, frango, frita     245     18,3     18,5         76            0,0              NaN
+       420          Lingüiça, frango, grelhada     244     18,2     18,4         80            0,0              NaN
+       421               Lingüiça, porco, crua     227     16,1     17,6         53            0,0              NaN
+       422              Lingüiça, porco, frita     280     20,5     21,3         75            0,0              NaN
+       423           Lingüiça, porco, grelhada     296     23,2     21,9         82            0,0              NaN
+       424                           Mortadela     269     12,0     21,6         83            5,8              NaN
+       425             Peru, congelado, assado     163     26,2      5,7         91            0,0              NaN
+       426                Peru, congelado, cru      94     18,1      1,8         68            0,0              NaN
+       427                Porco, bisteca, crua     164     21,5      8,0         56            0,0              NaN
+       428               Porco, bisteca, frita     311     33,7     18,5        126            0,0              NaN
+       429            Porco, bisteca, grelhada     280     28,9     17,4         82            0,0              NaN
+       430              Porco, costela, assada     402     30,2     30,3        113            0,0              NaN
+       431                Porco, costela, crua     256     18,0     19,8         69            0,0              NaN
+       432                Porco, lombo, assado     210     35,7      6,4        103            0,0              NaN
+       433                   Porco, lombo, cru     176     22,6      8,8         55            0,0              NaN
+       434        Porco, orelha, salgada, crua     258     18,5     19,9         83            0,0              NaN
+       435               Porco, pernil, assado     262     32,1     13,9        110            0,0              NaN
+       436                  Porco, pernil, cru     186     20,1     11,1         59            0,0              NaN
+
+
+=== Table 39-Tabela 1 ===
+
+                                 Unnamed: 0                    Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                                   Alimento       Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+                                        437     Porco, rabo, salgado, cru     377     15,6     34,5         89            0,0              NaN
+                                        438 Presunto, com capa de gordura     128     14,4      6,8         40            1,4              NaN
+                                        439 Presunto, sem capa de gordura      94     14,3      2,7         36            2,1              NaN
+                                        440                 Quibe, assado     136     14,6      2,7         34           12,9              1,9
+                                        441                    Quibe, cru     109     12,4      1,7         27           10,8              1,6
+                                        442                  Quibe, frito     254     14,9     15,8         38           12,3              NaN
+                                        443                        Salame     398     25,8     30,6         85            2,9              NaN
+                                        444                 Toucinho, cru     593     11,5     60,3         73            0,0              NaN
+                                        445               Toucinho, frito     697     27,3     64,3         89            0,0              NaN
+                          Leite e derivados                           NaN     NaN      NaN      NaN        NaN            NaN              NaN
+        446          Bebida láctea, pêssego                           NaN      55      2,1      1,9          5            7,6              0,3
+                447          Creme de Leite                           NaN     221      1,5     22,5         66            4,5              NaN
+              448          Iogurte, natural                           NaN      51      4,1      3,0         14            1,9              NaN
+   449          Iogurte, natural, desnatado                           NaN      41      3,8      0,3          3            5,8              NaN
+        450          Iogurte, sabor abacaxi                           NaN       *        *        *          6              *                *
+        451          Iogurte, sabor morango                           NaN      70      2,7      2,3          7            9,7              0,2
+        452          Iogurte, sabor pêssego                           NaN      68      2,5      2,3          8            9,4              0,7
+             453          Leite, condensado                           NaN     313      7,7      6,7         28           57,0              NaN
+               454          Leite, de cabra                           NaN      66      3,1      3,8         14            5,2              NaN
+  455          Leite, de vaca, achocolatado                           NaN      83      2,1      2,2          6           14,2              0,6
+ 456          Leite, de vaca, desnatado, pó                           NaN     362     34,7      0,9         25           53,0              NaN
+457          Leite, de vaca, desnatado, UHT                           NaN       *        *        *          4              *              NaN
+      458          Leite, de vaca, integral                           NaN       *        *        *         10              *              NaN
+  459          Leite, de vaca, integral, pó                           NaN     497     25,4     26,9         85           39,2              NaN
+             460          Leite, fermentado                           NaN      70      1,9      0,1          2           15,7              NaN
+        461          Queijo, minas, frescal                           NaN     264     17,4     20,2         62            3,2              NaN
+      462          Queijo, minas, meia cura                           NaN     321     21,2     24,6         76            3,6              NaN
+              463          Queijo, mozarela                           NaN     330     22,6     25,2         80            3,0              NaN
+              464          Queijo, parmesão                           NaN     453     35,6     33,5        106            1,7              NaN
+          465          Queijo, pasteurizado                           NaN     303      9,4     27,4         82            5,7              NaN
+
+
+=== Table 41-Tabela 1 ===
+
+                                             Unnamed: 0                    Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                                               Alimento       Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+                                                    466 Queijo, petit suisse, morango     121      5,8      2,8         12           18,5              NaN
+                                                    467                 Queijo, prato     360     22,7     29,1         91            1,9              NaN
+                                                    468    Queijo, requeijão, cremoso     257      9,6     23,4         74            2,4              NaN
+                                                    469                Queijo, ricota     140     12,6      8,1         49            3,8              NaN
+                  Bebidas (alcoólicas e não alcoólicas)                           NaN     NaN      NaN      NaN        NaN            NaN              NaN
+        470          Bebida isotônica, sabores variados                           NaN      26      0,0      0,0        NaN            6,4              NaN
+                         471          Café, infusão 10%                           NaN       9      0,7      0,1        NaN            1,5              NaN
+                        472          Cana, aguardente 1                           NaN     216      NaN      NaN        NaN            NaN              NaN
+                            473          Cana, caldo de                           NaN      65       Tr       Tr        NaN           18,2              0,1
+                         474          Cerveja, pilsen 2                           NaN      41      0,6       Tr        NaN            3,3              NaN
+                475          Chá, erva-doce, infusão 5%                           NaN       1      0,0      0,0        NaN            0,4              NaN
+                     476          Chá, mate, infusão 5%                           NaN       3      0,0      0,1        NaN            0,6              NaN
+                    477          Chá, preto, infusão 5%                           NaN       2      0,0      0,0        NaN            0,6              NaN
+                             478          Coco, água de                           NaN      22      0,0      0,0        NaN            5,3              0,1
+            479          Refrigerante, tipo água tônica                           NaN      31      0,0      0,0        NaN            8,0              NaN
+                   480          Refrigerante, tipo cola                           NaN      34      0,0      0,0        NaN            8,7              NaN
+                481          Refrigerante, tipo guaraná                           NaN      39      0,0      0,0        NaN           10,0              NaN
+                482          Refrigerante, tipo laranja                           NaN      46      0,0      0,0        NaN           11,8              NaN
+                  483          Refrigerante, tipo limão                           NaN      40      0,0      0,0        NaN           10,3              NaN
+                                       Ovos e derivados                           NaN     NaN      NaN      NaN        NaN            NaN              NaN
+                        484          Omelete, de queijo                           NaN     268     15,6     22,0        384            0,4              NaN
+             485          Ovo, de codorna, inteiro, cru                           NaN     177     13,7     12,7        568            0,8              NaN
+  486          Ovo, de galinha, clara, cozida/10minutos                           NaN      59     13,4      0,1        NaN            0,0              NaN
+   487          Ovo, de galinha, gema, cozida/10minutos                           NaN     353     15,9     30,8       1272            1,6              NaN
+488          Ovo, de galinha, inteiro, cozido/10minutos                           NaN     146     13,3      9,5        397            0,6              NaN
+             489          Ovo, de galinha, inteiro, cru                           NaN     143     13,0      8,9        356            1,6              NaN
+           490          Ovo, de galinha, inteiro, frito                           NaN     240     15,6     18,6        516            1,2              NaN
+                                    Produtos açucarados                           NaN     NaN      NaN      NaN        NaN            NaN              NaN
+                          491          Achocolatado, pó                           NaN     401      4,2      2,2         Tr           91,2              3,9
+                           492          Açúcar, cristal                           NaN     387      0,3       Tr        NaN           99,6              NaN
+
+
+=== Table 43-Tabela 1 ===
+
+                       Unnamed: 0                                Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                         Alimento                   Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+                              493                           Açúcar, mascavo     369      0,8      0,1        NaN           94,5              NaN
+                              494                          Açúcar, refinado     387      0,3       Tr        NaN           99,5              NaN
+                              495                       Chocolate, ao leite     540      7,2     30,3         17           59,6              2,2
+                              496 Chocolate, ao leite, com castanha do Pará     559      7,4     34,2         16           55,4              2,5
+                              497            Chocolate, ao leite, dietético     557      6,9     33,8         13           56,3              2,8
+                              498                    Chocolate, meio amargo     475      4,9     29,9          2           62,4              4,9
+                              499                             Cocada branca     449      1,1     13,6        NaN           81,4              3,6
+                              500                 Doce, de abóbora, cremoso     199      0,9      0,2        NaN           54,6              2,3
+                              501                   Doce, de leite, cremoso     306      5,5      6,0         20           59,5              NaN
+                              502                   Geléia, mocotó, natural     106      2,1      0,1         Tr           24,2              NaN
+                              503                          Glicose de milho     292      0,0      0,0        NaN           79,4              NaN
+                              504                                Maria mole     301      3,8      0,2        NaN           73,6              0,7
+                              505                 Maria mole, coco queimado     307      3,9      0,1        NaN           75,1              0,6
+                              506                                 Marmelada     257      0,4      0,1        NaN           70,8              4,1
+                              507                            Mel, de abelha     309      0,0      0,0        NaN           84,0              NaN
+                              508                                    Melado     297      0,0      0,0        NaN           76,6              NaN
+                              509                                   Quindim     411      4,7     24,4        271           46,3              3,2
+                              510                                  Rapadura     352      1,0      0,1        NaN           90,8              NaN
+                 Miscelâneas\n511                         Café, pó, torrado     419     14,7     11,9        NaN           65,8             51,2
+                              512                             Capuccino, pó     417     11,3      8,6         29           73,6              2,4
+                              513                   Fermento em pó, químico      90      0,5      0,1        NaN           43,9              NaN
+                              514    Fermento, biológico, levedura, tablete      90     17,0      1,5        NaN            7,7              4,2
+                              515            Gelatina, sabores variados, pó     380      8,9       Tr        NaN           89,2              NaN
+                              516                            Sal, dietético     NaN      NaN      NaN        NaN            NaN              NaN
+                              517                               Sal, grosso     NaN      NaN      NaN        NaN            NaN              NaN
+                              518                                     Shoyu      61      3,3      0,3        NaN           11,6              NaN
+                              519                     Tempero a base de sal      21      2,7      0,3        NaN            2,1              0,6
+Outros alimentos industrializados                                       NaN     NaN      NaN      NaN        NaN            NaN              NaN
+                              520                 Azeitona, preta, conserva     194      1,2     20,3        NaN            5,5              4,6
+
+
+=== Table 45-Tabela 1 ===
+
+                                         Unnamed: 0                            Unnamed: 1 Energia Proteína Unnamed: 4 Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                                           Alimento               Descrição dos alimentos  (kcal)      (g)        NaN      (g)       (mg)            (g)              (g)
+                                                521             Azeitona, verde, conserva     137      0,9        NaN     14,2        NaN            4,1              3,8
+                                                522 Chantilly, spray, com gordura vegetal     315      0,5        NaN     27,3         Tr           16,9              NaN
+                                                523                        Leite, de coco     166      1,0        NaN     18,4        NaN            2,2              0,7
+                                                524        Maionese, tradicional com ovos     302      0,6        NaN     30,5         42            7,9              NaN
+                               Alimentos preparados                                   NaN     NaN      NaN        NaN      NaN        NaN            NaN              NaN
+                               525          Acarajé                                   NaN     289      8,3       19,9      NaN         25           19,1              9,4
+                      526          Arroz carreteiro                                   NaN     154     10,8        7,1      NaN         36           11,6              1,5
+527          Baião de dois, arroz e feijão-de-corda                                   NaN     136      6,2        3,2      NaN          4           20,4              5,1
+                              528          Barreado                                   NaN     165     18,3        9,5      NaN         60            0,2              0,1
+        529          Bife à cavalo, com contra filé                                   NaN     291     23,7       21,1      NaN        257            0,0              NaN
+                      530          Bolinho de arroz                                   NaN     274      8,0        8,3      NaN         70           41,7              2,7
+                      531          Camarão à baiana                                   NaN     101      7,9        6,0      NaN        117            3,2              0,4
+                   532          Charuto, de repolho                                   NaN      78      6,8        1,1      NaN         21           10,1              1,5
+      533          Cuscuz, de milho, cozido com sal                                   NaN     113      2,2        0,7      NaN        NaN           25,3              2,1
+                      534          Cuscuz, paulista                                   NaN     142      2,6        4,6      NaN         15           22,5              2,4
+                           535          Cuxá, molho                                   NaN      80      5,6        3,6      NaN         58            5,7              3,0
+                            536          Dobradinha                                   NaN     125     19,8        4,4      NaN        144            0,0              NaN
+                  537          Estrogonofe de carne                                   NaN     173     15,0       10,8      NaN         66            3,0              NaN
+                 538          Estrogonofe de frango                                   NaN     157     17,6        8,0      NaN         80            2,6              NaN
+               539          Feijão tropeiro mineiro                                   NaN     152     10,2        6,8      NaN         68           19,6              3,6
+                              540          Feijoada                                   NaN     117      8,7        6,5      NaN         22           11,6              5,1
+                   541          Frango, com açafrão                                   NaN     113      9,7        6,2      NaN         50            4,1              0,2
+             542          Macarrão, molho bolognesa                                   NaN     120      4,9        0,9      NaN          7           22,5              0,8
+                              543          Maniçoba                                   NaN     134     10,0        8,7      NaN         43            3,4              2,2
+                               544          Quibebe                                   NaN      86      8,6        2,7      NaN        NaN            6,6              1,7
+      545          Salada, de legumes, com maionese                                   NaN      96      1,1        7,0      NaN          7            8,9              2,2
+   546          Salada, de legumes, cozida no vapor                                   NaN      35      2,0        0,3      NaN        NaN            7,1              2,5
+                   547          Salpicão, de frango                                   NaN     148     13,9        7,8      NaN         53            4,6              0,4
+                             548          Sarapatel                                   NaN     123     18,5        4,4      NaN        315            1,1              NaN
+                                549          Tabule                                   NaN      57      2,0        1,2      NaN        NaN           10,6              2,1
+
+
+=== Table 47-Tabela 1 ===
+
+                             Unnamed: 0                    Unnamed: 1 Energia Proteína Lipídeos Colesterol Carbo-\nidrato Fibra\nAlimentar
+                               Alimento       Descrição dos alimentos  (kcal)      (g)      (g)       (mg)            (g)              (g)
+                                    550                        Tacacá      47      7,0      0,4         71            3,4              0,2
+                                    551         Tapioca, com manteiga     348      0,1     10,9         31           63,6               Tr
+                                    552 Tucupi, com pimenta-de-cheiro      27      2,1      0,3        NaN            4,7              0,2
+                                    553                  Vaca atolada     145      5,1      9,3         19           10,1              2,3
+                                    554                        Vatapá     255      6,0     23,2         44            9,7              1,7
+                                    555             Virado à paulista     307     10,2     25,6         66           14,1              2,2
+                                    556                      Yakisoba     113      7,5      2,6        NaN           18,3              1,1
+                Leguminosas e derivados                           NaN     NaN      NaN      NaN        NaN            NaN              NaN
+       557          Amendoim, grão, cru                           NaN     544     27,2     43,9        NaN           20,3              8,0
+558          Amendoim, torrado, salgado                           NaN     606     22,5     54,0        NaN           18,7              7,8
+         559          Ervilha, em vagem                           NaN      88      7,5      0,5        NaN           14,2              9,7
+560          Ervilha, enlatada, drenada                           NaN      74      4,6      0,4        NaN           13,4              5,1
+   561          Feijão, carioca, cozido                           NaN      76      4,8      0,5        NaN           13,6              8,5
+      562          Feijão, carioca, cru                           NaN     329     20,0      1,3        NaN           61,2             18,4
+  563          Feijão, fradinho, cozido                           NaN      78      5,1      0,6        NaN           13,5              7,5
+     564          Feijão, fradinho, cru                           NaN     339     20,2      2,4        NaN           61,2             23,6
+      565          Feijão, jalo, cozido                           NaN      93      6,1      0,5        NaN           16,5             13,9
+         566          Feijão, jalo, cru                           NaN     328     20,1      0,9        NaN           61,5             30,3
+     567          Feijão, preto, cozido                           NaN      77      4,5      0,5        NaN           14,0              8,4
+        568          Feijão, preto, cru                           NaN     324     21,3      1,2        NaN           58,8             21,8
+    569          Feijão, rajado, cozido                           NaN      85      5,5      0,4        NaN           15,3              9,3
+       570          Feijão, rajado, cru                           NaN     326     17,3      1,2        NaN           62,9             24,0
+   571          Feijão, rosinha, cozido                           NaN      68      4,5      0,5        NaN           11,8              4,8
+      572          Feijão, rosinha, cru                           NaN     337     20,9      1,3        NaN           62,2             20,6
+      573          Feijão, roxo, cozido                           NaN      77      5,7      0,5        NaN           12,9             11,5
+         574          Feijão, roxo, cru                           NaN     331     22,2      1,2        NaN           60,0             33,8
+         575          Grão-de-bico, cru                           NaN     355     21,2      5,4        NaN           57,9             12,4
+               576          Guandu, cru                           NaN     344     19,0      2,1        NaN           64,0             21,3
+          577          Lentilha, cozida                           NaN      93      6,3      0,5        NaN           16,3              7,9
