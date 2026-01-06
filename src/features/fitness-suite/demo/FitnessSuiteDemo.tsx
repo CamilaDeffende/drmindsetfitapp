@@ -1,5 +1,6 @@
 import { Suspense, lazy, useMemo, useState } from "react";
 import { tokens } from "../ui/tokens";
+import { ProgressProPanel } from "../modules/progress/ProgressProPanel";
 
 type Tab = "Library" | "BodyMap" | "Builder" | "Timer" | "Progress" | "Programs";
 
@@ -7,7 +8,6 @@ const ExerciseLibrary = lazy(() => import("../modules/exercises/ExerciseLibrary"
 const BodyMap = lazy(() => import("../modules/bodymap/BodyMap").then(m => ({ default: m.BodyMap })));
 const WorkoutBuilder = lazy(() => import("../modules/workout/WorkoutBuilder").then(m => ({ default: m.WorkoutBuilder })));
 const WorkoutTimer = lazy(() => import("../modules/timer/WorkoutTimer").then(m => ({ default: m.WorkoutTimer })));
-const ProgressDashboard = lazy(() => import("../modules/progress/ProgressDashboard").then(m => ({ default: m.ProgressDashboard })));
 const Programs = lazy(() => import("../modules/programs/Programs").then(m => ({ default: m.Programs })));
 
 function PremiumFallback({ label }: { label?: string }) {
@@ -91,7 +91,7 @@ export function FitnessSuiteDemo() {
         {tab === "BodyMap" && <BodyMap />}
         {tab === "Builder" && <WorkoutBuilder />}
         {tab === "Timer" && <WorkoutTimer />}
-        {tab === "Progress" && <ProgressDashboard />}
+        {tab === "Progress" && <ProgressProPanel />}
         {tab === "Programs" && <Programs />}
       </div>
       </Suspense>
