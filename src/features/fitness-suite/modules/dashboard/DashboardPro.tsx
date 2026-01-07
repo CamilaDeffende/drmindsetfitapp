@@ -39,7 +39,90 @@ function toneBg(tone: "good" | "warn" | "neutral") {
 export function DashboardPro() {
   // compat: sessions (novo) ou history (legado)
   const sessions = useHistoryStore((s: any) => (s.sessions ?? flattenHistory(s.history)) as WorkoutSession[]);
-  const streak = useProgressStore((s: any) => s.streak);
+  const progress = useProgressStore();
+
+  
+
+  // === Sprint 12.0 | Progressão Inteligente ===
+  const progression = useMemo(() => {
+    const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
+    const toN = (v: unknown) => Number(v ?? 0) || 0;
+
+    const h: any = (typeof history !== "undefined" ? history : {}) as any;
+    const p: any = (progress ?? {}) as any;
+const sessionsRaw =
+      h.sessions ??
+      h.sessionsCompat ??
+      h.items ??
+      h.history ??
+      h.entries ??
+      [];
+
+    const sessions: any[] = Array.isArray(sessionsRaw) ? sessionsRaw : [];
+
+    const now = new Date();
+    const start7 = new Date(now);
+    start7.setDate(now.getDate() - 6);
+    start7.setHours(0, 0, 0, 0);
+
+    const in7d = sessions.filter((x) => {
+      const d = new Date(x?.date ?? x?.startedAt ?? x?.endedAt ?? x?.createdAt ?? 0);
+      return d.getTime() >= start7.getTime() && d.getTime() <= now.getTime();
+    });
+
+    const sessions7 = in7d.length;
+    const streakNow = toN(p.streak ?? 0);
+    const prsCount = Array.isArray(p.prs) ? p.prs.length : 0;
+
+    // Score (0–100) — 4 pilares auditáveis
+    const scoreFreq = clamp(Math.round((sessions7 / 5) * 40), 0, 40);   // alvo 5/7d → 40
+    const scoreStreak = clamp(Math.round((streakNow / 14) * 30), 0, 30); // alvo 14d → 30
+    const scoreCons = clamp(Math.round((sessions7 / 3) * 20), 0, 20);    // presença mínima → 20
+    const scorePR = clamp(Math.round((prsCount / 10) * 10), 0, 10);      // PRs → 10
+
+    const total = clamp(scoreFreq + scoreStreak + scoreCons + scorePR, 0, 100);
+
+    let state: "Evoluindo" | "Estável" | "Estagnado" | "Regressão" = "Estável";
+    if (total >= 78) state = "Evoluindo";
+    else if (total <= 35) state = "Regressão";
+    else if (sessions7 >= 3 && streakNow <= 2) state = "Estagnado";
+
+    const drivers: { label: string; tone: "up" | "down" | "neutral" }[] = [
+      {
+        label: sessions7 >= 4 ? "Frequência sólida (" + sessions7 + "/7d)" : "Frequência baixa (" + sessions7 + "/7d)",
+        tone: sessions7 >= 4 ? "up" : sessions7 <= 1 ? "down" : "neutral",
+      },
+      {
+        label: streakNow >= 7 ? "Streak em alta (" + streakNow + "d)" : "Streak curto (" + streakNow + "d)",
+        tone: streakNow >= 7 ? "up" : streakNow <= 2 ? "down" : "neutral",
+      },
+      {
+        label: prsCount > 0 ? "PRs registrados (" + prsCount + ")" : "Sem PRs recentes",
+        tone: prsCount > 0 ? "up" : "neutral",
+      },
+    ];
+
+    let action = "Mantenha consistência e registre seus treinos para consolidar a evolução.";
+    let target: "start" | "history" | "report" = "start";
+
+    if (sessions7 <= 1) {
+      action = "Frequência abaixo do mínimo: faça 1 sessão hoje (45–60 min) para retomar o ritmo.";
+      target = "start";
+    } else if (streakNow <= 2) {
+      action = "Streak curto: priorize 3 dias ativos/semana antes de aumentar intensidade.";
+      target = "start";
+    } else if (total >= 78) {
+      action = "Você está evoluindo: consolide e gere o PDF para acompanhar semana a semana.";
+      target = "report";
+    } else {
+      action = "Boa base: mantenha 3–5 treinos/semana e busque 1 pequeno avanço por sessão.";
+      target = "history";
+    }
+
+    return { total, state, drivers, action, target };
+  }, [history, progress]);
+  // === /Sprint 12.0 | Progressão Inteligente ===
+const streak = useProgressStore((s: any) => s.streak);
   const prs = useProgressStore((s: any) => s.prs) as PR[];
 
   const latest = sessions.length
@@ -864,6 +947,72 @@ const html =
 
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
+
+        {/* Sprint 12.0 | Progressão Inteligente */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-white/50">
+                Progressão Inteligente
+              </div>
+              <div className="mt-1 text-[13px] text-white/80">
+                Score baseado em frequência, consistência, streak e PRs (regras auditáveis).
+              </div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-[12px] text-white/50">Score</div>
+              <div className="mt-1 text-3xl font-semibold leading-none text-white/90">
+                {progression.total}
+              </div>
+              <div
+                className={
+                  "mt-2 inline-flex rounded-full px-3 py-1 text-[12px] " +
+                  (progression.state === "Evoluindo"
+                    ? "bg-emerald-500/20 text-emerald-300"
+                    : progression.state === "Regressão"
+                    ? "bg-red-500/20 text-red-300"
+                    : progression.state === "Estagnado"
+                    ? "bg-yellow-500/20 text-yellow-300"
+                    : "bg-white/10 text-white/70")
+                }
+              >
+                {progression.state}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {progression.drivers.slice(0, 3).map((d) => (
+              <div key={d.label} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                <div className="text-[12px] text-white/55">Driver</div>
+                <div className="mt-1 text-[12px] leading-relaxed text-white/80">{d.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-[12px] text-white/60">
+              Recomendação: <span className="text-white/80">{progression.action}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const id =
+                  progression.target === "history" ? "dmf-cta-history" :
+                  (progression.target === "report" ? "dmf-cta-report" : "dmf-cta-start");
+                const el = document.getElementById(id);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] text-white/90 hover:bg-white/15 active:scale-[0.98] transition"
+            >
+              Ação recomendada
+            </button>
+          </div>
+        </div>
+        {/* /Sprint 12.0 */}
+
       {/* Header */}
       <div style={{
         borderRadius: tokens.radius.xl,
