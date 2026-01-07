@@ -17,6 +17,12 @@ import {
 
 export function NutritionPlan() {
   const { state } = useDrMindSetfit()
+
+  const nutricaoSafe = state.nutricao ?? {
+    refeicoes: [],
+    macros: { calorias: 0, proteina: 0, carboidratos: 0, gorduras: 0 },
+    restricoes: [],
+  };
   const navigate = useNavigate()
 
   if (!state.nutricao) {
@@ -37,8 +43,6 @@ export function NutritionPlan() {
     )
   }
 
-  const { nutricao } = state
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
       {/* Header Premium */}
@@ -49,7 +53,7 @@ export function NutritionPlan() {
               Nutrição
             </h1>
             <p className="text-xs text-gray-400">
-              {nutricao.refeicoes.length} refeições • {nutricao.macros.calorias} kcal/dia
+              {nutricaoSafe.refeicoes.length} refeições • {nutricaoSafe.macros.calorias} kcal/dia
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -75,31 +79,31 @@ export function NutritionPlan() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-xl border border-green-500/30">
                 <p className="text-xs text-gray-400 mb-1">Calorias</p>
-                <p className="text-3xl font-bold text-green-400">{nutricao.macros.calorias}</p>
+                <p className="text-3xl font-bold text-green-400">{nutricaoSafe.macros.calorias}</p>
                 <p className="text-xs text-gray-500">kcal</p>
               </div>
               <div className="text-center p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl border border-blue-500/30">
                 <p className="text-xs text-gray-400 mb-1">Proteína</p>
-                <p className="text-3xl font-bold text-blue-400">{nutricao.macros.proteina}</p>
+                <p className="text-3xl font-bold text-blue-400">{nutricaoSafe.macros.proteina}</p>
                 <p className="text-xs text-gray-500">gramas</p>
               </div>
               <div className="text-center p-4 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-xl border border-yellow-500/30">
                 <p className="text-xs text-gray-400 mb-1">Gorduras</p>
-                <p className="text-3xl font-bold text-yellow-400">{nutricao.macros.gorduras}</p>
+                <p className="text-3xl font-bold text-yellow-400">{nutricaoSafe.macros.gorduras}</p>
                 <p className="text-xs text-gray-500">gramas</p>
               </div>
               <div className="text-center p-4 bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-xl border border-purple-500/30">
                 <p className="text-xs text-gray-400 mb-1">Carboidratos</p>
-                <p className="text-3xl font-bold text-purple-400">{nutricao.macros.carboidratos}</p>
+                <p className="text-3xl font-bold text-purple-400">{nutricaoSafe.macros.carboidratos}</p>
                 <p className="text-xs text-gray-500">gramas</p>
               </div>
             </div>
 
-            {nutricao.restricoes.length > 0 && (
+            {nutricaoSafe.restricoes.length > 0 && (
               <div className="mt-4 pt-4 border-t border-white/10">
                 <p className="text-sm text-gray-400 mb-2">Restrições ativas:</p>
                 <div className="flex flex-wrap gap-2">
-                  {nutricao.restricoes.map(rest => (
+                  {nutricaoSafe.restricoes.map((rest: any) => (
                     <Badge key={rest} variant="outline" className="text-xs border-red-500/50 text-red-400">
                       {rest}
                     </Badge>
@@ -112,11 +116,11 @@ export function NutritionPlan() {
 
         {/* Refeições */}
         <div className="space-y-4">
-          {nutricao.refeicoes.map((refeicao, index) => {
-            const totalCalorias = refeicao.alimentos.reduce((acc, a) => acc + a.calorias, 0)
-            const totalProteinas = refeicao.alimentos.reduce((acc, a) => acc + a.proteinas, 0)
-            const totalCarbs = refeicao.alimentos.reduce((acc, a) => acc + a.carboidratos, 0)
-            const totalGorduras = refeicao.alimentos.reduce((acc, a) => acc + a.gorduras, 0)
+          {nutricaoSafe.refeicoes.map((refeicao: any, index: number) => {
+            const totalCalorias = refeicao.alimentos.reduce((acc: number, a: any) => acc + a.calorias, 0)
+            const totalProteinas = refeicao.alimentos.reduce((acc: number, a: any) => acc + a.proteinas, 0)
+            const totalCarbs = refeicao.alimentos.reduce((acc: number, a: any) => acc + a.carboidratos, 0)
+            const totalGorduras = refeicao.alimentos.reduce((acc: number, a: any) => acc + a.gorduras, 0)
 
             return (
               <Card key={index} className="glass-effect border-white/10">
@@ -143,7 +147,7 @@ export function NutritionPlan() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {refeicao.alimentos.map((alimento, idx) => {
+                    {refeicao.alimentos.map((alimento: any, idx: number) => {
                       const substituicoes = buscarSubstituicoes(alimento.alimentoId)
 
                       return (
@@ -200,7 +204,7 @@ export function NutritionPlan() {
                                     </DialogDescription>
                                   </DialogHeader>
                                   <div className="space-y-3 mt-4">
-                                    {substituicoes.map(sub => {
+                                    {substituicoes.map((sub: any) => {
                                       const macrosSub = {
                                         calorias: Math.round((sub.macrosPor100g.calorias * alimento.gramas) / 100),
                                         proteinas: ((sub.macrosPor100g.proteinas * alimento.gramas) / 100).toFixed(1),
