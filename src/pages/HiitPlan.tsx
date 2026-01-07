@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { jsPDF } from "jspdf";
 import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 
+import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 type ProtocolKey = "TABATA" | "EMOM" | "AMRAP" | "SPRINT";
 type GoalKey = "FAT_LOSS" | "PERFORMANCE" | "CONDITIONING";
 type ModalityKey = "RUN" | "BIKE" | "ROPE" | "ROW";
@@ -234,17 +234,6 @@ function slug(s: string) {
     .toLowerCase();
 }
 
-async function toDataUrl(url: string): Promise<string> {
-  const res = await fetch(url);
-  const blob = await res.blob();
-  const reader = new FileReader();
-  return await new Promise((resolve, reject) => {
-    reader.onerror = () => reject(new Error("FileReader error"));
-    reader.onload = () => resolve(String(reader.result));
-    reader.readAsDataURL(blob);
-  });
-}
-
 export default function HiitPlan() {
   const [goal, setGoal] = useState<GoalKey>("FAT_LOSS");
   const [modality, setModality] = useState<ModalityKey>("RUN");
@@ -417,102 +406,32 @@ export default function HiitPlan() {
     const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
     const fileName = `mindsetfit-hiit-${slug(goalName)}-${slug(modalityName)}.pdf`;
 
-    // PDF premium (estilo da foto): fundo escuro + logo central + texto clean
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
+    await generateMindsetFitPremiumPdf({
+      logoUrl,
+      fileName,
+      wordmarkText: "MindSetFit",
+      reportLabel: "RELATÓRIO HIIT",
+      metaLines: [
+        `Objetivo: ${goalName}`,
+        `Modalidade: ${modalityName}`,
+        `Protocolo: ${protocol.name} (${protocol.defaults.intensityLabel})`,
+        `Bloco: ${weeks} semanas | ${sessionsPerWeek} sessões/sem`,
+        protocolParamsLine(protocol, rounds, workSec, restSec, totalMinutes),
+      ],
+      bodyText: exportPayload,
+      layout: {
+        logoW: 220,
+        logoH: 150,
+        logoY: 78,
+        wordmarkSize: 38,
+        wordmarkGap: 92,
+        headerGap: 32,
+        margin: 60,
+        lineHeight: 13,
+        drawFrame: true,
+      },
+    });
 
-    // Fundo preto
-    doc.setFillColor(8, 8, 10);
-    doc.rect(0, 0, pageW, pageH, "F");
-
-    // Carrega logo (PNG)
-    const dataUrl = await toDataUrl(logoUrl);
-
-    // Logo central (tamanho calibrado)
-    
-// ====== CALIBRAÇÃO MILIMÉTRICA (Sprint 3G.2) ======
-// Referência: sua imagem (logo central + wordmark abaixo)
-// Ajustes finos aqui:
-const logoW = 220;          // largura do logo
-const logoH = 150;          // altura do logo
-const logoY = 78;           // topo do logo (desce/sobe)
-const logoX = (pageW - logoW) / 2;
-
-const wordmarkText = "MindSetFit"; // exatamente como na sua imagem
-const wordmarkY = logoY + logoH + 92; // distância do wordmark até o logo
-const wordmarkSize = 38;    // tamanho do wordmark
-
-// Moldura/realce sutil (premium). Pode comentar se quiser totalmente clean.
-doc.setDrawColor(40, 120, 255);
-doc.setLineWidth(0.9);
-doc.roundedRect(logoX - 22, logoY - 22, logoW + 44, logoH + 44, 16, 16, "S");
-
-// Logo
-doc.addImage(dataUrl, "PNG", logoX, logoY, logoW, logoH);
-
-// Wordmark centralizado
-doc.setTextColor(240, 240, 240);
-doc.setFont("helvetica", "normal");
-doc.setFontSize(wordmarkSize);
-doc.text(wordmarkText, pageW / 2, wordmarkY, { align: "center" });
-// ====== FIM CALIBRAÇÃO ======
-// Header do relatório
-    const headerTop = wordmarkY + 32;
-    doc.setDrawColor(255, 255, 255);
-    doc.setLineWidth(0.5);
-    doc.line(60, headerTop, pageW - 60, headerTop);
-
-    doc.setFontSize(12);
-    doc.setTextColor(210, 210, 210);
-    doc.text("RELATÓRIO HIIT", 60, headerTop + 26);
-
-    doc.setTextColor(235, 235, 235);
-    doc.setFontSize(10);
-    doc.text(`Objetivo: ${goalName}`, 60, headerTop + 46);
-    doc.text(`Modalidade: ${modalityName}`, 60, headerTop + 62);
-    doc.text(`Protocolo: ${protocol.name} (${protocol.defaults.intensityLabel})`, 60, headerTop + 78);
-    doc.text(`Bloco: ${weeks} semanas | ${sessionsPerWeek} sessões/sem`, 60, headerTop + 94);
-    doc.text(protocolParamsLine(protocol, rounds, workSec, restSec, totalMinutes), 60, headerTop + 110);
-
-    // Corpo (texto + progressão)
-    const bodyY = headerTop + 140;
-    doc.setTextColor(220, 220, 220);
-    doc.setFont("courier", "normal");
-    doc.setFontSize(9);
-
-    const margin = 60;
-    const maxW = pageW - margin * 2;
-    const lines = doc.splitTextToSize(exportPayload, maxW);
-
-    let y = bodyY;
-    for (const line of lines) {
-      if (y > pageH - 80) {
-        doc.addPage();
-        // fundo preto também na nova página
-        doc.setFillColor(8, 8, 10);
-        doc.rect(0, 0, pageW, pageH, "F");
-        y = 70;
-        doc.setTextColor(220, 220, 220);
-        doc.setFont("courier", "normal");
-        doc.setFontSize(9);
-      }
-      doc.text(String(line), margin, y);
-      y += 13;
-    }
-
-    // Footer
-    const footerY = pageH - 38;
-    doc.setDrawColor(255, 255, 255);
-    doc.setLineWidth(0.35);
-    doc.line(60, footerY - 14, pageW - 60, footerY - 14);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(180, 180, 180);
-    doc.text("MindsetFit • Relatório gerado automaticamente", pageW / 2, footerY, { align: "center" });
-
-    doc.save(fileName);
   }
 
   return (
