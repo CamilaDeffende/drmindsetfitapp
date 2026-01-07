@@ -178,6 +178,7 @@ export function DashboardPro() {
   // === /Sprint 10.5 | Meta da Semana ===
 
   // === Sprint 10.6 | Badges & Milestones ===
+  const [badgesExpanded, setBadgesExpanded] = useState<boolean>(false);
   const streakDays = useProgressStore((s: any) => s.streak) as number;
   const prsCount = useProgressStore((s: any) => (s.prs || []).length) as number;
 
@@ -210,6 +211,7 @@ export function DashboardPro() {
   }, [streakDays, prsCount, totalSessions]);
 
   const badgesEarned = useMemo(() => badges.filter((b) => b.earned).length, [badges]);
+  const badgesShown = useMemo(() => (badgesExpanded ? badges : badges.slice(0, 6)), [badgesExpanded, badges]);
   // === /Sprint 10.6 | Badges & Milestones ===
 
 
@@ -340,7 +342,26 @@ export function DashboardPro() {
             <div className="mt-4 h-2 w-full rounded-full bg-white/10">
               <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: weekly.pct + "%" }} />
             </div>
-            <div className="mt-3 text-[12px] text-white/50">Ajuste rápido: meta fica salva neste dispositivo.</div>
+
+
+          <div className="mt-3 flex items-center justify-between">
+            <div className="text-[12px] text-white/50">
+              {badges.length > 6 ? (badgesExpanded ? "Mostrando todos os badges" : "Mostrando principais badges") : "Badges ativos"}
+            </div>
+
+            {badges.length > 6 ? (
+              <button
+                type="button"
+                onClick={() => setBadgesExpanded((v) => !v)}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
+              >
+                {badgesExpanded ? "Ocultar" : "Ver todos"}
+              </button>
+            ) : null}
+          </div>
+
+
+          <div className="mt-3 text-[12px] text-white/50">Ajuste rápido: meta fica salva neste dispositivo.</div>
           </div>
           {/* /Sprint 10.5 */}
 
@@ -366,7 +387,7 @@ export function DashboardPro() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {badges.map((b) => (
+            {badgesShown.map((b) => (
               <span
                 key={b.id}
                 title={b.hint}
@@ -384,7 +405,7 @@ export function DashboardPro() {
           </div>
 
           <div className="mt-3 text-[12px] text-white/50">
-            Dica: consistência + PRs = progresso mensurável. Sem “motivação vazia”.
+            Consistência + PRs = progresso mensurável.
           </div>
         </div>
         {/* /Sprint 10.6 */}
