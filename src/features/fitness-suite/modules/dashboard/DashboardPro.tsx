@@ -633,6 +633,21 @@ export function DashboardPro() {
       const title = "DrMindSetFit — Performance Report";
       const isDetailed = mode === "detailed";
       const reportModeLabel = isDetailed ? "Detalhado" : "Compacto";
+      const appVersion = "11.4.4";
+      const pad2 = (n: number) => String(n).padStart(2, "0");
+      const rand = () => Math.random().toString(36).slice(2, 6).toUpperCase();
+      const reportId =
+        "RPT-" +
+        now.getFullYear() +
+        pad2(now.getMonth() + 1) +
+        pad2(now.getDate()) +
+        "-" +
+        pad2(now.getHours()) +
+        pad2(now.getMinutes()) +
+        "-" +
+        rand();
+      // === Sprint 11.4.4 | Branding ===
+
       const sub = "Dashboard PRO (Enterprise) — " + reportModeLabel;
 
       const pwScore = Number(perfectWeek?.score ?? 0);
@@ -698,7 +713,7 @@ export function DashboardPro() {
       const css =
         "@page{size:auto;margin:14mm 12mm 18mm 12mm;}" +
         "html,body{margin:0;padding:0;background:#0b0f16;color:#e9eef8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Inter,Roboto,Arial,sans-serif;}" +
-        ".page{max-width:900px;margin:0 auto;padding:20px;}" +
+        ".page{max-width:900px;margin:0 auto;padding:20px;position:relative;z-index:1;}" +
         ".top{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:16px 16px 14px 16px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);border-radius:18px;}" +
         ".brand{font-weight:800;font-size:18px;letter-spacing:0.2px;}" +
         ".sub{margin-top:6px;font-size:12px;color:rgba(233,238,248,0.70);}" +
@@ -720,6 +735,8 @@ export function DashboardPro() {
         ".muted{color:rgba(233,238,248,0.60);}" +
         ".hr{height:1px;background:rgba(255,255,255,0.10);border:0;margin:10px 0;}" +
         ".footer{margin-top:12px;font-size:11px;color:rgba(233,238,248,0.55);}" +
+        ".watermark{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;opacity:0.06;font-weight:800;font-size:72px;letter-spacing:0.12em;color:rgba(233,238,248,0.22);transform:rotate(-18deg);}"
+        +
         "@media print{body{background:#ffffff;color:#0b0f16;} .top,.card{background:#ffffff;border-color:#e6e8ee;} .sub,.muted,.meta{color:#4b5563;} .p,.li{color:#111827;} .h{color:#6b7280;} .row{background:#f8fafc;border-color:#e6e8ee;} .row td{color:#111827;} .row td:last-child{color:#4b5563;} .footer{position:fixed;left:12mm;right:12mm;bottom:8mm;color:#6b7280;} .pg:after{content: counter(page);} .pgs:after{content: counter(pages);} }";
 
       const htmlTop =
@@ -727,8 +744,10 @@ export function DashboardPro() {
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>" +
         "<title>" + title + "</title><style>" + css + "</style></head><body>" +
         "<div class=\"page\">" +
+        "<div class=\\\"watermark\\\">MindsetFit</div>" +
         "<div class=\"top\">" +
         "<div>" +
+        "<img src=\\\"/logo-mindsetfit.svg\\\" alt=\\\"MindsetFit\\\" style=\\\"height:22px;width:auto;opacity:0.95;margin-bottom:10px\\\" onerror=\\\"this.style.display='none'\\\"/>" +
         "<div class=\"brand\">" + esc(title) + "</div>" +
         "<div class=\"sub\">" + esc(sub) + "</div>" +
         "<div class=\"pill\"><span>Score</span><strong>" + String(pwScore) + "/100</strong><span class=\"muted\">" + pwTier + "</span></div>" +
@@ -737,6 +756,7 @@ export function DashboardPro() {
         "<div><strong>Data</strong>: " + esc(dateStr) + "</div>" +
         "<div><strong>Hora</strong>: " + esc(timeStr) + "</div>" +
         "<div><strong>Janela</strong>: 7d vs 7d</div>" +
+        "<div><strong>ID</strong>: " + esc(reportId) + "</div>" +
         "</div>" +
         "</div>";
 
@@ -790,7 +810,7 @@ export function DashboardPro() {
 
       const footer =
         "<div class=\"footer\">" +
-        "<span>Confidential • Personal Use</span>" +
+        "<span>Confidential • Personal Use • v" + esc(appVersion) + "</span>" +
         "<span style=\"float:right\">Página <span class=\"pg\"></span>/<span class=\"pgs\"></span></span>" +
         "</div>";
 
