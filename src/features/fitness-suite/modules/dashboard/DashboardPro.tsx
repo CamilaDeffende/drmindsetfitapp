@@ -214,6 +214,137 @@ export function DashboardPro() {
   const badgesShown = useMemo(() => (badgesExpanded ? badges : badges.slice(0, 6)), [badgesExpanded, badges]);
   // === /Sprint 10.6 | Badges & Milestones ===
 
+  // === Sprint 10.7 | Combo (Consistência + Volume) ===
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+
+  // Fonte real de sessões (compat: canon + legacy)
+  const sessionsAll = useHistoryStore((st: any) => (
+    st?.sessions ?? st?.legacySessions ?? st?.items ?? st?.history ?? []
+  )) as any[];
+
+  const consistency = useMemo(() => {
+    const now = new Date();
+    const days = 28;
+
+    // Normaliza para "YYYY-MM-DD" em timezone local
+    const keyOf = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const da = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${da}`;
+    };
+
+    const start = new Date(now);
+    start.setHours(0,0,0,0);
+    start.setDate(start.getDate() - (days - 1));
+
+    const active = new Set<string>();
+    for (const sess of sessionsAll) {
+      const t = new Date(sess?.date || sess?.createdAt || sess?.startAt || sess?.performedAt || sess?.endedAt || 0);
+      if (!Number.isFinite(t.getTime())) continue;
+      // Ignora futuros e fora do range
+      if (t < start || t > now) continue;
+      const d = new Date(t);
+      d.setHours(0,0,0,0);
+      active.add(keyOf(d));
+    }
+
+    const grid: { key: string; active: boolean; label: string }[] = [];
+    let best = 0;
+    let run = 0;
+    let activeDays = 0;
+
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      const k = keyOf(d);
+      const isActive = active.has(k);
+      if (isActive) activeDays++;
+
+      run = isActive ? run + 1 : 0;
+      if (run > best) best = run;
+
+      // label curto (DD/MM)
+      const label = `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
+      grid.push({ key: k, active: isActive, label });
+    }
+
+    const pct = Math.round((activeDays / days) * 100);
+    return { grid, activeDays, bestStreak: best, pct };
+  }, [sessionsAll]);
+
+  const volume = useMemo(() => {
+    const now = new Date();
+
+    const dayStart = (d: Date) => {
+      const x = new Date(d);
+      x.setHours(0,0,0,0);
+      return x;
+    };
+
+    const start7 = dayStart(now);
+    start7.setDate(start7.getDate() - 6);
+    const end7 = new Date(dayStart(now));
+    end7.setDate(end7.getDate() + 1);
+
+    const prevStart7 = new Date(start7);
+    prevStart7.setDate(prevStart7.getDate() - 7);
+    const prevEnd7 = new Date(start7);
+
+    const toTime = (sess: any) => new Date(sess?.date || sess?.createdAt || sess?.startAt || sess?.performedAt || sess?.endedAt || 0).getTime();
+    const inRange = (t: number, a: Date, b: Date) => t >= a.getTime() && t < b.getTime();
+
+    const sum = (a: any[], b: Date, c: Date) => {
+      let sessions = 0;
+      let sets = 0;
+      let reps = 0;
+      let volumeKg = 0;
+      let durationMin = 0;
+
+      for (const sess of a) {
+        const t = toTime(sess);
+        if (!Number.isFinite(t) || t <= 0) continue;
+        if (!inRange(t, b, c)) continue;
+
+        sessions++;
+
+        // duração (se existir)
+        const dur = Number(sess?.durationMin ?? sess?.duration ?? 0);
+        if (Number.isFinite(dur) && dur > 0) durationMin += dur;
+
+        // estrutura flexível de exercícios/sets (compatível com legados)
+        const exercises = sess?.exercises ?? sess?.workout?.exercises ?? sess?.items ?? [];
+        if (!Array.isArray(exercises)) continue;
+
+        for (const ex of exercises) {
+          const setsArr = ex?.sets ?? ex?.series ?? ex?.rows ?? [];
+          if (!Array.isArray(setsArr)) continue;
+
+          for (const st of setsArr) {
+            const r = Number(st?.reps ?? st?.rep ?? st?.repetitions ?? 0);
+            const kg = Number(st?.kg ?? st?.weight ?? st?.load ?? 0);
+            if (Number.isFinite(r) && r > 0) reps += r;
+            sets += 1;
+            if (Number.isFinite(r) && r > 0 && Number.isFinite(kg) && kg > 0) volumeKg += (kg * r);
+          }
+        }
+      }
+
+      return { sessions, sets, reps, volumeKg, durationMin };
+    };
+
+    const curr = sum(sessionsAll, start7, end7);
+    const prev = sum(sessionsAll, prevStart7, prevEnd7);
+
+    const diff = curr.volumeKg - prev.volumeKg;
+    const dir = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
+    const pct = prev.volumeKg > 0 ? Math.round((diff / prev.volumeKg) * 100) : (curr.volumeKg > 0 ? 100 : 0);
+
+    return { curr, prev, dir, pct };
+  }, [sessionsAll]);
+  // === /Sprint 10.7 | Combo (Consistência + Volume) ===
+
+
 
 
   return (
@@ -409,6 +540,92 @@ export function DashboardPro() {
           </div>
         </div>
         {/* /Sprint 10.6 */}
+
+        {/* Sprint 10.7 | Combo (Consistência + Volume) */}
+        <div className="rounded-2xl border bg-white/5 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-white/60">Consistência</div>
+              <div className="mt-1 text-[14px] text-white/80">
+                <span className="font-semibold text-white">{consistency.activeDays}</span>
+                <span className="text-white/50"> / 28 dias</span>
+                <span className="mx-2 text-white/20">•</span>
+                <span className="text-white/60">melhor sequência: </span>
+                <span className="font-semibold text-white">{consistency.bestStreak}</span>
+                <span className="mx-2 text-white/20">•</span>
+                <span className="font-semibold text-white">{consistency.pct}%</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((v) => !v)}
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
+            >
+              {showAdvanced ? "Ocultar métricas" : "Ver métricas avançadas"}
+            </button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-7 gap-2">
+            {consistency.grid.map((d) => (
+              <div
+                key={d.key}
+                title={d.active ? `Treino em ${d.label}` : `Sem treino em ${d.label}`}
+                className={
+                  "h-4 rounded-md border transition " +
+                  (d.active ? "border-white/15 bg-white/30" : "border-white/10 bg-white/5")
+                }
+              />
+            ))}
+          </div>
+
+          {showAdvanced ? (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-[12px] uppercase tracking-wide text-white/60">Volume (7 dias)</div>
+                  <div className="mt-1 text-[14px] text-white/80">
+                    <span className="font-semibold text-white">
+                      {Math.round(volume.curr.volumeKg).toLocaleString("pt-BR")}
+                    </span>
+                    <span className="text-white/50"> kg-reps</span>
+                    <span className="mx-2 text-white/20">•</span>
+                    <span className="text-white/60">Séries: </span>
+                    <span className="font-semibold text-white">{volume.curr.sets}</span>
+                    <span className="mx-2 text-white/20">•</span>
+                    <span className="text-white/60">Reps: </span>
+                    <span className="font-semibold text-white">{volume.curr.reps}</span>
+                  </div>
+                  <div className="mt-2 text-[12px] text-white/55">
+                    Semana anterior: {Math.round(volume.prev.volumeKg).toLocaleString("pt-BR")} kg-reps
+                    <span className="mx-2 text-white/20">•</span>
+                    Tendência:{" "}
+                    <span className="text-white/80 font-medium">
+                      {volume.dir === "up" ? "↑" : volume.dir === "down" ? "↓" : "→"} {volume.pct}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-[12px] text-white/50">Tempo (7 dias)</div>
+                  <div className="mt-1 text-[14px] text-white/80">
+                    <span className="font-semibold text-white">{Math.round(volume.curr.durationMin)}</span>
+                    <span className="text-white/50"> min</span>
+                  </div>
+                  <div className="mt-2 text-[12px] text-white/55">
+                    Sessões: <span className="text-white/80 font-medium">{volume.curr.sessions}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 text-[12px] text-white/50">
+                Métricas avançadas são opcionais — o foco continua sendo execução consistente.
+              </div>
+            </div>
+          ) : null}
+        </div>
+        {/* /Sprint 10.7 | Combo */}
+
 
 
 
