@@ -131,7 +131,6 @@ function applyModalityTuning(modality: ModalityKey, current: {
   workSec: number;
   restSec: number;
 }) {
-  // Ajustes leves (MVP) por modalidade
   const out = { ...current };
 
   if (modality === "RUN") {
@@ -222,6 +221,16 @@ function protocolParamsLine(protocol: Protocol, rounds: number, workSec: number,
   if (protocol.key === "EMOM") return `Tempo total: ${totalMinutes} min (EMOM)`;
   if (protocol.key === "AMRAP") return `Tempo total: ${totalMinutes} min (AMRAP)`;
   return `Rounds: ${rounds} | Work/Rest: ${workSec}s/${restSec}s`;
+}
+
+function slug(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .toLowerCase();
 }
 
 export default function HiitPlan() {
@@ -391,12 +400,83 @@ export default function HiitPlan() {
     }
   }
 
+  async function downloadPdf() {
+    // 1) tenta jsPDF (se já existir no projeto)
+    try {
+      const mod: any = await import("jspdf");
+      const JsPdf = mod?.jsPDF ?? mod?.default;
+      if (!JsPdf) throw new Error("jsPDF export not found");
+
+      const goalName = GOALS.find((g) => g.key === goal)?.name ?? goal;
+      const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
+      const fileName = `hiit-${slug(goalName)}-${slug(modalityName)}.pdf`;
+
+      const doc = new JsPdf({ unit: "pt", format: "a4" });
+      const margin = 40;
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const maxW = pageW - margin * 2;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text("DRMINDSETFIT — HIIT", margin, margin);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+
+      const lines = doc.splitTextToSize(exportPayload, maxW);
+      let y = margin + 24;
+
+      for (const line of lines) {
+        if (y > pageH - margin) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(String(line), margin, y);
+        y += 14;
+      }
+
+      doc.save(fileName);
+      return;
+    } catch {
+      // 2) fallback: abrir janela print-friendly (Salvar como PDF)
+      const w = window.open("", "_blank");
+      if (!w) return;
+
+      const safe = exportPayload
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      w.document.open();
+      w.document.write(`<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>DRMINDSETFIT — HIIT</title>
+  <style>
+    body { font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial; padding: 24px; }
+    pre { white-space: pre-wrap; font-size: 12px; line-height: 1.35; }
+    .hint { margin-top: 12px; font-size: 12px; opacity: .7; }
+  </style>
+</head>
+<body>
+  <h2>DRMINDSETFIT — HIIT</h2>
+  <pre>${safe}</pre>
+  <div class="hint">Use Ctrl/Cmd+P e selecione “Salvar como PDF”.</div>
+  <script>window.onload = () => setTimeout(() => window.print(), 250);</script>
+</body>
+</html>`);
+      w.document.close();
+    }
+  }
+
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-red-500">HIIT — Avançado</h1>
-          <p className="text-gray-300">Modalidade + export em texto (clipboard) mantendo progressão semanal.</p>
+          <p className="text-gray-300">Modalidade + export em texto + export em PDF.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -532,13 +612,20 @@ export default function HiitPlan() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={copyPlan}
                 className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
               >
                 Copiar plano
+              </button>
+              <button
+                type="button"
+                onClick={downloadPdf}
+                className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
+              >
+                Baixar PDF
               </button>
               <button
                 type="button"
@@ -571,7 +658,7 @@ export default function HiitPlan() {
                   Protocolo: <span className="text-white font-semibold">{protocol.name}</span>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">Export gera texto completo (objetivo+modalidade+progressão).</div>
+              <div className="text-xs text-gray-400">PDF: tenta jsPDF, senão abre “Salvar como PDF” (print).</div>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-white/10">
@@ -606,7 +693,7 @@ export default function HiitPlan() {
             </div>
 
             <div className="text-xs text-gray-400">
-              Dica: use “Copiar plano” para colar no WhatsApp/relatório/atendimento.
+              Dica: use “Baixar PDF” para anexar no WhatsApp/relatório do paciente.
             </div>
           </div>
         </div>
