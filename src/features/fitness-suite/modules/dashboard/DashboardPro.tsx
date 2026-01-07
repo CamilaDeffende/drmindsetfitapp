@@ -7,7 +7,6 @@ import { buildTrends, buildInsight, formatKg, formatMin, formatPct, formatInt } 
 
 import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
-
 function todayYMD(): string {
 const d = new Date();
   const y = d.getFullYear();
@@ -41,7 +40,7 @@ function toneBg(tone: "good" | "warn" | "neutral") {
 
 export function DashboardPro() {
 
-  // === Sprint 13.0 | Premium Layer ===
+    // === Sprint 13.0 | Premium Layer ===
   const [premiumNotice, setPremiumNotice] = useState<string | null>(null);
 
   const requestPremium = (feature: any) => {
@@ -845,6 +844,8 @@ const streak = useProgressStore((s: any) => s.streak);
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>" +
         "<title>" + title + "</title><style>" + css + "</style></head><body>" +
         "<div class=\"page\">" +
+
+        "" +
         "<div class=\\\"watermark\\\">MindsetFit</div>" +
         "<div class=\"top\">" +
         "<div>" +
@@ -1248,7 +1249,7 @@ const html =
               </div>
             </div>
             <div className="mt-4 h-2 w-full rounded-full bg-white/10">
-              <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: weekly.pct + "%" }} />
+              <div className="h-2 rounded-full bg-white/60 transition-all active:scale-[0.98]" style={{ width: weekly.pct + "%" }} />
             </div>
 
 
@@ -1438,7 +1439,7 @@ const html =
           </div>
 
           <div className="mt-4 h-2 w-full rounded-full bg-white/10">
-            <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: perfectWeek.score + "%" }} />
+            <div className="h-2 rounded-full bg-white/60 transition-all active:scale-[0.98]" style={{ width: perfectWeek.score + "%" }} />
           </div>
 
           <div className="mt-3 text-[12px] text-white/50">
@@ -1512,7 +1513,7 @@ const html =
               </div>
 
               <div className="mt-3 h-2 w-full rounded-full bg-white/10">
-                <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: Math.min(100, goalsView.weeklyPct) + "%" }} />
+                <div className="h-2 rounded-full bg-white/60 transition-all active:scale-[0.98]" style={{ width: Math.min(100, goalsView.weeklyPct) + "%" }} />
               </div>
             </div>
 
@@ -1550,7 +1551,7 @@ const html =
               </div>
 
               <div className="mt-3 h-2 w-full rounded-full bg-white/10">
-                <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: Math.min(100, goalsView.activePct) + "%" }} />
+                <div className="h-2 rounded-full bg-white/60 transition-all active:scale-[0.98]" style={{ width: Math.min(100, goalsView.activePct) + "%" }} />
               </div>
             </div>
 
@@ -1590,7 +1591,7 @@ const html =
               </div>
 
               <div className="mt-3 h-2 w-full rounded-full bg-white/10">
-                <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: Math.min(100, goalsView.volPct) + "%" }} />
+                <div className="h-2 rounded-full bg-white/60 transition-all active:scale-[0.98]" style={{ width: Math.min(100, goalsView.volPct) + "%" }} />
               </div>
 
               <div className="mt-2 text-[12px] text-white/50">
