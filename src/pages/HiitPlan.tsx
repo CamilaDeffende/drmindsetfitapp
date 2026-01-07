@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type ProtocolKey = "TABATA" | "EMOM" | "AMRAP" | "SPRINT";
 
@@ -145,15 +145,14 @@ export default function HiitPlan() {
   const [restSec, setRestSec] = useState<number>(protocol.defaults.restSec ?? 10);
 
   // Quando trocar protocolo, reseta defaults com segurança
-  useMemo(() => {
+  useEffect(() => {
     setTotalMinutes(protocol.defaultTotalMinutes);
     setRounds(protocol.defaults.rounds ?? 8);
     setWorkSec(protocol.defaults.workSec ?? 20);
     setRestSec(protocol.defaults.restSec ?? 10);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [protocolKey]);
+  }, [protocolKey, protocol.defaultTotalMinutes, protocol.defaults.rounds, protocol.defaults.workSec, protocol.defaults.restSec]);
 
-  const table = useMemo(() => {
+const table = useMemo(() => {
     const w = clamp(weeks, 1, 12);
     const s = clamp(sessionsPerWeek, 1, 7);
 
