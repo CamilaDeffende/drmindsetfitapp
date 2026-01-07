@@ -616,6 +616,68 @@ export function DashboardPro() {
   };
   // === /Sprint 11.2 | Relatório rápido ===
 
+  // === Sprint 11.3 | Export PDF ===
+  const exportReportPdf = () => {
+    try {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("pt-BR");
+      const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+      const title = "DrMindSetFit — Relatório";
+      const snapshot = reportSnapshot.text || "";
+
+      const css =
+        "html,body{margin:0;padding:0;background:#0b0f16;color:#e9eef8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Inter,Roboto,Arial,sans-serif;}" +
+        ".page{max-width:860px;margin:0 auto;padding:28px;}" +
+        ".header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.10);}" +
+        ".brand{font-weight:700;font-size:18px;letter-spacing:0.2px;}" +
+        ".meta{font-size:12px;color:rgba(233,238,248,0.65);text-align:right;}" +
+        ".cards{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px;}" +
+        ".card{border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);border-radius:16px;padding:14px;}" +
+        ".card h3{margin:0 0 8px 0;font-size:12px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(233,238,248,0.60);}" +
+        "pre{margin:0;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.55;color:rgba(233,238,248,0.80);}" +
+        ".footer{margin-top:14px;font-size:11px;color:rgba(233,238,248,0.55);}" +
+        "@media print{body{background:#ffffff;color:#0b0f16;} .card{background:#ffffff;border-color:#e6e8ee;} .meta{color:#4b5563;} h3{color:#6b7280;} pre{color:#111827;} .footer{color:#6b7280;}}";
+
+      const html =
+        "<!doctype html><html><head><meta charset=\"utf-8\"/>" +
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>" +
+        "<title>" + title + "</title><style>" + css + "</style></head><body>" +
+        "<div class=\"page\">" +
+        "<div class=\"header\">" +
+        "<div><div class=\"brand\">" + title + "</div>" +
+        "<div style=\"margin-top:6px;font-size:12px;color:rgba(233,238,248,0.70)\">Snapshot premium (Dashboard PRO)</div></div>" +
+        "<div class=\"meta\">" +
+        "<div><strong>Data</strong>: " + dateStr + "</div>" +
+        "<div><strong>Hora</strong>: " + timeStr + "</div>" +
+        "</div></div>" +
+        "<div class=\"cards\">" +
+        "<div class=\"card\"><h3>Resumo</h3><pre>" +
+        snapshot.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
+        "</pre></div>" +
+        "</div>" +
+        "<div class=\"footer\">Gerado pelo DrMindSetFitApp • Exportação via impressão (Salvar como PDF)</div>" +
+        "</div></body></html>";
+
+      const w = window.open("", "_blank", "noopener,noreferrer");
+      if (!w) return;
+
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+
+      // aguarda fonts/layout
+      window.setTimeout(() => {
+        try {
+          w.focus();
+          w.print();
+        } catch {}
+      }, 250);
+    } catch {}
+  };
+  // === /Sprint 11.3 | Export PDF ===
+
+
 
 
 
@@ -738,7 +800,16 @@ export function DashboardPro() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={decGoal}
+                <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={exportReportPdf}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
+              >
+                Exportar PDF
+              </button>
+
+              <button type="button" onClick={decGoal}
                   className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
                   aria-label="Diminuir meta semanal">−</button>
                 <button type="button" onClick={incGoal}
@@ -1188,6 +1259,8 @@ export function DashboardPro() {
             >
               {snapshotCopied ? "Copiado" : "Copiar resumo"}
             </button>
+            </div>
+            {/* Sprint 11.3 | Export PDF */}
           </div>
 
           <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
