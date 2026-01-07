@@ -27,7 +27,9 @@ export function OnboardingFlow() {
       (state.treino?.treinos?.length ?? 0) > 0 &&
       (state.nutricao?.refeicoes?.length ?? 0) > 0
     ) {
-      navigate('/dashboard')
+      if (state.treino?.treinos?.length && state.nutricao?.refeicoes?.length) {
+      navigate("/dashboard")
+    }
     }
   }, [state.concluido, navigate])
 
