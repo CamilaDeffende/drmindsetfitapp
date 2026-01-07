@@ -5,6 +5,9 @@ import { useProgressStore } from "../../store/useProgressStore";
 import type { WorkoutSession, PR } from "../../contracts/workout";
 import { buildTrends, buildInsight, formatKg, formatMin, formatPct, formatInt } from "../../utils/dashboard";
 
+import { PremiumBadge } from "../../premium/PremiumBadge";
+import { isPremium, premiumLabel } from "../../premium/premium";
+
 function todayYMD(): string {
 const d = new Date();
   const y = d.getFullYear();
@@ -37,6 +40,21 @@ function toneBg(tone: "good" | "warn" | "neutral") {
 }
 
 export function DashboardPro() {
+
+  // === Sprint 13.0 | Premium Layer ===
+  const [premiumNotice, setPremiumNotice] = useState<string | null>(null);
+
+  const requestPremium = (feature: any) => {
+    if (!isPremium(feature)) {
+      setPremiumNotice(`${premiumLabel(feature)} — disponível no Premium.`);
+      // auto-dismiss leve
+      window.setTimeout(() => setPremiumNotice(null), 3200);
+      return false;
+    }
+    return true;
+  };
+  // === /Sprint 13.0 | Premium Layer ===
+
   // compat: sessions (novo) ou history (legado)
   const sessions = useHistoryStore((s: any) => (s.sessions ?? flattenHistory(s.history)) as WorkoutSession[]);
   const progress = useProgressStore();
@@ -948,13 +966,89 @@ const html =
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
 
+        {/* Sprint 13.0 | Premium Layer UI */}
+        {premiumNotice ? (
+          <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-[12px] uppercase tracking-wide text-white/50">Recurso Premium</div>
+                <div className="mt-1 text-[13px] text-white/85">{premiumNotice}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPremiumNotice(null)}
+                className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] text-white/80 hover:bg-white/15 active:scale-[0.98] transition"
+              >
+                Ok
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-white/50">Plano</div>
+              <div className="mt-1 text-[14px] font-semibold text-white/90">Free</div>
+              <div className="mt-1 text-[12px] text-white/60">
+                Desbloqueie relatórios avançados, histórico estendido e insights PRO.
+              </div>
+            </div>
+
+            <div className="text-right">
+              <PremiumBadge label="PRO" />
+              <button
+                type="button"
+                onClick={() => setPremiumNotice("Premium ainda não está habilitado neste build. Arquitetura pronta para ativação quando você decidir.")}
+                className="mt-3 w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] text-white/85 hover:bg-white/15 active:scale-[0.98] transition"
+              >
+                Ativar Premium
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[12px] text-white/60">Relatórios avançados</div>
+                <PremiumBadge />
+              </div>
+              <div className="mt-1 text-[12px] text-white/75">PDF com análises extras e comparativos.</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[12px] text-white/60">Histórico estendido</div>
+                <PremiumBadge />
+              </div>
+              <div className="mt-1 text-[12px] text-white/75">28/90 dias para insights mais confiáveis.</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[12px] text-white/60">Insights PRO</div>
+                <PremiumBadge />
+              </div>
+              <div className="mt-1 text-[12px] text-white/75">Recomendações mais profundas e acionáveis.</div>
+            </div>
+          </div>
+        </div>
+        {/* /Sprint 13.0 | Premium Layer UI */}
+
+
         {/* Sprint 12.0 | Progressão Inteligente */}
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-[12px] uppercase tracking-wide text-white/50">
-                Progressão Inteligente
-              </div>
+              <div className="flex items-center justify-between gap-3">
+              <div className="text-[12px] uppercase tracking-wide text-white/50">Progressão Inteligente</div>
+              <button
+                type="button"
+                onClick={() => requestPremium("progressionPro")}
+                className="rounded-full"
+                aria-label="Recurso PRO"
+              >
+                <PremiumBadge />
+              </button>
+            </div>
               <div className="mt-1 text-[13px] text-white/80">
                 Score baseado em frequência, consistência, streak e PRs (regras auditáveis).
               </div>
