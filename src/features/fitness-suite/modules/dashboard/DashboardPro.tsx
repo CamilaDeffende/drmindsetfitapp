@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from "react";
 import { tokens } from "../../ui/tokens";
 import { useHistoryStore } from "../../store/useHistoryStore";
 import { useProgressStore } from "../../store/useProgressStore";
@@ -5,7 +6,7 @@ import type { WorkoutSession, PR } from "../../contracts/workout";
 import { buildTrends, buildInsight, formatKg, formatMin, formatPct, formatInt } from "../../utils/dashboard";
 
 function todayYMD(): string {
-  const d = new Date();
+const d = new Date();
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -38,8 +39,8 @@ function toneBg(tone: "good" | "warn" | "neutral") {
 export function DashboardPro() {
   // compat: sessions (novo) ou history (legado)
   const sessions = useHistoryStore((s: any) => (s.sessions ?? flattenHistory(s.history)) as WorkoutSession[]);
-  const streak = useProgressStore((s) => s.streak);
-  const prs = useProgressStore((s) => s.prs) as PR[];
+  const streak = useProgressStore((s: any) => s.streak);
+  const prs = useProgressStore((s: any) => s.prs) as PR[];
 
   const latest = sessions.length
     ? [...sessions].sort((a, b) => String(b.finishedAt || b.startedAt || b.date).localeCompare(String(a.finishedAt || a.startedAt || a.date)))[0]
@@ -59,6 +60,123 @@ export function DashboardPro() {
     { label: "Intensidade", value: formatInt(t.current.avgIntensity), hint: formatPct(t.intensityDeltaPct) + " vs prev." },
     { label: "Duração média", value: formatMin(t.current.avgDurationMin), hint: "últimos 7d" },
   ];
+
+
+  // === Sprint 10.5 | Meta da Semana ===
+
+  const [weeklyGoal, setWeeklyGoal] = useState<number>(4);
+
+
+  useEffect(() => {
+
+    try {
+
+      const raw = window.localStorage.getItem("dmf_weekly_goal_v1");
+
+      const n = raw ? Number(raw) : NaN;
+
+      if (Number.isFinite(n) && n >= 1 && n <= 14) setWeeklyGoal(n);
+
+    } catch {}
+
+  }, []);
+
+
+  useEffect(() => {
+
+    try {
+
+      window.localStorage.setItem("dmf_weekly_goal_v1", String(weeklyGoal));
+
+    } catch {}
+
+  }, [weeklyGoal]);
+
+
+  // compat: sessions pode estar em sessões canon ou legado
+
+  const weeklySessions = useHistoryStore((st: any) => (
+
+    st?.sessions ?? st?.legacySessions ?? st?.items ?? st?.history ?? []
+
+  )) as any[];
+
+
+  const weekly = useMemo(() => {
+
+    const sessions = weeklySessions;
+
+    const now = new Date();
+
+    const day = now.getDay(); // 0 dom ... 6 sáb
+
+    const diffToMon = (day + 6) % 7;
+
+    const start = new Date(now);
+
+    start.setHours(0,0,0,0);
+
+    start.setDate(start.getDate() - diffToMon);
+
+
+    const end = new Date(start);
+
+    end.setDate(end.getDate() + 7);
+
+
+    const prevStart = new Date(start);
+
+    prevStart.setDate(prevStart.getDate() - 7);
+
+
+    const prevEnd = new Date(start);
+
+
+    const toTime = (d: any) => (d instanceof Date ? d.getTime() : new Date(d).getTime());
+
+    const inRange = (t: number, a: number, b: number) => t >= a && t < b;
+
+
+    const startT = start.getTime();
+
+    const endT = end.getTime();
+
+    const prevStartT = prevStart.getTime();
+
+    const prevEndT = prevEnd.getTime();
+
+
+    let thisWeek = 0;
+
+    let lastWeek = 0;
+
+
+    for (const sess of sessions) {
+
+      const t = toTime(sess?.date || sess?.createdAt || sess?.startAt || sess?.performedAt || sess?.endedAt || 0);
+
+      if (!Number.isFinite(t) || t <= 0) continue;
+
+      if (inRange(t, startT, endT)) thisWeek++;
+
+      else if (inRange(t, prevStartT, prevEndT)) lastWeek++;
+
+    }
+
+
+    const pct = weeklyGoal > 0 ? Math.min(100, Math.round((thisWeek / weeklyGoal) * 100)) : 0;
+
+    return { thisWeek, lastWeek, pct };
+
+  }, [weeklySessions, weeklyGoal]);
+
+
+  const incGoal = () => setWeeklyGoal((g) => Math.min(14, g + 1));
+
+  const decGoal = () => setWeeklyGoal((g) => Math.max(1, g - 1));
+
+  // === /Sprint 10.5 | Meta da Semana ===
+
 
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
@@ -158,6 +276,38 @@ export function DashboardPro() {
             ? `${latest.exercises?.length || 0} exercícios • ${latest.setsTotal || 0} sets • ${Math.round(latest.volumeTotal || 0)} kg`
             : "Sem treinos salvos ainda. Faça seu primeiro treino para liberar métricas."}
         </div>
+
+          {/* Sprint 10.5 | Meta da Semana */}
+          <div className="rounded-2xl border bg-white/5 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-[12px] uppercase tracking-wide text-white/60">Meta da semana</div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <div className="text-3xl font-semibold leading-none">{weekly.thisWeek}</div>
+                  <div className="text-[14px] text-white/60">/ {weeklyGoal} treinos</div>
+                </div>
+                <div className="mt-2 text-[12px] text-white/60">
+                  Semana anterior: <span className="text-white/80 font-medium">{weekly.lastWeek}</span>
+                  <span className="mx-2 text-white/30">•</span>
+                  Progresso: <span className="text-white/80 font-medium">{weekly.pct}%</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={decGoal}
+                  className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
+                  aria-label="Diminuir meta semanal">−</button>
+                <button type="button" onClick={incGoal}
+                  className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
+                  aria-label="Aumentar meta semanal">+</button>
+              </div>
+            </div>
+            <div className="mt-4 h-2 w-full rounded-full bg-white/10">
+              <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: weekly.pct + "%" }} />
+            </div>
+            <div className="mt-3 text-[12px] text-white/50">Ajuste rápido: meta fica salva neste dispositivo.</div>
+          </div>
+          {/* /Sprint 10.5 */}
+
 
         <div style={{ display: "flex", gap: 10 }}>
           <a href="#/workout" style={btnPrimary}>Iniciar treino</a>

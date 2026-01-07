@@ -43,9 +43,9 @@ export function HistoryPanel() {
   const selectedDate = useHistoryStore((s: any) => s.selectedDate);
   const selectDate = useHistoryStore((s: any) => s.selectDate);
 
-  const streak = useProgressStore((p) => p.streak);
-  const prs = useProgressStore((p) => p.prs);
-  const prsToday = (prs || []).filter((pr) => isSameDay(pr.date, selectedDate)).length;
+  const streak = useProgressStore((p: any) => p.streak);
+  const prs = useProgressStore((p: any) => p.prs);
+  const prsToday = (prs || []).filter((pr: any) => isSameDay(pr.date, selectedDate)).length;
 
   // Preferir sessions (novo). Se não existir, tentar converter legado do dia.
   let workouts: WorkoutSession[] = [];
