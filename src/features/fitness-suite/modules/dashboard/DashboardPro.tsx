@@ -563,6 +563,60 @@ export function DashboardPro() {
   }, [volume]);
   // === /Sprint 11.0 | Weekly Review ===
 
+  // === Sprint 11.2 | Relatório rápido ===
+  const [snapshotCopied, setSnapshotCopied] = useState<boolean>(false);
+
+  const reportSnapshot = useMemo(() => {
+    const fmt = (n: number) => Math.round(Number(n) || 0).toLocaleString("pt-BR");
+
+    const lines: string[] = [];
+    lines.push("DrMindSetFit — Relatório rápido");
+    lines.push("");
+    // Semana perfeita
+    lines.push("Semana Perfeita: " + String(perfectWeek?.score ?? 0) + "/100 — " + String(perfectWeek?.tier ?? ""));
+    lines.push("• " + String(perfectWeek?.title ?? ""));
+    lines.push("• " + String(perfectWeek?.action ?? ""));
+    lines.push("");
+
+    // Goals
+    lines.push("Objetivos:");
+    lines.push("• Treinos/semana: " + String(goalsView?.weeklyDone ?? 0) + "/" + String(goalsView?.weeklyTarget ?? 0) + " (" + String(goalsView?.weeklyPct ?? 0) + "%)");
+    lines.push("• Dias ativos (28d): " + String(goalsView?.activeDone ?? 0) + "/" + String(goalsView?.activeTarget ?? 0) + " (" + String(goalsView?.activePct ?? 0) + "%)");
+    lines.push("• Volume (7d): " + fmt(Number(goalsView?.volDone ?? 0)) + "/" + fmt(Number(goalsView?.volTarget ?? 0)) + " (" + String(goalsView?.volPct ?? 0) + "%)");
+    lines.push("");
+
+    // Weekly Review
+    lines.push("Weekly Review (7d vs 7d):");
+    const hs = (weeklyReview?.highlights ?? []) as any[];
+    for (const h of hs) {
+      const label = String(h?.label ?? "");
+      const value = String(h?.value ?? "");
+      const detail = String(h?.detail ?? "");
+      lines.push("• " + label + ": " + value + " — " + detail);
+    }
+    lines.push("• Ajuste: " + String(weeklyReview?.action ?? ""));
+    lines.push("");
+
+    // Consistência + Volume
+    lines.push("Consistência (28d): " + String(consistency?.activeDays ?? 0) + " dias ativos | melhor streak " + String(consistency?.bestStreak ?? 0) + " | " + String(consistency?.pct ?? 0) + "%");
+    lines.push("Volume (7d): " + fmt(Number(volume?.curr?.volumeKg ?? 0)) + " kg-reps | Séries " + String(volume?.curr?.sets ?? 0) + " | Reps " + String(volume?.curr?.reps ?? 0) + " | Tempo " + fmt(Number(volume?.curr?.durationMin ?? 0)) + " min");
+
+    return { text: lines.join("\n") };
+  }, [perfectWeek, goalsView, weeklyReview, consistency, volume]);
+
+  const copyReportSnapshot = async () => {
+    try {
+      await navigator.clipboard.writeText(reportSnapshot.text);
+      setSnapshotCopied(true);
+      window.setTimeout(() => setSnapshotCopied(false), 1400);
+    } catch {
+      // fallback simples: sem quebrar build/UX
+      setSnapshotCopied(false);
+    }
+  };
+  // === /Sprint 11.2 | Relatório rápido ===
+
+
 
 
 
@@ -1116,6 +1170,38 @@ export function DashboardPro() {
           <div className="mt-3 text-[12px] text-white/45">{weeklyReview.note}</div>
         </div>
         {/* /Sprint 11.0 */}
+
+        {/* Sprint 11.2 | Relatório rápido */}
+        <div className="rounded-2xl border bg-white/5 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-white/60">Relatório rápido</div>
+              <div className="mt-1 text-[13px] text-white/80">
+                Snapshot do seu progresso (copiável). Ideal para compartilhar ou registrar.
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={copyReportSnapshot}
+              className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] text-white/90 hover:bg-white/15 active:scale-[0.98] transition"
+            >
+              {snapshotCopied ? "Copiado" : "Copiar resumo"}
+            </button>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
+            <pre className="whitespace-pre-wrap text-[12px] leading-relaxed text-white/70">
+{reportSnapshot.text}
+            </pre>
+          </div>
+
+          <div className="mt-3 text-[12px] text-white/45">
+            Dica: use este resumo no fim da semana para comparar consistência, volume e metas.
+          </div>
+        </div>
+        {/* /Sprint 11.2 */}
+
 
 
 
