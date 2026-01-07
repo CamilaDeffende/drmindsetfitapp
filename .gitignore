@@ -9,3 +9,5 @@ dist
 *.zip
 
 .bak.*
+.vercel
+.env*.local
