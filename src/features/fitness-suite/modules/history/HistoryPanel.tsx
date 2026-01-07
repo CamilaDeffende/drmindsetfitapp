@@ -1,142 +1,180 @@
-import { useMemo } from "react";
-import { useHistoryStore } from "../../store/useHistoryStore";
 import { tokens } from "../../ui/tokens";
+import { useHistoryStore } from "../../store/useHistoryStore";
+import { useProgressStore } from "../../store/useProgressStore";
+import { WorkoutSession } from "../../contracts/workout";
 
-function round(n: number) {
-  return Math.round(n * 10) / 10;
+function formatDateBR(iso: string) {
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
+function isSameDay(a: string, b: string) {
+  return a.slice(0, 10) === b.slice(0, 10);
+}
+
+function minutesBetween(startIso: string, endIso: string) {
+  const a = Date.parse(startIso);
+  const b = Date.parse(endIso);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+  const diff = Math.max(0, b - a);
+  return Math.round(diff / 60000);
+}
+
+function safeDurationMin(w: any): number {
+  // 1) se existir durationMin
+  if (typeof w?.durationMin === "number") return w.durationMin;
+
+  // 2) se existir durationSec
+  if (typeof w?.durationSec === "number") return Math.round(w.durationSec / 60);
+
+  // 3) calcula por startedAt/finishedAt
+  if (typeof w?.startedAt === "string" && typeof w?.finishedAt === "string") {
+    return minutesBetween(w.startedAt, w.finishedAt);
+  }
+
+  return 0;
 }
 
 export function HistoryPanel() {
-  const selectedDate = useHistoryStore(s => s.selectedDate);
-  const history = useHistoryStore(s => s.history);
+  // store (compat)
+  const history = useHistoryStore((s: any) => s.history);
+  const sessions = useHistoryStore((s: any) => s.sessions);
+  const selectedDate = useHistoryStore((s: any) => s.selectedDate);
+  const selectDate = useHistoryStore((s: any) => s.selectDate);
 
-  const workout = history[selectedDate];
+  const streak = useProgressStore((p) => p.streak);
+  const prs = useProgressStore((p) => p.prs);
+  const prsToday = (prs || []).filter((pr) => isSameDay(pr.date, selectedDate)).length;
 
-  const summary = useMemo(() => {
-    if (!workout) return { exercises: 0, sets: 0, volume: 0 };
+  // Preferir sessions (novo). Se não existir, tentar converter legado do dia.
+  let workouts: WorkoutSession[] = [];
 
-    let sets = 0;
-    let volume = 0;
-
-    for (const ex of workout.exercises) {
-      for (const st of ex.sets) {
-        sets += 1;
-        volume += (Number(st.load) || 0) * (Number(st.reps) || 0);
-      }
+  if (Array.isArray(sessions)) {
+    workouts = sessions.filter((w: any) => (w?.date ?? "").slice(0, 10) === selectedDate);
+  } else {
+    const legacyDay = history?.[selectedDate];
+    // Se o legado já for array, usa direto
+    if (Array.isArray(legacyDay)) {
+      workouts = legacyDay as WorkoutSession[];
+    } else if (legacyDay && typeof legacyDay === "object") {
+      // Converter legado (mínimo para render)
+      const legacyList: any[] = Array.isArray(legacyDay.workouts) ? legacyDay.workouts : [];
+      workouts = legacyList.map((w, i) => ({
+        id: w?.id ?? `legacy_${selectedDate}_${i}`,
+        date: selectedDate,
+        startedAt: w?.startedAt ?? new Date().toISOString(),
+        finishedAt: w?.finishedAt ?? new Date().toISOString(),
+        exercises: Array.isArray(w?.exercises) ? w.exercises : [],
+        volumeTotal: typeof w?.volumeTotal === "number" ? w.volumeTotal : 0,
+        setsTotal: typeof w?.setsTotal === "number" ? w.setsTotal : 0,
+        repsTotal: typeof w?.repsTotal === "number" ? w.repsTotal : 0,
+        intensityScore: typeof w?.intensityScore === "number" ? w.intensityScore : 0,
+      })) as WorkoutSession[];
     }
-    return { exercises: workout.exercises.length, sets, volume: round(volume) };
-  }, [workout]);
+  }
 
   return (
-    <div style={{
-      marginTop: 12,
-      padding: 14,
-      borderRadius: tokens.radius.xl,
-      border: "1px solid " + tokens.colors.border,
-      background: tokens.colors.panel
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+    <div
+      style={{
+        marginTop: 12,
+        padding: 14,
+        borderRadius: tokens.radius.xl,
+        border: "1px solid " + tokens.colors.border,
+        background: tokens.colors.panel,
+      }}
+    >
+      {/* Day View PRO */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          gap: 10,
+          marginBottom: 14,
+        }}
+      >
         <div>
-          <div style={{ fontSize: 16, fontWeight: 950 }}>Histórico</div>
+          <div style={{ fontSize: 18, fontWeight: 1000 }}>Dia</div>
           <div style={{ fontSize: 12, color: tokens.colors.muted }}>
-            Data selecionada: <b style={{ color: tokens.colors.text }}>{selectedDate}</b>
+            {formatDateBR(selectedDate)} • histórico de treino
           </div>
         </div>
 
-        <div style={{
-          display: "flex",
-          gap: 8
-        }}>
-          <div style={pill}>Ex: {summary.exercises}</div>
-          <div style={pill}>Sets: {summary.sets}</div>
-          <div style={pill}>Vol: {summary.volume}</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <span
+            style={{
+              borderRadius: 999,
+              border: "1px solid " + tokens.colors.border,
+              background: tokens.colors.panel2,
+              padding: "8px 10px",
+              fontSize: 12,
+              fontWeight: 900,
+              color: tokens.colors.text,
+            }}
+          >
+            🔥 Streak: {streak}
+          </span>
+
+          <span
+            style={{
+              borderRadius: 999,
+              border: "1px solid " + tokens.colors.border,
+              background: tokens.colors.panel2,
+              padding: "8px 10px",
+              fontSize: 12,
+              fontWeight: 900,
+              color: tokens.colors.text,
+            }}
+          >
+            🏆 PRs: {prsToday}
+          </span>
+
+          <button
+            onClick={() => selectDate(new Date().toISOString().slice(0, 10))}
+            style={{
+              borderRadius: 14,
+              border: "1px solid " + tokens.colors.border,
+              background: tokens.colors.panel2,
+              padding: "8px 12px",
+              fontWeight: 900,
+              color: tokens.colors.text,
+              cursor: "pointer",
+            }}
+          >
+            Hoje
+          </button>
         </div>
       </div>
 
-      {!workout ? (
-        <div style={{
-          marginTop: 12,
-          padding: 14,
-          borderRadius: 16,
-          border: "1px dashed " + tokens.colors.border,
-          color: tokens.colors.muted,
-          fontSize: 12,
-          fontWeight: 800
-        }}>
-          Nenhum treino salvo para essa data ainda.
-          <div style={{ marginTop: 6, fontWeight: 700 }}>
-            Em breve: botão “Salvar treino” no Workout Builder.
-          </div>
-        </div>
-      ) : (
-        <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-          {workout.exercises.map((ex, idx) => (
-            <div key={idx} style={{
-              borderRadius: 18,
-              border: "1px solid " + tokens.colors.border,
-              background: tokens.colors.panel2,
-              padding: 12
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <div>
-                  <div style={{ fontWeight: 1000 }}>{ex.name}</div>
-                  <div style={{ fontSize: 12, color: tokens.colors.muted }}>{ex.muscle}</div>
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 950, color: tokens.colors.muted }}>
-                  {ex.sets.length} sets
-                </div>
-              </div>
-
-              <div style={{
-                marginTop: 10,
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 8
-              }}>
-                <div style={hdr}>Set</div>
-                <div style={hdr}>Reps</div>
-                <div style={hdr}>Carga</div>
-
-                {ex.sets.map((st, i) => (
-                  <>
-                    <div key={i + "-a"} style={cell}>{i + 1}</div>
-                    <div key={i + "-b"} style={cell}>{st.reps}</div>
-                    <div key={i + "-c"} style={cell}>{st.load}</div>
-                  </>
-                ))}
-              </div>
-            </div>
-          ))}
+      {/* Workouts */}
+      {workouts.length === 0 && (
+        <div style={{ fontSize: 12, color: tokens.colors.muted }}>
+          Nenhum treino registrado neste dia.
         </div>
       )}
+
+      <div style={{ display: "grid", gap: 10 }}>
+        {workouts.map((w) => (
+          <div
+            key={w.id}
+            style={{
+              borderRadius: tokens.radius.lg,
+              border: "1px solid " + tokens.colors.border,
+              background: tokens.colors.panel2,
+              padding: 12,
+            }}
+          >
+            <div style={{ fontWeight: 900, color: tokens.colors.text }}>
+              {w.exercises?.length ?? 0} exercícios • {w.setsTotal} sets • {w.volumeTotal} kg
+            </div>
+
+            <div style={{ fontSize: 12, color: tokens.colors.muted }}>
+              Duração: {safeDurationMin(w)} min • Reps: {w.repsTotal}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
-
-const pill: React.CSSProperties = {
-  padding: "8px 10px",
-  borderRadius: 14,
-  border: "1px solid " + tokens.colors.border,
-  background: tokens.colors.panel2,
-  fontSize: 12,
-  fontWeight: 1000,
-  color: tokens.colors.text
-};
-
-const hdr: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 950,
-  color: "#9CA3AF"
-};
-
-const cell: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 900,
-  color: "#E5E7EB",
-  display: "grid",
-  placeItems: "center",
-  padding: "10px 8px",
-  borderRadius: 12,
-  border: "1px solid #1F2937",
-  background: "#0F172A"
-};
