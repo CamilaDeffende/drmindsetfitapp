@@ -863,7 +863,9 @@ const streak = useProgressStore((s: any) => s.streak);
         "<!doctype html><html><head><meta charset=\"utf-8\"/>" +
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>" +
         "<title>" + title + "</title><style>" + css + "</style></head><body>" +
-        "<div class=\"page\">" +
+        "<div class=\\\"page\\\">" +
+
+"" +
 
         "" +
         "<div class=\\\"watermark\\\">MindsetFit</div>" +
@@ -987,6 +989,7 @@ const html =
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
 
+
         {/* Sprint 13.0 | Premium Layer UI */}
         {premiumNotice ? (
           <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -1053,6 +1056,7 @@ const html =
           </div>
         </div>
         {/* /Sprint 13.0 | Premium Layer UI */}
+
 
         {/* Sprint 14.0.1 | Loading / Empty States (SAFE) */}
         {!uiReady_1401 ? (
