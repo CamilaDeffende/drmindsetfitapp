@@ -619,7 +619,7 @@ export function DashboardPro() {
   
   // === Sprint 11.3 | Export PDF ===
   // === Sprint 11.4 | Enterprise PDF v2 (template + pagination) ===
-  const exportReportPdf = () => {
+  const exportReportPdf = (mode: "compact" | "detailed" = "compact") => {
     try {
       const now = new Date();
       const dateStr = now.toLocaleDateString("pt-BR");
@@ -631,7 +631,9 @@ export function DashboardPro() {
         .replace(/>/g, "&gt;");
 
       const title = "DrMindSetFit — Performance Report";
-      const sub = "Dashboard PRO (Enterprise)";
+      const isDetailed = mode === "detailed";
+      const reportModeLabel = isDetailed ? "Detalhado" : "Compacto";
+      const sub = "Dashboard PRO (Enterprise) — " + reportModeLabel;
 
       const pwScore = Number(perfectWeek?.score ?? 0);
       const pwTier = esc(perfectWeek?.tier ?? "");
@@ -792,13 +794,27 @@ export function DashboardPro() {
         "<span style=\"float:right\">Página <span class=\"pg\"></span>/<span class=\"pgs\"></span></span>" +
         "</div>";
 
-      const html =
+      
+      const snapshotHtml =
+        isDetailed
+          ? "<div class=\"card\">" +
+            "<h3 class=\"h\">Full Snapshot</h3>" +
+            "<div class=\"p muted\">Versão detalhada: inclui o resumo completo copiado do app.</div>" +
+            "<hr class=\"hr\"/>" +
+            "<pre style=\"margin:0;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.55;color:rgba(233,238,248,0.82)\">" +
+            esc(reportSnapshot?.text ?? "") +
+            "</pre>" +
+            "</div>"
+          : "";
+
+const html =
         htmlTop +
         execHtml +
         goalsHtml +
         reviewHtml +
         consistencyHtml +
         actionsHtml +
+        snapshotHtml +
         "</div>" +
         footer +
         "</div></body></html>";
@@ -942,13 +958,23 @@ export function DashboardPro() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={exportReportPdf}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
-              >
-                Exportar PDF
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => exportReportPdf("compact")}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
+                >
+                  PDF (Compacto)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportReportPdf("detailed")}
+                  className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] text-white/90 hover:bg-white/15 active:scale-[0.98] transition"
+                >
+                  PDF (Detalhado)
+                </button>
+              </div>
+              {/* Sprint 11.4.3 | PDF Modes */}
 
               <button type="button" onClick={decGoal}
                   className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
