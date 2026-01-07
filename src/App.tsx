@@ -17,6 +17,7 @@ import { DashboardPremium } from '@/pages/DashboardPremium'
 import { Running } from '@/pages/Running'
 import { TreinoAtivo } from '@/pages/TreinoAtivo'
 import { NutritionPlan } from '@/pages/NutritionPlan'
+import { CardioPlan } from '@/pages/CardioPlan'
 import { PlanosAtivos } from '@/pages/PlanosAtivos'
 import Download from '@/pages/Download'
 import { Report } from '@/pages/Report'
@@ -90,6 +91,7 @@ function App() {
                 element={
                   <ProtectedRoute requiresPremium>
                     <NutritionPlan />
+            <Route path="/cardio" element={<CardioPlan />} />
                   </ProtectedRoute>
                 }
               />
