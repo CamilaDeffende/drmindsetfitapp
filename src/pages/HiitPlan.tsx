@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 type ProtocolKey = "TABATA" | "EMOM" | "AMRAP" | "SPRINT";
+type GoalKey = "FAT_LOSS" | "PERFORMANCE" | "CONDITIONING";
 
 type Protocol = {
   key: ProtocolKey;
@@ -8,11 +9,9 @@ type Protocol = {
   summary: string;
   defaultTotalMinutes: number;
   defaults: {
-    rounds?: number;       // Tabata / Sprint
-    workSec?: number;      // Tabata / Sprint
-    restSec?: number;      // Tabata / Sprint
-    emomMinutes?: number;  // EMOM
-    amrapMinutes?: number; // AMRAP
+    rounds?: number;
+    workSec?: number;
+    restSec?: number;
     intensityLabel: string;
   };
 };
@@ -21,9 +20,9 @@ type ProgressionRow = {
   week: number;
   sessions: number;
   totalMin: number;
+  rounds?: number;
   workSec?: number;
   restSec?: number;
-  rounds?: number;
   notes: string;
 };
 
@@ -38,16 +37,16 @@ const PROTOCOLS: Protocol[] = [
   {
     key: "EMOM",
     name: "EMOM",
-    summary: "A cada minuto, executa um bloco. Volume progride por semanas.",
+    summary: "A cada minuto, executa um bloco. Progressão por tempo total.",
     defaultTotalMinutes: 12,
-    defaults: { emomMinutes: 12, intensityLabel: "RPE 8–9" },
+    defaults: { intensityLabel: "RPE 8–9" },
   },
   {
     key: "AMRAP",
     name: "AMRAP",
     summary: "Máximo de rounds em X minutos. Progressão por tempo total.",
     defaultTotalMinutes: 10,
-    defaults: { amrapMinutes: 10, intensityLabel: "RPE 8–9" },
+    defaults: { intensityLabel: "RPE 8–9" },
   },
   {
     key: "SPRINT",
@@ -58,8 +57,62 @@ const PROTOCOLS: Protocol[] = [
   },
 ];
 
+const GOALS: { key: GoalKey; name: string; note: string }[] = [
+  { key: "FAT_LOSS", name: "Emagrecimento", note: "Maior consistência semanal e volume moderado." },
+  { key: "PERFORMANCE", name: "Performance", note: "Alta intensidade com controle de volume." },
+  { key: "CONDITIONING", name: "Condicionamento", note: "Progressão gradual e sustentável." },
+];
+
+const STORAGE_KEY = "drmindsetfit.hiit.v1";
+
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
+}
+
+function safeParse(raw: string | null) {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function getPreset(goal: GoalKey) {
+  if (goal === "FAT_LOSS") {
+    return {
+      goal,
+      protocolKey: "EMOM" as ProtocolKey,
+      weeks: 6,
+      sessionsPerWeek: 4,
+      totalMinutes: 14,
+      rounds: 10,
+      workSec: 20,
+      restSec: 40,
+    };
+  }
+  if (goal === "PERFORMANCE") {
+    return {
+      goal,
+      protocolKey: "TABATA" as ProtocolKey,
+      weeks: 4,
+      sessionsPerWeek: 3,
+      totalMinutes: 8,
+      rounds: 10,
+      workSec: 20,
+      restSec: 10,
+    };
+  }
+  return {
+    goal,
+    protocolKey: "AMRAP" as ProtocolKey,
+    weeks: 6,
+    sessionsPerWeek: 3,
+    totalMinutes: 12,
+    rounds: 8,
+    workSec: 15,
+    restSec: 75,
+  };
 }
 
 function buildProgression(params: {
@@ -72,35 +125,28 @@ function buildProgression(params: {
   rounds: number;
 }): ProgressionRow[] {
   const { protocol, weeks, sessionsPerWeek } = params;
-
-  // Progressão conservadora e “build-safe”:
-  // - semanas sobem volume ~5–12% (depende do protocolo)
-  // - mantém esforço/descanso fixo, e ajusta rounds/tempo total
   const rows: ProgressionRow[] = [];
 
   for (let w = 1; w <= weeks; w++) {
-    const baseSessions = sessionsPerWeek;
     const volFactor =
-      protocol.key === "TABATA" ? 1 + (w - 1) * 0.10 :
-      protocol.key === "SPRINT" ? 1 + (w - 1) * 0.08 :
-      protocol.key === "EMOM"   ? 1 + (w - 1) * 0.07 :
-      1 + (w - 1) * 0.07; // AMRAP
+      protocol.key === "TABATA"
+        ? 1 + (w - 1) * 0.1
+        : protocol.key === "SPRINT"
+          ? 1 + (w - 1) * 0.08
+          : 1 + (w - 1) * 0.07;
 
-    const deload = weeks >= 4 && w === Math.ceil(weeks / 2) ? 0.90 : 1.0; // micro-deload no meio
+    const deload = weeks >= 4 && w === Math.ceil(weeks / 2) ? 0.9 : 1.0;
     const factor = volFactor * deload;
 
     let totalMin = params.totalMinutes;
     let rounds = params.rounds;
-    let workSec = params.workSec;
-    let restSec = params.restSec;
+    const workSec = params.workSec;
+    const restSec = params.restSec;
 
-    if (protocol.key === "EMOM") {
-      totalMin = clamp(Math.round(params.totalMinutes * factor), 6, 30);
-    } else if (protocol.key === "AMRAP") {
+    if (protocol.key === "EMOM" || protocol.key === "AMRAP") {
       totalMin = clamp(Math.round(params.totalMinutes * factor), 6, 30);
     } else if (protocol.key === "TABATA") {
       rounds = clamp(Math.round(params.rounds * factor), 6, 16);
-      // totalMin aproximado
       totalMin = Math.round(((workSec + restSec) * rounds) / 60);
     } else if (protocol.key === "SPRINT") {
       rounds = clamp(Math.round(params.rounds * factor), 4, 14);
@@ -116,11 +162,11 @@ function buildProgression(params: {
 
     rows.push({
       week: w,
-      sessions: baseSessions,
+      sessions: sessionsPerWeek,
       totalMin,
+      rounds: protocol.key === "EMOM" || protocol.key === "AMRAP" ? undefined : rounds,
       workSec: protocol.key === "EMOM" || protocol.key === "AMRAP" ? undefined : workSec,
       restSec: protocol.key === "EMOM" || protocol.key === "AMRAP" ? undefined : restSec,
-      rounds: protocol.key === "EMOM" || protocol.key === "AMRAP" ? undefined : rounds,
       notes,
     });
   }
@@ -129,7 +175,9 @@ function buildProgression(params: {
 }
 
 export default function HiitPlan() {
+  const [goal, setGoal] = useState<GoalKey>("FAT_LOSS");
   const [protocolKey, setProtocolKey] = useState<ProtocolKey>("TABATA");
+
   const protocol = useMemo(
     () => PROTOCOLS.find((p) => p.key === protocolKey) ?? PROTOCOLS[0],
     [protocolKey]
@@ -137,22 +185,79 @@ export default function HiitPlan() {
 
   const [weeks, setWeeks] = useState<number>(4);
   const [sessionsPerWeek, setSessionsPerWeek] = useState<number>(3);
-
   const [totalMinutes, setTotalMinutes] = useState<number>(protocol.defaultTotalMinutes);
 
   const [rounds, setRounds] = useState<number>(protocol.defaults.rounds ?? 8);
   const [workSec, setWorkSec] = useState<number>(protocol.defaults.workSec ?? 20);
   const [restSec, setRestSec] = useState<number>(protocol.defaults.restSec ?? 10);
 
-  // Quando trocar protocolo, reseta defaults com segurança
+  // HYDRATE
   useEffect(() => {
-    setTotalMinutes(protocol.defaultTotalMinutes);
-    setRounds(protocol.defaults.rounds ?? 8);
-    setWorkSec(protocol.defaults.workSec ?? 20);
-    setRestSec(protocol.defaults.restSec ?? 10);
-  }, [protocolKey, protocol.defaultTotalMinutes, protocol.defaults.rounds, protocol.defaults.workSec, protocol.defaults.restSec]);
+    const data = safeParse(localStorage.getItem(STORAGE_KEY));
+    if (!data || typeof data !== "object") return;
 
-const table = useMemo(() => {
+    if (data.goal) setGoal(data.goal);
+    if (data.protocolKey) setProtocolKey(data.protocolKey);
+
+    if (typeof data.weeks === "number") setWeeks(data.weeks);
+    if (typeof data.sessionsPerWeek === "number") setSessionsPerWeek(data.sessionsPerWeek);
+    if (typeof data.totalMinutes === "number") setTotalMinutes(data.totalMinutes);
+
+    if (typeof data.rounds === "number") setRounds(data.rounds);
+    if (typeof data.workSec === "number") setWorkSec(data.workSec);
+    if (typeof data.restSec === "number") setRestSec(data.restSec);
+  }, []);
+
+  // PERSIST
+  useEffect(() => {
+    const payload = {
+      goal,
+      protocolKey,
+      weeks,
+      sessionsPerWeek,
+      totalMinutes,
+      rounds,
+      workSec,
+      restSec,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }, [goal, protocolKey, weeks, sessionsPerWeek, totalMinutes, rounds, workSec, restSec]);
+
+  function applyGoal(g: GoalKey) {
+    const p = getPreset(g);
+    setGoal(p.goal);
+    setProtocolKey(p.protocolKey);
+    setWeeks(p.weeks);
+    setSessionsPerWeek(p.sessionsPerWeek);
+    setTotalMinutes(p.totalMinutes);
+    setRounds(p.rounds);
+    setWorkSec(p.workSec);
+    setRestSec(p.restSec);
+  }
+
+  function resetAll() {
+    localStorage.removeItem(STORAGE_KEY);
+    const p = getPreset("FAT_LOSS");
+    setGoal(p.goal);
+    setProtocolKey(p.protocolKey);
+    setWeeks(p.weeks);
+    setSessionsPerWeek(p.sessionsPerWeek);
+    setTotalMinutes(p.totalMinutes);
+    setRounds(p.rounds);
+    setWorkSec(p.workSec);
+    setRestSec(p.restSec);
+  }
+
+  function applyProtocolDefaults(next: ProtocolKey) {
+    const p = PROTOCOLS.find((x) => x.key === next) ?? PROTOCOLS[0];
+    setProtocolKey(next);
+    setTotalMinutes(p.defaultTotalMinutes);
+    setRounds(p.defaults.rounds ?? 8);
+    setWorkSec(p.defaults.workSec ?? 20);
+    setRestSec(p.defaults.restSec ?? 10);
+  }
+
+  const table = useMemo(() => {
     const w = clamp(weeks, 1, 12);
     const s = clamp(sessionsPerWeek, 1, 7);
 
@@ -178,17 +283,50 @@ const table = useMemo(() => {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-red-500">HIIT — Avançado</h1>
           <p className="text-gray-300">
-            Protocolos prontos (Tabata / EMOM / AMRAP / Sprint) com progressão semanal automática.
+            Protocolos (Tabata / EMOM / AMRAP / Sprint) com progressão semanal + presets por objetivo + persistência.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-red-500/20 bg-neutral-900 p-5 space-y-4">
+          <div className="rounded-2xl border border-red-500/20 bg-neutral-900 p-5 space-y-5">
+            <div className="space-y-1">
+              <div className="text-xs text-gray-400">Objetivo</div>
+              <select
+                value={goal}
+                onChange={(e) => applyGoal(e.target.value as GoalKey)}
+                className="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 outline-none"
+              >
+                {GOALS.map((g) => (
+                  <option key={g.key} value={g.key}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+              <div className="text-xs text-gray-400 mt-2">{GOALS.find((g) => g.key === goal)?.note}</div>
+
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => applyGoal(goal)}
+                  className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
+                >
+                  Aplicar preset
+                </button>
+                <button
+                  type="button"
+                  onClick={resetAll}
+                  className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-1">
               <div className="text-xs text-gray-400">Protocolo</div>
               <select
                 value={protocolKey}
-                onChange={(e) => setProtocolKey(e.target.value as ProtocolKey)}
+                onChange={(e) => applyProtocolDefaults(e.target.value as ProtocolKey)}
                 className="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 outline-none"
               >
                 {PROTOCOLS.map((p) => (
@@ -197,6 +335,7 @@ const table = useMemo(() => {
                   </option>
                 ))}
               </select>
+
               <div className="text-sm text-gray-300 mt-2">{protocol.summary}</div>
               <div className="text-xs text-gray-400 mt-1">Intensidade alvo: {protocol.defaults.intensityLabel}</div>
             </div>
@@ -243,6 +382,7 @@ const table = useMemo(() => {
 
             <div className="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2">
               <div className="text-sm font-semibold">Parâmetros (quando aplicável)</div>
+
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <div className="text-xs text-gray-400">Rounds</div>
@@ -333,8 +473,8 @@ const table = useMemo(() => {
             </div>
 
             <div className="text-xs text-gray-400">
-              Observação: parâmetros e progressão são MVP avançado. Na próxima sprint, integraremos isso ao store do app
-              e adicionaremos presets por objetivo (emagrecimento / performance / recomposição).
+              Persistência ativa (localStorage). Próxima sprint: presets por modalidade (bike/corrida/corda/remo) +
+              export do plano.
             </div>
           </div>
         </div>
