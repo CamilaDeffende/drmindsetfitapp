@@ -21,6 +21,20 @@ import { PlanosAtivos } from '@/pages/PlanosAtivos'
 import Download from '@/pages/Download'
 import { Report } from '@/pages/Report'
 import { EditDiet } from '@/pages/EditDiet'
+// RESET_STORAGE_QUERY_SYNC: limpa estado salvo via ?reset=1 ANTES do Provider montar (sem loop)
+try {
+  const qs = new URLSearchParams(window.location.search);
+  if (qs.get('reset') === '1') {
+    // evita loop/reexecução constante
+    if (sessionStorage.getItem('drmindsetfit_reset_done') !== '1') {
+      sessionStorage.setItem('drmindsetfit_reset_done', '1');
+      localStorage.removeItem('drmindsetfit_state');
+    }
+    // remove query e garante entrada limpa no onboarding
+    window.history.replaceState({}, '', '/');
+  }
+} catch {}
+
 
 function App() {
   const __suite = new URLSearchParams(window.location.search).get("suite") === "1";

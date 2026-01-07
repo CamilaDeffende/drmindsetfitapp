@@ -10,6 +10,7 @@ import { Home, Check, ArrowLeft, ArrowRight, Timer, Dumbbell } from 'lucide-reac
 import { useNavigate } from 'react-router-dom'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
+import ProgressaoCargaHint from '@/components/ProgressaoCargaHint'
 
 interface SerieDados {
   numero: number
@@ -32,6 +33,9 @@ export function TreinoAtivo() {
   if (!state.treino) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
+{/* PROGRESSAO_CARGA_UI */}
+<ProgressaoCargaHint historico={(Array.isArray((state as any)?.treino?.historicoCargas) ? (state as any).treino.historicoCargas : [])}  />
+
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Nenhum Treino Configurado</CardTitle>

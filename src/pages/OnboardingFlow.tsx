@@ -22,7 +22,11 @@ export function OnboardingFlow() {
 
   // Redirecionar para dashboard se já completou
   useEffect(() => {
-    if (state.concluido) {
+    if (
+      state.concluido &&
+      (state.treino?.treinos?.length ?? 0) > 0 &&
+      (state.nutricao?.refeicoes?.length ?? 0) > 0
+    ) {
       navigate('/dashboard')
     }
   }, [state.concluido, navigate])
