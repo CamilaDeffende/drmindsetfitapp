@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type ProtocolKey = "TABATA" | "EMOM" | "AMRAP" | "SPRINT";
 type GoalKey = "FAT_LOSS" | "PERFORMANCE" | "CONDITIONING";
+type ModalityKey = "RUN" | "BIKE" | "ROPE" | "ROW";
 
 type Protocol = {
   key: ProtocolKey;
@@ -63,7 +64,14 @@ const GOALS: { key: GoalKey; name: string; note: string }[] = [
   { key: "CONDITIONING", name: "Condicionamento", note: "Progressão gradual e sustentável." },
 ];
 
-const STORAGE_KEY = "drmindsetfit.hiit.v1";
+const MODALITIES: { key: ModalityKey; name: string; note: string }[] = [
+  { key: "RUN", name: "Corrida", note: "Impacto maior: ajuste de recuperação e técnica." },
+  { key: "BIKE", name: "Bike", note: "Menor impacto: tolera um pouco mais de volume." },
+  { key: "ROPE", name: "Corda", note: "Coordenação/panturrilha: volume moderado." },
+  { key: "ROW", name: "Remo", note: "Full-body: atenção na postura e fadiga do tronco." },
+];
+
+const STORAGE_KEY = "drmindsetfit.hiit.v2";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -115,6 +123,33 @@ function getPreset(goal: GoalKey) {
   };
 }
 
+function applyModalityTuning(modality: ModalityKey, current: {
+  weeks: number;
+  sessionsPerWeek: number;
+  totalMinutes: number;
+  rounds: number;
+  workSec: number;
+  restSec: number;
+}) {
+  // Ajustes leves (MVP) por modalidade
+  const out = { ...current };
+
+  if (modality === "RUN") {
+    out.restSec = clamp(out.restSec + 10, 5, 180);
+    out.sessionsPerWeek = clamp(out.sessionsPerWeek, 1, 5);
+  } else if (modality === "BIKE") {
+    out.totalMinutes = clamp(out.totalMinutes + 2, 6, 30);
+  } else if (modality === "ROPE") {
+    out.restSec = clamp(out.restSec + 5, 5, 180);
+    out.totalMinutes = clamp(out.totalMinutes, 6, 20);
+  } else if (modality === "ROW") {
+    out.workSec = clamp(out.workSec, 10, 40);
+    out.restSec = clamp(out.restSec + 5, 5, 180);
+  }
+
+  return out;
+}
+
 function buildProgression(params: {
   protocol: Protocol;
   weeks: number;
@@ -123,8 +158,10 @@ function buildProgression(params: {
   workSec: number;
   restSec: number;
   rounds: number;
+  modality: ModalityKey;
 }): ProgressionRow[] {
-  const { protocol, weeks, sessionsPerWeek } = params;
+  const { protocol, weeks, sessionsPerWeek, totalMinutes, workSec, restSec, rounds, modality } = params;
+
   const rows: ProgressionRow[] = [];
 
   for (let w = 1; w <= weeks; w++) {
@@ -138,33 +175,40 @@ function buildProgression(params: {
     const deload = weeks >= 4 && w === Math.ceil(weeks / 2) ? 0.9 : 1.0;
     const factor = volFactor * deload;
 
-    let totalMin = params.totalMinutes;
-    let rounds = params.rounds;
-    const workSec = params.workSec;
-    const restSec = params.restSec;
+    let weekTotalMin = totalMinutes;
+    let weekRounds = rounds;
 
     if (protocol.key === "EMOM" || protocol.key === "AMRAP") {
-      totalMin = clamp(Math.round(params.totalMinutes * factor), 6, 30);
+      weekTotalMin = clamp(Math.round(totalMinutes * factor), 6, 30);
     } else if (protocol.key === "TABATA") {
-      rounds = clamp(Math.round(params.rounds * factor), 6, 16);
-      totalMin = Math.round(((workSec + restSec) * rounds) / 60);
+      weekRounds = clamp(Math.round(rounds * factor), 6, 16);
+      weekTotalMin = Math.round(((workSec + restSec) * weekRounds) / 60);
     } else if (protocol.key === "SPRINT") {
-      rounds = clamp(Math.round(params.rounds * factor), 4, 14);
-      totalMin = Math.round(((workSec + restSec) * rounds) / 60);
+      weekRounds = clamp(Math.round(rounds * factor), 4, 14);
+      weekTotalMin = Math.round(((workSec + restSec) * weekRounds) / 60);
     }
+
+    const modalityNote =
+      modality === "RUN"
+        ? "Corrida: foco em técnica e recuperação."
+        : modality === "BIKE"
+          ? "Bike: tolera um pouco mais de volume."
+          : modality === "ROPE"
+            ? "Corda: atenção em panturrilha/coordenação."
+            : "Remo: postura e fadiga do tronco.";
 
     const notes =
       deload < 1
-        ? "Semana de controle (deload): foco em técnica e qualidade."
+        ? `Semana de controle (deload). ${modalityNote}`
         : w === weeks
-          ? "Semana final: caprichar no aquecimento e execução máxima."
-          : "Progressão linear: aumento gradual de volume.";
+          ? `Semana final: qualidade máxima. ${modalityNote}`
+          : `Progressão linear. ${modalityNote}`;
 
     rows.push({
       week: w,
       sessions: sessionsPerWeek,
-      totalMin,
-      rounds: protocol.key === "EMOM" || protocol.key === "AMRAP" ? undefined : rounds,
+      totalMin: weekTotalMin,
+      rounds: protocol.key === "EMOM" || protocol.key === "AMRAP" ? undefined : weekRounds,
       workSec: protocol.key === "EMOM" || protocol.key === "AMRAP" ? undefined : workSec,
       restSec: protocol.key === "EMOM" || protocol.key === "AMRAP" ? undefined : restSec,
       notes,
@@ -174,8 +218,15 @@ function buildProgression(params: {
   return rows;
 }
 
+function protocolParamsLine(protocol: Protocol, rounds: number, workSec: number, restSec: number, totalMinutes: number) {
+  if (protocol.key === "EMOM") return `Tempo total: ${totalMinutes} min (EMOM)`;
+  if (protocol.key === "AMRAP") return `Tempo total: ${totalMinutes} min (AMRAP)`;
+  return `Rounds: ${rounds} | Work/Rest: ${workSec}s/${restSec}s`;
+}
+
 export default function HiitPlan() {
   const [goal, setGoal] = useState<GoalKey>("FAT_LOSS");
+  const [modality, setModality] = useState<ModalityKey>("RUN");
   const [protocolKey, setProtocolKey] = useState<ProtocolKey>("TABATA");
 
   const protocol = useMemo(
@@ -191,12 +242,15 @@ export default function HiitPlan() {
   const [workSec, setWorkSec] = useState<number>(protocol.defaults.workSec ?? 20);
   const [restSec, setRestSec] = useState<number>(protocol.defaults.restSec ?? 10);
 
+  const [exportText, setExportText] = useState<string>("");
+
   // HYDRATE
   useEffect(() => {
     const data = safeParse(localStorage.getItem(STORAGE_KEY));
     if (!data || typeof data !== "object") return;
 
     if (data.goal) setGoal(data.goal);
+    if (data.modality) setModality(data.modality);
     if (data.protocolKey) setProtocolKey(data.protocolKey);
 
     if (typeof data.weeks === "number") setWeeks(data.weeks);
@@ -212,6 +266,7 @@ export default function HiitPlan() {
   useEffect(() => {
     const payload = {
       goal,
+      modality,
       protocolKey,
       weeks,
       sessionsPerWeek,
@@ -221,23 +276,10 @@ export default function HiitPlan() {
       restSec,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }, [goal, protocolKey, weeks, sessionsPerWeek, totalMinutes, rounds, workSec, restSec]);
+  }, [goal, modality, protocolKey, weeks, sessionsPerWeek, totalMinutes, rounds, workSec, restSec]);
 
   function applyGoal(g: GoalKey) {
     const p = getPreset(g);
-    setGoal(p.goal);
-    setProtocolKey(p.protocolKey);
-    setWeeks(p.weeks);
-    setSessionsPerWeek(p.sessionsPerWeek);
-    setTotalMinutes(p.totalMinutes);
-    setRounds(p.rounds);
-    setWorkSec(p.workSec);
-    setRestSec(p.restSec);
-  }
-
-  function resetAll() {
-    localStorage.removeItem(STORAGE_KEY);
-    const p = getPreset("FAT_LOSS");
     setGoal(p.goal);
     setProtocolKey(p.protocolKey);
     setWeeks(p.weeks);
@@ -257,6 +299,39 @@ export default function HiitPlan() {
     setRestSec(p.defaults.restSec ?? 10);
   }
 
+  function applyModality(m: ModalityKey) {
+    setModality(m);
+    const tuned = applyModalityTuning(m, {
+      weeks,
+      sessionsPerWeek,
+      totalMinutes,
+      rounds,
+      workSec,
+      restSec,
+    });
+    setWeeks(tuned.weeks);
+    setSessionsPerWeek(tuned.sessionsPerWeek);
+    setTotalMinutes(tuned.totalMinutes);
+    setRounds(tuned.rounds);
+    setWorkSec(tuned.workSec);
+    setRestSec(tuned.restSec);
+  }
+
+  function resetAll() {
+    localStorage.removeItem(STORAGE_KEY);
+    setExportText("");
+    setModality("RUN");
+    const p = getPreset("FAT_LOSS");
+    setGoal(p.goal);
+    setProtocolKey(p.protocolKey);
+    setWeeks(p.weeks);
+    setSessionsPerWeek(p.sessionsPerWeek);
+    setTotalMinutes(p.totalMinutes);
+    setRounds(p.rounds);
+    setWorkSec(p.workSec);
+    setRestSec(p.restSec);
+  }
+
   const table = useMemo(() => {
     const w = clamp(weeks, 1, 12);
     const s = clamp(sessionsPerWeek, 1, 7);
@@ -274,17 +349,54 @@ export default function HiitPlan() {
       rounds: r,
       workSec: ws,
       restSec: rs,
+      modality,
     });
-  }, [protocol, weeks, sessionsPerWeek, totalMinutes, rounds, workSec, restSec]);
+  }, [protocol, weeks, sessionsPerWeek, totalMinutes, rounds, workSec, restSec, modality]);
+
+  const exportPayload = useMemo(() => {
+    const goalName = GOALS.find((g) => g.key === goal)?.name ?? goal;
+    const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
+
+    const header = [
+      "DRMINDSETFIT — HIIT",
+      `Objetivo: ${goalName}`,
+      `Modalidade: ${modalityName}`,
+      `Protocolo: ${protocol.name} (${protocol.defaults.intensityLabel})`,
+      `Bloco: ${weeks} semanas | ${sessionsPerWeek} sessões/sem`,
+      protocolParamsLine(protocol, rounds, workSec, restSec, totalMinutes),
+      "",
+      "PROGRESSÃO (SEMANA A SEMANA):",
+    ].join("\n");
+
+    const lines = table
+      .map((rRow) => {
+        const wr =
+          typeof rRow.workSec === "number" && typeof rRow.restSec === "number"
+            ? `${rRow.workSec}s/${rRow.restSec}s`
+            : "—";
+        const rd = typeof rRow.rounds === "number" ? String(rRow.rounds) : "—";
+        return `Semana ${rRow.week}: sessões=${rRow.sessions} | total=${rRow.totalMin}min | rounds=${rd} | work/rest=${wr} | ${rRow.notes}`;
+      })
+      .join("\n");
+
+    return header + "\n" + lines + "\n";
+  }, [goal, modality, protocol, weeks, sessionsPerWeek, totalMinutes, rounds, workSec, restSec, table]);
+
+  async function copyPlan() {
+    setExportText(exportPayload);
+    try {
+      await navigator.clipboard.writeText(exportPayload);
+    } catch {
+      // fallback: textarea fica preenchido pra copiar manualmente
+    }
+  }
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-red-500">HIIT — Avançado</h1>
-          <p className="text-gray-300">
-            Protocolos (Tabata / EMOM / AMRAP / Sprint) com progressão semanal + presets por objetivo + persistência.
-          </p>
+          <p className="text-gray-300">Modalidade + export em texto (clipboard) mantendo progressão semanal.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -303,23 +415,22 @@ export default function HiitPlan() {
                 ))}
               </select>
               <div className="text-xs text-gray-400 mt-2">{GOALS.find((g) => g.key === goal)?.note}</div>
+            </div>
 
-              <div className="flex gap-2 mt-3">
-                <button
-                  type="button"
-                  onClick={() => applyGoal(goal)}
-                  className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
-                >
-                  Aplicar preset
-                </button>
-                <button
-                  type="button"
-                  onClick={resetAll}
-                  className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
-                >
-                  Reset
-                </button>
-              </div>
+            <div className="space-y-1">
+              <div className="text-xs text-gray-400">Modalidade</div>
+              <select
+                value={modality}
+                onChange={(e) => applyModality(e.target.value as ModalityKey)}
+                className="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 outline-none"
+              >
+                {MODALITIES.map((m) => (
+                  <option key={m.key} value={m.key}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+              <div className="text-xs text-gray-400 mt-2">{MODALITIES.find((m) => m.key === modality)?.note}</div>
             </div>
 
             <div className="space-y-1">
@@ -335,7 +446,6 @@ export default function HiitPlan() {
                   </option>
                 ))}
               </select>
-
               <div className="text-sm text-gray-300 mt-2">{protocol.summary}</div>
               <div className="text-xs text-gray-400 mt-1">Intensidade alvo: {protocol.defaults.intensityLabel}</div>
             </div>
@@ -382,7 +492,6 @@ export default function HiitPlan() {
 
             <div className="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2">
               <div className="text-sm font-semibold">Parâmetros (quando aplicável)</div>
-
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <div className="text-xs text-gray-400">Rounds</div>
@@ -421,11 +530,37 @@ export default function HiitPlan() {
                   />
                 </div>
               </div>
-
-              <div className="text-xs text-gray-400">
-                Aquecimento recomendado: 6–10min + mobilidade + 2–3 acelerações progressivas.
-              </div>
             </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={copyPlan}
+                className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
+              >
+                Copiar plano
+              </button>
+              <button
+                type="button"
+                onClick={resetAll}
+                className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
+              >
+                Reset
+              </button>
+            </div>
+
+            {exportText ? (
+              <div className="space-y-2">
+                <div className="text-xs text-gray-400">Export (fallback)</div>
+                <textarea
+                  value={exportText}
+                  onChange={(e) => setExportText(e.target.value)}
+                  rows={7}
+                  className="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-xs outline-none"
+                />
+                <div className="text-[11px] text-gray-500">Se clipboard estiver bloqueado, copie manualmente.</div>
+              </div>
+            ) : null}
           </div>
 
           <div className="lg:col-span-2 rounded-2xl border border-red-500/20 bg-neutral-900 p-5 space-y-4">
@@ -436,9 +571,7 @@ export default function HiitPlan() {
                   Protocolo: <span className="text-white font-semibold">{protocol.name}</span>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">
-                Ajuste “deload” no meio do bloco quando semanas ≥ 4.
-              </div>
+              <div className="text-xs text-gray-400">Export gera texto completo (objetivo+modalidade+progressão).</div>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-white/10">
@@ -454,18 +587,18 @@ export default function HiitPlan() {
                   </tr>
                 </thead>
                 <tbody>
-                  {table.map((r) => (
-                    <tr key={r.week} className="border-t border-white/10">
-                      <td className="px-3 py-2 font-semibold">{r.week}</td>
-                      <td className="px-3 py-2">{r.sessions}</td>
-                      <td className="px-3 py-2">{r.totalMin}</td>
-                      <td className="px-3 py-2">{typeof r.rounds === "number" ? r.rounds : "—"}</td>
+                  {table.map((rRow) => (
+                    <tr key={rRow.week} className="border-t border-white/10">
+                      <td className="px-3 py-2 font-semibold">{rRow.week}</td>
+                      <td className="px-3 py-2">{rRow.sessions}</td>
+                      <td className="px-3 py-2">{rRow.totalMin}</td>
+                      <td className="px-3 py-2">{typeof rRow.rounds === "number" ? rRow.rounds : "—"}</td>
                       <td className="px-3 py-2">
-                        {typeof r.workSec === "number" && typeof r.restSec === "number"
-                          ? `${r.workSec}s / ${r.restSec}s`
+                        {typeof rRow.workSec === "number" && typeof rRow.restSec === "number"
+                          ? `${rRow.workSec}s / ${rRow.restSec}s`
                           : "—"}
                       </td>
-                      <td className="px-3 py-2 text-gray-300">{r.notes}</td>
+                      <td className="px-3 py-2 text-gray-300">{rRow.notes}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -473,8 +606,7 @@ export default function HiitPlan() {
             </div>
 
             <div className="text-xs text-gray-400">
-              Persistência ativa (localStorage). Próxima sprint: presets por modalidade (bike/corrida/corda/remo) +
-              export do plano.
+              Dica: use “Copiar plano” para colar no WhatsApp/relatório/atendimento.
             </div>
           </div>
         </div>
