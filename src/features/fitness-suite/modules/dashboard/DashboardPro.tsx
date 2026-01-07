@@ -554,7 +554,12 @@ export function DashboardPro() {
 
     const note = "Resumo baseado nos últimos 7 dias vs 7 anteriores. Use como guia — sem promessas, só sinal.";
 
-    return { highlights, title, action, note };
+    const target =
+      diffSessions < 0 ? "start" :
+      (diffVol < 0 ? "history" :
+      (diffVol > 0 ? "report" : "start"));
+
+    return { highlights, title, action, note, target };
   }, [volume]);
   // === /Sprint 11.0 | Weekly Review ===
 
@@ -1042,12 +1047,54 @@ export function DashboardPro() {
         {/* /Sprint 10.9 */}
 
         {/* Sprint 11.0 | Weekly Review */}
+        {/* Sprint 11.1 | Weekly Review Actions */}
         <div className="rounded-2xl border bg-white/5 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="text-[12px] uppercase tracking-wide text-white/60">Weekly Review</div>
               <div className="mt-1 text-[13px] text-white/80 font-medium">{weeklyReview.title}</div>
               <div className="mt-1 text-[12px] text-white/55">{weeklyReview.action}</div>
+
+              {/* Sprint 11.1 | Weekly Review Actions */}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const id =
+                      weeklyReview.target === "history" ? "dmf-cta-history" :
+                      (weeklyReview.target === "report" ? "dmf-cta-report" : "dmf-cta-start");
+                    const el = document.getElementById(id);
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
+                  className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] text-white/90 hover:bg-white/15 active:scale-[0.98] transition"
+                >
+                  Ação recomendada
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById("dmf-cta-history");
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
+                >
+                  Abrir histórico
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById("dmf-cta-report");
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
+                >
+                  Ver relatório
+                </button>
+              </div>
+              {/* /Sprint 11.1 | Weekly Review Actions */}
+
             </div>
 
             <div className="text-right">
