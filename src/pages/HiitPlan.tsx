@@ -430,26 +430,35 @@ export default function HiitPlan() {
     const dataUrl = await toDataUrl(logoUrl);
 
     // Logo central (tamanho calibrado)
-    const logoW = 160;
-    const logoH = 110;
-    const logoX = (pageW - logoW) / 2;
-    const logoY = 70;
+    
+// ====== CALIBRAÇÃO MILIMÉTRICA (Sprint 3G.2) ======
+// Referência: sua imagem (logo central + wordmark abaixo)
+// Ajustes finos aqui:
+const logoW = 220;          // largura do logo
+const logoH = 150;          // altura do logo
+const logoY = 78;           // topo do logo (desce/sobe)
+const logoX = (pageW - logoW) / 2;
 
-    // "Glow" sutil (retângulo transparente não dá glow real, mas cria destaque com moldura)
-    doc.setDrawColor(40, 120, 255);
-    doc.setLineWidth(1);
-    doc.roundedRect(logoX - 18, logoY - 18, logoW + 36, logoH + 36, 14, 14, "S");
+const wordmarkText = "MindSetFit"; // exatamente como na sua imagem
+const wordmarkY = logoY + logoH + 92; // distância do wordmark até o logo
+const wordmarkSize = 38;    // tamanho do wordmark
 
-    doc.addImage(dataUrl, "PNG", logoX, logoY, logoW, logoH);
+// Moldura/realce sutil (premium). Pode comentar se quiser totalmente clean.
+doc.setDrawColor(40, 120, 255);
+doc.setLineWidth(0.9);
+doc.roundedRect(logoX - 22, logoY - 22, logoW + 44, logoH + 44, 16, 16, "S");
 
-    // MindsetFit (como na imagem)
-    doc.setTextColor(240, 240, 240);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(34);
-    doc.text("MindsetFit", pageW / 2, logoY + logoH + 80, { align: "center" });
+// Logo
+doc.addImage(dataUrl, "PNG", logoX, logoY, logoW, logoH);
 
-    // Header do relatório
-    const headerTop = logoY + logoH + 110;
+// Wordmark centralizado
+doc.setTextColor(240, 240, 240);
+doc.setFont("helvetica", "normal");
+doc.setFontSize(wordmarkSize);
+doc.text(wordmarkText, pageW / 2, wordmarkY, { align: "center" });
+// ====== FIM CALIBRAÇÃO ======
+// Header do relatório
+    const headerTop = wordmarkY + 32;
     doc.setDrawColor(255, 255, 255);
     doc.setLineWidth(0.5);
     doc.line(60, headerTop, pageW - 60, headerTop);
