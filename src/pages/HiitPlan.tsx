@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { jsPDF } from "jspdf";
+import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 
 type ProtocolKey = "TABATA" | "EMOM" | "AMRAP" | "SPRINT";
 type GoalKey = "FAT_LOSS" | "PERFORMANCE" | "CONDITIONING";
@@ -71,7 +73,7 @@ const MODALITIES: { key: ModalityKey; name: string; note: string }[] = [
   { key: "ROW", name: "Remo", note: "Full-body: atenção na postura e fadiga do tronco." },
 ];
 
-const STORAGE_KEY = "drmindsetfit.hiit.v2";
+const STORAGE_KEY = "drmindsetfit.hiit.v3";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -160,7 +162,6 @@ function buildProgression(params: {
   modality: ModalityKey;
 }): ProgressionRow[] {
   const { protocol, weeks, sessionsPerWeek, totalMinutes, workSec, restSec, rounds, modality } = params;
-
   const rows: ProgressionRow[] = [];
 
   for (let w = 1; w <= weeks; w++) {
@@ -231,6 +232,17 @@ function slug(s: string) {
     .replace(/-+/g, "-")
     .replace(/(^-|-$)/g, "")
     .toLowerCase();
+}
+
+async function toDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  const reader = new FileReader();
+  return await new Promise((resolve, reject) => {
+    reader.onerror = () => reject(new Error("FileReader error"));
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsDataURL(blob);
+  });
 }
 
 export default function HiitPlan() {
@@ -367,7 +379,7 @@ export default function HiitPlan() {
     const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
 
     const header = [
-      "DRMINDSETFIT — HIIT",
+      "DRMINDSETFIT — HIIT (RELATÓRIO)",
       `Objetivo: ${goalName}`,
       `Modalidade: ${modalityName}`,
       `Protocolo: ${protocol.name} (${protocol.defaults.intensityLabel})`,
@@ -396,79 +408,102 @@ export default function HiitPlan() {
     try {
       await navigator.clipboard.writeText(exportPayload);
     } catch {
-      // fallback: textarea fica preenchido pra copiar manualmente
+      // fallback: textarea preenchido
     }
   }
 
-  async function downloadPdf() {
-    // 1) tenta jsPDF (se já existir no projeto)
-    try {
-      const mod: any = await import("jspdf");
-      const JsPdf = mod?.jsPDF ?? mod?.default;
-      if (!JsPdf) throw new Error("jsPDF export not found");
+  async function downloadPdfPremium() {
+    const goalName = GOALS.find((g) => g.key === goal)?.name ?? goal;
+    const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
+    const fileName = `mindsetfit-hiit-${slug(goalName)}-${slug(modalityName)}.pdf`;
 
-      const goalName = GOALS.find((g) => g.key === goal)?.name ?? goal;
-      const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
-      const fileName = `hiit-${slug(goalName)}-${slug(modalityName)}.pdf`;
+    // PDF premium (estilo da foto): fundo escuro + logo central + texto clean
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
 
-      const doc = new JsPdf({ unit: "pt", format: "a4" });
-      const margin = 40;
-      const pageW = doc.internal.pageSize.getWidth();
-      const pageH = doc.internal.pageSize.getHeight();
-      const maxW = pageW - margin * 2;
+    // Fundo preto
+    doc.setFillColor(8, 8, 10);
+    doc.rect(0, 0, pageW, pageH, "F");
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text("DRMINDSETFIT — HIIT", margin, margin);
+    // Carrega logo (PNG)
+    const dataUrl = await toDataUrl(logoUrl);
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
+    // Logo central (tamanho calibrado)
+    const logoW = 160;
+    const logoH = 110;
+    const logoX = (pageW - logoW) / 2;
+    const logoY = 70;
 
-      const lines = doc.splitTextToSize(exportPayload, maxW);
-      let y = margin + 24;
+    // "Glow" sutil (retângulo transparente não dá glow real, mas cria destaque com moldura)
+    doc.setDrawColor(40, 120, 255);
+    doc.setLineWidth(1);
+    doc.roundedRect(logoX - 18, logoY - 18, logoW + 36, logoH + 36, 14, 14, "S");
 
-      for (const line of lines) {
-        if (y > pageH - margin) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.text(String(line), margin, y);
-        y += 14;
+    doc.addImage(dataUrl, "PNG", logoX, logoY, logoW, logoH);
+
+    // MindsetFit (como na imagem)
+    doc.setTextColor(240, 240, 240);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(34);
+    doc.text("MindsetFit", pageW / 2, logoY + logoH + 80, { align: "center" });
+
+    // Header do relatório
+    const headerTop = logoY + logoH + 110;
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.5);
+    doc.line(60, headerTop, pageW - 60, headerTop);
+
+    doc.setFontSize(12);
+    doc.setTextColor(210, 210, 210);
+    doc.text("RELATÓRIO HIIT", 60, headerTop + 26);
+
+    doc.setTextColor(235, 235, 235);
+    doc.setFontSize(10);
+    doc.text(`Objetivo: ${goalName}`, 60, headerTop + 46);
+    doc.text(`Modalidade: ${modalityName}`, 60, headerTop + 62);
+    doc.text(`Protocolo: ${protocol.name} (${protocol.defaults.intensityLabel})`, 60, headerTop + 78);
+    doc.text(`Bloco: ${weeks} semanas | ${sessionsPerWeek} sessões/sem`, 60, headerTop + 94);
+    doc.text(protocolParamsLine(protocol, rounds, workSec, restSec, totalMinutes), 60, headerTop + 110);
+
+    // Corpo (texto + progressão)
+    const bodyY = headerTop + 140;
+    doc.setTextColor(220, 220, 220);
+    doc.setFont("courier", "normal");
+    doc.setFontSize(9);
+
+    const margin = 60;
+    const maxW = pageW - margin * 2;
+    const lines = doc.splitTextToSize(exportPayload, maxW);
+
+    let y = bodyY;
+    for (const line of lines) {
+      if (y > pageH - 80) {
+        doc.addPage();
+        // fundo preto também na nova página
+        doc.setFillColor(8, 8, 10);
+        doc.rect(0, 0, pageW, pageH, "F");
+        y = 70;
+        doc.setTextColor(220, 220, 220);
+        doc.setFont("courier", "normal");
+        doc.setFontSize(9);
       }
-
-      doc.save(fileName);
-      return;
-    } catch {
-      // 2) fallback: abrir janela print-friendly (Salvar como PDF)
-      const w = window.open("", "_blank");
-      if (!w) return;
-
-      const safe = exportPayload
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-      w.document.open();
-      w.document.write(`<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>DRMINDSETFIT — HIIT</title>
-  <style>
-    body { font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial; padding: 24px; }
-    pre { white-space: pre-wrap; font-size: 12px; line-height: 1.35; }
-    .hint { margin-top: 12px; font-size: 12px; opacity: .7; }
-  </style>
-</head>
-<body>
-  <h2>DRMINDSETFIT — HIIT</h2>
-  <pre>${safe}</pre>
-  <div class="hint">Use Ctrl/Cmd+P e selecione “Salvar como PDF”.</div>
-  <script>window.onload = () => setTimeout(() => window.print(), 250);</script>
-</body>
-</html>`);
-      w.document.close();
+      doc.text(String(line), margin, y);
+      y += 13;
     }
+
+    // Footer
+    const footerY = pageH - 38;
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.35);
+    doc.line(60, footerY - 14, pageW - 60, footerY - 14);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(180, 180, 180);
+    doc.text("MindsetFit • Relatório gerado automaticamente", pageW / 2, footerY, { align: "center" });
+
+    doc.save(fileName);
   }
 
   return (
@@ -476,7 +511,10 @@ export default function HiitPlan() {
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-red-500">HIIT — Avançado</h1>
-          <p className="text-gray-300">Modalidade + export em texto + export em PDF.</p>
+          <p className="text-gray-300">PDF premium MindsetFit (logo + header + layout relatório).</p>
+          <p className="text-xs text-gray-500">
+            ⚠️ Para ficar idêntico à sua imagem, substitua: <span className="text-white">src/assets/branding/mindsetfit-logo.png</span>
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -565,9 +603,6 @@ export default function HiitPlan() {
                 onChange={(e) => setTotalMinutes(Number(e.target.value || 6))}
                 className="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 outline-none"
               />
-              <div className="text-xs text-gray-500">
-                (EMOM/AMRAP usam principalmente tempo total. Tabata/Sprint derivam tempo pelos rounds.)
-              </div>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-black/30 p-3 space-y-2">
@@ -622,10 +657,10 @@ export default function HiitPlan() {
               </button>
               <button
                 type="button"
-                onClick={downloadPdf}
+                onClick={downloadPdfPremium}
                 className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-black/60"
               >
-                Baixar PDF
+                Baixar PDF Premium
               </button>
               <button
                 type="button"
@@ -645,7 +680,6 @@ export default function HiitPlan() {
                   rows={7}
                   className="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-xs outline-none"
                 />
-                <div className="text-[11px] text-gray-500">Se clipboard estiver bloqueado, copie manualmente.</div>
               </div>
             ) : null}
           </div>
@@ -658,7 +692,7 @@ export default function HiitPlan() {
                   Protocolo: <span className="text-white font-semibold">{protocol.name}</span>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">PDF: tenta jsPDF, senão abre “Salvar como PDF” (print).</div>
+              <div className="text-xs text-gray-400">PDF premium: fundo escuro + logo central + relatório.</div>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-white/10">
@@ -693,7 +727,7 @@ export default function HiitPlan() {
             </div>
 
             <div className="text-xs text-gray-400">
-              Dica: use “Baixar PDF” para anexar no WhatsApp/relatório do paciente.
+              Para ficar idêntico ao print: substitua o arquivo da logo pelo PNG real e gere o PDF novamente.
             </div>
           </div>
         </div>
