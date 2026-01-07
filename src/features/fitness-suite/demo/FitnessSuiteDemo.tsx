@@ -1,8 +1,9 @@
 import { Suspense, lazy, useMemo, useState } from "react";
 import { tokens } from "../ui/tokens";
 import { ProgressProPanel } from "../modules/progress/ProgressProPanel";
+import { HistoryScreen } from "../modules/history/HistoryScreen";
 
-type Tab = "Library" | "BodyMap" | "Builder" | "Timer" | "Progress" | "Programs";
+type Tab = "Library" | "BodyMap" | "Builder" | "Timer" | "Progress" | "Programs" | "History";
 
 const ExerciseLibrary = lazy(() => import("../modules/exercises/ExerciseLibrary").then(m => ({ default: m.ExerciseLibrary })));
 const BodyMap = lazy(() => import("../modules/bodymap/BodyMap").then(m => ({ default: m.BodyMap })));
@@ -38,7 +39,8 @@ function PremiumFallback({ label }: { label?: string }) {
 }
 
 export function FitnessSuiteDemo() {
-  const tabs: Tab[] = useMemo(() => ["Library","BodyMap","Builder","Timer","Progress","Programs"], []);
+  const tabs: Tab[] = useMemo(() => ["Library","BodyMap","Builder","Timer","Progress",
+  "History","Programs"], []);
   const [tab, setTab] = useState<Tab>("Library");
   return (
     <div style={{ minHeight: "100vh", background: tokens.colors.bg, color: tokens.colors.text, padding: 16 }}>
@@ -92,7 +94,9 @@ export function FitnessSuiteDemo() {
         {tab === "Builder" && <WorkoutBuilder />}
         {tab === "Timer" && <WorkoutTimer />}
         {tab === "Progress" && <ProgressProPanel />}
-        {tab === "Programs" && <Programs />}
+        
+        {tab === "History" && <HistoryScreen />}
+{tab === "Programs" && <Programs />}
       </div>
       </Suspense>
     </div>

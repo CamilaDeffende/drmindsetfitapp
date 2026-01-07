@@ -1,11 +1,20 @@
 import React from "react";
 import { tokens } from "../../ui/tokens";
 import { useWorkoutStore } from "../../store/useWorkoutStore";
-
+import { useHistoryStore } from "../../store/useHistoryStore";
+import { useProgressStore } from "../../store/useProgressStore";
 export function WorkoutBuilder() {
-  const { workout, addExercise, removeExercise, addSet, updateSet, updateNotes, reset } = useWorkoutStore();
+  const { workout, addExercise: _addExercise, removeExercise, addSet, updateSet, updateNotes, reset  } = useWorkoutStore();
+  const selectedDate = useHistoryStore(s => s.selectedDate);
+  const saveWorkout = useHistoryStore(s => s.saveWorkout);
 
-  return (
+  
+  const updateStreak = useProgressStore(s => s.updateStreak);
+  const addExercise = (name: string, muscle: any) => {
+    _addExercise(name, muscle);
+    updateStreak(new Date().toISOString());
+  };
+return (
     <div style={{ padding: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
         <div>
@@ -17,6 +26,29 @@ export function WorkoutBuilder() {
           background: tokens.colors.panel2, color: tokens.colors.text,
           padding: "10px 12px", fontWeight: 1000, cursor: "pointer"
         }}>Limpar</button>
+        <button
+          onClick={() => {
+            saveWorkout({
+              date: selectedDate,
+              exercises: workout.map(ex => ({
+                name: ex.name,
+                muscle: ex.muscle,
+                sets: ex.sets.map(s => ({ reps: s.reps, load: s.load }))
+              }))
+            });
+          }}
+          style={{
+            borderRadius: 16,
+            border: "1px solid " + tokens.colors.border,
+            background: tokens.colors.blue,
+            color: "#001018",
+            padding: "10px 12px",
+            fontWeight: 1000,
+            cursor: "pointer"
+          }}
+        >
+          Salvar treino
+        </button>
       </div>
 
       <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
@@ -89,3 +121,4 @@ const inp: React.CSSProperties = {
   width: "100%", borderRadius: 12, border: "1px solid #1F2937",
   background: "#0F172A", color: "#E5E7EB", padding: "10px 10px", outline: "none", fontWeight: 900
 };
+
