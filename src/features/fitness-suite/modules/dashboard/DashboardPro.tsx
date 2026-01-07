@@ -177,6 +177,42 @@ export function DashboardPro() {
 
   // === /Sprint 10.5 | Meta da Semana ===
 
+  // === Sprint 10.6 | Badges & Milestones ===
+  const streakDays = useProgressStore((s: any) => s.streak) as number;
+  const prsCount = useProgressStore((s: any) => (s.prs || []).length) as number;
+
+  // weeklySessions vem do Sprint 10.5 (compat legacy)
+  const totalSessions = (weeklySessions || []).length;
+
+  type Badge = {
+    id: string;
+    label: string;
+    hint: string;
+    earned: boolean;
+  };
+
+  const badges = useMemo<Badge[]>(() => {
+    const list: Badge[] = [
+      { id: "first", label: "Primeiro treino", hint: "Complete 1 treino", earned: totalSessions >= 1 },
+      { id: "s3", label: "Streak 3", hint: "3 dias seguidos", earned: streakDays >= 3 },
+      { id: "s7", label: "Streak 7", hint: "7 dias seguidos", earned: streakDays >= 7 },
+      { id: "s14", label: "Streak 14", hint: "14 dias seguidos", earned: streakDays >= 14 },
+      { id: "s30", label: "Streak 30", hint: "30 dias seguidos", earned: streakDays >= 30 },
+
+      { id: "pr1", label: "PR Starter", hint: "1 PR registrado", earned: prsCount >= 1 },
+      { id: "pr5", label: "PR x5", hint: "5 PRs registrados", earned: prsCount >= 5 },
+      { id: "pr10", label: "PR x10", hint: "10 PRs registrados", earned: prsCount >= 10 },
+      { id: "pr20", label: "PR x20", hint: "20 PRs registrados", earned: prsCount >= 20 },
+    ];
+
+    // mantém ordem e evita “excesso” visual: retorna todos, mas UI pode colapsar depois se quiser
+    return list;
+  }, [streakDays, prsCount, totalSessions]);
+
+  const badgesEarned = useMemo(() => badges.filter((b) => b.earned).length, [badges]);
+  // === /Sprint 10.6 | Badges & Milestones ===
+
+
 
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
@@ -307,6 +343,52 @@ export function DashboardPro() {
             <div className="mt-3 text-[12px] text-white/50">Ajuste rápido: meta fica salva neste dispositivo.</div>
           </div>
           {/* /Sprint 10.5 */}
+
+        {/* Sprint 10.6 | Badges & Milestones */}
+        <div className="rounded-2xl border bg-white/5 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-white/60">Badges</div>
+              <div className="mt-1 text-[14px] text-white/80">
+                <span className="font-semibold text-white">{badgesEarned}</span>
+                <span className="text-white/50"> / {badges.length}</span>
+                <span className="mx-2 text-white/20">•</span>
+                <span className="text-white/60">marcos reais de consistência e PR</span>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-[12px] text-white/50">Próximo foco</div>
+              <div className="text-[13px] text-white/80">
+                {badges.find((b) => !b.earned)?.hint ?? "Tudo concluído"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {badges.map((b) => (
+              <span
+                key={b.id}
+                title={b.hint}
+                className={
+                  "inline-flex items-center rounded-full border px-3 py-1 text-[12px] transition " +
+                  (b.earned
+                    ? "border-white/15 bg-white/10 text-white/90"
+                    : "border-white/10 bg-white/5 text-white/55")
+                }
+              >
+                <span className={"mr-2 h-2 w-2 rounded-full " + (b.earned ? "bg-white/70" : "bg-white/25")} />
+                {b.label}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-3 text-[12px] text-white/50">
+            Dica: consistência + PRs = progresso mensurável. Sem “motivação vazia”.
+          </div>
+        </div>
+        {/* /Sprint 10.6 */}
+
 
 
         <div style={{ display: "flex", gap: 10 }}>
