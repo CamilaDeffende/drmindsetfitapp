@@ -22,6 +22,7 @@ import { PlanosAtivos } from '@/pages/PlanosAtivos'
 import Download from '@/pages/Download'
 import { Report } from '@/pages/Report'
 import { EditDiet } from '@/pages/EditDiet'
+import HiitPlan from "@/pages/HiitPlan";
 // RESET_STORAGE_QUERY_SYNC: limpa estado salvo via ?reset=1 ANTES do Provider montar (sem loop)
 try {
   const qs = new URLSearchParams(window.location.search);
@@ -92,6 +93,7 @@ function App() {
                   <ProtectedRoute requiresPremium>
                     <NutritionPlan />
             <Route path="/cardio" element={<CardioPlan />} />
+<Route path="/hiit" element={<HiitPlan />} />
                   </ProtectedRoute>
                 }
               />
