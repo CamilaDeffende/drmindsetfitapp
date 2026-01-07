@@ -7,6 +7,8 @@ import { buildTrends, buildInsight, formatKg, formatMin, formatPct, formatInt } 
 
 import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
+import { Skeleton } from "../../ui/Skeleton";
+import { EmptyState } from "../../ui/EmptyState";
 function todayYMD(): string {
 const d = new Date();
   const y = d.getFullYear();
@@ -56,6 +58,24 @@ export function DashboardPro() {
 
   // compat: sessions (novo) ou history (legado)
   const sessions = useHistoryStore((s: any) => (s.sessions ?? flattenHistory(s.history)) as WorkoutSession[]);
+
+  // === Sprint 14.0.1 | UX Polish SAFE v3 ===
+  const historyRef_1401 = useHistoryStore();
+
+  const [uiReady_1401, setUiReady_1401] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setUiReady_1401(true), 220);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  const hasHistory_1401 = Boolean(
+    (historyRef_1401 as any)?.sessions?.length ||
+      (historyRef_1401 as any)?.items?.length ||
+      (historyRef_1401 as any)?.entries?.length ||
+      (historyRef_1401 as any)?.history?.length
+  );
+  // === /Sprint 14.0.1 | UX Polish SAFE v3 ===
+
   const progress = useProgressStore();
 
   
@@ -1033,6 +1053,46 @@ const html =
           </div>
         </div>
         {/* /Sprint 13.0 | Premium Layer UI */}
+
+        {/* Sprint 14.0.1 | Loading / Empty States (SAFE) */}
+        {!uiReady_1401 ? (
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="space-y-3">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </div>
+          </div>
+        ) : null}
+
+        {uiReady_1401 && !hasHistory_1401 ? (
+          <div className="mb-4">
+            <EmptyState
+              title="Sem sessões registradas ainda"
+              subtitle="Registre seu primeiro treino para liberar insights, tendências e relatórios."
+              actionLabel="Iniciar primeiro treino"
+              onAction={() => {
+                const ids = ["dmf-cta-start", "dmf-cta-history", "dmf-cta-report"];
+                for (const id of ids) {
+                  const el = document.getElementById(id);
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    break;
+                  }
+                }
+              }}
+            />
+          </div>
+        ) : null}
+        {/* /Sprint 14.0.1 | Loading / Empty States (SAFE) */}
+
 
 
         {/* Sprint 12.0 | Progressão Inteligente */}
