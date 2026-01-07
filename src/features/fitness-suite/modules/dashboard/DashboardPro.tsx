@@ -616,66 +616,207 @@ export function DashboardPro() {
   };
   // === /Sprint 11.2 | Relatório rápido ===
 
+  
   // === Sprint 11.3 | Export PDF ===
+  // === Sprint 11.4 | Enterprise PDF v2 (template + pagination) ===
   const exportReportPdf = () => {
     try {
       const now = new Date();
       const dateStr = now.toLocaleDateString("pt-BR");
       const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-      const title = "DrMindSetFit — Relatório";
-      const snapshot = reportSnapshot.text || "";
+      const esc = (t: unknown) => String(t ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      const title = "DrMindSetFit — Performance Report";
+      const sub = "Dashboard PRO (Enterprise)";
+
+      const pwScore = Number(perfectWeek?.score ?? 0);
+      const pwTier = esc(perfectWeek?.tier ?? "");
+
+      const goalsRows = [
+        {
+          k: "Treinos/semana",
+          cur: String(goalsView?.weeklyDone ?? 0),
+          tgt: String(goalsView?.weeklyTarget ?? 0),
+          pct: String(goalsView?.weeklyPct ?? 0) + "%",
+        },
+        {
+          k: "Dias ativos (28d)",
+          cur: String(goalsView?.activeDone ?? 0),
+          tgt: String(goalsView?.activeTarget ?? 0),
+          pct: String(goalsView?.activePct ?? 0) + "%",
+        },
+        {
+          k: "Volume (7d)",
+          cur: String(Math.round(Number(goalsView?.volDone ?? 0)).toLocaleString("pt-BR")),
+          tgt: String(Math.round(Number(goalsView?.volTarget ?? 0)).toLocaleString("pt-BR")),
+          pct: String(goalsView?.volPct ?? 0) + "%",
+        },
+      ];
+
+      const wrTitle = esc(weeklyReview?.title ?? "Weekly Review");
+      const wrAction = esc(weeklyReview?.action ?? "");
+      const wrHighlights = Array.isArray(weeklyReview?.highlights) ? weeklyReview.highlights : [];
+
+      const consLine =
+        "Consistência (28d): " +
+        String(consistency?.activeDays ?? 0) +
+        " dias ativos • melhor streak " +
+        String(consistency?.bestStreak ?? 0) +
+        " • " +
+        String(consistency?.pct ?? 0) +
+        "%";
+
+      const volLine =
+        "Volume (7d): " +
+        String(Math.round(Number(volume?.curr?.volumeKg ?? 0)).toLocaleString("pt-BR")) +
+        " kg-reps • Séries " +
+        String(volume?.curr?.sets ?? 0) +
+        " • Reps " +
+        String(volume?.curr?.reps ?? 0) +
+        " • Tempo " +
+        String(Math.round(Number(volume?.curr?.durationMin ?? 0)).toLocaleString("pt-BR")) +
+        " min";
+
+      const execBullets = [
+        "Semana Perfeita: " + pwScore + "/100 — " + String(perfectWeek?.tier ?? ""),
+        "Ajuste recomendado: " + String(weeklyReview?.action ?? ""),
+        "Foco da semana: " + String(goalsView?.suggestion ?? "Consistência primeiro."),
+      ];
+
+      const nextActions = [
+        String(perfectWeek?.action ?? ""),
+        String(weeklyReview?.action ?? ""),
+        String(goalsView?.suggestion ?? ""),
+      ].map((x) => String(x || "").trim()).filter(Boolean).slice(0, 3);
 
       const css =
+        "@page{size:auto;margin:14mm 12mm 18mm 12mm;}" +
         "html,body{margin:0;padding:0;background:#0b0f16;color:#e9eef8;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Inter,Roboto,Arial,sans-serif;}" +
-        ".page{max-width:860px;margin:0 auto;padding:28px;}" +
-        ".header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.10);}" +
-        ".brand{font-weight:700;font-size:18px;letter-spacing:0.2px;}" +
-        ".meta{font-size:12px;color:rgba(233,238,248,0.65);text-align:right;}" +
-        ".cards{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px;}" +
-        ".card{border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);border-radius:16px;padding:14px;}" +
-        ".card h3{margin:0 0 8px 0;font-size:12px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(233,238,248,0.60);}" +
-        "pre{margin:0;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.55;color:rgba(233,238,248,0.80);}" +
-        ".footer{margin-top:14px;font-size:11px;color:rgba(233,238,248,0.55);}" +
-        "@media print{body{background:#ffffff;color:#0b0f16;} .card{background:#ffffff;border-color:#e6e8ee;} .meta{color:#4b5563;} h3{color:#6b7280;} pre{color:#111827;} .footer{color:#6b7280;}}";
+        ".page{max-width:900px;margin:0 auto;padding:20px;}" +
+        ".top{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:16px 16px 14px 16px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);border-radius:18px;}" +
+        ".brand{font-weight:800;font-size:18px;letter-spacing:0.2px;}" +
+        ".sub{margin-top:6px;font-size:12px;color:rgba(233,238,248,0.70);}" +
+        ".meta{font-size:12px;color:rgba(233,238,248,0.65);text-align:right;line-height:1.5;}" +
+        ".pill{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);font-size:12px;color:rgba(233,238,248,0.85);}" +
+        ".grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px;}" +
+        "@media(min-width:860px){.grid{grid-template-columns:1fr 1fr;}}" +
+        ".card{border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);border-radius:18px;padding:14px 14px;}" +
+        ".card, .top{break-inside:avoid;page-break-inside:avoid;}" +
+        ".h{margin:0 0 10px 0;font-size:12px;text-transform:uppercase;letter-spacing:0.14em;color:rgba(233,238,248,0.62);}" +
+        ".p{margin:0;font-size:12px;line-height:1.6;color:rgba(233,238,248,0.82);}" +
+        ".ul{margin:0;padding-left:16px;}" +
+        ".li{margin:0 0 6px 0;font-size:12px;line-height:1.55;color:rgba(233,238,248,0.82);}" +
+        ".tbl{width:100%;border-collapse:separate;border-spacing:0 8px;}" +
+        ".row{background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.08);}" +
+        ".row td{padding:10px 10px;font-size:12px;color:rgba(233,238,248,0.82);}" +
+        ".row td:first-child{border-top-left-radius:14px;border-bottom-left-radius:14px;}" +
+        ".row td:last-child{border-top-right-radius:14px;border-bottom-right-radius:14px;text-align:right;color:rgba(233,238,248,0.70);}" +
+        ".muted{color:rgba(233,238,248,0.60);}" +
+        ".hr{height:1px;background:rgba(255,255,255,0.10);border:0;margin:10px 0;}" +
+        ".footer{margin-top:12px;font-size:11px;color:rgba(233,238,248,0.55);}" +
+        "@media print{body{background:#ffffff;color:#0b0f16;} .top,.card{background:#ffffff;border-color:#e6e8ee;} .sub,.muted,.meta{color:#4b5563;} .p,.li{color:#111827;} .h{color:#6b7280;} .row{background:#f8fafc;border-color:#e6e8ee;} .row td{color:#111827;} .row td:last-child{color:#4b5563;} .footer{position:fixed;left:12mm;right:12mm;bottom:8mm;color:#6b7280;} .pg:after{content: counter(page);} .pgs:after{content: counter(pages);} }";
 
-      const html =
+      const htmlTop =
         "<!doctype html><html><head><meta charset=\"utf-8\"/>" +
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>" +
         "<title>" + title + "</title><style>" + css + "</style></head><body>" +
         "<div class=\"page\">" +
-        "<div class=\"header\">" +
-        "<div><div class=\"brand\">" + title + "</div>" +
-        "<div style=\"margin-top:6px;font-size:12px;color:rgba(233,238,248,0.70)\">Snapshot premium (Dashboard PRO)</div></div>" +
-        "<div class=\"meta\">" +
-        "<div><strong>Data</strong>: " + dateStr + "</div>" +
-        "<div><strong>Hora</strong>: " + timeStr + "</div>" +
-        "</div></div>" +
-        "<div class=\"cards\">" +
-        "<div class=\"card\"><h3>Resumo</h3><pre>" +
-        snapshot.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
-        "</pre></div>" +
+        "<div class=\"top\">" +
+        "<div>" +
+        "<div class=\"brand\">" + esc(title) + "</div>" +
+        "<div class=\"sub\">" + esc(sub) + "</div>" +
+        "<div class=\"pill\"><span>Score</span><strong>" + String(pwScore) + "/100</strong><span class=\"muted\">" + pwTier + "</span></div>" +
         "</div>" +
-        "<div class=\"footer\">Gerado pelo DrMindSetFitApp • Exportação via impressão (Salvar como PDF)</div>" +
+        "<div class=\"meta\">" +
+        "<div><strong>Data</strong>: " + esc(dateStr) + "</div>" +
+        "<div><strong>Hora</strong>: " + esc(timeStr) + "</div>" +
+        "<div><strong>Janela</strong>: 7d vs 7d</div>" +
+        "</div>" +
+        "</div>";
+
+      const execHtml =
+        "<div class=\"grid\">" +
+        "<div class=\"card\">" +
+        "<h3 class=\"h\">Executive Summary</h3>" +
+        "<ul class=\"ul\">" + execBullets.map((b) => "<li class=\"li\">" + esc(b) + "</li>").join("") + "</ul>" +
+        "</div>";
+
+      const goalsHtml =
+        "<div class=\"card\">" +
+        "<h3 class=\"h\">Goals Status</h3>" +
+        "<table class=\"tbl\">" +
+        goalsRows.map((r) =>
+          "<tr class=\"row\"><td>" + esc(r.k) + "</td><td>" + esc(r.cur) + "/" + esc(r.tgt) + " • " + esc(r.pct) + "</td></tr>"
+        ).join("") +
+        "</table>" +
+        "<div class=\"p muted\">" + esc(String(goalsView?.suggestion ?? "")) + "</div>" +
+        "</div>";
+
+      const reviewHtml =
+        "<div class=\"card\">" +
+        "<h3 class=\"h\">Weekly Review</h3>" +
+        "<div class=\"p\"><strong>" + wrTitle + "</strong></div>" +
+        "<div class=\"p muted\" style=\"margin-top:6px\">" + wrAction + "</div>" +
+        "<hr class=\"hr\"/>" +
+        "<ul class=\"ul\">" +
+        wrHighlights.map((h) => {
+          const label = esc(h?.label ?? "");
+          const value = esc(h?.value ?? "");
+          const detail = esc(h?.detail ?? "");
+          return "<li class=\"li\"><strong>" + label + ":</strong> " + value + " — <span class=\"muted\">" + detail + "</span></li>";
+        }).join("") +
+        "</ul>" +
+        "</div>";
+
+      const consistencyHtml =
+        "<div class=\"card\">" +
+        "<h3 class=\"h\">Consistency & Workload</h3>" +
+        "<div class=\"p\">" + esc(consLine) + "</div>" +
+        "<div class=\"p\" style=\"margin-top:8px\">" + esc(volLine) + "</div>" +
+        "</div>";
+
+      const actionsHtml =
+        "<div class=\"card\">" +
+        "<h3 class=\"h\">Next Actions</h3>" +
+        "<ul class=\"ul\">" + nextActions.map((a) => "<li class=\"li\">" + esc(a) + "</li>").join("") + "</ul>" +
+        "<div class=\"p muted\" style=\"margin-top:10px\">Gerado pelo DrMindSetFitApp • Exportação via impressão (Salvar como PDF)</div>" +
+        "</div>";
+
+      const footer =
+        "<div class=\"footer\">" +
+        "<span>Confidential • Personal Use</span>" +
+        "<span style=\"float:right\">Página <span class=\"pg\"></span>/<span class=\"pgs\"></span></span>" +
+        "</div>";
+
+      const html =
+        htmlTop +
+        execHtml +
+        goalsHtml +
+        reviewHtml +
+        consistencyHtml +
+        actionsHtml +
+        "</div>" +
+        footer +
         "</div></body></html>";
 
       const w = window.open("", "_blank", "noopener,noreferrer");
       if (!w) return;
-
       w.document.open();
       w.document.write(html);
       w.document.close();
 
-      // aguarda fonts/layout
       window.setTimeout(() => {
-        try {
-          w.focus();
-          w.print();
-        } catch {}
-      }, 250);
+        try { w.focus(); w.print(); } catch {}
+      }, 280);
     } catch {}
   };
+  // === /Sprint 11.4 | Enterprise PDF v2 (template + pagination) ===
   // === /Sprint 11.3 | Export PDF ===
+
 
 
 
