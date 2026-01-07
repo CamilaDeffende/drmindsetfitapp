@@ -406,6 +406,85 @@ export function DashboardPro() {
   }, [weekly, weeklyGoal, consistency, volume]);
   // === /Sprint 10.8 | Semana Perfeita ===
 
+  // === Sprint 10.9 | Goals ===
+  type Goals = {
+    weeklyWorkouts: number; // treinos/semana
+    activeDays28: number;   // dias ativos em 28d
+    volume7d: number;       // kg-reps (7d)
+  };
+
+  const [goals, setGoals] = useState<Goals>({
+    weeklyWorkouts: Number(weeklyGoal ?? 4),
+    activeDays28: 12,
+    volume7d: 6000,
+  });
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("dmf_goals_v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const next: Goals = {
+        weeklyWorkouts: Number.isFinite(Number(parsed?.weeklyWorkouts)) ? Number(parsed.weeklyWorkouts) : Number(weeklyGoal ?? 4),
+        activeDays28: Number.isFinite(Number(parsed?.activeDays28)) ? Number(parsed.activeDays28) : 12,
+        volume7d: Number.isFinite(Number(parsed?.volume7d)) ? Number(parsed.volume7d) : 6000,
+      };
+      // clamps
+      next.weeklyWorkouts = Math.max(1, Math.min(14, next.weeklyWorkouts));
+      next.activeDays28 = Math.max(1, Math.min(28, next.activeDays28));
+      next.volume7d = Math.max(0, Math.min(999999, next.volume7d));
+      setGoals(next);
+    } catch {}
+  }, [weeklyGoal]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("dmf_goals_v1", JSON.stringify(goals));
+    } catch {}
+  }, [goals]);
+
+  const goalsView = useMemo(() => {
+    const weeklyDone = Number(weekly?.thisWeek ?? 0);
+    const weeklyTarget = Number(goals.weeklyWorkouts ?? 0);
+    const weeklyPct = weeklyTarget > 0 ? Math.min(120, Math.round((weeklyDone / weeklyTarget) * 100)) : 0;
+
+    const activeDone = Number(consistency?.activeDays ?? 0);
+    const activeTarget = Number(goals.activeDays28 ?? 0);
+    const activePct = activeTarget > 0 ? Math.min(120, Math.round((activeDone / activeTarget) * 100)) : 0;
+
+    const volDone = Number(volume?.curr?.volumeKg ?? 0);
+    const volTarget = Number(goals.volume7d ?? 0);
+    const volPct = volTarget > 0 ? Math.min(120, Math.round((volDone / volTarget) * 100)) : 0;
+
+    // status simples (clean)
+    const onTrack = weeklyPct >= 100 && activePct >= 100;
+    const attention = weeklyPct < 70 || activePct < 70;
+
+    let headline = onTrack ? "On track" : attention ? "Atenção" : "Bom ritmo";
+    let suggestion = "Consistência primeiro, depois progressão.";
+
+    const missingWeekly = Math.max(0, weeklyTarget - weeklyDone);
+
+    if (missingWeekly >= 2) {
+      suggestion = "Faltam " + missingWeekly + " treinos para fechar a semana. Faça 1 sessão hoje.";
+    } else if (missingWeekly === 1) {
+      suggestion = "Você está a 1 treino de bater o objetivo semanal. Sessão objetiva e fecha.";
+    } else if (activePct < 100) {
+      suggestion = "Aumente frequência: um dia ativo a mais nos próximos 7 dias já muda o jogo.";
+    } else if (volTarget > 0 && volPct < 80) {
+      suggestion = "Volume está abaixo da meta: adicione 1–2 séries nos básicos na próxima sessão.";
+    }
+
+    return {
+      weeklyDone, weeklyTarget, weeklyPct,
+      activeDone, activeTarget, activePct,
+      volDone, volTarget, volPct,
+      headline, suggestion,
+    };
+  }, [weekly, consistency, volume, goals]);
+  // === /Sprint 10.9 | Goals ===
+
+
 
 
 
@@ -732,6 +811,161 @@ export function DashboardPro() {
           </div>
         </div>
         {/* /Sprint 10.8 */}
+
+        {/* Sprint 10.9 | Goals */}
+        <div className="rounded-2xl border bg-white/5 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-white/60">Objetivos</div>
+              <div className="mt-1 text-[14px] text-white/80">
+                <span className="font-semibold text-white">{goalsView.headline}</span>
+                <span className="mx-2 text-white/20">•</span>
+                <span className="text-white/55">{goalsView.suggestion}</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                // reset clean (sem modal)
+                setGoals({
+                  weeklyWorkouts: Number(weeklyGoal ?? 4),
+                  activeDays28: 12,
+                  volume7d: 6000,
+                });
+              }}
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
+              title="Resetar objetivos para padrão"
+            >
+              Reset
+            </button>
+          </div>
+
+          {/* linhas */}
+          <div className="mt-4 space-y-3">
+            {/* Treinos/semana */}
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[12px] text-white/55">Treinos na semana</div>
+                  <div className="mt-1 text-[14px] text-white/80">
+                    <span className="font-semibold text-white">{goalsView.weeklyDone}</span>
+                    <span className="text-white/50"> / {goalsView.weeklyTarget}</span>
+                    <span className="mx-2 text-white/20">•</span>
+                    <span className="text-white/70 font-medium">{goalsView.weeklyPct}%</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setGoals((g) => ({ ...g, weeklyWorkouts: Math.max(1, g.weeklyWorkouts - 1) }))}
+                    className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
+                    aria-label="Diminuir treinos por semana"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGoals((g) => ({ ...g, weeklyWorkouts: Math.min(14, g.weeklyWorkouts + 1) }))}
+                    className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
+                    aria-label="Aumentar treinos por semana"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3 h-2 w-full rounded-full bg-white/10">
+                <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: Math.min(100, goalsView.weeklyPct) + "%" }} />
+              </div>
+            </div>
+
+            {/* Dias ativos 28d */}
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[12px] text-white/55">Dias ativos (28d)</div>
+                  <div className="mt-1 text-[14px] text-white/80">
+                    <span className="font-semibold text-white">{goalsView.activeDone}</span>
+                    <span className="text-white/50"> / {goalsView.activeTarget}</span>
+                    <span className="mx-2 text-white/20">•</span>
+                    <span className="text-white/70 font-medium">{goalsView.activePct}%</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setGoals((g) => ({ ...g, activeDays28: Math.max(1, g.activeDays28 - 1) }))}
+                    className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
+                    aria-label="Diminuir dias ativos"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGoals((g) => ({ ...g, activeDays28: Math.min(28, g.activeDays28 + 1) }))}
+                    className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
+                    aria-label="Aumentar dias ativos"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3 h-2 w-full rounded-full bg-white/10">
+                <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: Math.min(100, goalsView.activePct) + "%" }} />
+              </div>
+            </div>
+
+            {/* Volume 7d */}
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[12px] text-white/55">Volume (7d)</div>
+                  <div className="mt-1 text-[14px] text-white/80">
+                    <span className="font-semibold text-white">{Math.round(goalsView.volDone).toLocaleString("pt-BR")}</span>
+                    <span className="text-white/50"> / {Math.round(goalsView.volTarget).toLocaleString("pt-BR")}</span>
+                    <span className="mx-2 text-white/20">•</span>
+                    <span className="text-white/70 font-medium">{goalsView.volPct}%</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setGoals((g) => ({ ...g, volume7d: Math.max(0, Math.round(g.volume7d - 500)) }))}
+                    className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
+                    aria-label="Diminuir volume alvo"
+                    title="-500"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGoals((g) => ({ ...g, volume7d: Math.min(999999, Math.round(g.volume7d + 500)) }))}
+                    className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
+                    aria-label="Aumentar volume alvo"
+                    title="+500"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3 h-2 w-full rounded-full bg-white/10">
+                <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: Math.min(100, goalsView.volPct) + "%" }} />
+              </div>
+
+              <div className="mt-2 text-[12px] text-white/50">
+                Dica: se você não registra carga/reps, o volume pode ficar subestimado — mas o objetivo semanal ainda guia o progresso.
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* /Sprint 10.9 */}
+
 
 
 
