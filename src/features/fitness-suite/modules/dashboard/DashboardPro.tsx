@@ -484,6 +484,81 @@ export function DashboardPro() {
   }, [weekly, consistency, volume, goals]);
   // === /Sprint 10.9 | Goals ===
 
+  // === Sprint 11.0 | Weekly Review ===
+  const weeklyReview = useMemo(() => {
+    const curr = volume?.curr ?? { sessions: 0, sets: 0, reps: 0, volumeKg: 0, durationMin: 0 };
+    const prev = volume?.prev ?? { sessions: 0, sets: 0, reps: 0, volumeKg: 0, durationMin: 0 };
+
+    const diffSessions = Number(curr.sessions ?? 0) - Number(prev.sessions ?? 0);
+    const diffSets = Number(curr.sets ?? 0) - Number(prev.sets ?? 0);
+    const diffReps = Number(curr.reps ?? 0) - Number(prev.reps ?? 0);
+    const diffVol = Number(curr.volumeKg ?? 0) - Number(prev.volumeKg ?? 0);
+    const diffDur = Number(curr.durationMin ?? 0) - Number(prev.durationMin ?? 0);
+
+    const pct = (d: number, base: number) => {
+      const b = Number(base ?? 0);
+      if (b > 0) return Math.round((Number(d) / b) * 100);
+      return Number(d) !== 0 ? 100 : 0;
+    };
+
+    const pctSessions = pct(diffSessions, Number(prev.sessions ?? 0));
+    const pctVol = pct(diffVol, Number(prev.volumeKg ?? 0));
+    const pctDur = pct(diffDur, Number(prev.durationMin ?? 0));
+
+    const arrow = (n: number) => (n > 0 ? "↑" : n < 0 ? "↓" : "→");
+    const fmt = (n: number) => Math.round(Number(n) || 0).toLocaleString("pt-BR");
+
+    const highlights = [
+      {
+        k: "sessions",
+        label: "Sessões",
+        value: String(curr.sessions ?? 0),
+        detail: arrow(diffSessions) + " " + diffSessions + " (" + pctSessions + "%) vs semana anterior",
+      },
+      {
+        k: "volume",
+        label: "Volume",
+        value: fmt(diffVol + Number(prev.volumeKg ?? 0)) + " kg-reps",
+        detail: arrow(diffVol) + " " + fmt(diffVol) + " (" + pctVol + "%) vs semana anterior",
+      },
+      {
+        k: "duration",
+        label: "Tempo",
+        value: fmt(diffDur + Number(prev.durationMin ?? 0)) + " min",
+        detail: arrow(diffDur) + " " + fmt(diffDur) + " (" + pctDur + "%) vs semana anterior",
+      },
+    ];
+
+    let title = "Ajuste da semana";
+    let action = "Mantenha o ritmo e foque em execução perfeita.";
+
+    if (diffSessions < 0) {
+      title = "Recuperar frequência";
+      action = "Você treinou menos vezes. Priorize +1 sessão curta (45–60 min) para voltar ao trilho.";
+    } else if (diffSessions === 0 && diffVol < 0) {
+      title = "Recuperar volume com controle";
+      action = "Mesma frequência, menos volume. Adicione 1–2 séries nos básicos (sem aumentar o tempo demais).";
+    } else if (diffVol > 0 && diffDur > 0 && diffSets <= 0) {
+      title = "Ganhar eficiência";
+      action = "Você ficou mais tempo treinando sem subir estrutura. Reduza descanso e mantenha a intensidade.";
+    } else if (diffVol > 0 && diffSessions >= 0) {
+      title = "Boa progressão";
+      action = "Volume subiu com consistência. Continue — ajuste pequeno é o que sustenta evolução.";
+    } else if (diffVol === 0 && diffSessions > 0) {
+      title = "Transformar frequência em progresso";
+      action = "Você treinou mais, mas volume não acompanhou. Registre cargas/reps e suba 5% nos principais.";
+    } else if (diffReps < 0 && diffSets < 0) {
+      title = "Reforçar estrutura";
+      action = "Caiu reps e séries. Volte ao básico: 2–3 movimentos principais + progressão gradual.";
+    }
+
+    const note = "Resumo baseado nos últimos 7 dias vs 7 anteriores. Use como guia — sem promessas, só sinal.";
+
+    return { highlights, title, action, note };
+  }, [volume]);
+  // === /Sprint 11.0 | Weekly Review ===
+
+
 
 
 
@@ -965,6 +1040,36 @@ export function DashboardPro() {
           </div>
         </div>
         {/* /Sprint 10.9 */}
+
+        {/* Sprint 11.0 | Weekly Review */}
+        <div className="rounded-2xl border bg-white/5 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-white/60">Weekly Review</div>
+              <div className="mt-1 text-[13px] text-white/80 font-medium">{weeklyReview.title}</div>
+              <div className="mt-1 text-[12px] text-white/55">{weeklyReview.action}</div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-[12px] text-white/50">Janela</div>
+              <div className="mt-1 text-[13px] text-white/80">7d vs 7d</div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {weeklyReview.highlights.map((h: any) => (
+              <div key={h.k} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                <div className="text-[12px] text-white/55">{h.label}</div>
+                <div className="mt-1 text-[14px] text-white/85 font-semibold">{h.value}</div>
+                <div className="mt-1 text-[12px] text-white/50">{h.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3 text-[12px] text-white/45">{weeklyReview.note}</div>
+        </div>
+        {/* /Sprint 11.0 */}
+
 
 
 
