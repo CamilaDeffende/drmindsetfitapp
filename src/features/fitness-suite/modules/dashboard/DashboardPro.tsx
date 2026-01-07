@@ -344,6 +344,69 @@ export function DashboardPro() {
   }, [sessionsAll]);
   // === /Sprint 10.7 | Combo (Consistência + Volume) ===
 
+  // === Sprint 10.8 | Semana Perfeita ===
+  const perfectWeek = useMemo(() => {
+    const weeklyPct = Number(weekly?.pct ?? 0);
+    const consistencyPct = Number(consistency?.pct ?? 0);
+
+    const prevVol = Number(volume?.prev?.volumeKg ?? 0);
+    const currVol = Number(volume?.curr?.volumeKg ?? 0);
+    const diff = currVol - prevVol;
+
+    // score de tendência do volume: 0..100 (neutro ~50)
+    let volumeTrendScore = 50;
+    if (prevVol > 0) {
+      const p = (diff / prevVol) * 50; // escala
+      volumeTrendScore = Math.max(0, Math.min(100, Math.round(50 + p)));
+    } else if (currVol > 0) {
+      volumeTrendScore = 80;
+    }
+
+    const score = Math.max(
+      0,
+      Math.min(100, Math.round(0.4 * weeklyPct + 0.3 * consistencyPct + 0.3 * volumeTrendScore))
+    );
+
+    const tier =
+      score >= 85 ? "Elite" :
+      score >= 70 ? "Forte" :
+      score >= 55 ? "Construindo" :
+      "Iniciando";
+
+    let title = "Manter o ritmo.";
+    let action = "Consistência vence intensidade: execute o básico com qualidade.";
+
+    const missingWeekly = Math.max(0, Number(weeklyGoal ?? 0) - Number(weekly?.thisWeek ?? 0));
+
+    if (missingWeekly >= 2) {
+      title = "Prioridade: bater a meta semanal.";
+      action =
+        "Você ainda precisa de " +
+        missingWeekly +
+        " treinos para fechar " +
+        weeklyGoal +
+        "/" +
+        weeklyGoal +
+        ". Faça 1 sessão hoje.";
+    } else if (missingWeekly === 1) {
+      title = "Você está a 1 treino de fechar a semana.";
+      action = "Faça uma sessão objetiva (45–60 min) e finalize a meta.";
+    } else if (consistencyPct < 40) {
+      title = "Ajuste: aumentar frequência.";
+      action = "Meta simples: 3 dias ativos nesta semana. Foque em constância, não em perfeição.";
+    } else if (prevVol > 0 && diff < 0) {
+      title = "Ajuste: recuperar volume com controle.";
+      action = "Suba 5–10% o volume na próxima sessão (1–2 séries extras nos básicos).";
+    } else if (score >= 85) {
+      title = "Semana Perfeita em andamento.";
+      action = "Mantenha o padrão. Pequenos ajustes > grandes mudanças.";
+    }
+
+    return { score, tier, title, action, weeklyPct, consistencyPct, volumeTrendScore };
+  }, [weekly, weeklyGoal, consistency, volume]);
+  // === /Sprint 10.8 | Semana Perfeita ===
+
+
 
 
 
@@ -625,6 +688,51 @@ export function DashboardPro() {
           ) : null}
         </div>
         {/* /Sprint 10.7 | Combo */}
+
+        {/* Sprint 10.8 | Semana Perfeita */}
+        <div className="rounded-2xl border bg-white/5 p-4 backdrop-blur supports-[backdrop-filter]:bg-white/5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide text-white/60">Semana Perfeita</div>
+              <div className="mt-1 flex items-baseline gap-3">
+                <div className="text-3xl font-semibold leading-none">{perfectWeek.score}</div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[12px] text-white/80">
+                  {perfectWeek.tier}
+                </span>
+              </div>
+              <div className="mt-2 text-[13px] text-white/80 font-medium">{perfectWeek.title}</div>
+              <div className="mt-1 text-[12px] text-white/55">{perfectWeek.action}</div>
+            </div>
+
+            <div className="min-w-[150px] text-right">
+              <div className="text-[12px] text-white/50">Componentes</div>
+              <div className="mt-2 space-y-2">
+                <div className="flex items-center justify-between gap-3 text-[12px]">
+                  <span className="text-white/55">Meta semanal</span>
+                  <span className="text-white/80 font-medium">{perfectWeek.weeklyPct}%</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[12px]">
+                  <span className="text-white/55">Consistência</span>
+                  <span className="text-white/80 font-medium">{perfectWeek.consistencyPct}%</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[12px]">
+                  <span className="text-white/55">Tendência volume</span>
+                  <span className="text-white/80 font-medium">{perfectWeek.volumeTrendScore}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 h-2 w-full rounded-full bg-white/10">
+            <div className="h-2 rounded-full bg-white/60 transition-all" style={{ width: perfectWeek.score + "%" }} />
+          </div>
+
+          <div className="mt-3 text-[12px] text-white/50">
+            Score é um sinal: foco em execução consistente e progressão sustentável.
+          </div>
+        </div>
+        {/* /Sprint 10.8 */}
+
 
 
 
