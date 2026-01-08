@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 
 type CardioItem = {
   modalidade: "corrida" | "caminhada" | "bike" | "eliptico";
@@ -81,13 +82,8 @@ export function CardioPlan() {
     const fileName = "mindsetfit-cardio.pdf";
 
     await generateMindsetFitPremiumPdf({
-    signatureLines: [
-      "Luiz Henrique Alexandre",
-      "Nutricionista • CRN XXXXX",
-      "MindSetFit — acompanhamento premium",
-    ],
-
-      logoUrl,
+    signatureLines: mindsetfitSignatureLines,
+logoUrl,
       fileName,
       wordmarkText: "MindSetFit",
       reportLabel: "RELATÓRIO CARDIO",

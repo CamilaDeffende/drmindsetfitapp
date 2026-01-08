@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 type ProtocolKey = "TABATA" | "EMOM" | "AMRAP" | "SPRINT";
 type GoalKey = "FAT_LOSS" | "PERFORMANCE" | "CONDITIONING";
 type ModalityKey = "RUN" | "BIKE" | "ROPE" | "ROW";
@@ -407,13 +408,8 @@ export default function HiitPlan() {
     const fileName = `mindsetfit-hiit-${slug(goalName)}-${slug(modalityName)}.pdf`;
 
     await generateMindsetFitPremiumPdf({
-    signatureLines: [
-      "Luiz Henrique Alexandre",
-      "Nutricionista • CRN XXXXX",
-      "MindSetFit — acompanhamento premium",
-    ],
-
-      logoUrl,
+    signatureLines: mindsetfitSignatureLines,
+logoUrl,
       fileName,
       wordmarkText: "MindSetFit",
       reportLabel: "RELATÓRIO HIIT",

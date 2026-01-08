@@ -21,7 +21,7 @@ export type MindsetFitPdfOptions = {
 }
 
 type PremiumPdfOptions = MindsetFitPdfOptions & {
-  signatureLines?: string[];
+  signatureLines?: readonly string[];
 };
 
 ;
