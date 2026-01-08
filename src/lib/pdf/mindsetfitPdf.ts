@@ -22,9 +22,11 @@ export type MindsetFitPdfOptions = {
 }
 
 type PremiumPdfOptions = MindsetFitPdfOptions & {
-  signatureLines?: readonly string[];
+signatureLines?: readonly string[];
   qrUrl?: string;
   qrLabel?: string;
+  docId?: string;
+  docVersion?: string;
 };
 
 async function buildQrDataUrl(qrUrl?: string): Promise<string | null> {
@@ -192,7 +194,7 @@ export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Pro
     }
   }
 
-function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: number, slogan: string, pageNumber: number, totalPages: number, qrDataUrl?: string | null, qrLabel?: string) {
+function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: number, slogan: string, pageNumber: number, totalPages: number, qrDataUrl?: string | null, qrLabel?: string, docId?: string, docVersion?: string) {
   // Faixa sutil no rodapé
   const footerH = 52;
   const yTop = pageH - footerH;
@@ -216,6 +218,16 @@ function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: numbe
   const stamp = now.toLocaleString("pt-BR", { hour12: false });
   doc.text(stamp, margin, yTop + 32);
 
+  /* DOC_META_BLOCK */
+  const metaParts: string[] = [];
+  if (docId) metaParts.push("ID: " + docId);
+  if (docVersion) metaParts.push("v" + docVersion);
+  if (metaParts.length) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(150, 155, 165);
+    doc.text(metaParts.join(" • "), margin, yTop + 45);
+  }
   // centro: slogan
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -262,13 +274,15 @@ function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: numbe
 
 const qrDataUrl = await buildQrDataUrl((opts as any).qrUrl);
 const qrLabel = (opts as any).qrLabel ? String((opts as any).qrLabel) : undefined;
+const docId = (opts as any).docId ? String((opts as any).docId) : undefined;
+const docVersion = (opts as any).docVersion ? String((opts as any).docVersion) : undefined;
     const totalPages = (typeof (doc as any).getNumberOfPages === "function") ? (doc as any).getNumberOfPages() : 1;
 
     for (let p = 1; p <= totalPages; p++) {
 
       (doc as any).setPage(p);
 
-      drawPremiumFooter(doc, pageW, pageH, margin, slogan, p, totalPages, qrDataUrl, qrLabel);
+      drawPremiumFooter(doc, pageW, pageH, margin, slogan, p, totalPages, qrDataUrl, qrLabel, docId, docVersion);
 
     }
 
