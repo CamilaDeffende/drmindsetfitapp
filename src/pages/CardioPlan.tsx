@@ -34,21 +34,46 @@ export function CardioPlan() {
 
   
   function buildCardioExportText() {
-    const lines = [
+    const lines: string[] = [
       "DRMINDSETFIT — CARDIO (RELATÓRIO)",
       "",
-      "Este PDF usa o template Premium MindSetFit.",
-      "Conteúdo do plano de cardio pode variar conforme o módulo/Cardio Builder.",
-      "",
+      "Template: MindSetFit Premium (PDF)",
+      ""
+    ];
+
+    try {
+      const keys = Object.keys(localStorage || {}).filter((k) => /cardio/i.test(k));
+      if (keys.length) {
+        lines.push("DADOS (localStorage • cardio*):", "");
+        for (const k of keys.slice(0, 12)) {
+          const raw = localStorage.getItem(k);
+          if (!raw) continue;
+          lines.push(`# ${k}`);
+          try {
+            const obj = JSON.parse(raw);
+            const pretty = JSON.stringify(obj, null, 2);
+            lines.push(pretty);
+          } catch {
+            lines.push(raw);
+          }
+          lines.push("");
+        }
+      } else {
+        lines.push("Nenhuma chave 'cardio*' encontrada no localStorage.", "");
+      }
+    } catch {
+      lines.push("Não foi possível ler localStorage neste ambiente.", "");
+    }
+
+    lines.push(
       "Checklist sugerido:",
       "- Frequência semanal",
       "- Duração/tempo alvo",
       "- Intensidade (RPE/Zonas)",
       "- Progressão (semanas)",
-      "- Observações de recuperação",
-      "",
-      "Obs: Se quiser, na próxima sprint (3H.2.1) eu conecto este PDF aos campos reais do Cardio (se existirem no arquivo)."
-    ];
+      "- Observações de recuperação"
+    );
+
     return lines.join("\n");
   }
 
