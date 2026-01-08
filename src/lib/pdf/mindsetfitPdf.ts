@@ -174,7 +174,7 @@ export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Pro
     }
   }
 
-function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: number, slogan: string, pageNumber: number) {
+function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: number, slogan: string, pageNumber: number, totalPages: number) {
   // Faixa sutil no rodapé
   const footerH = 52;
   const yTop = pageH - footerH;
@@ -208,7 +208,7 @@ function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: numbe
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(185, 190, 200);
-  doc.text(`Página ${pageNumber}`, pageW - margin, yTop + 32, { align: "right" });
+  doc.text(`Página ${pageNumber}/${totalPages}`, pageW - margin, yTop + 32, { align: "right" });
 }
 
 // Footer
@@ -222,11 +222,18 @@ function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: numbe
   doc.setTextColor(180, 180, 180);
   doc.text("MindSetFit • Relatório gerado automaticamente", pageW / 2, footerY, { align: "center" });
 
-  // Rodapé premium v2 (slogan central + data + paginação)
+    // Rodapé premium v2 — paginação real (aplicar em TODAS as páginas)
 
-  const slogan = (signatureLines && signatureLines.length ? String(signatureLines[0]) : "MindsetFit — Sistema inteligente de Saúde e Performance.");
+    const slogan = (signatureLines && signatureLines.length ? String(signatureLines[0]) : "MindsetFit — Sistema inteligente de Saúde e Performance.");
 
-  drawPremiumFooter(doc, pageW, pageH, margin, slogan, 1);
+    const totalPages = (typeof (doc as any).getNumberOfPages === "function") ? (doc as any).getNumberOfPages() : 1;
 
-  doc.save(fileName)
-}
+    for (let p = 1; p <= totalPages; p++) {
+
+      (doc as any).setPage(p);
+
+      drawPremiumFooter(doc, pageW, pageH, margin, slogan, p, totalPages);
+
+    }
+
+    doc.save(fileName)}
