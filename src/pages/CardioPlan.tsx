@@ -80,7 +80,13 @@ export function CardioPlan() {
     const bodyText = buildCardioExportText();
     const fileName = "mindsetfit-cardio.pdf";
 
-    await generateMindsetFitPremiumPdf({
+    await generateMindsetFitPremiumPdf(({
+    signatureLines: [
+      "Luiz Henrique Alexandre",
+      "Nutricionista • CRN XXXXX",
+      "MindSetFit — acompanhamento premium",
+    ],
+
       logoUrl,
       fileName,
       wordmarkText: "MindSetFit",
@@ -101,7 +107,7 @@ export function CardioPlan() {
         lineHeight: 13,
         drawFrame: true,
       },
-    });
+    }) as any);
   }
 
 return (
