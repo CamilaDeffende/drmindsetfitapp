@@ -11,3 +11,5 @@ dist
 .bak.*
 .vercel
 .env*.local
+*.bak.*
+src/**/*.bak.*
