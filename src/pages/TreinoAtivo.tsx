@@ -31,7 +31,7 @@ function buildWorkoutExportText() {
 }
 
 async function downloadPdfPremiumWorkout() {
-  await generateMindsetFitPremiumPdf(({
+  await generateMindsetFitPremiumPdf({
     signatureLines: [
       "Luiz Henrique Alexandre",
       "Nutricionista • CRN XXXXX",
@@ -58,7 +58,7 @@ async function downloadPdfPremiumWorkout() {
       lineHeight: 13,
       drawFrame: true,
     },
-  }) as any);
+  });
 }
 
 interface SerieDados {

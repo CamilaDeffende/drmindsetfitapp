@@ -41,7 +41,7 @@ function buildDietExportText() {
 }
 
 async function downloadPdfPremiumDiet() {
-  await generateMindsetFitPremiumPdf(({
+  await generateMindsetFitPremiumPdf({
     signatureLines: [
       "Luiz Henrique Alexandre",
       "Nutricionista • CRN XXXXX",
@@ -68,7 +68,7 @@ async function downloadPdfPremiumDiet() {
       lineHeight: 13,
       drawFrame: true,
     },
-  }) as any);
+  });
 }
 
 // Banco de dados de substitutos por categoria

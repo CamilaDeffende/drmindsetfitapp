@@ -18,7 +18,13 @@ export type MindsetFitPdfOptions = {
     lineHeight?: number;
     drawFrame?: boolean;         // moldura azul sutil (premium)
   };
+}
+
+type PremiumPdfOptions = MindsetFitPdfOptions & {
+  signatureLines?: string[];
 };
+
+;
 
 // Converte asset (url) em dataUrl para jsPDF
 async function toDataUrl(url: string): Promise<string> {
@@ -47,18 +53,18 @@ export function buildMindsetFitPdfFileName(base: string, parts: string[]) {
   return `${slug(base)}-${clean}.pdf`;
 }
 
-export async function generateMindsetFitPremiumPdf(opts: MindsetFitPdfOptions): Promise<void> {
+export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Promise<void> {
   const {
     logoUrl,
     fileName,
     metaLines,
     bodyText,
+    signatureLines = [],
     wordmarkText = "MindSetFit",
     reportLabel = "RELATÓRIO",
     layout = {},
   } = opts;
 
-const signatureLines: string[] = ((opts as any).signatureLines ?? []) as string[];
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();

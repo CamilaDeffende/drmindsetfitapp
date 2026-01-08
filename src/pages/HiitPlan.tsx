@@ -406,7 +406,7 @@ export default function HiitPlan() {
     const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
     const fileName = `mindsetfit-hiit-${slug(goalName)}-${slug(modalityName)}.pdf`;
 
-    await generateMindsetFitPremiumPdf(({
+    await generateMindsetFitPremiumPdf({
     signatureLines: [
       "Luiz Henrique Alexandre",
       "Nutricionista • CRN XXXXX",
@@ -436,9 +436,8 @@ export default function HiitPlan() {
         lineHeight: 13,
         drawFrame: true,
       },
-    }) as any);
-
-  }
+    });
+}
 
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
