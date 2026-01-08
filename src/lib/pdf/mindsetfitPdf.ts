@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 
+import QRCode from "qrcode";
 export type MindsetFitPdfOptions = {
   logoUrl: string;              // ex: import logoUrl from "@/assets/branding/mindsetfit-logo.png"
   fileName: string;             // ex: mindsetfit-hiit-....pdf
@@ -22,7 +23,24 @@ export type MindsetFitPdfOptions = {
 
 type PremiumPdfOptions = MindsetFitPdfOptions & {
   signatureLines?: readonly string[];
+  qrUrl?: string;
+  qrLabel?: string;
 };
+
+async function buildQrDataUrl(qrUrl?: string): Promise<string | null> {
+  if (!qrUrl) return null;
+  try {
+    // QR branco em fundo preto (combina com o PDF dark)
+    const dataUrl = await (QRCode as any).toDataURL(qrUrl, {
+      width: 256,
+      margin: 0,
+      color: { dark: "#FFFFFF", light: "#000000" },
+    });
+    return String(dataUrl);
+  } catch {
+    return null;
+  }
+}
 
 ;
 
@@ -174,7 +192,7 @@ export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Pro
     }
   }
 
-function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: number, slogan: string, pageNumber: number, totalPages: number) {
+function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: number, slogan: string, pageNumber: number, totalPages: number, qrDataUrl?: string | null, qrLabel?: string) {
   // Faixa sutil no rodapé
   const footerH = 52;
   const yTop = pageH - footerH;
@@ -209,6 +227,22 @@ function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: numbe
   doc.setFontSize(9);
   doc.setTextColor(185, 190, 200);
   doc.text(`Página ${pageNumber}/${totalPages}`, pageW - margin, yTop + 32, { align: "right" });
+
+  /* QR_CODE_BLOCK */
+  if (pageNumber === 1 && qrDataUrl) {
+    const size = 28;
+    const x = pageW - margin - size;
+    const y = yTop + 14;
+    try {
+      doc.addImage(qrDataUrl, "PNG", x, y, size, size);
+      if (qrLabel) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(160, 165, 175);
+        doc.text(qrLabel, x + size / 2, y + size + 10, { align: "center" });
+      }
+    } catch {}
+  }
 }
 
 // Footer
@@ -226,13 +260,15 @@ function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: numbe
 
     const slogan = (signatureLines && signatureLines.length ? String(signatureLines[0]) : "MindsetFit — Sistema inteligente de Saúde e Performance.");
 
+const qrDataUrl = await buildQrDataUrl((opts as any).qrUrl);
+const qrLabel = (opts as any).qrLabel ? String((opts as any).qrLabel) : undefined;
     const totalPages = (typeof (doc as any).getNumberOfPages === "function") ? (doc as any).getNumberOfPages() : 1;
 
     for (let p = 1; p <= totalPages; p++) {
 
       (doc as any).setPage(p);
 
-      drawPremiumFooter(doc, pageW, pageH, margin, slogan, p, totalPages);
+      drawPremiumFooter(doc, pageW, pageH, margin, slogan, p, totalPages, qrDataUrl, qrLabel);
 
     }
 
