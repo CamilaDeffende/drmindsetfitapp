@@ -34,48 +34,47 @@ export function CardioPlan() {
 
   
   function buildCardioExportText() {
-    const lines: string[] = [
-      "DRMINDSETFIT — CARDIO (RELATÓRIO)",
-      "",
-      "Template: MindSetFit Premium (PDF)",
-      ""
-    ];
+  const lines = [
+    "DRMINDSETFIT — CARDIO (RELATÓRIO)",
+    "",
+    "Template: MindSetFit Premium (PDF)",
+    ""
+  ];
 
-    try {
-      const keys = Object.keys(localStorage || {}).filter((k) => /cardio/i.test(k));
-      if (keys.length) {
-        lines.push("DADOS (localStorage • cardio*):", "");
-        for (const k of keys.slice(0, 12)) {
-          const raw = localStorage.getItem(k);
-          if (!raw) continue;
-          lines.push(`# ${k}`);
-          try {
-            const obj = JSON.parse(raw);
-            const pretty = JSON.stringify(obj, null, 2);
-            lines.push(pretty);
-          } catch {
-            lines.push(raw);
-          }
-          lines.push("");
+  try {
+    const keys = Object.keys(localStorage || {}).filter((k) => /cardio/i.test(k));
+    if (keys.length) {
+      lines.push("DADOS (localStorage • cardio*):", "");
+      for (const k of keys.slice(0, 12)) {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+        lines.push(`# ${k}`);
+        try {
+          const obj = JSON.parse(raw);
+          lines.push(JSON.stringify(obj, null, 2));
+        } catch {
+          lines.push(raw);
         }
-      } else {
-        lines.push("Nenhuma chave 'cardio*' encontrada no localStorage.", "");
+        lines.push("");
       }
-    } catch {
-      lines.push("Não foi possível ler localStorage neste ambiente.", "");
+    } else {
+      lines.push("Nenhuma chave 'cardio*' encontrada no localStorage.", "");
     }
-
-    lines.push(
-      "Checklist sugerido:",
-      "- Frequência semanal",
-      "- Duração/tempo alvo",
-      "- Intensidade (RPE/Zonas)",
-      "- Progressão (semanas)",
-      "- Observações de recuperação"
-    );
-
-    return lines.join("\n");
+  } catch {
+    lines.push("Não foi possível ler localStorage neste ambiente.", "");
   }
+
+  lines.push(
+    "Checklist sugerido:",
+    "- Frequência semanal",
+    "- Duração/tempo alvo",
+    "- Intensidade (RPE/Zonas)",
+    "- Progressão (semanas)",
+    "- Observações de recuperação"
+  );
+
+  return lines.join("\n");
+}
 
   async function downloadPdfPremiumCardio() {
     const bodyText = buildCardioExportText();
