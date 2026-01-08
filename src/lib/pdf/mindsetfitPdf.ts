@@ -158,7 +158,7 @@ export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Pro
   
   // Assinatura clínica (opcional)
   if (signatureLines.length) {
-    const sigTop = pageH - 110;
+    const sigTop = pageH - 125;
     doc.setDrawColor(255, 255, 255);
     doc.setLineWidth(0.35);
     doc.line(margin, sigTop, pageW - margin, sigTop);
@@ -174,6 +174,43 @@ export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Pro
     }
   }
 
+function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: number, slogan: string, pageNumber: number) {
+  // Faixa sutil no rodapé
+  const footerH = 52;
+  const yTop = pageH - footerH;
+
+  // micro preenchimento (quase imperceptível)
+  doc.setFillColor(8, 10, 14);
+  doc.rect(0, yTop, pageW, footerH, "F");
+
+  // linha divisória suave
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.35);
+  doc.line(margin, yTop + 10, pageW - margin, yTop + 10);
+
+  // tipografia
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(185, 190, 200);
+
+  // esquerda: timestamp discreto
+  const now = new Date();
+  const stamp = now.toLocaleString("pt-BR", { hour12: false });
+  doc.text(stamp, margin, yTop + 32);
+
+  // centro: slogan
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(225, 230, 240);
+  doc.text(slogan, pageW / 2, yTop + 32, { align: "center" });
+
+  // direita: paginação
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(185, 190, 200);
+  doc.text(`Página ${pageNumber}`, pageW - margin, yTop + 32, { align: "right" });
+}
+
 // Footer
   const footerY = pageH - 38;
   doc.setDrawColor(255, 255, 255);
@@ -185,5 +222,11 @@ export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Pro
   doc.setTextColor(180, 180, 180);
   doc.text("MindSetFit • Relatório gerado automaticamente", pageW / 2, footerY, { align: "center" });
 
-  doc.save(fileName);
+  // Rodapé premium v2 (slogan central + data + paginação)
+
+  const slogan = (signatureLines && signatureLines.length ? String(signatureLines[0]) : "MindsetFit — Sistema inteligente de Saúde e Performance.");
+
+  drawPremiumFooter(doc, pageW, pageH, margin, slogan, 1);
+
+  doc.save(fileName)
 }
