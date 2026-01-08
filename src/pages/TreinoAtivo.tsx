@@ -11,6 +11,49 @@ import { useNavigate } from 'react-router-dom'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
 import ProgressaoCargaHint from '@/components/ProgressaoCargaHint'
+import logoUrl from "@/assets/branding/mindsetfit-logo.png";
+import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+
+function buildWorkoutExportText() {
+  const lines = [
+    "DRMINDSETFIT — TREINO (RELATÓRIO)",
+    "",
+    "Template: MindSetFit Premium (PDF)",
+    "",
+    "Conteúdo recomendado:",
+    "- Divisão (A/B/C...)",
+    "- Exercícios, séries, reps, descanso",
+    "- Observações técnicas",
+    "- Progressão",
+    ""
+  ];
+  return lines.join("\n");
+}
+
+async function downloadPdfPremiumWorkout() {
+  await generateMindsetFitPremiumPdf({
+    logoUrl,
+    fileName: "mindsetfit-treino.pdf",
+    wordmarkText: "MindSetFit",
+    reportLabel: "RELATÓRIO TREINO",
+    metaLines: [
+      "Módulo: Treino",
+      "Template: MindSetFit Premium (PDF)",
+    ],
+    bodyText: buildWorkoutExportText(),
+    layout: {
+      logoW: 220,
+      logoH: 150,
+      logoY: 78,
+      wordmarkSize: 38,
+      wordmarkGap: 92,
+      headerGap: 32,
+      margin: 60,
+      lineHeight: 13,
+      drawFrame: true,
+    },
+  });
+}
 
 interface SerieDados {
   numero: number
@@ -31,7 +74,10 @@ export function TreinoAtivo() {
   const [timerAtivo, setTimerAtivo] = useState(false)
 
   if (!state.treino) {
-    return (
+    
+  
+  
+return (
       <div className="min-h-screen flex items-center justify-center p-4">
 {/* PROGRESSAO_CARGA_UI */}
 <ProgressaoCargaHint historico={(Array.isArray((state as any)?.treino?.historicoCargas) ? (state as any).treino.historicoCargas : [])}  />
@@ -189,6 +235,11 @@ export function TreinoAtivo() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex-1">
               <h1 className="text-lg sm:text-xl font-bold">{treino.dia}</h1>
+
+          <div className="mt-4 flex gap-2 flex-wrap">
+            <button type="button" onClick={downloadPdfPremiumWorkout} className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60">Baixar PDF Premium</button>
+          </div>
+
               <p className="text-xs sm:text-sm text-muted-foreground">
                 Exercício {exercicioAtual + 1} de {treino.exercicios.length}
               </p>
