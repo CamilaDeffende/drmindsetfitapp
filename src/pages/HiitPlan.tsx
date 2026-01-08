@@ -406,7 +406,8 @@ export default function HiitPlan() {
     const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
     const fileName = `mindsetfit-hiit-${slug(goalName)}-${slug(modalityName)}.pdf`;
 
-    await generateMindsetFitPremiumPdf(({    signatureLines: [
+    await generateMindsetFitPremiumPdf(({
+    signatureLines: [
       "Luiz Henrique Alexandre",
       "Nutricionista • CRN XXXXX",
       "MindSetFit — acompanhamento premium",
