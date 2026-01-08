@@ -21,6 +21,49 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import type { AlimentoRefeicao, Refeicao } from '@/types'
 import { useToast } from '@/hooks/use-toast'
+import logoUrl from "@/assets/branding/mindsetfit-logo.png";
+import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+
+function buildDietExportText() {
+  const lines = [
+    "DRMINDSETFIT — DIETA (RELATÓRIO)",
+    "",
+    "Template: MindSetFit Premium (PDF)",
+    "",
+    "Conteúdo recomendado:",
+    "- Calorias e macros",
+    "- Refeições (horários, alimentos, quantidades)",
+    "- Substituições",
+    "- Hidratação e suplementação",
+    ""
+  ];
+  return lines.join("\n");
+}
+
+async function downloadPdfPremiumDiet() {
+  await generateMindsetFitPremiumPdf({
+    logoUrl,
+    fileName: "mindsetfit-dieta.pdf",
+    wordmarkText: "MindSetFit",
+    reportLabel: "RELATÓRIO DIETA",
+    metaLines: [
+      "Módulo: Dieta",
+      "Template: MindSetFit Premium (PDF)",
+    ],
+    bodyText: buildDietExportText(),
+    layout: {
+      logoW: 220,
+      logoH: 150,
+      logoY: 78,
+      wordmarkSize: 38,
+      wordmarkGap: 92,
+      headerGap: 32,
+      margin: 60,
+      lineHeight: 13,
+      drawFrame: true,
+    },
+  });
+}
 
 // Banco de dados de substitutos por categoria
 const SUBSTITUTOS_DATABASE: Record<string, { nome: string; calorias: number; proteinas: number; carboidratos: number; gorduras: number }[]> = {
@@ -147,7 +190,10 @@ export function EditDiet() {
   const [refeicoes, setRefeicoes] = useState<Refeicao[]>(state.dietaAtiva?.nutricao.refeicoes || [])
 
   if (!state.dietaAtiva) {
-    return (
+    
+  
+  
+return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <Card className="w-full max-w-md mx-4 glass-effect neon-border">
           <CardContent className="p-6 text-center">
@@ -233,6 +279,11 @@ export function EditDiet() {
             </Button>
             <div className="text-center">
               <h1 className="text-xl font-bold text-neon">Editar Minha Dieta</h1>
+
+          <div className="mt-4 flex gap-2 flex-wrap">
+            <button type="button" onClick={downloadPdfPremiumDiet} className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60">Baixar PDF Premium</button>
+          </div>
+
               <p className="text-xs text-gray-400">{totalCalorias.toFixed(0)} kcal totais</p>
             </div>
             <Button variant="ghost" size="icon" onClick={handleResetar}>
