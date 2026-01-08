@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+import logoUrl from "@/assets/branding/mindsetfit-logo.png";
+import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 
 type CardioItem = {
   modalidade: "corrida" | "caminhada" | "bike" | "eliptico";
@@ -30,12 +32,65 @@ export function CardioPlan() {
     ];
   }, [cardioSalvo]);
 
-  return (
+  
+  function buildCardioExportText() {
+    const lines = [
+      "DRMINDSETFIT — CARDIO (RELATÓRIO)",
+      "",
+      "Este PDF usa o template Premium MindSetFit.",
+      "Conteúdo do plano de cardio pode variar conforme o módulo/Cardio Builder.",
+      "",
+      "Checklist sugerido:",
+      "- Frequência semanal",
+      "- Duração/tempo alvo",
+      "- Intensidade (RPE/Zonas)",
+      "- Progressão (semanas)",
+      "- Observações de recuperação",
+      "",
+      "Obs: Se quiser, na próxima sprint (3H.2.1) eu conecto este PDF aos campos reais do Cardio (se existirem no arquivo)."
+    ];
+    return lines.join("\n");
+  }
+
+  async function downloadPdfPremiumCardio() {
+    const bodyText = buildCardioExportText();
+    const fileName = "mindsetfit-cardio.pdf";
+
+    await generateMindsetFitPremiumPdf({
+      logoUrl,
+      fileName,
+      wordmarkText: "MindSetFit",
+      reportLabel: "RELATÓRIO CARDIO",
+      metaLines: [
+        "Módulo: Cardio",
+        "Template: MindSetFit Premium (PDF)",
+      ],
+      bodyText,
+      layout: {
+        logoW: 220,
+        logoH: 150,
+        logoY: 78,
+        wordmarkSize: 38,
+        wordmarkGap: 92,
+        headerGap: 32,
+        margin: 60,
+        lineHeight: 13,
+        drawFrame: true,
+      },
+    });
+  }
+
+return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold">Cardio</h1>
+
+          <div className="mt-4 flex gap-2 flex-wrap">
+            <button type="button" onClick={downloadPdfPremiumCardio} className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60">Baixar PDF Premium</button>
+          </div>
+
             <p className="text-xs text-muted-foreground">Plano separado • sem interferir na musculação</p>
           </div>
           <div className="flex gap-2">
