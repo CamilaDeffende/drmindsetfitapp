@@ -58,6 +58,7 @@ export async function generateMindsetFitPremiumPdf(opts: MindsetFitPdfOptions): 
     layout = {},
   } = opts;
 
+const signatureLines: string[] = ((opts as any).signatureLines ?? []) as string[];
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -148,7 +149,26 @@ export async function generateMindsetFitPremiumPdf(opts: MindsetFitPdfOptions): 
     y += lineHeight;
   }
 
-  // Footer
+  
+  // Assinatura clínica (opcional)
+  if (signatureLines.length) {
+    const sigTop = pageH - 110;
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.35);
+    doc.line(margin, sigTop, pageW - margin, sigTop);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(210, 210, 210);
+
+    let sy = sigTop + 18;
+    for (const line of signatureLines.slice(0, 3)) {
+      doc.text(line, margin, sy);
+      sy += 14;
+    }
+  }
+
+// Footer
   const footerY = pageH - 38;
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.35);
