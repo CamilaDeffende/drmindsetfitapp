@@ -4,41 +4,25 @@ import { useUIStore } from "../../store/useUIStore";
 
 type AnyObj = Record<string, any>;
 
-function safeJsonParse<T = any>(raw: string | null): T | null {
-  if (!raw) return null;
-  try { return JSON.parse(raw) as T; } catch { return null; }
-}
-
-function safeLocalStorageGet(key: string): any | null {
-  try {
-    if (typeof window === "undefined") return null;
-    return safeJsonParse(window.localStorage.getItem(key));
-  } catch { return null; }
-}
-
-function mergeWithFallback(storeData: AnyObj | null | undefined, fallback: AnyObj | null | undefined): AnyObj {
-  const s = storeData && typeof storeData === "object" ? storeData : {};
-  const f = fallback && typeof fallback === "object" ? fallback : {};
-  return { ...f, ...s };
-}
+function safeParse(raw: string | null) { try { return raw ? JSON.parse(raw) : null; } catch { return null; } }
+function ls(key: string) { return typeof window === "undefined" ? null : safeParse(localStorage.getItem(key)); }
+function merge(store: AnyObj | null, fb: AnyObj | null) { return { ...(fb||{}), ...(store||{}) }; }
 
 export function getDashboardExportSnapshot() {
-  const workoutState = useWorkoutStore.getState?.() ?? null;
-  const uiState = useUIStore.getState?.() ?? null;
+  const workout = merge(useWorkoutStore.getState?.(), ls("treino"));
+  const diet    = merge(ls("diet"), ls("diet"));
+  const hiit    = merge(ls("hiit"), ls("hiit"));
+  const cardio  = merge(ls("cardio"), ls("cardio"));
+  const ui      = merge(useUIStore.getState?.(), ls("ui"));
 
-  const workoutLS = safeLocalStorageGet("mindsetfit.workout");
-  const uiLS = safeLocalStorageGet("mindsetfit.ui");
-
-  const workout = mergeWithFallback(workoutState as AnyObj, workoutLS as AnyObj);
-  const ui = mergeWithFallback(uiState as AnyObj, uiLS as AnyObj);
-
-  const meta = {
-    exportedAtISO: new Date().toISOString(),
-    source: {
-      workout: workoutState ? "store" : workoutLS ? "localStorage" : "empty",
-      ui: uiState ? "store" : uiLS ? "localStorage" : "empty",
-    },
+  return {
+    workout,
+    diet,
+    hiit,
+    cardio,
+    ui,
+    meta: {
+      exportedAt: new Date().toISOString(),
+    }
   };
-
-  return { workout, ui, meta };
 }
