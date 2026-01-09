@@ -1,3 +1,20 @@
+/** === Sprint 5E | assinatura clínica (coach vs patient) === */
+function getClinicalFooterHtml(variant: "coach" | "patient" | undefined) {
+  if (variant === "patient") return "";
+  const name = "Luiz Henrique Alexandre";
+  const reg  = "CRN: XXXX"; // <- troque aqui
+  const contact = "drmindsetfitapp.vercel.app";
+  return `
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(0,0,0,.08);font-size:11px;line-height:1.35;color:rgba(0,0,0,.72)">
+      <div style="font-weight:700">${name}</div>
+      <div>${reg}</div>
+      <div style="opacity:.85">Relatório gerado via <b>MindsetFit</b> • ${contact}</div>
+    </div>
+  `;
+}
+void getClinicalFooterHtml;
+/** === /Sprint 5E === */
+
 import { jsPDF } from "jspdf";
 
 import QRCode from "qrcode";
@@ -23,6 +40,9 @@ export type MindsetFitPdfOptions = {
 }
 
 type PremiumPdfOptions = MindsetFitPdfOptions & {
+  /** Sprint 5E: versão do PDF (coach/patient) */
+  variant?: "coach" | "patient";
+
 signatureLines?: readonly string[];
   qrUrl?: string;
   qrLabel?: string;

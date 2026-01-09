@@ -45,6 +45,11 @@ function toneBg(tone: "good" | "warn" | "neutral") {
 }
 
 export function DashboardPro() {
+  // === Sprint 5E | PDF variant (coach vs patient) ===
+  const [pdfVariant, setPdfVariant] = useState<"coach" | "patient">("coach");
+  // === /Sprint 5E ===
+
+
 
     // === Sprint 13.0 | Premium Layer ===
   const [premiumNotice, setPremiumNotice] = useState<string | null>(null);
@@ -965,7 +970,42 @@ const html =
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
         <div className="mb-4 flex flex-wrap gap-2">
-          <button
+                    {/* === Sprint 5E | seletor de versão (coach/patient) === */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+            <span style={{ fontSize: 12, opacity: 0.8 }}>Versão do PDF:</span>
+            <button
+              type="button"
+              onClick={() => setPdfVariant("coach")}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: pdfVariant === "coach" ? "rgba(0,149,255,0.22)" : "transparent",
+                color: "inherit",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              Coach (com assinatura)
+            </button>
+            <button
+              type="button"
+              onClick={() => setPdfVariant("patient")}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: pdfVariant === "patient" ? "rgba(0,149,255,0.22)" : "transparent",
+                color: "inherit",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              Paciente (clean)
+            </button>
+          </div>
+          {/* === /Sprint 5E === */}
+<button
   className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60"
   onClick={() => {
     (async () => {
@@ -1047,6 +1087,7 @@ const html =
           logoUrl,
           fileName: "Relatorio-MindsetFit-Premium.pdf",
           metaLines: [...mindsetfitSignatureLines] as string[],
+          variant: pdfVariant,
           bodyText,
           bodyHtml,
         });
