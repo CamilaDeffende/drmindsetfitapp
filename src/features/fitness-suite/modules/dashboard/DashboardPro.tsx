@@ -736,10 +736,6 @@ const streak = useProgressStore((s: any) => s.streak);
       const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
       const esc = (t: unknown) => String(t ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
       const title = "DrMindSetFit — Performance Report";
       const isDetailed = mode === "detailed";
       const reportModeLabel = isDetailed ? "Detalhado" : "Compacto";
@@ -981,7 +977,6 @@ const html =
 
                 const snapshot = getDashboardExportSnapshot();
                 const snap: any = snapshot as any;
-
                 const report: string[] = [];
                 report.push("RELATÓRIO GERAL — MindsetFit");
                 report.push("");
@@ -1118,6 +1113,134 @@ const html =
                 bullet("Gerado: " + oneLine(snap?.meta?.exportedAtISO ?? "", 80));
                 // === /Sprint 4E ===
 
+
+                // === Sprint 4F | bodyHtml (cards visuais reais) ===
+
+                const escH = (x: any) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+
+
+
+
+                const card4f = (t: string, inner: string) =>
+
+                  `<div class="cardx"><div class="t">${escH(t)}</div><div class="p">${inner}</div></div>`;
+
+
+                const kpi4f = (k: string, v: string) =>
+
+                  `<div class="kpi"><div class="k">${escH(k)}</div><div class="v">${escH(v)}</div></div>`;
+
+
+                const src4f = (snap?.meta?.source ?? {}) as any;
+
+
+                const bodyHtml =
+
+                  [
+
+                    card4f(
+
+                      "Resumo executivo",
+
+                      `<div class="grid2">` +
+
+                        kpi4f("Treino", (Array.isArray(exercises) && exercises.length) ? (String(exercises.length) + " exercícios") : "nenhum ativo") +
+
+                        kpi4f("Dieta", (Array.isArray(meals) && meals.length) ? (String(meals.length) + " refeições") : (macros ? "metas configuradas" : "nenhuma ativa")) +
+
+                        kpi4f("HIIT", (hiitProtocol || hiitFreq) ? "ativo" : "nenhum ativo") +
+
+                        kpi4f("Cardio", (cardioMod || cardioDur || cardioFreq || cardioInt) ? "ativo" : "nenhum ativo") +
+
+                      `</div>`
+
+                    ),
+
+                    card4f(
+
+                      "Treino atual",
+
+                      (Array.isArray(exercises) && exercises.length)
+
+                        ? (`<div class="small">Exercícios: <b>${escH(exercises.length)}</b></div>` +
+
+                           `<div class="small">Principais: ${escH(exercises.slice(0, 10).map((e: any) => e?.name ?? e?.title ?? e?.exercise ?? "Exercício").filter(Boolean).join(", "))}</div>` +
+
+                           (wNotes ? `<div class="small">Notas: ${escH(oneLine(wNotes, 260))}</div>` : ""))
+
+                        : `<div class="small">Status: Nenhum treino ativo no momento.</div>`
+
+                    ),
+
+                    card4f(
+
+                      "Dieta ativa",
+
+                      `<div class="small">Refeições: <b>${escH(count(meals))}</b></div>` +
+
+                      (macros ? `<div class="small">Macros/Meta: ${escH(oneLine(macros, 260))}</div>` : "") +
+
+                      ((!(Array.isArray(meals) && meals.length) && !macros) ? `<div class="small">Status: Nenhuma dieta ativa no momento.</div>` : "")
+
+                    ),
+
+                    card4f(
+
+                      "Protocolo HIIT",
+
+                      (hiitProtocol ? `<div class="small">Protocolo: ${escH(oneLine(hiitProtocol, 280))}</div>` : "") +
+
+                      (hiitFreq ? `<div class="small">Frequência: ${escH(oneLine(hiitFreq, 140))}</div>` : "") +
+
+                      ((!hiitProtocol && !hiitFreq) ? `<div class="small">Status: Nenhum HIIT ativo no momento.</div>` : "")
+
+                    ),
+
+                    card4f(
+
+                      "Plano de cardio",
+
+                      (cardioMod ? `<div class="small">Modalidade: ${escH(oneLine(cardioMod, 160))}</div>` : "") +
+
+                      (cardioDur ? `<div class="small">Duração: ${escH(oneLine(cardioDur, 120))}</div>` : "") +
+
+                      (cardioInt ? `<div class="small">Intensidade: ${escH(oneLine(cardioInt, 160))}</div>` : "") +
+
+                      (cardioFreq ? `<div class="small">Frequência: ${escH(oneLine(cardioFreq, 140))}</div>` : "") +
+
+                      ((!cardioMod && !cardioDur && !cardioInt && !cardioFreq) ? `<div class="small">Status: Nenhum cardio ativo no momento.</div>` : "")
+
+                    ),
+
+                    card4f(
+
+                      "Progresso & histórico",
+
+                      `<div class="small">Progresso: ${escH(progKeys.length ? ("dados (" + progKeys.slice(0, 8).join(", ") + (progKeys.length > 8 ? ", …" : "") + ")") : "—")}</div>` +
+
+                      `<div class="small">Histórico: ${escH(histKeys.length ? ("dados (" + histKeys.slice(0, 8).join(", ") + (histKeys.length > 8 ? ", …" : "") + ")") : "—")}</div>`
+
+                    ),
+
+                    card4f(
+
+                      "Fonte dos dados",
+
+                      `<div class="small">Workout: <b>${escH(String(src4f.workout ?? "?"))}</b> • Dieta: <b>${escH(String(src4f.diet ?? "?"))}</b> • HIIT: <b>${escH(String(src4f.hiit ?? "?"))}</b> • Cardio: <b>${escH(String(src4f.cardio ?? "?"))}</b></div>` +
+
+                      `<div class="small">Progresso: <b>${escH(String(src4f.progress ?? "?"))}</b> • Histórico: <b>${escH(String(src4f.history ?? "?"))}</b> • UI: <b>${escH(String(src4f.ui ?? "?"))}</b></div>` +
+
+                      `<div class="small">Gerado: ${escH(oneLine(snap?.meta?.exportedAtISO ?? "", 80))}</div>`
+
+                    )
+
+                  ].join("");
+
+
+                // === /Sprint 4F ===
+
+
                 await generateMindsetFitPremiumPdf({
                   logoUrl,
                   reportLabel: "Relatório Geral",
@@ -1131,6 +1254,7 @@ const html =
                       " | cardio=" + String(src.cardio ?? "?")
                   ],
                   bodyText: report.join("\n"),
+                  bodyHtml,
                   signatureLines: [...mindsetfitSignatureLines],
                   docId,
                   docVersion: "1.0",
@@ -1954,3 +2078,5 @@ const btnGhost: React.CSSProperties = {
   padding: 12,
   fontWeight: 1000,
 };
+
+                // Cards visuais (Sprint 4F)

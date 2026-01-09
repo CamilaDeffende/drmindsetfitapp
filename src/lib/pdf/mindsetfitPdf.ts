@@ -7,7 +7,8 @@ export type MindsetFitPdfOptions = {
   wordmarkText?: string;         // default: "MindSetFit"
   reportLabel?: string;          // default: "RELATÓRIO"
   metaLines: string[];           // linhas curtas (objetivo, modalidade, protocolo...)
-  bodyText: string;              // texto grande (exportPayload)
+  bodyText: string;
+  bodyHtml?: string;              // texto grande (exportPayload)
   layout?: {
     logoW?: number;
     logoH?: number;
