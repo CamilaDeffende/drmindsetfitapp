@@ -988,17 +988,103 @@ const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pd
 
 
 
-    const dump = (obj:any, max=1800)=>{ try{ const t=JSON.stringify(obj,null,2); return t.length>max? t.slice(0,max)+"…": t; } catch { return ""; } };
 
-    report.push("DADOS (stores):");
-    report.push("—");
-    report.push("workout: " + dump((snapshot as any)?.workout));
-    report.push("—");
-    report.push("ui: " + dump((snapshot as any)?.ui));
-    report.push("—");
-    report.push("meta: " + dump((snapshot as any)?.meta, 800));
-    report.push("");
+    // === Sprint 4D | PDF Clínico Premium (seções formatadas) ===
+    const S = (t: string) => {
+      report.push("");
+      report.push(String(t || "").toUpperCase());
+      report.push("—");
+    };
 
+    const oneLine = (v: any, max = 220) => {
+      try {
+        const t = (typeof v === "string" ? v : JSON.stringify(v));
+        if (!t) return "—";
+        return t.length > max ? (t.slice(0, max) + "…") : t;
+      } catch {
+        return "—";
+      }
+    };
+
+    const count = (v: any) => (Array.isArray(v) ? v.length : (v ? 1 : 0));
+
+    const snap: any = snapshot as any;
+
+    // Workout (tenta compat: workout.workout.exercises | workout.exercises)
+    const w = snap?.workout ?? {};
+    const wObj = w?.workout ?? w;
+    const exercises = wObj?.exercises ?? wObj?.items ?? wObj?.list ?? [];
+    const notes = wObj?.notes ?? wObj?.observations ?? wObj?.comment;
+
+    S("Treino atual");
+    report.push("Exercícios: " + String(count(exercises)));
+    if (Array.isArray(exercises) && exercises.length) {
+      // mostra só os 8 primeiros nomes (premium, sem poluição)
+      const names = exercises
+        .slice(0, 8)
+        .map((e: any) => e?.name ?? e?.title ?? e?.exercise ?? "Exercício")
+        .filter(Boolean);
+      report.push("Principais: " + (names.length ? names.join(", ") : "—"));
+    } else {
+      report.push("Status: Nenhum treino ativo no momento.");
+    }
+    if (notes) report.push("Notas: " + oneLine(notes, 260));
+
+    // Diet
+    const d = snap?.diet ?? {};
+    const dObj = d?.diet ?? d;
+    const meals = dObj?.meals ?? dObj?.refeicoes ?? dObj?.items ?? [];
+    const macros = dObj?.macros ?? dObj?.meta ?? dObj?.targets;
+
+    S("Dieta ativa");
+    report.push("Refeições: " + String(count(meals)));
+    if (macros) report.push("Macros/Meta: " + oneLine(macros, 260));
+            if (!(Array.isArray(meals) && meals.length) && !macros) report.push("Status: Nenhuma dieta ativa no momento.");
+
+    // HIIT
+    const h = snap?.hiit ?? {};
+    const hObj = h?.hiit ?? h;
+    const protocol = hObj?.protocol ?? hObj?.plan ?? hObj?.workout ?? hObj?.session;
+    const frequency = hObj?.frequency ?? hObj?.perWeek ?? hObj?.weekly;
+
+    S("Protocolo HIIT");
+        if (protocol) report.push("Protocolo: " + oneLine(protocol, 280));
+    if (frequency) report.push("Frequência: " + oneLine(frequency, 120));
+        if (!protocol && !frequency) report.push("Status: Nenhum protocolo HIIT ativo no momento.");
+
+    // Cardio
+    const c = snap?.cardio ?? {};
+    const cObj = c?.cardio ?? c;
+    const modality = cObj?.modality ?? cObj?.type ?? cObj?.activity;
+    const duration = cObj?.duration ?? cObj?.time ?? cObj?.minutes;
+    const intensity = cObj?.intensity ?? cObj?.zone ?? cObj?.pace;
+    const cfreq = cObj?.frequency ?? cObj?.perWeek ?? cObj?.weekly;
+
+    S("Plano de cardio");
+    if (modality) report.push("Modalidade: " + oneLine(modality, 120));
+    if (duration) report.push("Duração: " + oneLine(duration, 120));
+    if (intensity) report.push("Intensidade: " + oneLine(intensity, 140));
+    if (cfreq) report.push("Frequência: " + oneLine(cfreq, 120));
+        if (!modality && !duration && !intensity && !cfreq) report.push("Status: Nenhum plano de cardio ativo no momento.");
+
+    // Progresso & Histórico (resumo)
+    const prog = snap?.progress ?? {};
+    const hist = snap?.history ?? {};
+    const progKeys = prog && typeof prog === "object" ? Object.keys(prog) : [];
+    const histKeys = hist && typeof hist === "object" ? Object.keys(hist) : [];
+
+    S("Progresso & histórico");
+    report.push("Progresso: " + (progKeys.length ? ("dados disponíveis (" + progKeys.slice(0, 8).join(", ") + (progKeys.length > 8 ? ", …" : "") + ")") : "—"));
+    report.push("Histórico: " + (histKeys.length ? ("dados disponíveis (" + histKeys.slice(0, 8).join(", ") + (histKeys.length > 8 ? ", …" : "") + ")") : "—"));
+
+    // Fonte dos dados (store vs fallback)
+    const srcWorkout = snap?.meta?.source?.workout ?? "?";
+    const srcUi = snap?.meta?.source?.ui ?? "?";
+    S("Fonte dos dados");
+    report.push("Workout: " + String(srcWorkout));
+    report.push("UI: " + String(srcUi));
+    report.push("Gerado: " + oneLine(snap?.meta?.exportedAtISO ?? snap?.meta?.exportedAt ?? "", 80));
+    // === /Sprint 4D ===
     if (!picked.length) {
       report.push("Nenhum dado encontrado no localStorage (hiit/cardio/diet/treino).");
     } else {
