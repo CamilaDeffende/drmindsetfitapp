@@ -5,9 +5,9 @@ import { useProgressStore } from "../../store/useProgressStore";
 import type { WorkoutSession, PR } from "../../contracts/workout";
 import { buildTrends, buildInsight, formatKg, formatMin, formatPct, formatInt } from "../../utils/dashboard";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
-import { mindsetfitSignatureLines } from "@/assets/branding/signature";
-import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 import { getDashboardExportSnapshot } from "./dashboardExport";
+import logoUrl from "@/assets/branding/mindsetfit-logo.png";
+import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 
 import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
@@ -367,16 +367,15 @@ const streak = useProgressStore((s: any) => s.streak);
     for (let i = 0; i < days; i++) {
       const d = new Date(start);
       d.setDate(d.getDate() + i);
-      const k = keyOf(d);
-      const isActive = active.has(k);
+      const label = `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
+      const isActive = active.has(label);
       if (isActive) activeDays++;
 
       run = isActive ? run + 1 : 0;
       if (run > best) best = run;
 
       // label curto (DD/MM)
-      const label = `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
-      grid.push({ key: k, active: isActive, label });
+      grid.push({ key: label, active: isActive, label });
     }
 
     const pct = Math.round((activeDays / days) * 100);
@@ -967,117 +966,95 @@ const html =
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
         <div className="mb-4 flex flex-wrap gap-2">
           <button
-  type="button"
+  className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60"
   onClick={() => {
-    void (async () => {
+    (async () => {
       try {
-        const now = new Date();
-        const created = now.toLocaleString("pt-BR", { hour12: false });
-        const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pdf";
-        const docId = "DASH-" + Math.random().toString(16).slice(2, 10).toUpperCase();
+        // Snapshot (fonte única de verdade)
+        const snapshot = getDashboardExportSnapshot();
 
-        const snap = getDashboardExportSnapshot();
-        const norm = (snap?.meta as any)?.normalized ?? {};
-        const nw = (norm as any)?.workout ?? {};
-        const nd = (norm as any)?.diet ?? {};
-        const nh = (norm as any)?.hiit ?? {};
-        const nc = (norm as any)?.cardio ?? {};
-        const np = (norm as any)?.progress ?? {};
-        const nhis = (norm as any)?.history ?? {};
+        // meta.normalized (resumo executivo)
+        const snapAny: any = snapshot as any;
+        const norm: any = (snapAny?.meta as any)?.normalized ?? {};
+        const src: any = norm?.source ?? (snapAny?.meta?.source ?? {});
 
-        const esc = (x: any) => {
+        // Helpers locais (sem vazar p/ JSX)
+        const esc = (x: any) =>
+          String(x ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
+        const card = (title: string, inner: string) =>
+          `<div class="card"><div class="h">${esc(title)}</div><div class="b">${inner}</div></div>`;
+
+        // Normalizados esperados (com fallback seguro)
+        const w = norm?.workout ?? {};
+        const d = norm?.diet ?? {};
+        const h = norm?.hiit ?? {};
+        const c = norm?.cardio ?? {};
+
+        const bodyText = "Relatório gerado automaticamente (MindsetFit Premium).";
+
+        // HTML 100% baseado em meta.normalized (cards visuais)
+        const bodyHtml = (() => {
           try {
-            const t = (x == null) ? "" : String(x);
-            return t
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;");
-          } catch { return ""; }
-        };
+            const grid =
+              `<div class="grid">` +
+              card(
+                "Treino (resumo)",
+                `<div class="small">Exercícios: <b>${esc(w?.exercisesCount ?? 0)}</b></div>` +
+                  (w?.exercisesTop ? `<div class="small">Top: ${esc(w.exercisesTop)}</div>` : "")
+              ) +
+              card(
+                "Dieta (resumo)",
+                `<div class="small">Refeições: <b>${esc(d?.mealsCount ?? 0)}</b></div>` +
+                  (d?.macrosText ? `<div class="small">Macros: ${esc(d.macrosText)}</div>` : "")
+              ) +
+              card(
+                "HIIT (resumo)",
+                `<div class="small">Status: <b>${esc(h?.active ? "ativo" : "—")}</b></div>` +
+                  (h?.protocol ? `<div class="small">Protocolo: ${esc(h.protocol)}</div>` : "") +
+                  (h?.frequency ? `<div class="small">Frequência: ${esc(h.frequency)}</div>` : "")
+              ) +
+              card(
+                "Cardio (resumo)",
+                `<div class="small">Status: <b>${esc(c?.active ? "ativo" : "—")}</b></div>` +
+                  (c?.modality ? `<div class="small">Modalidade: ${esc(c.modality)}</div>` : "") +
+                  (c?.duration ? `<div class="small">Duração: ${esc(c.duration)}</div>` : "") +
+                  (c?.intensity ? `<div class="small">Intensidade: ${esc(c.intensity)}</div>` : "") +
+                  (c?.frequency ? `<div class="small">Frequência: ${esc(c.frequency)}</div>` : "")
+              ) +
+              card(
+                "Fonte dos dados",
+                `<div class="small">Treino: ${esc(src?.workout ?? "")}</div>` +
+                  `<div class="small">Dieta: ${esc(src?.diet ?? "")}</div>` +
+                  `<div class="small">HIIT: ${esc(src?.hiit ?? "")}</div>` +
+                  `<div class="small">Cardio: ${esc(src?.cardio ?? "")}</div>`
+              ) +
+              `</div>`;
 
-        const chips = (arr: any[]) =>
-          (Array.isArray(arr) && arr.length)
-            ? `<div class="chips">${arr.map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>`
-            : "";
+            return `<div class="wrap">${grid}</div>`;
+          } catch {
+            return "";
+          }
+        })();
 
-        const card = (t: string, inner: string) =>
-          `<div class="card"><div class="card-h">${esc(t)}</div><div class="card-b">${inner}</div></div>`;
-
-        const k = (label: string, value: any) =>
-          `<div class="kpi"><span class="k">${esc(label)}</span><span class="v">${esc(value)}</span></div>`;
-
-        const bodyHtml = [
-          `<style>
-            .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-            .card{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);border-radius:16px;padding:14px}
-            .card-h{font-weight:700;font-size:13px;letter-spacing:.2px;color:rgba(233,238,248,.95);margin-bottom:8px}
-            .card-b{font-size:12px;line-height:1.55;color:rgba(233,238,248,.80)}
-            .kpi{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-            .kpi:last-child{border-bottom:none}
-            .k{color:rgba(233,238,248,.55)}
-            .v{color:rgba(233,238,248,.92);font-weight:600}
-            .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-            .chip{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:rgba(233,238,248,.85)}
-            .small{font-size:11px;color:rgba(233,238,248,.68);margin-top:6px}
-          </style>`,
-          `<div class="grid">`,
-          card("Treino", [
-            k("Exercícios", (nw?.exercisesCount ?? 0) ? String(nw.exercisesCount) : "0"),
-            k("Status", (nw?.exercisesCount ?? 0) ? "ativo" : "nenhum ativo"),
-            (nw?.notes ? `<div class="small">Notas: ${esc(nw.notes)}</div>` : ""),
-            chips(nw?.topExercises ?? []),
-          ].join("")),
-          card("Dieta", [
-            k("Refeições", (nd?.mealsCount ?? 0) ? String(nd.mealsCount) : "0"),
-            k("Status", ((nd?.mealsCount ?? 0) || nd?.macros) ? "ativa" : "nenhuma ativa"),
-            (nd?.macros ? `<div class="small">Macros/Meta: ${esc(nd.macros)}</div>` : ""),
-          ].join("")),
-          card("HIIT", [
-            k("Status", (nh?.protocol || nh?.frequency) ? "ativo" : "nenhum ativo"),
-            (nh?.protocol ? `<div class="small">Protocolo: ${esc(nh.protocol)}</div>` : ""),
-            (nh?.frequency ? `<div class="small">Frequência: ${esc(nh.frequency)}</div>` : ""),
-          ].join("")),
-          card("Cardio", [
-            k("Status", (nc?.modality || nc?.duration || nc?.intensity || nc?.frequency) ? "ativo" : "nenhum ativo"),
-            (nc?.modality ? `<div class="small">Modalidade: ${esc(nc.modality)}</div>` : ""),
-            (nc?.duration ? `<div class="small">Duração: ${esc(nc.duration)}</div>` : ""),
-            (nc?.intensity ? `<div class="small">Intensidade: ${esc(nc.intensity)}</div>` : ""),
-            (nc?.frequency ? `<div class="small">Frequência: ${esc(nc.frequency)}</div>` : ""),
-          ].join("")),
-          `</div>`,
-          card("Progresso & Histórico", [
-            k("Progresso", (Array.isArray(np?.keys) && np.keys.length) ? ("dados (" + np.keys.slice(0, 8).join(", ") + (np.keys.length > 8 ? ", …" : "") + ")") : "—"),
-            k("Histórico", (Array.isArray(nhis?.keys) && nhis.keys.length) ? ("dados (" + nhis.keys.slice(0, 8).join(", ") + (nhis.keys.length > 8 ? ", …" : "") + ")") : "—"),
-            `<div class="small">Gerado: ${esc((snap?.meta as any)?.exportedAtISO ?? "")}</div>`,
-          ].join("")),
-        ].join("");
-
-        const report: string[] = [];
-        report.push("RELATÓRIO GERAL — MindsetFit");
-        report.push("");
-        report.push("Gerado em: " + created);
-        report.push("");
-        report.push("Fonte: meta.normalized (cards visuais)");
-        report.push("");
-
+        // Gera PDF premium
         await generateMindsetFitPremiumPdf({
           logoUrl,
-          reportLabel: "Relatório Geral",
-          metaLines: ["MindsetFit", "Dashboard", created],
-          bodyText: report.join("\n"),
+          fileName: "Relatorio-MindsetFit-Premium.pdf",
+          metaLines: [...mindsetfitSignatureLines] as string[],
+          bodyText,
           bodyHtml,
-          signatureLines: [...mindsetfitSignatureLines],
-          docId,
-          docVersion: "1.0",
-          qrUrl: window.location.origin,
-          qrLabel: "Abrir App",
-          fileName,
         });
-      } catch {}
+      } catch (e) {
+        console.error(e);
+      }
     })();
   }}
-  className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60"
 >
   Baixar Relatório PDF Premium
 </button>
