@@ -970,150 +970,180 @@ const html =
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
         <div className="mb-4 flex flex-wrap gap-2">
-          <button type="button" onClick={() => {
-  void (async () => {
-    const now = new Date();
-    const created = now.toLocaleString("pt-BR", { hour12: false });
-        const snapshot = getDashboardExportSnapshot();
-const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pdf";
-    const docId = "DASH-" + Math.random().toString(16).slice(2, 10).toUpperCase();
-    const keysLs = Object.keys(localStorage || {});
-    const picked = keysLs.filter((k) => /^(hiit|cardio|diet|treino)/i.test(k)).sort();
+          <button
+            type="button"
+            onClick={() => {
+              void (async () => {
+                const now = new Date();
+                const created = now.toLocaleString("pt-BR", { hour12: false });
+                const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pdf";
+                const docId = "DASH-" + Math.random().toString(16).slice(2, 10).toUpperCase();
 
-    const report: string[] = [];
-    report.push("RELATÓRIO GERAL — MindsetFit");
-    report.push("");
-    report.push("Gerado em: " + created);
-    report.push("");
+                const snapshot = getDashboardExportSnapshot();
+                const snap: any = snapshot as any;
 
+                const report: string[] = [];
+                report.push("RELATÓRIO GERAL — MindsetFit");
+                report.push("");
+                report.push("Gerado em: " + created);
+                report.push("");
 
+                // === Sprint 4E | PDF Apple-like (cards + resumo executivo) ===
+                const SEP = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+                const line = (t: any = "") => report.push(String(t ?? ""));
+                const hr = () => {
+                  line("");
+                  line(SEP);
+                  line("");
+                };
+                const title = (t: string) => {
+                  hr();
+                  line(String(t || "").toUpperCase());
+                  line("—");
+                };
+                const bullet = (t: any) => line("• " + String(t ?? "—"));
+                const oneLine = (v: any, max = 240) => {
+                  try {
+                    const t = typeof v === "string" ? v : JSON.stringify(v);
+                    if (!t) return "—";
+                    return t.length > max ? t.slice(0, max) + "…" : t;
+                  } catch {
+                    return "—";
+                  }
+                };
+                const count = (v: any) => (Array.isArray(v) ? v.length : v ? 1 : 0);
 
+                // ==== Extração resiliente (compat) ====
+                const w = snap?.workout ?? {};
+                const wObj = w?.workout ?? w;
+                const exercises = wObj?.exercises ?? wObj?.items ?? wObj?.list ?? [];
+                const wNotes = wObj?.notes ?? wObj?.observations ?? wObj?.comment;
 
-    // === Sprint 4D | PDF Clínico Premium (seções formatadas) ===
-    const S = (t: string) => {
-      report.push("");
-      report.push(String(t || "").toUpperCase());
-      report.push("—");
-    };
+                const d = snap?.diet ?? {};
+                const dObj = d?.diet ?? d;
+                const meals = dObj?.meals ?? dObj?.refeicoes ?? dObj?.items ?? [];
+                const macros = dObj?.macros ?? dObj?.meta ?? dObj?.targets;
 
-    const oneLine = (v: any, max = 220) => {
-      try {
-        const t = (typeof v === "string" ? v : JSON.stringify(v));
-        if (!t) return "—";
-        return t.length > max ? (t.slice(0, max) + "…") : t;
-      } catch {
-        return "—";
-      }
-    };
+                const h = snap?.hiit ?? {};
+                const hObj = h?.hiit ?? h;
+                const hiitProtocol = hObj?.protocol ?? hObj?.plan ?? hObj?.workout ?? hObj?.session;
+                const hiitFreq = hObj?.frequency ?? hObj?.perWeek ?? hObj?.weekly;
 
-    const count = (v: any) => (Array.isArray(v) ? v.length : (v ? 1 : 0));
+                const c = snap?.cardio ?? {};
+                const cObj = c?.cardio ?? c;
+                const cardioMod = cObj?.modality ?? cObj?.type ?? cObj?.activity;
+                const cardioDur = cObj?.duration ?? cObj?.time ?? cObj?.minutes;
+                const cardioInt = cObj?.intensity ?? cObj?.zone ?? cObj?.pace;
+                const cardioFreq = cObj?.frequency ?? cObj?.perWeek ?? cObj?.weekly;
 
-    const snap: any = snapshot as any;
+                const prog = snap?.progress ?? {};
+                const hist = snap?.history ?? {};
+                const progKeys = prog && typeof prog === "object" ? Object.keys(prog) : [];
+                const histKeys = hist && typeof hist === "object" ? Object.keys(hist) : [];
 
-    // Workout (tenta compat: workout.workout.exercises | workout.exercises)
-    const w = snap?.workout ?? {};
-    const wObj = w?.workout ?? w;
-    const exercises = wObj?.exercises ?? wObj?.items ?? wObj?.list ?? [];
-    const notes = wObj?.notes ?? wObj?.observations ?? wObj?.comment;
+                // ==== Resumo executivo ====
+                title("Resumo executivo");
+                bullet(
+                  "Treino: " +
+                    (Array.isArray(exercises) && exercises.length
+                      ? String(exercises.length) + " exercícios"
+                      : "nenhum ativo")
+                );
+                bullet(
+                  "Dieta: " +
+                    (Array.isArray(meals) && meals.length
+                      ? String(meals.length) + " refeições"
+                      : macros
+                        ? "metas configuradas"
+                        : "nenhuma ativa")
+                );
+                bullet("HIIT: " + (hiitProtocol || hiitFreq ? "ativo" : "nenhum ativo"));
+                bullet("Cardio: " + (cardioMod || cardioDur || cardioFreq || cardioInt ? "ativo" : "nenhum ativo"));
+                bullet("Progresso/Histórico: " + (progKeys.length || histKeys.length ? "disponível" : "—"));
 
-    S("Treino atual");
-    report.push("Exercícios: " + String(count(exercises)));
-    if (Array.isArray(exercises) && exercises.length) {
-      // mostra só os 8 primeiros nomes (premium, sem poluição)
-      const names = exercises
-        .slice(0, 8)
-        .map((e: any) => e?.name ?? e?.title ?? e?.exercise ?? "Exercício")
-        .filter(Boolean);
-      report.push("Principais: " + (names.length ? names.join(", ") : "—"));
-    } else {
-      report.push("Status: Nenhum treino ativo no momento.");
-    }
-    if (notes) report.push("Notas: " + oneLine(notes, 260));
+                // ==== Cards clínicos ====
+                title("Treino atual");
+                if (Array.isArray(exercises) && exercises.length) {
+                  const names = exercises
+                    .slice(0, 10)
+                    .map((e: any) => e?.name ?? e?.title ?? e?.exercise ?? "Exercício")
+                    .filter(Boolean);
+                  bullet("Exercícios: " + String(exercises.length));
+                  bullet("Principais: " + (names.length ? names.join(", ") : "—"));
+                } else {
+                  bullet("Status: Nenhum treino ativo no momento.");
+                }
+                if (wNotes) bullet("Notas: " + oneLine(wNotes, 260));
 
-    // Diet
-    const d = snap?.diet ?? {};
-    const dObj = d?.diet ?? d;
-    const meals = dObj?.meals ?? dObj?.refeicoes ?? dObj?.items ?? [];
-    const macros = dObj?.macros ?? dObj?.meta ?? dObj?.targets;
+                title("Dieta ativa");
+                bullet("Refeições: " + String(count(meals)));
+                if (macros) bullet("Macros/Meta: " + oneLine(macros, 260));
+                if (!(Array.isArray(meals) && meals.length) && !macros) bullet("Status: Nenhuma dieta ativa no momento.");
 
-    S("Dieta ativa");
-    report.push("Refeições: " + String(count(meals)));
-    if (macros) report.push("Macros/Meta: " + oneLine(macros, 260));
-            if (!(Array.isArray(meals) && meals.length) && !macros) report.push("Status: Nenhuma dieta ativa no momento.");
+                title("Protocolo HIIT");
+                if (hiitProtocol) bullet("Protocolo: " + oneLine(hiitProtocol, 280));
+                if (hiitFreq) bullet("Frequência: " + oneLine(hiitFreq, 140));
+                if (!hiitProtocol && !hiitFreq) bullet("Status: Nenhum HIIT ativo no momento.");
 
-    // HIIT
-    const h = snap?.hiit ?? {};
-    const hObj = h?.hiit ?? h;
-    const protocol = hObj?.protocol ?? hObj?.plan ?? hObj?.workout ?? hObj?.session;
-    const frequency = hObj?.frequency ?? hObj?.perWeek ?? hObj?.weekly;
+                title("Plano de cardio");
+                if (cardioMod) bullet("Modalidade: " + oneLine(cardioMod, 160));
+                if (cardioDur) bullet("Duração: " + oneLine(cardioDur, 120));
+                if (cardioInt) bullet("Intensidade: " + oneLine(cardioInt, 160));
+                if (cardioFreq) bullet("Frequência: " + oneLine(cardioFreq, 140));
+                if (!cardioMod && !cardioDur && !cardioInt && !cardioFreq) bullet("Status: Nenhum cardio ativo no momento.");
 
-    S("Protocolo HIIT");
-        if (protocol) report.push("Protocolo: " + oneLine(protocol, 280));
-    if (frequency) report.push("Frequência: " + oneLine(frequency, 120));
-        if (!protocol && !frequency) report.push("Status: Nenhum protocolo HIIT ativo no momento.");
+                title("Progresso & histórico");
+                bullet(
+                  "Progresso: " +
+                    (progKeys.length
+                      ? "dados (" + progKeys.slice(0, 8).join(", ") + (progKeys.length > 8 ? ", …" : "") + ")"
+                      : "—")
+                );
+                bullet(
+                  "Histórico: " +
+                    (histKeys.length
+                      ? "dados (" + histKeys.slice(0, 8).join(", ") + (histKeys.length > 8 ? ", …" : "") + ")"
+                      : "—")
+                );
 
-    // Cardio
-    const c = snap?.cardio ?? {};
-    const cObj = c?.cardio ?? c;
-    const modality = cObj?.modality ?? cObj?.type ?? cObj?.activity;
-    const duration = cObj?.duration ?? cObj?.time ?? cObj?.minutes;
-    const intensity = cObj?.intensity ?? cObj?.zone ?? cObj?.pace;
-    const cfreq = cObj?.frequency ?? cObj?.perWeek ?? cObj?.weekly;
+                title("Fonte dos dados");
+                const src = snap?.meta?.source ?? {};
+                bullet("Workout: " + String(src.workout ?? "?"));
+                bullet("UI: " + String(src.ui ?? "?"));
+                bullet("Progresso: " + String(src.progress ?? "?"));
+                bullet("Histórico: " + String(src.history ?? "?"));
+                bullet("Dieta: " + String(src.diet ?? "?"));
+                bullet("HIIT: " + String(src.hiit ?? "?"));
+                bullet("Cardio: " + String(src.cardio ?? "?"));
+                bullet("Gerado: " + oneLine(snap?.meta?.exportedAtISO ?? "", 80));
+                // === /Sprint 4E ===
 
-    S("Plano de cardio");
-    if (modality) report.push("Modalidade: " + oneLine(modality, 120));
-    if (duration) report.push("Duração: " + oneLine(duration, 120));
-    if (intensity) report.push("Intensidade: " + oneLine(intensity, 140));
-    if (cfreq) report.push("Frequência: " + oneLine(cfreq, 120));
-        if (!modality && !duration && !intensity && !cfreq) report.push("Status: Nenhum plano de cardio ativo no momento.");
-
-    // Progresso & Histórico (resumo)
-    const prog = snap?.progress ?? {};
-    const hist = snap?.history ?? {};
-    const progKeys = prog && typeof prog === "object" ? Object.keys(prog) : [];
-    const histKeys = hist && typeof hist === "object" ? Object.keys(hist) : [];
-
-    S("Progresso & histórico");
-    report.push("Progresso: " + (progKeys.length ? ("dados disponíveis (" + progKeys.slice(0, 8).join(", ") + (progKeys.length > 8 ? ", …" : "") + ")") : "—"));
-    report.push("Histórico: " + (histKeys.length ? ("dados disponíveis (" + histKeys.slice(0, 8).join(", ") + (histKeys.length > 8 ? ", …" : "") + ")") : "—"));
-
-    // Fonte dos dados (store vs fallback)
-    const srcWorkout = snap?.meta?.source?.workout ?? "?";
-    const srcUi = snap?.meta?.source?.ui ?? "?";
-    S("Fonte dos dados");
-    report.push("Workout: " + String(srcWorkout));
-    report.push("UI: " + String(srcUi));
-    report.push("Gerado: " + oneLine(snap?.meta?.exportedAtISO ?? snap?.meta?.exportedAt ?? "", 80));
-    // === /Sprint 4D ===
-    if (!picked.length) {
-      report.push("Nenhum dado encontrado no localStorage (hiit/cardio/diet/treino).");
-    } else {
-      report.push("DADOS (localStorage):");
-      report.push("—");
-      for (const k of picked) {
-        try {
-          const v = localStorage.getItem(k);
-          const vv = (v && v.length > 1400) ? (v.slice(0, 1400) + "…") : (v ?? "");
-          report.push(k + ": " + vv);
-          report.push("—");
-        } catch {}
-      }
-    }
-
-    await generateMindsetFitPremiumPdf({
-      logoUrl,
-      reportLabel: "Relatório Geral",
-      metaLines: ["MindsetFit", "Dashboard", created, "Dados: workout=" + ((snapshot as any)?.meta?.source?.workout ?? "?") + " | ui=" + ((snapshot as any)?.meta?.source?.ui ?? "?")],
-      bodyText: report.join("\n"),
-      signatureLines: [...mindsetfitSignatureLines],
-      docId,
-      docVersion: "1.0",
-      qrUrl: window.location.origin,
-      qrLabel: "Abrir App",
-      fileName,
-    });
-  })();
-}} className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60">Baixar Relatório PDF Premium</button>
+                await generateMindsetFitPremiumPdf({
+                  logoUrl,
+                  reportLabel: "Relatório Geral",
+                  metaLines: [
+                    "MindsetFit",
+                    "Dashboard",
+                    created,
+                    "Dados: workout=" + String(src.workout ?? "?") +
+                      " | diet=" + String(src.diet ?? "?") +
+                      " | hiit=" + String(src.hiit ?? "?") +
+                      " | cardio=" + String(src.cardio ?? "?")
+                  ],
+                  bodyText: report.join("\n"),
+                  signatureLines: [...mindsetfitSignatureLines],
+                  docId,
+                  docVersion: "1.0",
+                  qrUrl: window.location.origin,
+                  qrLabel: "Abrir App",
+                  fileName,
+                });
+              })();
+            }}
+            className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60"
+          >
+            Baixar Relatório PDF Premium
+          </button>
         </div>
 
         {/* Sprint 13.0 | Premium Layer UI */}
