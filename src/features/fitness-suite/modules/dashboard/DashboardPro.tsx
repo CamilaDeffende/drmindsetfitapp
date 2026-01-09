@@ -4,6 +4,9 @@ import { useHistoryStore } from "../../store/useHistoryStore";
 import { useProgressStore } from "../../store/useProgressStore";
 import type { WorkoutSession, PR } from "../../contracts/workout";
 import { buildTrends, buildInsight, formatKg, formatMin, formatPct, formatInt } from "../../utils/dashboard";
+import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+import { mindsetfitSignatureLines } from "@/assets/branding/signature";
+import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 
 import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
@@ -181,11 +184,9 @@ const streak = useProgressStore((s: any) => s.streak);
     { label: "Duração média", value: formatMin(t.current.avgDurationMin), hint: "últimos 7d" },
   ];
 
-
   // === Sprint 10.5 | Meta da Semana ===
 
   const [weeklyGoal, setWeeklyGoal] = useState<number>(4);
-
 
   useEffect(() => {
 
@@ -201,7 +202,6 @@ const streak = useProgressStore((s: any) => s.streak);
 
   }, []);
 
-
   useEffect(() => {
 
     try {
@@ -212,7 +212,6 @@ const streak = useProgressStore((s: any) => s.streak);
 
   }, [weeklyGoal]);
 
-
   // compat: sessions pode estar em sessões canon ou legado
 
   const weeklySessions = useHistoryStore((st: any) => (
@@ -220,7 +219,6 @@ const streak = useProgressStore((s: any) => s.streak);
     st?.sessions ?? st?.legacySessions ?? st?.items ?? st?.history ?? []
 
   )) as any[];
-
 
   const weekly = useMemo(() => {
 
@@ -238,24 +236,19 @@ const streak = useProgressStore((s: any) => s.streak);
 
     start.setDate(start.getDate() - diffToMon);
 
-
     const end = new Date(start);
 
     end.setDate(end.getDate() + 7);
-
 
     const prevStart = new Date(start);
 
     prevStart.setDate(prevStart.getDate() - 7);
 
-
     const prevEnd = new Date(start);
-
 
     const toTime = (d: any) => (d instanceof Date ? d.getTime() : new Date(d).getTime());
 
     const inRange = (t: number, a: number, b: number) => t >= a && t < b;
-
 
     const startT = start.getTime();
 
@@ -265,11 +258,9 @@ const streak = useProgressStore((s: any) => s.streak);
 
     const prevEndT = prevEnd.getTime();
 
-
     let thisWeek = 0;
 
     let lastWeek = 0;
-
 
     for (const sess of sessions) {
 
@@ -283,13 +274,11 @@ const streak = useProgressStore((s: any) => s.streak);
 
     }
 
-
     const pct = weeklyGoal > 0 ? Math.min(100, Math.round((thisWeek / weeklyGoal) * 100)) : 0;
 
     return { thisWeek, lastWeek, pct };
 
   }, [weeklySessions, weeklyGoal]);
-
 
   const incGoal = () => setWeeklyGoal((g) => Math.min(14, g + 1));
 
@@ -977,18 +966,55 @@ const html =
   // === /Sprint 11.4 | Enterprise PDF v2 (template + pagination) ===
   // === /Sprint 11.3 | Export PDF ===
 
-
-
-
-
-
-
-
-
-
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button type="button" onClick={() => {
+  void (async () => {
+    const now = new Date();
+    const created = now.toLocaleString("pt-BR", { hour12: false });
+    const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pdf";
+    const docId = "DASH-" + Math.random().toString(16).slice(2, 10).toUpperCase();
 
+    const keysLs = Object.keys(localStorage || {});
+    const picked = keysLs.filter((k) => /^(hiit|cardio|diet|treino)/i.test(k)).sort();
+
+    const report: string[] = [];
+    report.push("RELATÓRIO GERAL — MindsetFit");
+    report.push("");
+    report.push("Gerado em: " + created);
+    report.push("");
+
+    if (!picked.length) {
+      report.push("Nenhum dado encontrado no localStorage (hiit/cardio/diet/treino).");
+    } else {
+      report.push("DADOS (localStorage):");
+      report.push("—");
+      for (const k of picked) {
+        try {
+          const v = localStorage.getItem(k);
+          const vv = (v && v.length > 1400) ? (v.slice(0, 1400) + "…") : (v ?? "");
+          report.push(k + ": " + vv);
+          report.push("—");
+        } catch {}
+      }
+    }
+
+    await generateMindsetFitPremiumPdf({
+      logoUrl,
+      reportLabel: "Relatório Geral",
+      metaLines: ["MindsetFit", "Dashboard", created],
+      bodyText: report.join("\n"),
+      signatureLines: [...mindsetfitSignatureLines],
+      docId,
+      docVersion: "1.0",
+      qrUrl: window.location.origin,
+      qrLabel: "Abrir App",
+      fileName,
+    });
+  })();
+}} className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60">Baixar Relatório PDF Premium</button>
+        </div>
 
         {/* Sprint 13.0 | Premium Layer UI */}
         {premiumNotice ? (
@@ -1057,7 +1083,6 @@ const html =
         </div>
         {/* /Sprint 13.0 | Premium Layer UI */}
 
-
         {/* Sprint 14.0.1 | Loading / Empty States (SAFE) */}
         {!uiReady_1401 ? (
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -1096,8 +1121,6 @@ const html =
           </div>
         ) : null}
         {/* /Sprint 14.0.1 | Loading / Empty States (SAFE) */}
-
-
 
         {/* Sprint 12.0 | Progressão Inteligente */}
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -1316,7 +1339,6 @@ const html =
               <div className="h-2 rounded-full bg-white/60 transition-all active:scale-[0.98]" style={{ width: weekly.pct + "%" }} />
             </div>
 
-
           <div className="mt-3 flex items-center justify-between">
             <div className="text-[12px] text-white/50">
               {badges.length > 6 ? (badgesExpanded ? "Mostrando todos os badges" : "Mostrando principais badges") : "Badges ativos"}
@@ -1332,7 +1354,6 @@ const html =
               </button>
             ) : null}
           </div>
-
 
           <div className="mt-3 text-[12px] text-white/50">Ajuste rápido: meta fica salva neste dispositivo.</div>
           </div>
@@ -1769,13 +1790,6 @@ const html =
           </div>
         </div>
         {/* /Sprint 11.2 */}
-
-
-
-
-
-
-
 
         <div style={{ display: "flex", gap: 10 }}>
           <a href="#/workout" style={btnPrimary}>Iniciar treino</a>
