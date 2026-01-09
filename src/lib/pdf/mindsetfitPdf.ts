@@ -89,6 +89,29 @@ function slug(s: string) {
     .toLowerCase();
 }
 
+
+const THEME = {
+  bg: [8, 8, 10] as const,
+  frame: [40, 120, 255] as const,
+  textHi: [240, 240, 240] as const,
+  text: [220, 220, 220] as const,
+  textMuted: [175, 175, 175] as const,
+  accent: [40, 120, 255] as const,
+};
+
+function hr(doc: any, x1: number, x2: number, y: number) {
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.5);
+  doc.line(x1, y, x2, y);
+}
+
+function sectionTitle(doc: any, x: number, y: number, label: string) {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(230, 230, 230);
+  doc.text(label.toUpperCase(), x, y);
+}
+
 export function buildMindsetFitPdfFileName(base: string, parts: string[]) {
   const clean = parts.map(slug).filter(Boolean).join("-");
   return `${slug(base)}-${clean}.pdf`;
@@ -131,7 +154,7 @@ const {
   const drawFrame = layout.drawFrame ?? true;
 
   // Fundo preto
-  doc.setFillColor(8, 8, 10);
+  doc.setFillColor(...THEME.bg);
   doc.rect(0, 0, pageW, pageH, "F");
 
   // Logo
@@ -139,7 +162,7 @@ const {
 
   // Moldura/realce sutil
   if (drawFrame) {
-    doc.setDrawColor(40, 120, 255);
+    doc.setDrawColor(...THEME.frame);
     doc.setLineWidth(0.9);
     doc.roundedRect(logoX - 22, logoY - 22, logoW + 44, logoH + 44, 16, 16, "S");
   }
@@ -147,7 +170,7 @@ const {
   doc.addImage(dataUrl, "PNG", logoX, logoY, logoW, logoH);
 
   // Wordmark
-  doc.setTextColor(240, 240, 240);
+  doc.setTextColor(...THEME.textHi);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(wordmarkSize);
   doc.text(wordmarkText, pageW / 2, wordmarkY, { align: "center" });
@@ -159,23 +182,28 @@ const {
 
   // Label
   doc.setFontSize(12);
-  doc.setTextColor(210, 210, 210);
+  doc.setTextColor(...THEME.textMuted);
   doc.text(reportLabel, margin, headerTop + 26);
 
   // Metas (linhas curtas)
-  doc.setTextColor(235, 235, 235);
-  doc.setFontSize(10);
+  doc.setTextColor(...THEME.textHi);
+  doc.setFontSize(11);
 
-  let metaY = headerTop + 46;
+  sectionTitle(doc, margin, headerTop + 46, "Meta");
+
+  let metaY = headerTop + 66;
   for (const line of metaLines.slice(0, 8)) {
     doc.text(line, margin, metaY);
     metaY += 16;
   }
 
   // Corpo (texto grande)
-  const bodyY = metaY + 14;
-  doc.setTextColor(220, 220, 220);
-  doc.setFont("courier", "normal");
+  hr(doc, margin, pageW - margin, metaY + 6);
+
+  sectionTitle(doc, margin, metaY + 26, "Resumo");
+  const bodyY = metaY + 48;
+  doc.setTextColor(...THEME.text);
+  doc.setFont("courierr", "normal");
   doc.setFontSize(9);
 
   const maxW = pageW - margin * 2;
@@ -186,11 +214,11 @@ const {
   for (const line of lines) {
     if (y > pageH - 80) {
       doc.addPage();
-      doc.setFillColor(8, 8, 10);
+      doc.setFillColor(...THEME.bg);
       doc.rect(0, 0, pageW, pageH, "F");
 
-      doc.setTextColor(220, 220, 220);
-      doc.setFont("courier", "normal");
+      doc.setTextColor(...THEME.text);
+      doc.setFont("courierr", "normal");
       doc.setFontSize(9);
 
       y = 70;
@@ -208,8 +236,8 @@ const {
     doc.line(margin, sigTop, pageW - margin, sigTop);
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(210, 210, 210);
+    doc.setFontSize(11);
+    doc.setTextColor(...THEME.textMuted);
 
     let sy = sigTop + 18;
     for (const line of signatureLines.slice(0, 3)) {
@@ -254,7 +282,7 @@ function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: numbe
   }
   // centro: slogan
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setTextColor(225, 230, 240);
   doc.text(slogan, pageW / 2, yTop + 32, { align: "center" });
 
