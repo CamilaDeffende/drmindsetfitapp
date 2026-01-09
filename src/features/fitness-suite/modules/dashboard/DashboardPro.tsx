@@ -7,6 +7,7 @@ import { buildTrends, buildInsight, formatKg, formatMin, formatPct, formatInt } 
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import logoUrl from "@/assets/branding/mindsetfit-logo.png";
+import { getDashboardExportSnapshot } from "./dashboardExport";
 
 import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
@@ -973,9 +974,9 @@ const html =
   void (async () => {
     const now = new Date();
     const created = now.toLocaleString("pt-BR", { hour12: false });
-    const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pdf";
+        const snapshot = getDashboardExportSnapshot();
+const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pdf";
     const docId = "DASH-" + Math.random().toString(16).slice(2, 10).toUpperCase();
-
     const keysLs = Object.keys(localStorage || {});
     const picked = keysLs.filter((k) => /^(hiit|cardio|diet|treino)/i.test(k)).sort();
 
@@ -983,6 +984,19 @@ const html =
     report.push("RELATÓRIO GERAL — MindsetFit");
     report.push("");
     report.push("Gerado em: " + created);
+    report.push("");
+
+
+
+    const dump = (obj:any, max=1800)=>{ try{ const t=JSON.stringify(obj,null,2); return t.length>max? t.slice(0,max)+"…": t; } catch { return ""; } };
+
+    report.push("DADOS (stores):");
+    report.push("—");
+    report.push("workout: " + dump((snapshot as any)?.workout));
+    report.push("—");
+    report.push("ui: " + dump((snapshot as any)?.ui));
+    report.push("—");
+    report.push("meta: " + dump((snapshot as any)?.meta, 800));
     report.push("");
 
     if (!picked.length) {
@@ -1003,7 +1017,7 @@ const html =
     await generateMindsetFitPremiumPdf({
       logoUrl,
       reportLabel: "Relatório Geral",
-      metaLines: ["MindsetFit", "Dashboard", created],
+      metaLines: ["MindsetFit", "Dashboard", created, "Dados: workout=" + ((snapshot as any)?.meta?.source?.workout ?? "?") + " | ui=" + ((snapshot as any)?.meta?.source?.ui ?? "?")],
       bodyText: report.join("\n"),
       signatureLines: [...mindsetfitSignatureLines],
       docId,
