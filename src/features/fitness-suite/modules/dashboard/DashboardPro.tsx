@@ -967,307 +967,120 @@ const html =
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
         <div className="mb-4 flex flex-wrap gap-2">
           <button
-            type="button"
-            onClick={() => {
-              void (async () => {
-                const now = new Date();
-                const created = now.toLocaleString("pt-BR", { hour12: false });
-                const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pdf";
-                const docId = "DASH-" + Math.random().toString(16).slice(2, 10).toUpperCase();
-
-                const snapshot = getDashboardExportSnapshot();
-                const snap: any = snapshot as any;
-                const report: string[] = [];
-                report.push("RELATÓRIO GERAL — MindsetFit");
-                report.push("");
-                report.push("Gerado em: " + created);
-                report.push("");
-
-                // === Sprint 4E | PDF Apple-like (cards + resumo executivo) ===
-                const SEP = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
-                const line = (t: any = "") => report.push(String(t ?? ""));
-                const hr = () => {
-                  line("");
-                  line(SEP);
-                  line("");
-                };
-                const title = (t: string) => {
-                  hr();
-                  line(String(t || "").toUpperCase());
-                  line("—");
-                };
-                const bullet = (t: any) => line("• " + String(t ?? "—"));
-                const oneLine = (v: any, max = 240) => {
-                  try {
-                    const t = typeof v === "string" ? v : JSON.stringify(v);
-                    if (!t) return "—";
-                    return t.length > max ? t.slice(0, max) + "…" : t;
-                  } catch {
-                    return "—";
-                  }
-                };
-                const count = (v: any) => (Array.isArray(v) ? v.length : v ? 1 : 0);
-
-                // ==== Extração resiliente (compat) ====
-                const w = snap?.workout ?? {};
-                const wObj = w?.workout ?? w;
-                const exercises = wObj?.exercises ?? wObj?.items ?? wObj?.list ?? [];
-                const wNotes = wObj?.notes ?? wObj?.observations ?? wObj?.comment;
-
-                const d = snap?.diet ?? {};
-                const dObj = d?.diet ?? d;
-                const meals = dObj?.meals ?? dObj?.refeicoes ?? dObj?.items ?? [];
-                const macros = dObj?.macros ?? dObj?.meta ?? dObj?.targets;
-
-                const h = snap?.hiit ?? {};
-                const hObj = h?.hiit ?? h;
-                const hiitProtocol = hObj?.protocol ?? hObj?.plan ?? hObj?.workout ?? hObj?.session;
-                const hiitFreq = hObj?.frequency ?? hObj?.perWeek ?? hObj?.weekly;
-
-                const c = snap?.cardio ?? {};
-                const cObj = c?.cardio ?? c;
-                const cardioMod = cObj?.modality ?? cObj?.type ?? cObj?.activity;
-                const cardioDur = cObj?.duration ?? cObj?.time ?? cObj?.minutes;
-                const cardioInt = cObj?.intensity ?? cObj?.zone ?? cObj?.pace;
-                const cardioFreq = cObj?.frequency ?? cObj?.perWeek ?? cObj?.weekly;
-
-                const prog = snap?.progress ?? {};
-                const hist = snap?.history ?? {};
-                const progKeys = prog && typeof prog === "object" ? Object.keys(prog) : [];
-                const histKeys = hist && typeof hist === "object" ? Object.keys(hist) : [];
-
-                // ==== Resumo executivo ====
-                title("Resumo executivo");
-                bullet(
-                  "Treino: " +
-                    (Array.isArray(exercises) && exercises.length
-                      ? String(exercises.length) + " exercícios"
-                      : "nenhum ativo")
-                );
-                bullet(
-                  "Dieta: " +
-                    (Array.isArray(meals) && meals.length
-                      ? String(meals.length) + " refeições"
-                      : macros
-                        ? "metas configuradas"
-                        : "nenhuma ativa")
-                );
-                bullet("HIIT: " + (hiitProtocol || hiitFreq ? "ativo" : "nenhum ativo"));
-                bullet("Cardio: " + (cardioMod || cardioDur || cardioFreq || cardioInt ? "ativo" : "nenhum ativo"));
-                bullet("Progresso/Histórico: " + (progKeys.length || histKeys.length ? "disponível" : "—"));
-
-                // ==== Cards clínicos ====
-                title("Treino atual");
-                if (Array.isArray(exercises) && exercises.length) {
-                  const names = exercises
-                    .slice(0, 10)
-                    .map((e: any) => e?.name ?? e?.title ?? e?.exercise ?? "Exercício")
-                    .filter(Boolean);
-                  bullet("Exercícios: " + String(exercises.length));
-                  bullet("Principais: " + (names.length ? names.join(", ") : "—"));
-                } else {
-                  bullet("Status: Nenhum treino ativo no momento.");
-                }
-                if (wNotes) bullet("Notas: " + oneLine(wNotes, 260));
-
-                title("Dieta ativa");
-                bullet("Refeições: " + String(count(meals)));
-                if (macros) bullet("Macros/Meta: " + oneLine(macros, 260));
-                if (!(Array.isArray(meals) && meals.length) && !macros) bullet("Status: Nenhuma dieta ativa no momento.");
-
-                title("Protocolo HIIT");
-                if (hiitProtocol) bullet("Protocolo: " + oneLine(hiitProtocol, 280));
-                if (hiitFreq) bullet("Frequência: " + oneLine(hiitFreq, 140));
-                if (!hiitProtocol && !hiitFreq) bullet("Status: Nenhum HIIT ativo no momento.");
-
-                title("Plano de cardio");
-                if (cardioMod) bullet("Modalidade: " + oneLine(cardioMod, 160));
-                if (cardioDur) bullet("Duração: " + oneLine(cardioDur, 120));
-                if (cardioInt) bullet("Intensidade: " + oneLine(cardioInt, 160));
-                if (cardioFreq) bullet("Frequência: " + oneLine(cardioFreq, 140));
-                if (!cardioMod && !cardioDur && !cardioInt && !cardioFreq) bullet("Status: Nenhum cardio ativo no momento.");
-
-                title("Progresso & histórico");
-                bullet(
-                  "Progresso: " +
-                    (progKeys.length
-                      ? "dados (" + progKeys.slice(0, 8).join(", ") + (progKeys.length > 8 ? ", …" : "") + ")"
-                      : "—")
-                );
-                bullet(
-                  "Histórico: " +
-                    (histKeys.length
-                      ? "dados (" + histKeys.slice(0, 8).join(", ") + (histKeys.length > 8 ? ", …" : "") + ")"
-                      : "—")
-                );
-
-                title("Fonte dos dados");
-                const src = snap?.meta?.source ?? {};
-                bullet("Workout: " + String(src.workout ?? "?"));
-                bullet("UI: " + String(src.ui ?? "?"));
-                bullet("Progresso: " + String(src.progress ?? "?"));
-                bullet("Histórico: " + String(src.history ?? "?"));
-                bullet("Dieta: " + String(src.diet ?? "?"));
-                bullet("HIIT: " + String(src.hiit ?? "?"));
-                bullet("Cardio: " + String(src.cardio ?? "?"));
-                bullet("Gerado: " + oneLine(snap?.meta?.exportedAtISO ?? "", 80));
-                // === /Sprint 4E ===
-
-
-                // === Sprint 4F | bodyHtml (cards visuais reais) ===
-
-                const escH = (x: any) => String(x ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-
-
-
-
-
-                const card4f = (t: string, inner: string) =>
-
-                  `<div class="cardx"><div class="t">${escH(t)}</div><div class="p">${inner}</div></div>`;
-
-
-                const kpi4f = (k: string, v: string) =>
-
-                  `<div class="kpi"><div class="k">${escH(k)}</div><div class="v">${escH(v)}</div></div>`;
-
-
-                const src4f = (snap?.meta?.source ?? {}) as any;
-
-
-                const bodyHtml =
-
-                  [
-
-                    card4f(
-
-                      "Resumo executivo",
-
-                      `<div class="grid2">` +
-
-                        kpi4f("Treino", (Array.isArray(exercises) && exercises.length) ? (String(exercises.length) + " exercícios") : "nenhum ativo") +
-
-                        kpi4f("Dieta", (Array.isArray(meals) && meals.length) ? (String(meals.length) + " refeições") : (macros ? "metas configuradas" : "nenhuma ativa")) +
-
-                        kpi4f("HIIT", (hiitProtocol || hiitFreq) ? "ativo" : "nenhum ativo") +
-
-                        kpi4f("Cardio", (cardioMod || cardioDur || cardioFreq || cardioInt) ? "ativo" : "nenhum ativo") +
-
-                      `</div>`
-
-                    ),
-
-                    card4f(
-
-                      "Treino atual",
-
-                      (Array.isArray(exercises) && exercises.length)
-
-                        ? (`<div class="small">Exercícios: <b>${escH(exercises.length)}</b></div>` +
-
-                           `<div class="small">Principais: ${escH(exercises.slice(0, 10).map((e: any) => e?.name ?? e?.title ?? e?.exercise ?? "Exercício").filter(Boolean).join(", "))}</div>` +
-
-                           (wNotes ? `<div class="small">Notas: ${escH(oneLine(wNotes, 260))}</div>` : ""))
-
-                        : `<div class="small">Status: Nenhum treino ativo no momento.</div>`
-
-                    ),
-
-                    card4f(
-
-                      "Dieta ativa",
-
-                      `<div class="small">Refeições: <b>${escH(count(meals))}</b></div>` +
-
-                      (macros ? `<div class="small">Macros/Meta: ${escH(oneLine(macros, 260))}</div>` : "") +
-
-                      ((!(Array.isArray(meals) && meals.length) && !macros) ? `<div class="small">Status: Nenhuma dieta ativa no momento.</div>` : "")
-
-                    ),
-
-                    card4f(
-
-                      "Protocolo HIIT",
-
-                      (hiitProtocol ? `<div class="small">Protocolo: ${escH(oneLine(hiitProtocol, 280))}</div>` : "") +
-
-                      (hiitFreq ? `<div class="small">Frequência: ${escH(oneLine(hiitFreq, 140))}</div>` : "") +
-
-                      ((!hiitProtocol && !hiitFreq) ? `<div class="small">Status: Nenhum HIIT ativo no momento.</div>` : "")
-
-                    ),
-
-                    card4f(
-
-                      "Plano de cardio",
-
-                      (cardioMod ? `<div class="small">Modalidade: ${escH(oneLine(cardioMod, 160))}</div>` : "") +
-
-                      (cardioDur ? `<div class="small">Duração: ${escH(oneLine(cardioDur, 120))}</div>` : "") +
-
-                      (cardioInt ? `<div class="small">Intensidade: ${escH(oneLine(cardioInt, 160))}</div>` : "") +
-
-                      (cardioFreq ? `<div class="small">Frequência: ${escH(oneLine(cardioFreq, 140))}</div>` : "") +
-
-                      ((!cardioMod && !cardioDur && !cardioInt && !cardioFreq) ? `<div class="small">Status: Nenhum cardio ativo no momento.</div>` : "")
-
-                    ),
-
-                    card4f(
-
-                      "Progresso & histórico",
-
-                      `<div class="small">Progresso: ${escH(progKeys.length ? ("dados (" + progKeys.slice(0, 8).join(", ") + (progKeys.length > 8 ? ", …" : "") + ")") : "—")}</div>` +
-
-                      `<div class="small">Histórico: ${escH(histKeys.length ? ("dados (" + histKeys.slice(0, 8).join(", ") + (histKeys.length > 8 ? ", …" : "") + ")") : "—")}</div>`
-
-                    ),
-
-                    card4f(
-
-                      "Fonte dos dados",
-
-                      `<div class="small">Workout: <b>${escH(String(src4f.workout ?? "?"))}</b> • Dieta: <b>${escH(String(src4f.diet ?? "?"))}</b> • HIIT: <b>${escH(String(src4f.hiit ?? "?"))}</b> • Cardio: <b>${escH(String(src4f.cardio ?? "?"))}</b></div>` +
-
-                      `<div class="small">Progresso: <b>${escH(String(src4f.progress ?? "?"))}</b> • Histórico: <b>${escH(String(src4f.history ?? "?"))}</b> • UI: <b>${escH(String(src4f.ui ?? "?"))}</b></div>` +
-
-                      `<div class="small">Gerado: ${escH(oneLine(snap?.meta?.exportedAtISO ?? "", 80))}</div>`
-
-                    )
-
-                  ].join("");
-
-
-                // === /Sprint 4F ===
-
-
-                await generateMindsetFitPremiumPdf({
-                  logoUrl,
-                  reportLabel: "Relatório Geral",
-                  metaLines: [
-                    "MindsetFit",
-                    "Dashboard",
-                    created,
-                    "Dados: workout=" + String(src.workout ?? "?") +
-                      " | diet=" + String(src.diet ?? "?") +
-                      " | hiit=" + String(src.hiit ?? "?") +
-                      " | cardio=" + String(src.cardio ?? "?")
-                  ],
-                  bodyText: report.join("\n"),
-                  bodyHtml,
-                  signatureLines: [...mindsetfitSignatureLines],
-                  docId,
-                  docVersion: "1.0",
-                  qrUrl: window.location.origin,
-                  qrLabel: "Abrir App",
-                  fileName,
-                });
-              })();
-            }}
-            className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60"
-          >
-            Baixar Relatório PDF Premium
-          </button>
+  type="button"
+  onClick={() => {
+    void (async () => {
+      try {
+        const now = new Date();
+        const created = now.toLocaleString("pt-BR", { hour12: false });
+        const fileName = "mindsetfit-dashboard-" + now.toISOString().slice(0, 10) + ".pdf";
+        const docId = "DASH-" + Math.random().toString(16).slice(2, 10).toUpperCase();
+
+        const snap = getDashboardExportSnapshot();
+        const norm = (snap?.meta as any)?.normalized ?? {};
+        const nw = (norm as any)?.workout ?? {};
+        const nd = (norm as any)?.diet ?? {};
+        const nh = (norm as any)?.hiit ?? {};
+        const nc = (norm as any)?.cardio ?? {};
+        const np = (norm as any)?.progress ?? {};
+        const nhis = (norm as any)?.history ?? {};
+
+        const esc = (x: any) => {
+          try {
+            const t = (x == null) ? "" : String(x);
+            return t
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;");
+          } catch { return ""; }
+        };
+
+        const chips = (arr: any[]) =>
+          (Array.isArray(arr) && arr.length)
+            ? `<div class="chips">${arr.map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>`
+            : "";
+
+        const card = (t: string, inner: string) =>
+          `<div class="card"><div class="card-h">${esc(t)}</div><div class="card-b">${inner}</div></div>`;
+
+        const k = (label: string, value: any) =>
+          `<div class="kpi"><span class="k">${esc(label)}</span><span class="v">${esc(value)}</span></div>`;
+
+        const bodyHtml = [
+          `<style>
+            .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+            .card{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);border-radius:16px;padding:14px}
+            .card-h{font-weight:700;font-size:13px;letter-spacing:.2px;color:rgba(233,238,248,.95);margin-bottom:8px}
+            .card-b{font-size:12px;line-height:1.55;color:rgba(233,238,248,.80)}
+            .kpi{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+            .kpi:last-child{border-bottom:none}
+            .k{color:rgba(233,238,248,.55)}
+            .v{color:rgba(233,238,248,.92);font-weight:600}
+            .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+            .chip{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:rgba(233,238,248,.85)}
+            .small{font-size:11px;color:rgba(233,238,248,.68);margin-top:6px}
+          </style>`,
+          `<div class="grid">`,
+          card("Treino", [
+            k("Exercícios", (nw?.exercisesCount ?? 0) ? String(nw.exercisesCount) : "0"),
+            k("Status", (nw?.exercisesCount ?? 0) ? "ativo" : "nenhum ativo"),
+            (nw?.notes ? `<div class="small">Notas: ${esc(nw.notes)}</div>` : ""),
+            chips(nw?.topExercises ?? []),
+          ].join("")),
+          card("Dieta", [
+            k("Refeições", (nd?.mealsCount ?? 0) ? String(nd.mealsCount) : "0"),
+            k("Status", ((nd?.mealsCount ?? 0) || nd?.macros) ? "ativa" : "nenhuma ativa"),
+            (nd?.macros ? `<div class="small">Macros/Meta: ${esc(nd.macros)}</div>` : ""),
+          ].join("")),
+          card("HIIT", [
+            k("Status", (nh?.protocol || nh?.frequency) ? "ativo" : "nenhum ativo"),
+            (nh?.protocol ? `<div class="small">Protocolo: ${esc(nh.protocol)}</div>` : ""),
+            (nh?.frequency ? `<div class="small">Frequência: ${esc(nh.frequency)}</div>` : ""),
+          ].join("")),
+          card("Cardio", [
+            k("Status", (nc?.modality || nc?.duration || nc?.intensity || nc?.frequency) ? "ativo" : "nenhum ativo"),
+            (nc?.modality ? `<div class="small">Modalidade: ${esc(nc.modality)}</div>` : ""),
+            (nc?.duration ? `<div class="small">Duração: ${esc(nc.duration)}</div>` : ""),
+            (nc?.intensity ? `<div class="small">Intensidade: ${esc(nc.intensity)}</div>` : ""),
+            (nc?.frequency ? `<div class="small">Frequência: ${esc(nc.frequency)}</div>` : ""),
+          ].join("")),
+          `</div>`,
+          card("Progresso & Histórico", [
+            k("Progresso", (Array.isArray(np?.keys) && np.keys.length) ? ("dados (" + np.keys.slice(0, 8).join(", ") + (np.keys.length > 8 ? ", …" : "") + ")") : "—"),
+            k("Histórico", (Array.isArray(nhis?.keys) && nhis.keys.length) ? ("dados (" + nhis.keys.slice(0, 8).join(", ") + (nhis.keys.length > 8 ? ", …" : "") + ")") : "—"),
+            `<div class="small">Gerado: ${esc((snap?.meta as any)?.exportedAtISO ?? "")}</div>`,
+          ].join("")),
+        ].join("");
+
+        const report: string[] = [];
+        report.push("RELATÓRIO GERAL — MindsetFit");
+        report.push("");
+        report.push("Gerado em: " + created);
+        report.push("");
+        report.push("Fonte: meta.normalized (cards visuais)");
+        report.push("");
+
+        await generateMindsetFitPremiumPdf({
+          logoUrl,
+          reportLabel: "Relatório Geral",
+          metaLines: ["MindsetFit", "Dashboard", created],
+          bodyText: report.join("\n"),
+          bodyHtml,
+          signatureLines: [...mindsetfitSignatureLines],
+          docId,
+          docVersion: "1.0",
+          qrUrl: window.location.origin,
+          qrLabel: "Abrir App",
+          fileName,
+        });
+      } catch {}
+    })();
+  }}
+  className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60"
+>
+  Baixar Relatório PDF Premium
+</button>
         </div>
 
         {/* Sprint 13.0 | Premium Layer UI */}
