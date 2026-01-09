@@ -46,7 +46,14 @@ function toneBg(tone: "good" | "warn" | "neutral") {
 
 export function DashboardPro() {
   // === Sprint 5E | PDF variant (coach vs patient) ===
-  const [pdfVariant, setPdfVariant] = useState<"coach" | "patient">("coach");
+  const [pdfVariant, setPdfVariant] = useState<"coach" | "patient">(() => {
+    try {
+      const v = typeof window !== "undefined" ? localStorage.getItem("pdfVariant") : null;
+      return (v === "patient" ? "patient" : "coach");
+    } catch {
+      return "coach";
+    }
+  });
   // === /Sprint 5E ===
 
 
@@ -975,7 +982,7 @@ const html =
             <span style={{ fontSize: 12, opacity: 0.8 }}>Versão do PDF:</span>
             <button
               type="button"
-              onClick={() => setPdfVariant("coach")}
+              onClick={() => { setPdfVariant("coach"); try { localStorage.setItem("pdfVariant","coach"); } catch {} }}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
@@ -990,7 +997,7 @@ const html =
             </button>
             <button
               type="button"
-              onClick={() => setPdfVariant("patient")}
+              onClick={() => { setPdfVariant("patient"); try { localStorage.setItem("pdfVariant","patient"); } catch {} }}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
@@ -1084,7 +1091,7 @@ const html =
 
         // Gera PDF premium
         await generateMindsetFitPremiumPdf({
-          logoUrl,
+logoUrl,
           fileName: "Relatorio-MindsetFit-Premium.pdf",
           metaLines: [...mindsetfitSignatureLines] as string[],
           variant: pdfVariant,

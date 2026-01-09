@@ -95,7 +95,10 @@ export function buildMindsetFitPdfFileName(base: string, parts: string[]) {
 }
 
 export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Promise<void> {
-  const {
+  
+  const footerHtml = getClinicalFooterHtml(opts.variant);
+  void footerHtml;
+const {
     logoUrl,
     fileName,
     metaLines,
