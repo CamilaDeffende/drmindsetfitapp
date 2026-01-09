@@ -112,6 +112,43 @@ function sectionTitle(doc: any, x: number, y: number, label: string) {
   doc.text(label.toUpperCase(), x, y);
 }
 
+
+function isPatientVariant(v: "coach" | "patient" | undefined) {
+  return v === "patient";
+}
+
+function simplifyLinesForPatient(lines: string[]) {
+  // mantém no máximo 4 linhas curtas e mais “humanas”
+  const clean = (lines || []).map((x) => String(x || "").trim()).filter(Boolean);
+  return clean.slice(0, 4);
+}
+
+function simplifyBodyForPatient(bodyText: string) {
+  const t = String(bodyText || "").trim();
+  if (!t) return "Orientações do plano (resumo).";
+
+  // Heurística simples: pega as primeiras linhas úteis e suaviza prefixos
+  const parts = t
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  const keep: string[] = [];
+  for (const x of parts.slice(0, 24)) {
+    const x2 = x
+      .replace("PROTOCOLO:", "Protocolo:")
+      .replace("OBJETIVO:", "Objetivo:")
+      .replace("OBS:", "Obs:");
+    keep.push(x2);
+  }
+
+  let base = keep.join("\n").trim();
+  if (base.length < 80) {
+    base = base + "\n\nSiga o plano com consistência e registre seu progresso.";
+  }
+  return base;
+}
+
 export function buildMindsetFitPdfFileName(base: string, parts: string[]) {
   const clean = parts.map(slug).filter(Boolean).join("-");
   return `${slug(base)}-${clean}.pdf`;
@@ -131,6 +168,16 @@ const {
     reportLabel = "RELATÓRIO",
     layout = {},
   } = opts;
+
+  const patientMode = isPatientVariant(opts.variant);
+
+  const effectiveMetaLines = patientMode ? simplifyLinesForPatient(metaLines) : metaLines;
+  const effectiveBodyText = patientMode ? simplifyBodyForPatient(bodyText) : bodyText;
+
+  const effectiveFileName = patientMode
+    ? buildMindsetFitPdfFileName("mindsetfit-paciente", ["relatorio", "plano"])
+    : fileName;
+
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -183,7 +230,8 @@ const {
   // Label
   doc.setFontSize(12);
   doc.setTextColor(...THEME.textMuted);
-  doc.text(reportLabel, margin, headerTop + 26);
+  const effectiveReportLabel = patientMode ? "RELATÓRIO DO PACIENTE" : reportLabel;
+  doc.text(effectiveReportLabel, margin, headerTop + 26);
 
   // Metas (linhas curtas)
   doc.setTextColor(...THEME.textHi);
@@ -192,7 +240,7 @@ const {
   sectionTitle(doc, margin, headerTop + 46, "Meta");
 
   let metaY = headerTop + 66;
-  for (const line of metaLines.slice(0, 8)) {
+  for (const line of effectiveMetaLines.slice(0, 8)) {
     doc.text(line, margin, metaY);
     metaY += 16;
   }
@@ -207,7 +255,7 @@ const {
   doc.setFontSize(9);
 
   const maxW = pageW - margin * 2;
-  const lines = doc.splitTextToSize(bodyText, maxW);
+  const lines = doc.splitTextToSize(effectiveBodyText, maxW);
 
   let y = bodyY;
 
@@ -338,4 +386,4 @@ const docVersion = (opts as any).docVersion ? String((opts as any).docVersion) :
 
     }
 
-    doc.save(fileName)}
+    doc.save(effectiveFileName)}
