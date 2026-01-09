@@ -19,6 +19,14 @@ function ls(key: string) {
   }
 }
 
+function lsPick(keys: string[]) {
+  for (const k of keys) {
+    const v = ls(k);
+    if (v != null) return { key: k, val: v as AnyObj };
+  }
+  return { key: "", val: null as any };
+}
+
 function merge(store: AnyObj | null, fb: AnyObj | null) {
   return { ...(fb || {}), ...(store || {}) };
 }
@@ -33,30 +41,35 @@ export function getDashboardExportSnapshot() {
   const progressState = (useProgressStore.getState?.() as AnyObj) ?? null;
   const historyState = (useHistoryStore.getState?.() as AnyObj) ?? null;
 
-  // módulos que hoje vivem principalmente em localStorage (fallback-first)
-  const dietLS = ls("diet") as AnyObj | null;
-  const hiitLS = ls("hiit") as AnyObj | null;
-  const cardioLS = ls("cardio") as AnyObj | null;
+  // módulos que hoje vivem principalmente em localStorage (fallback-first) — robusto por múltiplas chaves
+  const dietPick = lsPick(["diet", "dieta", "dietPlan", "diet_plan", "nutrition", "nutricao", "meals", "mealPlan", "meal_plan"]);
+  const hiitPick = lsPick(["hiit", "hiitPlan", "hiit_plan", "hiitWorkout", "hiit_workout"]);
+  const cardioPick = lsPick(["cardio", "cardioPlan", "cardio_plan", "cardioWorkout", "cardio_workout"]);
 
-  const workout = merge(workoutState, ls("treino"));
-  const ui = merge(uiState, ls("ui"));
-  const progress = merge(progressState, ls("progress"));
-  const history = merge(historyState, ls("history"));
+  const treinoPick = lsPick(["treino", "workout", "workoutPlan", "workout_plan"]);
+  const uiPick = lsPick(["ui", "uistate", "uiState"]);
+  const progressPick = lsPick(["progress", "progresso"]);
+  const historyPick = lsPick(["history", "historico", "histórico"]);
 
-  const diet = merge(null, dietLS);
-  const hiit = merge(null, hiitLS);
-  const cardio = merge(null, cardioLS);
+  const workout = merge(workoutState, treinoPick.val);
+  const ui = merge(uiState, uiPick.val);
+  const progress = merge(progressState, progressPick.val);
+  const history = merge(historyState, historyPick.val);
+
+  const diet = merge(null, dietPick.val);
+  const hiit = merge(null, hiitPick.val);
+  const cardio = merge(null, cardioPick.val);
 
   const meta = {
     exportedAtISO: new Date().toISOString(),
     source: {
-      workout: sourceOf(workoutState, ls("treino")),
-      ui: sourceOf(uiState, ls("ui")),
-      progress: sourceOf(progressState, ls("progress")),
-      history: sourceOf(historyState, ls("history")),
-      diet: (dietLS ? "localStorage" : "empty"),
-      hiit: (hiitLS ? "localStorage" : "empty"),
-      cardio: (cardioLS ? "localStorage" : "empty"),
+      workout: sourceOf(workoutState, treinoPick.val) + (treinoPick.key ? `:${treinoPick.key}` : ""),
+      ui: sourceOf(uiState, uiPick.val) + (uiPick.key ? `:${uiPick.key}` : ""),
+      progress: sourceOf(progressState, progressPick.val) + (progressPick.key ? `:${progressPick.key}` : ""),
+      history: sourceOf(historyState, historyPick.val) + (historyPick.key ? `:${historyPick.key}` : ""),
+      diet: (dietPick.val ? `localStorage:${dietPick.key}` : "empty"),
+      hiit: (hiitPick.val ? `localStorage:${hiitPick.key}` : "empty"),
+      cardio: (cardioPick.val ? `localStorage:${cardioPick.key}` : "empty"),
     },
   };
 
