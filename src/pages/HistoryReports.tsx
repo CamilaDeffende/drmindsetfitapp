@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { REPORT_HISTORY_KEY } from "@/lib/storageKeys";
 
 type ReportHistoryItem = {
   id: string;
@@ -11,7 +12,6 @@ type ReportHistoryItem = {
   label?: string;
 };
 
-const REPORT_HISTORY_KEY = "mindsetfit:reportHistory:v1";
 
 function safeParse(raw: string | null): any[] {
   if (!raw) return [];

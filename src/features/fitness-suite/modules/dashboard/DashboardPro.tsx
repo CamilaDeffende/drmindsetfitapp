@@ -8,6 +8,7 @@ import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { getDashboardExportSnapshot } from "./dashboardExport";
 import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
+import { REPORT_HISTORY_KEY, PDF_VARIANT_KEY } from "@/lib/storageKeys";
 
 import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
@@ -67,7 +68,7 @@ export function DashboardPro() {
     // === Sprint 6B | PDF Variant (coach/patient) ===
   const [pdfVariant, setPdfVariant] = useState<"coach" | "patient">(() => {
     try {
-      const v = localStorage.getItem("mindsetfit:pdfVariant");
+      const v = localStorage.getItem(PDF_VARIANT_KEY);
       return v === "patient" ? "patient" : "coach";
     } catch {
       return "coach";
@@ -86,9 +87,6 @@ export function DashboardPro() {
     pinned?: boolean;
     label?: string;
   };
-
-  const REPORT_HISTORY_KEY = "mindsetfit:reportHistory:v1";
-
   function safeParseHistory(raw: string | null): ReportHistoryItem[] {
     if (!raw) return [];
     try {
@@ -1126,7 +1124,7 @@ const html =
             <span style={{ fontSize: 12, opacity: 0.8 }}>Versão do PDF:</span>
             <button
               type="button"
-              onClick={() => { setPdfVariant("coach"); try { localStorage.setItem("mindsetfit:pdfVariant","coach"); localStorage.setItem("mindsetfit:pdfVariant","coach"); } catch {} }}
+              onClick={() => { setPdfVariant("coach"); try { localStorage.setItem(PDF_VARIANT_KEY,"coach"); localStorage.setItem(PDF_VARIANT_KEY,"coach"); } catch {} }}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
@@ -1141,7 +1139,7 @@ const html =
             </button>
             <button
               type="button"
-              onClick={() => { setPdfVariant("patient"); try { localStorage.setItem("mindsetfit:pdfVariant","patient"); localStorage.setItem("mindsetfit:pdfVariant","patient"); } catch {} }}
+              onClick={() => { setPdfVariant("patient"); try { localStorage.setItem(PDF_VARIANT_KEY,"patient"); localStorage.setItem(PDF_VARIANT_KEY,"patient"); } catch {} }}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
@@ -1346,7 +1344,7 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
                       onClick={() => {
                         // Regerar rapidamente usando o variant do item
                         setPdfVariant(it.variant);
-                        try { localStorage.setItem("mindsetfit:pdfVariant", it.variant); } catch {}
+                        try { localStorage.setItem(PDF_VARIANT_KEY, it.variant); } catch {}
                         setTimeout(() => {
                           const btn = document.querySelector('button[data-action="download-premium-pdf"]') as HTMLButtonElement | null;
                           btn?.click();
