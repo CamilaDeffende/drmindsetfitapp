@@ -64,6 +64,9 @@ export function DashboardPro() {
     fileName: string;
     metaSource: string;
     summary: string;
+    // Sprint 7 (UX)
+    pinned?: boolean;
+    label?: string;
   };
 
   const REPORT_HISTORY_KEY = "mindsetfit:reportHistory:v1";
@@ -82,6 +85,63 @@ export function DashboardPro() {
     if (typeof window === "undefined") return [];
     return safeParseHistory(window.localStorage.getItem(REPORT_HISTORY_KEY));
   });
+
+  // === Sprint 7 | Report History UX (safe) ===
+  const [rhQuery, setRhQuery] = useState("");
+  const [rhFilter, setRhFilter] = useState<"all" | "coach" | "patient">("all");
+  const [rhShowAll, setRhShowAll] = useState(false);
+
+  const normalizedReportHistory = useMemo(() => (reportHistory?.length ? reportHistory : []), [reportHistory]);
+
+  const filteredReportHistory = useMemo(() => {
+    const q = String(rhQuery || "").toLowerCase().trim();
+    const byFilter = (it: ReportHistoryItem) => rhFilter === "all" ? true : it.variant === rhFilter;
+    const byQuery = (it: ReportHistoryItem) => {
+      if (!q) return true;
+      const hay = [
+        it.label || "",
+        it.fileName || "",
+        it.summary || "",
+        it.metaSource || "",
+        it.variant === "patient" ? "paciente" : "coach",
+        it.createdAtISO || "",
+      ].join(" ").toLowerCase();
+      return hay.includes(q);
+    };
+
+    const list = normalizedReportHistory.map((x: any) => ({
+      ...x,
+      pinned: Boolean(x?.pinned),
+      label: typeof x?.label === "string" ? x.label : undefined,
+    })) as ReportHistoryItem[];
+
+    const pinned = list.filter((x) => x.pinned).filter(byFilter).filter(byQuery);
+    const normal = list.filter((x) => !x.pinned).filter(byFilter).filter(byQuery);
+
+    const desc = (a: ReportHistoryItem, b: ReportHistoryItem) => (a.createdAtISO < b.createdAtISO ? 1 : -1);
+    return [...pinned.sort(desc), ...normal.sort(desc)];
+  }, [normalizedReportHistory, rhQuery, rhFilter]);
+
+  const visibleReportHistory = useMemo(
+    () => (rhShowAll ? filteredReportHistory : filteredReportHistory.slice(0, 10)),
+    [filteredReportHistory, rhShowAll]
+  );
+
+  function togglePinReport(id: string) {
+    const next = (normalizedReportHistory || []).map((x: any) => x.id === id ? ({ ...x, pinned: !x.pinned }) : x);
+    writeReportHistory(next as any);
+  }
+
+  function renameReport(id: string) {
+    const cur: any = (normalizedReportHistory || []).find((x: any) => x.id === id);
+    const nextLabel = window.prompt("Nome do relatório (label):", String(cur?.label || ""));
+    if (nextLabel === null) return;
+    const label = String(nextLabel || "").trim();
+    const next = (normalizedReportHistory || []).map((x: any) => x.id === id ? ({ ...x, label: label || undefined }) : x);
+    writeReportHistory(next as any);
+  }
+  // === /Sprint 7 ===
+
 
   function refreshReportHistory() {
     if (typeof window === "undefined") return;
@@ -1049,7 +1109,7 @@ const html =
             <span style={{ fontSize: 12, opacity: 0.8 }}>Versão do PDF:</span>
             <button
               type="button"
-              onClick={() => { setPdfVariant("coach"); try { localStorage.setItem("pdfVariant","coach"); } catch {} }}
+              onClick={() => { setPdfVariant("coach"); try { localStorage.setItem("mindsetfit:pdfVariant","coach"); localStorage.setItem("pdfVariant","coach"); } catch {} }}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
@@ -1064,7 +1124,7 @@ const html =
             </button>
             <button
               type="button"
-              onClick={() => { setPdfVariant("patient"); try { localStorage.setItem("pdfVariant","patient"); } catch {} }}
+              onClick={() => { setPdfVariant("patient"); try { localStorage.setItem("mindsetfit:pdfVariant","patient"); localStorage.setItem("pdfVariant","patient"); } catch {} }}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
@@ -1207,13 +1267,58 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
             </div>
           </div>
 
+          <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <input
+              value={rhQuery}
+              onChange={(e) => setRhQuery((e.target as HTMLInputElement).value)}
+              placeholder="Buscar (nome, data, resumo...)"
+              style={{
+                padding: "8px 10px",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.14)",
+                background: "rgba(0,0,0,0.18)",
+                color: "white",
+                fontSize: 12,
+                outline: "none",
+                minWidth: 220,
+              }}
+            />
+            <select
+              value={rhFilter}
+              onChange={(e) => setRhFilter((e.target as HTMLSelectElement).value as any)}
+              style={{
+                padding: "8px 10px",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.14)",
+                background: "rgba(0,0,0,0.18)",
+                color: "white",
+                fontSize: 12,
+                outline: "none",
+              }}
+            >
+              <option value="all">Todos</option>
+              <option value="coach">Coach</option>
+              <option value="patient">Paciente</option>
+            </select>
+
+            {filteredReportHistory.length > 10 ? (
+              <button
+                type="button"
+                onClick={() => setRhShowAll((v) => !v)}
+                style={{ padding: "8px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.06)", color: "white", cursor: "pointer", fontSize: 12 }}
+              >
+                {rhShowAll ? "Mostrar menos" : "Mostrar todos"}
+              </button>
+            ) : null}
+          </div>
+
           <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-            {(reportHistory?.length ? reportHistory : []).slice(0, 10).map((it: ReportHistoryItem) => (
+            {visibleReportHistory.map((it: ReportHistoryItem) => (
               <div key={it.id} style={{ padding: 10, borderRadius: 12, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(0,0,0,0.25)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {it.fileName}
+                      {it.label ? it.label : it.fileName}
                     </div>
                     <div style={{ fontSize: 12, opacity: 0.75 }}>
                       {new Date(it.createdAtISO).toLocaleString()} • {it.variant === "patient" ? "Paciente" : "Coach"} • {it.summary || ""}
@@ -1233,6 +1338,24 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
                       style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(0,149,255,0.35)", background: "rgba(0,149,255,0.12)", color: "white", cursor: "pointer", fontSize: 12 }}
                     >
                       Baixar de novo
+                    </button>
+                    <button
+                      onClick={() => {
+                        togglePinReport(it.id);
+                        refreshReportHistory();
+                      }}
+                      style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "white", cursor: "pointer", fontSize: 12 }}
+                    >
+                      {it.pinned ? "Despin" : "Pin"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        renameReport(it.id);
+                        refreshReportHistory();
+                      }}
+                      style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "white", cursor: "pointer", fontSize: 12 }}
+                    >
+                      Renomear
                     </button>
                     <button
                       onClick={() => { removeReportHistory(it.id); refreshReportHistory(); }}
