@@ -13,6 +13,24 @@ import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
 import { Skeleton } from "../../ui/Skeleton";
 import { EmptyState } from "../../ui/EmptyState";
+function fmtDateHuman(iso: string): string {
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const dd = startOf(d);
+    const nn = startOf(now);
+    const diffDays = Math.round((nn - dd) / 86400000);
+
+    const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (diffDays === 0) return `Hoje • ${time}`;
+    if (diffDays === 1) return `Ontem • ${time}`;
+    return d.toLocaleString();
+  } catch {
+    return iso;
+  }
+}
+
 function todayYMD(): string {
 const d = new Date();
   const y = d.getFullYear();
@@ -141,7 +159,6 @@ export function DashboardPro() {
     writeReportHistory(next as any);
   }
   // === /Sprint 7 ===
-
 
   function refreshReportHistory() {
     if (typeof window === "undefined") return;
@@ -1320,8 +1337,8 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
                     <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {it.label ? it.label : it.fileName}
                     </div>
-                    <div style={{ fontSize: 12, opacity: 0.75 }}>
-                      {new Date(it.createdAtISO).toLocaleString()} • {it.variant === "patient" ? "Paciente" : "Coach"} • {it.summary || ""}
+                    <div style={{ fontSize: 12, opacity: 0.75 }} title={it.createdAtISO}>
+                      {fmtDateHuman(it.createdAtISO)} • {it.variant === "patient" ? "Paciente" : "Coach"} • {it.summary || ""}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
@@ -1376,12 +1393,11 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
 
             {!reportHistory?.length ? (
               <div style={{ padding: 10, borderRadius: 12, border: "1px dashed rgba(255,255,255,0.18)", opacity: 0.75, fontSize: 12 }}>
-                Nenhum relatório salvo ainda. Gere um PDF para iniciar o histórico.
+                Ainda não há relatórios aqui. Gere seu primeiro PDF Premium e ele ficará salvo neste dispositivo.
               </div>
             ) : null}
           </div>
         </div>
-
 
   Baixar Relatório PDF Premium
 </button>
