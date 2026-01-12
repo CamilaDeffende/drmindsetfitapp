@@ -13,11 +13,11 @@ type ReportHistoryItem = {
 
 const REPORT_HISTORY_KEY = "mindsetfit:reportHistory:v1";
 
-function safeParse(raw: string | null): ReportHistoryItem[] {
+function safeParse(raw: string | null): any[] {
   if (!raw) return [];
   try {
     const v = JSON.parse(raw);
-    return Array.isArray(v) ? (v as ReportHistoryItem[]) : [];
+    return Array.isArray(v) ? v : [];
   } catch {
     return [];
   }
@@ -79,21 +79,71 @@ export default function HistoryReports() {
   const [filter, setFilter] = useState<"all" | "coach" | "patient">("all");
   const [showAll, setShowAll] = useState(false);
 
-  const bytes = useMemo(() => {
+  // Sprint 8A | feedback (toast)
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<"good" | "warn" | "bad">("good");
+  const pushToast = (msg: string, tone: "good" | "warn" | "bad" = "good") => {
+    setToastMsg(msg);
+    setToastTone(tone);
+    window.setTimeout(() => setToastMsg(null), 3200);
+  };
+
+  const normalizeItem = (x: any): ReportHistoryItem | null => {
     try {
-      return new Blob([JSON.stringify(items || [])]).size;
+      const id = String(x?.id || "").trim();
+      const createdAtISO = String(x?.createdAtISO || "").trim();
+      const variant: "coach" | "patient" = x?.variant === "patient" ? "patient" : "coach";
+      const fileName = String(x?.fileName || "").trim();
+
+      if (!id || !createdAtISO || !fileName) return null;
+
+      const pinned = Boolean(x?.pinned);
+      const label = typeof x?.label === "string" ? x.label.trim() : undefined;
+      const summary = typeof x?.summary === "string" ? x.summary.trim() : undefined;
+      const metaSource = typeof x?.metaSource === "string" ? x.metaSource : undefined;
+
+      return {
+        id,
+        createdAtISO,
+        variant,
+        fileName,
+        metaSource,
+        summary,
+        pinned,
+        label: label || undefined,
+      };
     } catch {
-      return 0;
+      return null;
     }
-  }, [items]);
+  };
+
+  const normalizeList = (rawList: any): ReportHistoryItem[] => {
+    const arr = Array.isArray(rawList) ? rawList : [];
+    const out: ReportHistoryItem[] = [];
+    for (const it of arr) {
+      const n = normalizeItem(it);
+      if (n) out.push(n);
+    }
+    out.sort((a, b) => (a.createdAtISO < b.createdAtISO ? 1 : -1));
+    return out.slice(0, 30);
+  };
+
+  const mergeById = (incoming: ReportHistoryItem[], current: ReportHistoryItem[]) => {
+    const map = new Map<string, ReportHistoryItem>();
+    for (const it of incoming) map.set(it.id, it);
+    for (const it of current) if (!map.has(it.id)) map.set(it.id, it);
+    const merged = Array.from(map.values()).sort((a, b) => (a.createdAtISO < b.createdAtISO ? 1 : -1));
+    return merged.slice(0, 30);
+  };
 
   const refresh = () => {
     if (typeof window === "undefined") return;
-    setItems(safeParse(window.localStorage.getItem(REPORT_HISTORY_KEY)));
+    const parsed = safeParse(window.localStorage.getItem(REPORT_HISTORY_KEY));
+    setItems(normalizeList(parsed));
   };
 
-  const write = (list: ReportHistoryItem[]) => {
-    const next = (list || []).slice(0, 30);
+  const write = (list: any) => {
+    const next = normalizeList(list);
     try {
       window.localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(next));
     } catch {}
@@ -104,6 +154,14 @@ export default function HistoryReports() {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const bytes = useMemo(() => {
+    try {
+      return new Blob([JSON.stringify(items || [])]).size;
+    } catch {
+      return 0;
+    }
+  }, [items]);
 
   const filtered = useMemo(() => {
     const qq = String(q || "").toLowerCase().trim();
@@ -116,12 +174,7 @@ export default function HistoryReports() {
       return hay.includes(qq);
     };
 
-    const list = (items || []).map((x: any) => ({
-      ...x,
-      pinned: Boolean(x?.pinned),
-      label: typeof x?.label === "string" ? x.label : undefined,
-    })) as ReportHistoryItem[];
-
+    const list = normalizeList(items || []);
     const pinned = list.filter((x) => x.pinned).filter(byFilter).filter(byQuery);
     const normal = list.filter((x) => !x.pinned).filter(byFilter).filter(byQuery);
     const desc = (a: ReportHistoryItem, b: ReportHistoryItem) => (a.createdAtISO < b.createdAtISO ? 1 : -1);
@@ -142,30 +195,37 @@ export default function HistoryReports() {
     if (nextLabel === null) return;
     const label = String(nextLabel || "").trim();
     write((items || []).map((x: any) => (x.id === id ? { ...x, label: label || undefined } : x)));
+    pushToast("Nome atualizado.", "good");
   };
 
   const remove = (id: string) => {
     const ok = window.confirm("Excluir este relatório do histórico?");
     if (!ok) return;
     write((items || []).filter((x) => x.id !== id));
+    pushToast("Relatório excluído.", "warn");
   };
 
   const clearAll = () => {
     const ok = window.confirm("Limpar TODO o histórico de relatórios?");
     if (!ok) return;
     write([]);
+    pushToast("Histórico limpo.", "warn");
   };
 
   const exportJson = () => {
     try {
-      const blob = new Blob([JSON.stringify(items || [], null, 2)], { type: "application/json" });
+      const payload = normalizeList(items || []);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "mindsetfit-report-history.json";
       a.click();
       URL.revokeObjectURL(url);
-    } catch {}
+      pushToast(`Exportado: ${payload.length} item(ns)`, "good");
+    } catch {
+      pushToast("Falha ao exportar. Tente novamente.", "bad");
+    }
   };
 
   const importJson = async () => {
@@ -174,19 +234,44 @@ export default function HistoryReports() {
       input.type = "file";
       input.accept = "application/json";
       input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
-        const text = await file.text();
-        const list = safeParse(text);
-        // mescla preservando ids (mais novo primeiro)
-        const map = new Map<string, ReportHistoryItem>();
-        for (const it of list) map.set(it.id, it);
-        for (const it of items || []) if (!map.has(it.id)) map.set(it.id, it);
-        const merged = Array.from(map.values()).sort((a, b) => (a.createdAtISO < b.createdAtISO ? 1 : -1));
-        write(merged);
+        try {
+          const file = input.files?.[0];
+          if (!file) return;
+
+          if (file.size > 1024 * 1024) {
+            pushToast("Arquivo muito grande (limite ~1MB).", "warn");
+            return;
+          }
+
+          const text = await file.text();
+          let parsed: any;
+          try {
+            parsed = JSON.parse(text);
+          } catch {
+            pushToast("JSON inválido. Verifique o arquivo.", "bad");
+            return;
+          }
+
+          const incoming = normalizeList(parsed);
+          if (!incoming.length) {
+            pushToast("Arquivo válido, mas sem itens reconhecidos.", "warn");
+            return;
+          }
+
+          const before = (items || []).length;
+          const merged = mergeById(incoming, normalizeList(items || []));
+          write(merged);
+
+          const added = Math.max(0, merged.length - before);
+          pushToast(`Importado: ${incoming.length} • Mesclado: ${merged.length} ( +${added} )`, "good");
+        } catch {
+          pushToast("Falha ao importar. Tente novamente.", "bad");
+        }
       };
       input.click();
-    } catch {}
+    } catch {
+      pushToast("Importação indisponível neste navegador.", "bad");
+    }
   };
 
   return (
@@ -241,6 +326,27 @@ export default function HistoryReports() {
           </button>
         </div>
       </div>
+
+      {toastMsg ? (
+        <div
+          style={{
+            padding: "10px 12px",
+            borderRadius: 14,
+            border: "1px solid rgba(255,255,255,0.12)",
+            background:
+              toastTone === "good"
+                ? "rgba(16,185,129,0.10)"
+                : toastTone === "warn"
+                ? "rgba(245,158,11,0.10)"
+                : "rgba(239,68,68,0.10)",
+            color: "rgba(255,255,255,0.92)",
+            fontSize: 12,
+            fontWeight: 700,
+          }}
+        >
+          {toastMsg}
+        </div>
+      ) : null}
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <input
@@ -322,6 +428,7 @@ export default function HistoryReports() {
                     </span>
                   ) : null}
                 </div>
+
                 <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }} title={it.createdAtISO}>
                   {fmtDateHuman(it.createdAtISO)} • {it.summary || "—"}
                 </div>
