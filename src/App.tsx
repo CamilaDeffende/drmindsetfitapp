@@ -1,3 +1,4 @@
+import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { DrMindSetfitProvider } from '@/contexts/DrMindSetfitContext'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -132,7 +133,8 @@ function App() {
 
               {/* Redirect padrão */}
               <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+              <Route path="/history" element={<HistoryReports />} />
+</Routes>
           </BrowserRouter>
           <Toaster />
         </DrMindSetfitProvider>
