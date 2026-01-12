@@ -1126,7 +1126,7 @@ const html =
             <span style={{ fontSize: 12, opacity: 0.8 }}>Versão do PDF:</span>
             <button
               type="button"
-              onClick={() => { setPdfVariant("coach"); try { localStorage.setItem("mindsetfit:pdfVariant","coach"); localStorage.setItem("pdfVariant","coach"); } catch {} }}
+              onClick={() => { setPdfVariant("coach"); try { localStorage.setItem("mindsetfit:pdfVariant","coach"); localStorage.setItem("mindsetfit:pdfVariant","coach"); } catch {} }}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
@@ -1141,7 +1141,7 @@ const html =
             </button>
             <button
               type="button"
-              onClick={() => { setPdfVariant("patient"); try { localStorage.setItem("mindsetfit:pdfVariant","patient"); localStorage.setItem("pdfVariant","patient"); } catch {} }}
+              onClick={() => { setPdfVariant("patient"); try { localStorage.setItem("mindsetfit:pdfVariant","patient"); localStorage.setItem("mindsetfit:pdfVariant","patient"); } catch {} }}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
