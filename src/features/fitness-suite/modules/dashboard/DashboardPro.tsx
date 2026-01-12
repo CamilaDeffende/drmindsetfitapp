@@ -45,20 +45,87 @@ function toneBg(tone: "good" | "warn" | "neutral") {
 }
 
 export function DashboardPro() {
-  // === Sprint 5E | PDF variant (coach vs patient) ===
+// === Report History (Sprint 6C) ===
+    // === Sprint 6B | PDF Variant (coach/patient) ===
   const [pdfVariant, setPdfVariant] = useState<"coach" | "patient">(() => {
     try {
-      const v = typeof window !== "undefined" ? localStorage.getItem("pdfVariant") : null;
-      return (v === "patient" ? "patient" : "coach");
+      const v = localStorage.getItem("mindsetfit:pdfVariant");
+      return v === "patient" ? "patient" : "coach";
     } catch {
       return "coach";
     }
   });
-  // === /Sprint 5E ===
 
+  // === Sprint 6C | Report History (LS) ===
+  type ReportHistoryItem = {
+    id: string;
+    createdAtISO: string;
+    variant: "coach" | "patient";
+    fileName: string;
+    metaSource: string;
+    summary: string;
+  };
 
+  const REPORT_HISTORY_KEY = "mindsetfit:reportHistory:v1";
 
-    // === Sprint 13.0 | Premium Layer ===
+  function safeParseHistory(raw: string | null): ReportHistoryItem[] {
+    if (!raw) return [];
+    try {
+      const v = JSON.parse(raw);
+      return Array.isArray(v) ? (v as ReportHistoryItem[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  const [reportHistory, setReportHistory] = useState<ReportHistoryItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    return safeParseHistory(window.localStorage.getItem(REPORT_HISTORY_KEY));
+  });
+
+  function refreshReportHistory() {
+    if (typeof window === "undefined") return;
+    setReportHistory(safeParseHistory(window.localStorage.getItem(REPORT_HISTORY_KEY)));
+  }
+
+  function writeReportHistory(list: ReportHistoryItem[]) {
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(list.slice(0, 30)));
+      } catch {}
+    }
+    setReportHistory(list.slice(0, 30));
+  }
+
+  function addReportHistory(item: ReportHistoryItem) {
+    const next = [item, ...(reportHistory || [])].slice(0, 30);
+    writeReportHistory(next);
+  }
+
+  function removeReportHistory(id: string) {
+    const next = (reportHistory || []).filter((x) => x.id !== id);
+    writeReportHistory(next);
+  }
+
+  function clearReportHistory() {
+    writeReportHistory([]);
+  }
+
+  // keep-alive TS (evita TS6133 quando JSX/handlers mudam)
+  void ({
+    addReportHistory,
+    removeReportHistory,
+    clearReportHistory,
+    refreshReportHistory,
+    reportHistory,
+    setReportHistory,
+    pdfVariant,
+    setPdfVariant,
+  } as const);
+
+  // === /Sprint 6C ===
+
+  // === Sprint 13.0 | Premium Layer ===
   const [premiumNotice, setPremiumNotice] = useState<string | null>(null);
 
   const requestPremium = (feature: any) => {
@@ -1097,13 +1164,102 @@ logoUrl,
           variant: pdfVariant,
           bodyText,
           bodyHtml,
-        });
-      } catch (e) {
+});
+
+        // Sprint 6C: registrar no histórico
+        try {
+          const id = String(Date.now()) + "_" + Math.random().toString(16).slice(2);
+          const createdAtISO = new Date().toISOString();          const fileNameUsed = `mindsetfit-relatorio-${pdfVariant}-${new Date().toISOString().slice(0,10)}.pdf`;
+const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ? snapshot.meta.source : undefined;
+          const summary = pdfVariant === "patient"
+            ? "Versão Paciente — resumo simplificado."
+            : "Versão Coach — relatório completo premium.";
+          addReportHistory({ id, createdAtISO, variant: pdfVariant, fileName: fileNameUsed, metaSource: (typeof metaSource === "string" ? metaSource : "meta.normalized"), summary });
+          refreshReportHistory();
+        } catch {}
+} catch (e) {
         console.error(e);
       }
     })();
   }}
 >
+
+        {/* Sprint 6C | Histórico de Relatórios */}
+        <div style={{ marginTop: 14, padding: 12, borderRadius: 14, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div>
+              <div style={{ fontWeight: 800, letterSpacing: 0.2 }}>Histórico de Relatórios</div>
+              <div style={{ fontSize: 12, opacity: 0.75 }}>Últimos relatórios gerados (até 30).</div>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => { refreshReportHistory(); }}
+                style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "white", cursor: "pointer", fontSize: 12 }}
+              >
+                Atualizar
+              </button>
+              <button
+                onClick={() => { clearReportHistory(); refreshReportHistory(); }}
+                style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "white", cursor: "pointer", fontSize: 12 }}
+              >
+                Limpar
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+            {(reportHistory?.length ? reportHistory : []).slice(0, 10).map((it: ReportHistoryItem) => (
+              <div key={it.id} style={{ padding: 10, borderRadius: 12, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(0,0,0,0.25)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {it.fileName}
+                    </div>
+                    <div style={{ fontSize: 12, opacity: 0.75 }}>
+                      {new Date(it.createdAtISO).toLocaleString()} • {it.variant === "patient" ? "Paciente" : "Coach"} • {it.summary || ""}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    <button
+                      onClick={() => {
+                        // Regerar rapidamente usando o variant do item
+                        setPdfVariant(it.variant);
+                        try { localStorage.setItem("mindsetfit:pdfVariant", it.variant); } catch {}
+                        setTimeout(() => {
+                          const btn = document.querySelector('button[data-action="download-premium-pdf"]') as HTMLButtonElement | null;
+                          btn?.click();
+                        }, 60);
+                      }}
+                      style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(0,149,255,0.35)", background: "rgba(0,149,255,0.12)", color: "white", cursor: "pointer", fontSize: 12 }}
+                    >
+                      Baixar de novo
+                    </button>
+                    <button
+                      onClick={() => { removeReportHistory(it.id); refreshReportHistory(); }}
+                      style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "white", cursor: "pointer", fontSize: 12 }}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+
+                {it.metaSource ? (
+                  <div style={{ marginTop: 8, fontSize: 11, opacity: 0.7 }}>
+                    Fonte: {typeof it.metaSource === "string" ? it.metaSource : JSON.stringify(it.metaSource)}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+
+            {!reportHistory?.length ? (
+              <div style={{ padding: 10, borderRadius: 12, border: "1px dashed rgba(255,255,255,0.18)", opacity: 0.75, fontSize: 12 }}>
+                Nenhum relatório salvo ainda. Gere um PDF para iniciar o histórico.
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+
   Baixar Relatório PDF Premium
 </button>
         </div>
