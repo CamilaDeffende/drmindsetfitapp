@@ -145,6 +145,60 @@ const timeline_9c1 = useMemo(() => {
     .filter((it) => it && within((it as any).createdAtISO))
     .slice(0, 120);
 
+
+
+  // Sprint 9C.2 | Métricas (SAFE) a partir do histórico
+  const toTime = (iso: unknown): number => {
+    try {
+      const t = Date.parse(String(iso || ""));
+      return Number.isFinite(t) ? t : 0;
+    } catch { return 0; }
+  };
+
+  // score por item: coach pesa mais (tende a ser mais completo), patient pesa menos
+  const scoreOf = (it: any): number => {
+    const v = String((it && it.variant) || "coach");
+    return v === "coach" ? 2 : 1;
+  };
+
+  const sorted = picked.slice().sort((a,b) => toTime(b?.createdAtISO) - toTime(a?.createdAtISO));
+  const last = sorted[0] || null;
+  const prev = sorted[1] || null;
+
+  const sumScore = (arr: any[]): number => (arr || []).reduce((acc: number, it: any) => acc + scoreOf(it), 0);
+
+  const windowSlice = (daysN: number): any[] => {
+    const now = Date.now();
+    const cutoff = now - Number(daysN) * 24 * 60 * 60 * 1000;
+    return sorted.filter((it) => toTime(it?.createdAtISO) >= cutoff);
+  };
+
+  const w7 = windowSlice(7);
+  const w14 = windowSlice(14);
+  const w28 = windowSlice(28);
+
+  const s7 = sumScore(w7);
+  const s14 = sumScore(w14);
+  const s28 = sumScore(w28);
+
+  const trend = (a: number, b: number): string => {
+    const da = Number(a) || 0;
+    const db = Number(b) || 0;
+    if (db <= 0 && da <= 0) return "—";
+    if (db <= 0 && da > 0) return "↑";
+    if (da === db) return "→";
+    return da > db ? "↑" : "↓";
+  };
+
+  // insights textuais (sem “inventar”): apenas contagem/score e variação
+  const lastLabel = last ? (last.variant === "patient" ? "Paciente" : "Coach") : "—";
+  const prevLabel = prev ? (prev.variant === "patient" ? "Paciente" : "Coach") : "—";
+  const deltaLP = last && prev ? (scoreOf(last) - scoreOf(prev)) : 0;
+
+  const qualityHint = (it: any): string => {
+    if (!it) return "Sem dados";
+    return it.variant === "coach" ? "Relatório completo" : "Relatório simplificado";
+  };
   const groups = new Map<string, any[]>();
   for (const it of picked) {
     const iso = String((it as any).createdAtISO || "");
@@ -163,7 +217,7 @@ const timeline_9c1 = useMemo(() => {
   const rate = days > 0 ? (total / Math.max(1, days)) : 0;
   const badge = total >= 10 ? "Alta" : total >= 4 ? "Boa" : total >= 1 ? "Baixa" : "—";
 
-  return { rows, total, daysActive, rate, badge };
+  return { rows, total, daysActive, rate, badge, last, prev, lastLabel, prevLabel, deltaLP, qualityHint, s7, s14, s28, trend };
 }, [reportKey, rangeDays]);
 
 
@@ -476,6 +530,47 @@ const [items, setItems] = useState<ReportHistoryItem[]>([]);
         <button type="button" onClick={() => setRangeDays(0)} className={`rounded-xl border border-white/10 px-3 py-2 text-[12px] text-white/85 transition ${rangeDays===0 ? "bg-[rgba(0,149,255,0.18)] border-[rgba(0,149,255,0.35)]" : "bg-black/30 hover:bg-black/40"}`}>Tudo</button>
       </div>
     </div>
+    {/* Sprint 9C.2 | Insights */}
+    <div data-ui="insights-9c2" className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-[12px] uppercase tracking-wide text-white/50">Insights</div>
+          <div className="mt-1 text-[12px] text-white/70">
+            Último: <span className="font-semibold text-white/85">{timeline_9c1.lastLabel}</span> • {timeline_9c1.qualityHint(timeline_9c1.last)}
+            {timeline_9c1.prev ? (
+              <>
+                {" "}• Anterior: <span className="font-semibold text-white/85">{timeline_9c1.prevLabel}</span>
+              </>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[12px]">
+          <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-white/75">
+            7d: <span className="font-semibold text-white/85">{timeline_9c1.s7}</span>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-white/75">
+            14d: <span className="font-semibold text-white/85">{timeline_9c1.s14}</span> <span className="text-white/55">{timeline_9c1.trend(timeline_9c1.s14, timeline_9c1.s7)}</span>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-white/75">
+            28d: <span className="font-semibold text-white/85">{timeline_9c1.s28}</span> <span className="text-white/55">{timeline_9c1.trend(timeline_9c1.s28, timeline_9c1.s14)}</span>
+          </div>
+        </div>
+      </div>
+
+      {timeline_9c1.last && timeline_9c1.prev ? (
+        <div className="mt-3 rounded-xl border border-white/10 bg-black/25 p-3 text-[12px] text-white/70">
+          Comparação rápida: {timeline_9c1.deltaLP > 0 ? (
+            <span className="font-semibold text-white/85">↑ Mais completo</span>
+          ) : timeline_9c1.deltaLP < 0 ? (
+            <span className="font-semibold text-white/85">↓ Mais simples</span>
+          ) : (
+            <span className="font-semibold text-white/85">→ Mesmo nível</span>
+          )}
+          <span className="text-white/55"> (coach=2, paciente=1)</span>
+        </div>
+      ) : null}
+    </div>
+
 
     <div className="mt-4 grid gap-3">
       {(timeline_9c1.rows?.length ? timeline_9c1.rows : []).slice(0, 10).map((g: any) => (
