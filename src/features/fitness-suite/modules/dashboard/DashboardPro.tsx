@@ -8,7 +8,7 @@ import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { getDashboardExportSnapshot } from "./dashboardExport";
 import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
-import { REPORT_HISTORY_KEY, PDF_VARIANT_KEY } from "@/lib/storageKeys";
+import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey, PDF_VARIANT_KEY } from "@/lib/storageKeys";
 
 import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
@@ -75,6 +75,30 @@ export function DashboardPro() {
     }
   });
 
+  // Sprint 9B.1 | Paciente atual (namespace do histórico de relatórios)
+  const [patientId, _setPatientId] = useState<string>(() => {
+    try { return localStorage.getItem(CURRENT_PATIENT_KEY) || "default"; } catch { return "default"; }
+  });
+
+  const reportKey = useMemo(() => reportHistoryKey(patientId), [patientId]);
+
+  useEffect(() => {
+    try { localStorage.setItem(CURRENT_PATIENT_KEY, patientId || "default"); } catch {}
+  }, [patientId]);
+
+  useEffect(() => {
+    // migração automática (legado -> default)
+    try {
+      const legacy = localStorage.getItem(REPORT_HISTORY_BASE_KEY);
+      const destKey = reportHistoryKey("default");
+      if (legacy && !localStorage.getItem(destKey)) {
+        localStorage.setItem(destKey, legacy);
+        localStorage.removeItem(REPORT_HISTORY_BASE_KEY);
+      }
+    } catch {}
+  }, []);
+
+
   // === Sprint 6C | Report History (LS) ===
   type ReportHistoryItem = {
     id: string;
@@ -99,7 +123,7 @@ export function DashboardPro() {
 
   const [reportHistory, setReportHistory] = useState<ReportHistoryItem[]>(() => {
     if (typeof window === "undefined") return [];
-    return safeParseHistory(window.localStorage.getItem(REPORT_HISTORY_KEY));
+    return safeParseHistory(window.localStorage.getItem(reportKey));
   });
 
   // === Sprint 7 | Report History UX (safe) ===
@@ -160,13 +184,13 @@ export function DashboardPro() {
 
   function refreshReportHistory() {
     if (typeof window === "undefined") return;
-    setReportHistory(safeParseHistory(window.localStorage.getItem(REPORT_HISTORY_KEY)));
+    setReportHistory(safeParseHistory(window.localStorage.getItem(reportKey)));
   }
 
   function writeReportHistory(list: ReportHistoryItem[]) {
     if (typeof window !== "undefined") {
       try {
-        window.localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(list.slice(0, 30)));
+        window.localStorage.setItem(reportKey, JSON.stringify(list.slice(0, 30)));
       } catch {}
     }
     setReportHistory(list.slice(0, 30));
