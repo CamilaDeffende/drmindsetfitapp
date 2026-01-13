@@ -128,3 +128,33 @@
   }
 }
 
+
+
+/* mindsetfit-splash:animations */
+@keyframes mfFadeUp {
+  0% { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.995); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes mfPulseGlow {
+  0%, 100% { opacity: .55; transform: scale(1); }
+  50% { opacity: .85; transform: scale(1.04); }
+}
+@keyframes mfShine {
+  0% { transform: translateX(-120%); opacity: 0; }
+  20% { opacity: .55; }
+  60% { opacity: .20; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+@keyframes mfProgress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(180%); }
+}
+
+.mf-anim-fadeup { animation: mfFadeUp 520ms ease-out both; }
+.mf-anim-glow { animation: mfPulseGlow 1400ms ease-in-out infinite; }
+.mf-anim-shine { animation: mfShine 1600ms ease-in-out infinite; }
+.mf-anim-progress { animation: mfProgress 1200ms ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mf-anim-fadeup, .mf-anim-glow, .mf-anim-shine, .mf-anim-progress { animation: none !important; }
+}
