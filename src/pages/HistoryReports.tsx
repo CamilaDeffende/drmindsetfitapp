@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey } from "@/lib/storageKeys";
+import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey, PATIENTS_KEY } from "@/lib/storageKeys";
 
 type ReportHistoryItem = {
   id: string;
@@ -77,7 +77,82 @@ export default function HistoryReports() {
   const [patientId, _setPatientId] = useState<string>(() => {
   try { return localStorage.getItem(CURRENT_PATIENT_KEY) || "default"; } catch { return "default"; }
 });
+type Patient = { id: string; name: string; createdAtISO: string };
+
+const safeParsePatients = (raw: string | null): Patient[] => {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? (v as Patient[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const slugify = (x: string) =>
+  String(x ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9\-]/g, "")
+    .replace(/\-+/g, "-")
+    .slice(0, 32) || "paciente";
+
 const reportKey = useMemo(() => reportHistoryKey(patientId), [patientId]);
+
+const [patients, setPatients] = useState<Patient[]>(() => {
+  try {
+    const raw = localStorage.getItem(PATIENTS_KEY);
+    const list = safeParsePatients(raw);
+    // garante 'default'
+    if (!list.find((p) => p.id === "default")) {
+      return [{ id: "default", name: "Padrão", createdAtISO: new Date().toISOString() }, ...list].slice(0, 50);
+    }
+    return list.slice(0, 50);
+  } catch {
+    return [{ id: "default", name: "Padrão", createdAtISO: new Date().toISOString() }];
+  }
+});
+
+const [newPatientName, setNewPatientName] = useState<string>("");
+
+const writePatients = (list: Patient[]) => {
+  const next = (Array.isArray(list) ? list : []).slice(0, 50);
+  setPatients(next);
+  try { localStorage.setItem(PATIENTS_KEY, JSON.stringify(next)); } catch {}
+};
+
+const ensureDefaultPatient = () => {
+  if (!patients.find((p) => p.id === "default")) {
+    writePatients([{ id: "default", name: "Padrão", createdAtISO: new Date().toISOString() }, ...patients]);
+  }
+};
+
+useEffect(() => {
+  ensureDefaultPatient();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+const createPatient = (name: string) => {
+  const nm = String(name ?? "").trim();
+  if (!nm) return;
+  const base = slugify(nm);
+  const id = base + "-" + String(Date.now()).slice(-6);
+  const item = { id, name: nm, createdAtISO: new Date().toISOString() };
+  const next = [item, ...patients.filter((p) => p.id !== id)].slice(0, 50);
+  writePatients(next);
+  try { localStorage.setItem(CURRENT_PATIENT_KEY, id); } catch {}
+  _setPatientId(id);
+  setNewPatientName("");
+};
+
+const selectPatient = (id: string) => {
+  const pid = String(id || "default");
+  try { localStorage.setItem(CURRENT_PATIENT_KEY, pid); } catch {}
+  _setPatientId(pid);
+};
+
+
 useEffect(() => {
   try { localStorage.setItem(CURRENT_PATIENT_KEY, patientId || "default"); } catch {}
 }, [patientId]);
@@ -295,6 +370,43 @@ const [items, setItems] = useState<ReportHistoryItem[]>([]);
 
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
+      {/* Sprint 9B.2 | Seletor de Paciente */}
+      <div data-ui="patient-switcher" className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-[12px] uppercase tracking-wide text-white/50">Paciente</div>
+            <div className="mt-1 text-[14px] font-semibold text-white/90">{patients.find(p => p.id === patientId)?.name || patientId}</div>
+            <div className="mt-1 text-[12px] text-white/60">Histórico isolado por paciente (local, sem login).</div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={patientId}
+              onChange={(e) => selectPatient(e.target.value)}
+              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[12px] text-white/85 outline-none"
+            >
+              {(patients?.length ? patients : [{id:"default",name:"Padrão",createdAtISO:""}]).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <div className="flex items-center gap-2">
+              <input
+                value={newPatientName}
+                onChange={(e) => setNewPatientName(e.target.value)}
+                placeholder="Novo paciente…"
+                className="w-40 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[12px] text-white/85 placeholder:text-white/35 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => createPatient(newPatientName)}
+                className="rounded-xl border border-[rgba(0,149,255,0.35)] bg-[rgba(0,149,255,0.12)] px-3 py-2 text-[12px] text-white hover:bg-[rgba(0,149,255,0.18)] active:scale-[0.98] transition"
+              >
+                Criar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontWeight: 900, letterSpacing: 0.2 }}>Histórico de Relatórios</div>
