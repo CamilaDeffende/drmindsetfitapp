@@ -210,7 +210,7 @@ export function DivisaoTreinoSelector({ onSelect }: DivisaoTreinoSelectorProps) 
         onClick={handleConfirmar}
         disabled={!diasValidos}
         size="lg"
-        className="w-full bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
+        className="w-full bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0"
       >
         Gerar Treino Personalizado
       </Button>

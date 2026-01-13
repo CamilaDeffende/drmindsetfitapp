@@ -26,7 +26,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
           <div className="absolute top-5 left-0 h-0.5 bg-gray-200 dark:bg-gray-800"
                style={{ width: '100%', zIndex: 0 }} />
           <div
-            className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] transition-all duration-500"
+            className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] transition-all duration-500 hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0"
             style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`, zIndex: 1 }}
           />
 

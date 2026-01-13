@@ -187,7 +187,7 @@ export function TreinoAtivoView({ treinoAtivo }: TreinoAtivoViewProps) {
         <h3 className="text-lg font-semibold text-gray-100">Seus Treinos</h3>
         {treino.treinos.map((treinoDia, indexDia) => (
           <Card key={indexDia} className="glass-effect border-white/10">
-            <CardHeader className="pb-3 bg-gradient-to-r from-green-500/10 to-transparent">
+            <CardHeader className="pb-3 bg-gradient-to-r from-green-500/10 to-transparent hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
               <CardTitle className="text-lg text-gray-100 flex items-center gap-2">
                 <Dumbbell className="w-5 h-5 text-green-400" />
                 {treinoDia.dia}

@@ -103,7 +103,7 @@ export function Pricing() {
       <main className="max-w-7xl mx-auto px-4 py-12 sm:py-16">
         {/* Hero */}
         <div className="text-center mb-12">
-          <Badge className="mb-4 bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF]">
+          <Badge className="mb-4 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
             Transforme seu corpo e mente
           </Badge>
           <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-neon">
@@ -169,7 +169,7 @@ export function Pricing() {
           {/* Plano Premium */}
           <Card className="glass-effect border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)] relative">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-1">
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-1 hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
                 <Crown className="w-3 h-3 mr-1" />
                 MAIS POPULAR
               </Badge>

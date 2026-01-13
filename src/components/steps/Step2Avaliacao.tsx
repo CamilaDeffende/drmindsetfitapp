@@ -413,7 +413,7 @@ export function Step2Avaliacao() {
               <ArrowLeft className="mr-2 w-4 h-4" />
               Voltar
             </Button>
-            <Button type="submit" size="lg" className="bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]">
+            <Button type="submit" size="lg" className="bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
               Próxima Etapa
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>

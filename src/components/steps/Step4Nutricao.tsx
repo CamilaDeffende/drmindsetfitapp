@@ -262,7 +262,7 @@ export function Step4Nutricao() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
       <div className="mb-6 sm:mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] mb-3 sm:mb-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] mb-3 sm:mb-4 hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
           <UtensilsCrossed className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold mb-2">Planejamento Nutricional</h2>
@@ -408,7 +408,7 @@ export function Step4Nutricao() {
           size="lg"
           onClick={gerarPlanejamento}
           disabled={refeicoesSelecionadas.length === 0}
-          className="w-full sm:flex-1 bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
+          className="w-full sm:flex-1 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0"
         >
           Gerar Planejamento
           <ArrowRight className="ml-2 w-4 h-4" />

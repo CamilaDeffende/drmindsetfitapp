@@ -46,7 +46,7 @@ function AppContent() {
       <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] bg-clip-text text-transparent hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
               DrMindSetfit
             </h1>
             <p className="text-xs text-muted-foreground">
