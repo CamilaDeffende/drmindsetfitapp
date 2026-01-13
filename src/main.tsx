@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { DrMindSetfitProvider } from "./contexts/DrMindSetfitContext";
 import { SplashScreen } from "./components/branding/SplashScreen";
 import "./index.css";
 
@@ -22,7 +23,9 @@ if (!el) throw new Error("Root element #root not found");
 createRoot(el).render(
   <React.StrictMode>
     <BootSplash>
-      <App />
+      <DrMindSetfitProvider>
+        <App />
+      </DrMindSetfitProvider>
     </BootSplash>
   </React.StrictMode>
 );

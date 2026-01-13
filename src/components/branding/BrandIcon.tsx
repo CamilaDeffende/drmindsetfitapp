@@ -14,7 +14,7 @@ export function BrandIcon({ size = 24, className, alt }: Props) {
       src="/brand/mindsetfit-logo.png"
       alt={alt ?? "MindsetFit"}
       style={style}
-      className={className ?? "select-none"}
+      className={className ?? "w-5 h-5"}
       draggable={false}
       loading="eager"
     />

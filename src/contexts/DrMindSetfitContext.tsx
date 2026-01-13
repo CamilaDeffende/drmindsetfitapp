@@ -11,7 +11,7 @@ interface DrMindSetfitContextType {
 
 const DrMindSetfitContext = createContext<DrMindSetfitContextType | undefined>(undefined)
 
-const STORAGE_KEY = 'drmindsetfit_state'
+export const STORAGE_KEY = 'drmindsetfit_state';
 
 const initialState: DrMindSetfitState = {
   etapaAtual: 1,
