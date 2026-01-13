@@ -13,3 +13,4 @@ dist
 .env*.local
 *.bak.*
 src/**/*.bak.*
+.scan
