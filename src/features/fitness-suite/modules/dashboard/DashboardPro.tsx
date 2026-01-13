@@ -230,7 +230,7 @@ export function DashboardPro() {
 
   const requestPremium = (feature: any) => {
     if (!isPremium(feature)) {
-      setPremiumNotice(`${premiumLabel(feature)} — disponível no Premium.`);
+      setPremiumNotice(`${premiumLabel(feature)} - disponível no Premium.`);
       // auto-dismiss leve
       window.setTimeout(() => setPremiumNotice(null), 3200);
       return false;
@@ -294,7 +294,7 @@ const sessionsRaw =
     const streakNow = toN(p.streak ?? 0);
     const prsCount = Array.isArray(p.prs) ? p.prs.length : 0;
 
-    // Score (0–100) — 4 pilares auditáveis
+    // Score (0-100) - 4 pilares auditáveis
     const scoreFreq = clamp(Math.round((sessions7 / 5) * 40), 0, 40);   // alvo 5/7d → 40
     const scoreStreak = clamp(Math.round((streakNow / 14) * 30), 0, 30); // alvo 14d → 30
     const scoreCons = clamp(Math.round((sessions7 / 3) * 20), 0, 20);    // presença mínima → 20
@@ -326,7 +326,7 @@ const sessionsRaw =
     let target: "start" | "history" | "report" = "start";
 
     if (sessions7 <= 1) {
-      action = "Frequência abaixo do mínimo: faça 1 sessão hoje (45–60 min) para retomar o ritmo.";
+      action = "Frequência abaixo do mínimo: faça 1 sessão hoje (45-60 min) para retomar o ritmo.";
       target = "start";
     } else if (streakNow <= 2) {
       action = "Streak curto: priorize 3 dias ativos/semana antes de aumentar intensidade.";
@@ -335,7 +335,7 @@ const sessionsRaw =
       action = "Você está evoluindo: consolide e gere o PDF para acompanhar semana a semana.";
       target = "report";
     } else {
-      action = "Boa base: mantenha 3–5 treinos/semana e busque 1 pequeno avanço por sessão.";
+      action = "Boa base: mantenha 3-5 treinos/semana e busque 1 pequeno avanço por sessão.";
       target = "history";
     }
 
@@ -495,7 +495,7 @@ const streak = useProgressStore((s: any) => s.streak);
       { id: "pr20", label: "PR x20", hint: "20 PRs registrados", earned: prsCount >= 20 },
     ];
 
-    // mantém ordem e evita “excesso” visual: retorna todos, mas UI pode colapsar depois se quiser
+    // mantém ordem e evita "excesso" visual: retorna todos, mas UI pode colapsar depois se quiser
     return list;
   }, [streakDays, prsCount, totalSessions]);
 
@@ -678,13 +678,13 @@ const streak = useProgressStore((s: any) => s.streak);
         ". Faça 1 sessão hoje.";
     } else if (missingWeekly === 1) {
       title = "Você está a 1 treino de fechar a semana.";
-      action = "Faça uma sessão objetiva (45–60 min) e finalize a meta.";
+      action = "Faça uma sessão objetiva (45-60 min) e finalize a meta.";
     } else if (consistencyPct < 40) {
       title = "Ajuste: aumentar frequência.";
       action = "Meta simples: 3 dias ativos nesta semana. Foque em constância, não em perfeição.";
     } else if (prevVol > 0 && diff < 0) {
       title = "Ajuste: recuperar volume com controle.";
-      action = "Suba 5–10% o volume na próxima sessão (1–2 séries extras nos básicos).";
+      action = "Suba 5-10% o volume na próxima sessão (1-2 séries extras nos básicos).";
     } else if (score >= 85) {
       title = "Semana Perfeita em andamento.";
       action = "Mantenha o padrão. Pequenos ajustes > grandes mudanças.";
@@ -760,7 +760,7 @@ const streak = useProgressStore((s: any) => s.streak);
     } else if (activePct < 100) {
       suggestion = "Aumente frequência: um dia ativo a mais nos próximos 7 dias já muda o jogo.";
     } else if (volTarget > 0 && volPct < 80) {
-      suggestion = "Volume está abaixo da meta: adicione 1–2 séries nos básicos na próxima sessão.";
+      suggestion = "Volume está abaixo da meta: adicione 1-2 séries nos básicos na próxima sessão.";
     }
 
     return {
@@ -822,25 +822,25 @@ const streak = useProgressStore((s: any) => s.streak);
 
     if (diffSessions < 0) {
       title = "Recuperar frequência";
-      action = "Você treinou menos vezes. Priorize +1 sessão curta (45–60 min) para voltar ao trilho.";
+      action = "Você treinou menos vezes. Priorize +1 sessão curta (45-60 min) para voltar ao trilho.";
     } else if (diffSessions === 0 && diffVol < 0) {
       title = "Recuperar volume com controle";
-      action = "Mesma frequência, menos volume. Adicione 1–2 séries nos básicos (sem aumentar o tempo demais).";
+      action = "Mesma frequência, menos volume. Adicione 1-2 séries nos básicos (sem aumentar o tempo demais).";
     } else if (diffVol > 0 && diffDur > 0 && diffSets <= 0) {
       title = "Ganhar eficiência";
       action = "Você ficou mais tempo treinando sem subir estrutura. Reduza descanso e mantenha a intensidade.";
     } else if (diffVol > 0 && diffSessions >= 0) {
       title = "Boa progressão";
-      action = "Volume subiu com consistência. Continue — ajuste pequeno é o que sustenta evolução.";
+      action = "Volume subiu com consistência. Continue - ajuste pequeno é o que sustenta evolução.";
     } else if (diffVol === 0 && diffSessions > 0) {
       title = "Transformar frequência em progresso";
       action = "Você treinou mais, mas volume não acompanhou. Registre cargas/reps e suba 5% nos principais.";
     } else if (diffReps < 0 && diffSets < 0) {
       title = "Reforçar estrutura";
-      action = "Caiu reps e séries. Volte ao básico: 2–3 movimentos principais + progressão gradual.";
+      action = "Caiu reps e séries. Volte ao básico: 2-3 movimentos principais + progressão gradual.";
     }
 
-    const note = "Resumo baseado nos últimos 7 dias vs 7 anteriores. Use como guia — sem promessas, só sinal.";
+    const note = "Resumo baseado nos últimos 7 dias vs 7 anteriores. Use como guia - sem promessas, só sinal.";
 
     const target =
       diffSessions < 0 ? "start" :
@@ -858,10 +858,10 @@ const streak = useProgressStore((s: any) => s.streak);
     const fmt = (n: number) => Math.round(Number(n) || 0).toLocaleString("pt-BR");
 
     const lines: string[] = [];
-    lines.push("DrMindSetFit — Relatório rápido");
+    lines.push("DrMindSetFit - Relatório rápido");
     lines.push("");
     // Semana perfeita
-    lines.push("Semana Perfeita: " + String(perfectWeek?.score ?? 0) + "/100 — " + String(perfectWeek?.tier ?? ""));
+    lines.push("Semana Perfeita: " + String(perfectWeek?.score ?? 0) + "/100 - " + String(perfectWeek?.tier ?? ""));
     lines.push("• " + String(perfectWeek?.title ?? ""));
     lines.push("• " + String(perfectWeek?.action ?? ""));
     lines.push("");
@@ -880,7 +880,7 @@ const streak = useProgressStore((s: any) => s.streak);
       const label = String(h?.label ?? "");
       const value = String(h?.value ?? "");
       const detail = String(h?.detail ?? "");
-      lines.push("• " + label + ": " + value + " — " + detail);
+      lines.push("• " + label + ": " + value + " - " + detail);
     }
     lines.push("• Ajuste: " + String(weeklyReview?.action ?? ""));
     lines.push("");
@@ -914,14 +914,13 @@ const streak = useProgressStore((s: any) => s.streak);
       const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
       const esc = (t: unknown) => String(t ?? "")
-      const title = "DrMindSetFit — Performance Report";
+      const title = "DrMindSetFit - Performance Report";
       const isDetailed = mode === "detailed";
       const reportModeLabel = isDetailed ? "Detalhado" : "Compacto";
       const appVersion = "11.4.4";
       const pad2 = (n: number) => String(n).padStart(2, "0");
       const rand = () => Math.random().toString(36).slice(2, 6).toUpperCase();
-      const reportId =
-        "RPT-" +
+      const reportId="RPT-" +
         now.getFullYear() +
         pad2(now.getMonth() + 1) +
         pad2(now.getDate()) +
@@ -932,7 +931,7 @@ const streak = useProgressStore((s: any) => s.streak);
         rand();
       // === Sprint 11.4.4 | Branding ===
 
-      const sub = "Dashboard PRO (Enterprise) — " + reportModeLabel;
+      const sub = "Dashboard PRO (Enterprise) - " + reportModeLabel;
 
       const pwScore = Number(perfectWeek?.score ?? 0);
       const pwTier = esc(perfectWeek?.tier ?? "");
@@ -983,7 +982,7 @@ const streak = useProgressStore((s: any) => s.streak);
         " min";
 
       const execBullets = [
-        "Semana Perfeita: " + pwScore + "/100 — " + String(perfectWeek?.tier ?? ""),
+        "Semana Perfeita: " + pwScore + "/100 - " + String(perfectWeek?.tier ?? ""),
         "Ajuste recomendado: " + String(weeklyReview?.action ?? ""),
         "Foco da semana: " + String(goalsView?.suggestion ?? "Consistência primeiro."),
       ];
@@ -1027,15 +1026,15 @@ const streak = useProgressStore((s: any) => s.streak);
         "<!doctype html><html><head><meta charset=\"utf-8\"/>" +
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>" +
         "<title>" + title + "</title><style>" + css + "</style></head><body>" +
-        "<div class=\\\"page\\\">" +
+        "<div class=\\"page\\">" +
 
 "" +
 
         "" +
-        "<div class=\\\"watermark\\\">MindsetFit</div>" +
+        "<div class=\\"watermark\\">MindsetFit</div>" +
         "<div class=\"top\">" +
         "<div>" +
-        "<img src=\\\"/logo-mindsetfit.svg\\\" alt=\\\"MindsetFit\\\" style=\\\"height:22px;width:auto;opacity:0.95;margin-bottom:10px\\\" onerror=\\\"this.style.display='none'\\\"/>" +
+        "<img src=\\"/logo-mindsetfit.svg\\" alt=\\"MindsetFit\\" style=\\"height:22px;width:auto;opacity:0.95;margin-bottom:10px\\" onerror=\\"this.style.display='none'\\"/>" +
         "<div class=\"brand\">" + esc(title) + "</div>" +
         "<div class=\"sub\">" + esc(sub) + "</div>" +
         "<div class=\"pill\"><span>Score</span><strong>" + String(pwScore) + "/100</strong><span class=\"muted\">" + pwTier + "</span></div>" +
@@ -1077,7 +1076,7 @@ const streak = useProgressStore((s: any) => s.streak);
           const label = esc(h?.label ?? "");
           const value = esc(h?.value ?? "");
           const detail = esc(h?.detail ?? "");
-          return "<li class=\"li\"><strong>" + label + ":</strong> " + value + " — <span class=\"muted\">" + detail + "</span></li>";
+          return "<li class="li"><strong>" + label + ":</strong> " + value + " - <span class="muted">" + detail + "</span></li>";
         }).join("") +
         "</ul>" +
         "</div>";
@@ -1105,7 +1104,7 @@ const streak = useProgressStore((s: any) => s.streak);
       
       const snapshotHtml =
         isDetailed
-          ? "<div class=\"card\">" +
+          ? "<div class="card">" +
             "<h3 class=\"h\">Full Snapshot</h3>" +
             "<div class=\"p muted\">Versão detalhada: inclui o resumo completo copiado do app.</div>" +
             "<hr class=\"hr\"/>" +
@@ -1199,11 +1198,11 @@ const html =
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
+            .replace(/"/g, "&quot;")
             .replace(/'/g, "&#39;");
 
         const card = (title: string, inner: string) =>
-          `<div class="card"><div class="h">${esc(title)}</div><div class="b">${inner}</div></div>`;
+          `<div class=\"card\"><div class=\"h\">${esc(title)}</div><div class=\"b\">${inner}</div></div>`;
 
         // Normalizados esperados (com fallback seguro)
         const w = norm?.workout ?? {};
@@ -1217,26 +1216,26 @@ const html =
         const bodyHtml = (() => {
           try {
             const grid =
-              `<div class="grid">` +
+              `<div class=\"grid\">` +
               card(
                 "Treino (resumo)",
-                `<div class="small">Exercícios: <b>${esc(w?.exercisesCount ?? 0)}</b></div>` +
+                `<div class=\"small\">Exercícios: <b>${esc(w?.exercisesCount ?? 0)}</b></div>` +
                   (w?.exercisesTop ? `<div class="small">Top: ${esc(w.exercisesTop)}</div>` : "")
               ) +
               card(
                 "Dieta (resumo)",
-                `<div class="small">Refeições: <b>${esc(d?.mealsCount ?? 0)}</b></div>` +
+                `<div class=\"small\">Refeições: <b>${esc(d?.mealsCount ?? 0)}</b></div>` +
                   (d?.macrosText ? `<div class="small">Macros: ${esc(d.macrosText)}</div>` : "")
               ) +
               card(
                 "HIIT (resumo)",
-                `<div class="small">Status: <b>${esc(h?.active ? "ativo" : "—")}</b></div>` +
+                `<div class=\"small\">Status: <b>${esc(h?.active ? "ativo" : "-")}</b></div>` +
                   (h?.protocol ? `<div class="small">Protocolo: ${esc(h.protocol)}</div>` : "") +
                   (h?.frequency ? `<div class="small">Frequência: ${esc(h.frequency)}</div>` : "")
               ) +
               card(
                 "Cardio (resumo)",
-                `<div class="small">Status: <b>${esc(c?.active ? "ativo" : "—")}</b></div>` +
+                `<div class=\"small\">Status: <b>${esc(c?.active ? "ativo" : "-")}</b></div>` +
                   (c?.modality ? `<div class="small">Modalidade: ${esc(c.modality)}</div>` : "") +
                   (c?.duration ? `<div class="small">Duração: ${esc(c.duration)}</div>` : "") +
                   (c?.intensity ? `<div class="small">Intensidade: ${esc(c.intensity)}</div>` : "") +
@@ -1244,10 +1243,10 @@ const html =
               ) +
               card(
                 "Fonte dos dados",
-                `<div class="small">Treino: ${esc(src?.workout ?? "")}</div>` +
-                  `<div class="small">Dieta: ${esc(src?.diet ?? "")}</div>` +
-                  `<div class="small">HIIT: ${esc(src?.hiit ?? "")}</div>` +
-                  `<div class="small">Cardio: ${esc(src?.cardio ?? "")}</div>`
+                `<div class=\"small\">Treino: ${esc(src?.workout ?? "")}</div>` +
+                  `<div class=\"small\">Dieta: ${esc(src?.diet ?? "")}</div>` +
+                  `<div class=\"small\">HIIT: ${esc(src?.hiit ?? "")}</div>` +
+                  `<div class=\"small\">Cardio: ${esc(src?.cardio ?? "")}</div>`
               ) +
               `</div>`;
 
@@ -1257,7 +1256,7 @@ const html =
           }
         })();
 
-        // Sprint 9A.1 | PDF PRO v3 — bloco de Evolução (últimos 28 dias)
+        // Sprint 9A.1 | PDF PRO v3 - bloco de Evolução (últimos 28 dias)
         const historyKpiText = (() => {
           try {
             const now = Date.now();
@@ -1321,7 +1320,7 @@ const html =
           }
         })();
 
-        // Sprint 9A.2 | PDF PRO v3 — Últimos relatórios + Score (texto seguro)
+        // Sprint 9A.2 | PDF PRO v3 - Últimos relatórios + Score (texto seguro)
         const reportHistoryMiniText = (() => {
           try {
             const now = Date.now();
@@ -1377,7 +1376,7 @@ const html =
               const d = iso ? new Date(iso) : null;
               const dateTxt = d && Number.isFinite(d.getTime())
                 ? d.toLocaleDateString()
-                : (iso ? iso.slice(0,10) : "—");
+                : (iso ? iso.slice(0,10) : "-");
 
               const v = it?.variant === "patient" ? "Paciente" : "Coach";
               const name = String(it?.label || it?.fileName || "Relatório").slice(0, 46);
@@ -1395,7 +1394,7 @@ const html =
         // Gera PDF premium
 const flags = typeof window !== "undefined" ? loadFlags() : { paywallEnabled: false, premiumUnlocked: false };
     if (flags.paywallEnabled && !flags.premiumUnlocked) {
-      window.location.href = "/assinatura";
+      window.location.href="/assinatura";
       return;
     }
     await generateMindsetFitPremiumPdf({
@@ -1412,8 +1411,8 @@ fileName: "Relatorio-MindsetFit-Premium.pdf",
           const createdAtISO = new Date().toISOString();          const fileNameUsed = `mindsetfit-relatorio-${pdfVariant}-${new Date().toISOString().slice(0,10)}.pdf`;
 const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ? snapshot.meta.source : undefined;
           const summary = pdfVariant === "patient"
-            ? "Versão Paciente — resumo simplificado."
-            : "Versão Coach — relatório completo premium.";
+            ? "Versão Paciente - resumo simplificado."
+            : "Versão Coach - relatório completo premium.";
           addReportHistory({ id, createdAtISO, variant: pdfVariant, fileName: fileNameUsed, metaSource: (typeof metaSource === "string" ? metaSource : "meta.normalized"), summary });
           refreshReportHistory();
         } catch {}
@@ -1654,7 +1653,7 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
         {uiReady_1401 && !hasHistory_1401 ? (
           <div className="mb-4">
             <EmptyState
-              title="Sem sessões registradas ainda"
+              title="Sem sessões registradas ainda";
               subtitle="Registre seu primeiro treino para liberar insights, tendências e relatórios."
               actionLabel="Iniciar primeiro treino"
               onAction={() => {
@@ -1833,7 +1832,7 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
           <div style={{ fontSize: 12, fontWeight: 1000 }}>Último treino</div>
-          <div style={{ fontSize: 11, color: tokens.colors.muted }}>{latest?.date || "—"}</div>
+          <div style={{ fontSize: 11, color: tokens.colors.muted }}>{latest?.date || "-"}</div>
         </div>
 
         <div style={{ fontSize: 12, color: tokens.colors.muted }}>
@@ -2032,7 +2031,7 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
               </div>
 
               <div className="mt-3 text-[12px] text-white/50">
-                Métricas avançadas são opcionais — o foco continua sendo execução consistente.
+                Métricas avançadas são opcionais - o foco continua sendo execução consistente.
               </div>
             </div>
           ) : null}
@@ -2106,7 +2105,7 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
                 });
               }}
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/80 hover:bg-white/10 active:scale-[0.98] transition"
-              title="Resetar objetivos para padrão"
+              title="Resetar objetivos para padrão";
             >
               Reset
             </button>
@@ -2209,7 +2208,7 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
                     onClick={() => setGoals((g) => ({ ...g, volume7d: Math.max(0, Math.round(g.volume7d - 500)) }))}
                     className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
                     aria-label="Diminuir volume alvo"
-                    title="-500"
+                    title="-500";
                   >
                     −
                   </button>
@@ -2218,7 +2217,7 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
                     onClick={() => setGoals((g) => ({ ...g, volume7d: Math.min(999999, Math.round(g.volume7d + 500)) }))}
                     className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-white/90 hover:bg-white/10 active:scale-[0.98] transition"
                     aria-label="Aumentar volume alvo"
-                    title="+500"
+                    title="+500";
                   >
                     +
                   </button>
@@ -2230,7 +2229,7 @@ const metaSource = (typeof snapshot !== "undefined" && snapshot?.meta?.source) ?
               </div>
 
               <div className="mt-2 text-[12px] text-white/50">
-                Dica: se você não registra carga/reps, o volume pode ficar subestimado — mas o objetivo semanal ainda guia o progresso.
+                Dica: se você não registra carga/reps, o volume pode ficar subestimado - mas o objetivo semanal ainda guia o progresso.
               </div>
             </div>
           </div>

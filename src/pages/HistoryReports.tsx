@@ -94,8 +94,8 @@ const slugify = (x: string) =>
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9\-]/g, "")
-    .replace(/\-+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
     .slice(0, 32) || "paciente";
 
 const reportKey = useMemo(() => reportHistoryKey(patientId), [patientId]);
