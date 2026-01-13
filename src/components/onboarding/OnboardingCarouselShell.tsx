@@ -64,7 +64,7 @@ export function OnboardingCarouselShell({
           <img
             src="/brand/mindsetfit-logo.png"
             alt="MindsetFit"
-            className="h-7 w-auto select-none"
+            className="h-5 w-auto select-none select-none opacity-95"
             draggable={false}
           />
           <div className="leading-tight">
