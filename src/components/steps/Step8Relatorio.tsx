@@ -96,9 +96,9 @@ export function Step8Relatorio() {
               <p className="text-sm text-muted-foreground">TMB</p>
               <p className="text-xl font-bold text-[#1E6BFF]">{state.metabolismo?.tmb} kcal</p>
             </div>
-            <div className="text-center p-3 bg-purple-50 dark:bg-purple-950 rounded">
+            <div className="text-center p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded">
               <p className="text-sm text-muted-foreground">GET</p>
-              <p className="text-xl font-bold text-purple-600">{state.metabolismo?.get} kcal</p>
+              <p className="text-xl font-bold text-[#1E6BFF]">{state.metabolismo?.get} kcal</p>
             </div>
             <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded">
               <p className="text-sm text-muted-foreground">Alvo</p>

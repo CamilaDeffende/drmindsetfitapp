@@ -105,12 +105,12 @@ export function Report() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30">
+              <div className="p-4 rounded-lg bg-gradient-to-br from-[#1E6BFF]/20 to-[#00B7FF]/10 border border-[#1E6BFF]/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-4 h-4 text-purple-400" />
+                  <Clock className="w-4 h-4 text-[#1E6BFF]" />
                   <span className="text-sm text-gray-400">Duração Treino</span>
                 </div>
-                <p className="text-lg font-bold text-purple-400">
+                <p className="text-lg font-bold text-[#1E6BFF]">
                   {diasTreino} dias ({Math.floor(diasTreino / 7)} semanas)
                 </p>
               </div>
@@ -168,9 +168,9 @@ export function Report() {
                   <p className="text-2xl font-bold text-yellow-400">{dietaAtiva.nutricao.macros.carboidratos}g</p>
                   <p className="text-xs text-gray-500">por dia</p>
                 </div>
-                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                <div className="p-4 rounded-lg bg-[#1E6BFF]/10 border border-[#1E6BFF]/30">
                   <p className="text-xs text-gray-400 mb-1">Gorduras</p>
-                  <p className="text-2xl font-bold text-purple-400">{dietaAtiva.nutricao.macros.gorduras}g</p>
+                  <p className="text-2xl font-bold text-[#1E6BFF]">{dietaAtiva.nutricao.macros.gorduras}g</p>
                   <p className="text-xs text-gray-500">por dia</p>
                 </div>
               </div>
@@ -204,7 +204,7 @@ export function Report() {
                           <div className="flex gap-4 text-xs">
                             <span className="text-red-400">{alimento.proteinas.toFixed(1)}g P</span>
                             <span className="text-yellow-400">{alimento.carboidratos.toFixed(1)}g C</span>
-                            <span className="text-purple-400">{alimento.gorduras.toFixed(1)}g G</span>
+                            <span className="text-[#1E6BFF]">{alimento.gorduras.toFixed(1)}g G</span>
                           </div>
                         </div>
                       ))}
@@ -244,9 +244,9 @@ export function Report() {
                   <p className="text-xs text-gray-400 mb-1">Frequência</p>
                   <p className="text-xl font-bold text-green-400">{treinoAtivo.treino.frequencia}x/semana</p>
                 </div>
-                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                <div className="p-4 rounded-lg bg-[#1E6BFF]/10 border border-[#1E6BFF]/30">
                   <p className="text-xs text-gray-400 mb-1">Intensidade</p>
-                  <p className="text-xl font-bold text-purple-400 capitalize">{treinoAtivo.treino.divisao.intensidade}</p>
+                  <p className="text-xl font-bold text-[#1E6BFF] capitalize">{treinoAtivo.treino.divisao.intensidade}</p>
                 </div>
               </div>
 

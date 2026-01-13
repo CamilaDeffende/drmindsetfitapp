@@ -307,7 +307,7 @@ return (
                 <p className="text-xs text-muted-foreground mb-1">Reps</p>
                 <p className="text-xl sm:text-2xl font-bold">{exercicio.repeticoes}</p>
               </div>
-              <div className="p-2 sm:p-3 bg-purple-50 dark:bg-purple-950 rounded-lg text-center">
+              <div className="p-2 sm:p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg text-center">
                 <p className="text-xs text-muted-foreground mb-1">Descanso</p>
                 <p className="text-xl sm:text-2xl font-bold">{exercicio.descanso}s</p>
               </div>

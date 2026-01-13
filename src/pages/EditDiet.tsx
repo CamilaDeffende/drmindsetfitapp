@@ -366,7 +366,7 @@ return (
                                       <div className="flex gap-2 text-xs">
                                         <span className="text-red-400">{(substituto.proteinas * fator).toFixed(1)}g P</span>
                                         <span className="text-yellow-400">{(substituto.carboidratos * fator).toFixed(1)}g C</span>
-                                        <span className="text-purple-400">{(substituto.gorduras * fator).toFixed(1)}g G</span>
+                                        <span className="text-[#1E6BFF]">{(substituto.gorduras * fator).toFixed(1)}g G</span>
                                       </div>
                                     </div>
                                   </button>
@@ -381,7 +381,7 @@ return (
                     <div className="flex gap-3 text-xs mt-2 pt-2 border-t border-white/5">
                       <span className="text-red-400">Proteínas: {alimento.proteinas.toFixed(1)}g</span>
                       <span className="text-yellow-400">Carbo: {alimento.carboidratos.toFixed(1)}g</span>
-                      <span className="text-purple-400">Gordura: {alimento.gorduras.toFixed(1)}g</span>
+                      <span className="text-[#1E6BFF]">Gordura: {alimento.gorduras.toFixed(1)}g</span>
                     </div>
                   </div>
                 ))}

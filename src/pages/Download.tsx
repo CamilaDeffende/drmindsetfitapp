@@ -14,7 +14,7 @@ export default function Download() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#1E6BFF] to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#1E6BFF] to-[#00B7FF] dark:from-gray-900 dark:to-gray-800">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-full flex items-center justify-center mb-4">

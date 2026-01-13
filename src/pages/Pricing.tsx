@@ -85,7 +85,7 @@ export function Pricing() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E6BFF] to-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1E6BFF] to-[#00B7FF] flex items-center justify-center">
                 <Zap className="w-5 h-5" />
               </div>
               <h1 className="text-xl font-bold text-neon">DrMindSetfit</h1>
@@ -103,7 +103,7 @@ export function Pricing() {
       <main className="max-w-7xl mx-auto px-4 py-12 sm:py-16">
         {/* Hero */}
         <div className="text-center mb-12">
-          <Badge className="mb-4 bg-gradient-to-r from-[#1E6BFF] to-purple-600">
+          <Badge className="mb-4 bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF]">
             Transforme seu corpo e mente
           </Badge>
           <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-neon">
@@ -200,7 +200,7 @@ export function Pricing() {
                   <span>Dieta inteligente com substitutos</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Edit className="w-5 h-5 text-purple-400" />
+                  <Edit className="w-5 h-5 text-[#1E6BFF]" />
                   <span>Edição completa de dieta</span>
                 </li>
                 <li className="flex items-center gap-2">

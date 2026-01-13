@@ -77,9 +77,9 @@ export function DietaAtivaView({ dietaAtiva }: DietaAtivaViewProps) {
               <p className="text-2xl font-bold text-yellow-400">{nutricao.macros.gorduras}</p>
               <p className="text-xs text-gray-500">gramas</p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-xl border border-purple-500/30">
+            <div className="text-center p-4 bg-gradient-to-br from-[#1E6BFF]/20 to-[#00B7FF]/10 rounded-xl border border-[#1E6BFF]/30">
               <p className="text-xs text-gray-400 mb-1">Carboidratos</p>
-              <p className="text-2xl font-bold text-purple-400">{nutricao.macros.carboidratos}</p>
+              <p className="text-2xl font-bold text-[#1E6BFF]">{nutricao.macros.carboidratos}</p>
               <p className="text-xs text-gray-500">gramas</p>
             </div>
           </div>

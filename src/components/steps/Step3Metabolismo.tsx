@@ -83,7 +83,7 @@ export function Step3Metabolismo() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Gasto Energético Total</CardDescription>
-            <CardTitle className="text-3xl font-bold text-purple-600">
+            <CardTitle className="text-3xl font-bold text-[#1E6BFF]">
               {resultado.get}
               <span className="text-lg font-normal text-muted-foreground ml-1">kcal</span>
             </CardTitle>

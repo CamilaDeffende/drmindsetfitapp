@@ -212,7 +212,7 @@ export function DashboardPremium() {
                 <div className="text-xs text-gray-400">KM</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">{cargaHoje}</div>
+                <div className="text-2xl font-bold text-[#1E6BFF]">{cargaHoje}</div>
                 <div className="text-xs text-gray-400">KG HOJE</div>
               </div>
             </div>
@@ -345,10 +345,10 @@ export function DashboardPremium() {
           <Button
             onClick={() => navigate('/running')}
             variant="outline"
-            className="h-16 glass-effect border-purple-500/50"
+            className="h-16 glass-effect border-[#1E6BFF]/50"
           >
             <div className="flex flex-col items-center gap-1">
-              <MapPin className="w-5 h-5 text-purple-400" />
+              <MapPin className="w-5 h-5 text-[#1E6BFF]" />
               <span className="text-xs">Corrida</span>
             </div>
           </Button>

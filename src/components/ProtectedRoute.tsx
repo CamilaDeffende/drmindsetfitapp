@@ -48,7 +48,7 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-gradient-to-br from-[#1E6BFF]/10 to-purple-600/10 border border-white/10">
+            <div className="p-4 rounded-lg bg-gradient-to-br from-[#1E6BFF]/10 to-[#00B7FF]/10 border border-white/10">
               <p className="text-sm text-gray-300 mb-3">Com o plano Premium você tem acesso a:</p>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li className="flex items-center gap-2">

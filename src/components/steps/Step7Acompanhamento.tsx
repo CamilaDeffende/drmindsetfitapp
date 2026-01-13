@@ -45,7 +45,7 @@ export function Step7Acompanhamento() {
             </ul>
           </div>
 
-          <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+          <div className="p-4 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg">
             <h4 className="font-semibold mb-2">🎯 Sinais de ajuste necessário</h4>
             <ul className="text-sm space-y-1 text-muted-foreground list-disc list-inside">
               <li>Peso estagnado por mais de 3 semanas</li>
