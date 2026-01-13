@@ -35,3 +35,17 @@ export function setFlag<K extends keyof FeatureFlags>(key: K, value: FeatureFlag
   saveFlags(next);
   return next;
 }
+
+export function setPaywallEnabled(v: boolean): FeatureFlags {
+  const cur = typeof window !== "undefined" ? loadFlags() : { paywallEnabled: false, premiumUnlocked: false };
+  const next = { ...cur, paywallEnabled: !!v };
+  if (typeof window !== "undefined") saveFlags(next);
+  return next;
+}
+
+export function setPremiumUnlocked(v: boolean): FeatureFlags {
+  const cur = typeof window !== "undefined" ? loadFlags() : { paywallEnabled: false, premiumUnlocked: false };
+  const next = { ...cur, premiumUnlocked: !!v };
+  if (typeof window !== "undefined") saveFlags(next);
+  return next;
+}

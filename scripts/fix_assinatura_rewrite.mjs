@@ -1,4 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import fs from "fs";
+import path from "path";
+
+const ROOT = process.cwd();
+const file = "src/pages/Assinatura.tsx";
+
+function p(rel){ return path.join(ROOT, rel); }
+function write(rel, s){
+  fs.mkdirSync(path.dirname(p(rel)), { recursive: true });
+  fs.writeFileSync(p(rel), s, "utf8");
+}
+
+const content = `import { useEffect, useMemo, useState } from "react";
 import BrandIcon from "@/components/branding/BrandIcon";
 import { loadFlags, setPaywallEnabled, setPremiumUnlocked } from "@/lib/featureFlags";
 
@@ -159,3 +171,7 @@ export default function Assinatura() {
     </div>
   );
 }
+`;
+
+write(file, content);
+console.log("✅ Rewritten safely:", file);
