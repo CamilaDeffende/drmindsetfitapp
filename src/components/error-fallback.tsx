@@ -65,7 +65,7 @@ ${errorInfo?.componentStack || 'N/A'}`;
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Ops, pequeno erro encontrado</AlertTitle>
             <AlertDescription>
-              Algo deu errado durante a renderização. Copie o erro abaixo e envie para a Lasy corrigir.
+              Algo deu errado durante a renderização. Copie o erro abaixo e envie para o suporte corrigir.
             </AlertDescription>
           </Alert>
         </CardHeader>
@@ -92,7 +92,7 @@ ${errorInfo?.componentStack || 'N/A'}`;
 
         <CardFooter className="flex-col gap-2">
           <p className="text-sm text-muted-foreground text-center">
-            Clique abaixo para copiar e envie para a Lasy corrigir.
+            Clique abaixo para copiar e envie para o suporte corrigir.
           </p>
           <Button 
             onClick={handleCopy}

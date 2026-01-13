@@ -205,4 +205,4 @@ const cargaSemana = state.treino.historicoCargas
 
 ---
 
-**Desenvolvido com excelência por Lasy AI** 🤖✨
+**Desenvolvido com excelência pela equipe MindsetFit**
