@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
-import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 
@@ -79,12 +78,8 @@ export function CardioPlan() {
 
   async function downloadPdfPremiumCardio() {
     const bodyText = buildCardioExportText();
-    const fileName = "mindsetfit-cardio.pdf";
-
-    await generateMindsetFitPremiumPdf({
+await generateMindsetFitPremiumPdf({
     signatureLines: mindsetfitSignatureLines,
-logoUrl,
-      fileName,
       wordmarkText: "MindSetFit",
       reportLabel: "RELATÓRIO CARDIO",
       metaLines: [

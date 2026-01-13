@@ -62,7 +62,7 @@ export function OnboardingCarouselShell({
 
         <div className="flex items-center gap-3" data-ui="mindsetfit-logo-header">
           <img
-            src="/brand/mindsetfit-logo.png"
+            src="/brand/mindsetfit-logo.svg"
             alt="MindsetFit"
             className="h-5 w-auto select-none select-none opacity-95"
             draggable={false}

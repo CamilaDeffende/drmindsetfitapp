@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import logoUrl from "@/assets/branding/mindsetfit-logo.png";
-
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 type ProtocolKey = "TABATA" | "EMOM" | "AMRAP" | "SPRINT";
@@ -225,15 +223,6 @@ function protocolParamsLine(protocol: Protocol, rounds: number, workSec: number,
   return `Rounds: ${rounds} | Work/Rest: ${workSec}s/${restSec}s`;
 }
 
-function slug(s: string) {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .toLowerCase();
-}
 
 export default function HiitPlan() {
   const [goal, setGoal] = useState<GoalKey>("FAT_LOSS");
@@ -405,12 +394,8 @@ export default function HiitPlan() {
   async function downloadPdfPremium() {
     const goalName = GOALS.find((g) => g.key === goal)?.name ?? goal;
     const modalityName = MODALITIES.find((m) => m.key === modality)?.name ?? modality;
-    const fileName = `mindsetfit-hiit-${slug(goalName)}-${slug(modalityName)}.pdf`;
-
-    await generateMindsetFitPremiumPdf({
+await generateMindsetFitPremiumPdf({
     signatureLines: mindsetfitSignatureLines,
-logoUrl,
-      fileName,
       wordmarkText: "MindSetFit",
       reportLabel: "RELATÓRIO HIIT",
       metaLines: [
@@ -442,7 +427,7 @@ logoUrl,
           <h1 className="text-3xl font-bold text-red-500">HIIT — Avançado</h1>
           <p className="text-gray-300">PDF premium MindsetFit (logo + header + layout relatório).</p>
           <p className="text-xs text-gray-500">
-            ⚠️ Para ficar idêntico à sua imagem, substitua: <span className="text-white">src/assets/branding/mindsetfit-logo.png</span>
+            ⚠️ Para ficar idêntico à sua imagem, substitua: <span className="text-white">src/assets/branding/mindsetfit-logo.svg</span>
           </p>
         </div>
 

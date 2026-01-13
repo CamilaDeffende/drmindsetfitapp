@@ -6,7 +6,6 @@ import type { WorkoutSession, PR } from "../../contracts/workout";
 import { buildTrends, buildInsight, formatKg, formatMin, formatPct, formatInt } from "../../utils/dashboard";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { getDashboardExportSnapshot } from "./dashboardExport";
-import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey, PDF_VARIANT_KEY } from "@/lib/storageKeys";
 
@@ -1392,8 +1391,7 @@ const html =
 
         // Gera PDF premium
         await generateMindsetFitPremiumPdf({
-logoUrl,
-          fileName: "Relatorio-MindsetFit-Premium.pdf",
+fileName: "Relatorio-MindsetFit-Premium.pdf",
           metaLines: [...mindsetfitSignatureLines] as string[],
           variant: pdfVariant,
           bodyText: (String(bodyText ?? "") + "\n\n" + String(historyKpiText ?? "") + "\n\n" + String(reportHistoryMiniText ?? "")),

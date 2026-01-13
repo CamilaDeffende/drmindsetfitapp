@@ -21,7 +21,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import type { AlimentoRefeicao, Refeicao } from '@/types'
 import { useToast } from '@/hooks/use-toast'
-import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 
@@ -44,8 +43,6 @@ function buildDietExportText() {
 async function downloadPdfPremiumDiet() {
   await generateMindsetFitPremiumPdf({
     signatureLines: mindsetfitSignatureLines,
-logoUrl,
-    fileName: "mindsetfit-dieta.pdf",
     wordmarkText: "MindSetFit",
     reportLabel: "RELATÓRIO DIETA",
     metaLines: [

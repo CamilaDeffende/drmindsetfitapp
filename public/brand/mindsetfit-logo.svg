@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MindsetFit">
+  <defs>
+    <linearGradient id="mf" x1="40" y1="40" x2="216" y2="216" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00A3FF"/>
+      <stop offset="1" stop-color="#0077FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Marca minimalista (monograma MF) com fundo 100% transparente -->
+  <path d="M64 192V64h28l20 44 20-44h28v128h-24V108l-18 40h-12l-18-40v84H64z" fill="url(#mf)"/>
+  <path d="M176 192V64h72v22h-48v30h42v22h-42v54h-24z" fill="url(#mf)" opacity="0.92"/>
+</svg>

@@ -27,7 +27,7 @@ export function OnboardingFlow() {
         window.history.replaceState({}, '', next);
         window.location.reload();
       }
-    } catch {}
+    } catch { /* noop */ }
   }, [])
 
 

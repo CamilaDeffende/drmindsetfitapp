@@ -23,6 +23,8 @@ export type MindsetFitPdfOptions = {
   finalLogoUrl?: string;
   fileName?: string;
   logoUrl?: string;
+  finalLogoUrl: string;              // ex: import finalLogoUrl from "@/assets/branding/mindsetfit-logo.svg"
+  fileName: string;             // ex: mindsetfit-hiit-....pdf
   wordmarkText?: string;         // default: "MindSetFit"
   reportLabel?: string;          // default: "RELATÓRIO"
   metaLines: string[];           // linhas curtas (objetivo, modalidade, protocolo...)
@@ -42,6 +44,8 @@ export type MindsetFitPdfOptions = {
 }
 
 type PremiumPdfOptions = MindsetFitPdfOptions & {
+  finalLogoUrl?: string;
+  fileName?: string;
   /** Sprint 5E: versão do PDF (coach/patient) */
   variant?: "coach" | "patient";
 
@@ -158,13 +162,16 @@ export function buildMindsetFitPdfFileName(base: string, parts: string[]) {
 
 export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Promise<void> {
   
+  const fileNameUsed = (opts as any)?.fileNameUsed ?? "Relatorio-MindsetFit-Premium.pdf";
+  const finalLogoUrlUsed = (opts as any)?.finalLogoUrlUsed ?? DEFAULT_LOGO_URL;
+
   // ✅ defaults internos (callers NÃO precisam fornecer)
   const fileNameUsed = (opts as any)?.fileNameUsed ?? "Relatorio-MindsetFit-Premium.pdf";
-  const finalLogoUrlUsed = (opts as any)?.finalLogoUrlUsed ?? (opts as any)?.logoUrl ?? DEFAULT_LOGO_URL;
-
-  // ✅ defaults internos (callers NÃO precisam fornecer)
+  const finalLogoUrlUsed = (opts as any)?.finalLogoUrlUsed ?? DEFAULT_LOGO_URL;
 
   // ✅ defaults internos (callers não precisam fornecer)
+  const fileNameUsed = (opts as any)?.fileNameUsed ?? "Relatorio-MindsetFit-Premium.pdf";
+  const finalLogoUrlUsed = (opts as any)?.finalLogoUrlUsed ?? (opts as any)?.logoUrl ?? DEFAULT_LOGO_URL;
 
   const footerHtml = getClinicalFooterHtml(opts.variant);
   void footerHtml;

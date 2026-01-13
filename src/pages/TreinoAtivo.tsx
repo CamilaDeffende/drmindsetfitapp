@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router-dom'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
 import ProgressaoCargaHint from '@/components/ProgressaoCargaHint'
-import logoUrl from "@/assets/branding/mindsetfit-logo.png";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 
@@ -34,8 +33,6 @@ function buildWorkoutExportText() {
 async function downloadPdfPremiumWorkout() {
   await generateMindsetFitPremiumPdf({
     signatureLines: mindsetfitSignatureLines,
-logoUrl,
-    fileName: "mindsetfit-treino.pdf",
     wordmarkText: "MindSetFit",
     reportLabel: "RELATÓRIO TREINO",
     metaLines: [

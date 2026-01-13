@@ -1,22 +1,22 @@
 type Props = {
-  size?: number;        // tamanho explícito em px
-  className?: string;   // override opcional
+  size?: number;
+  className?: string;
   alt?: string;
 };
 
-export function BrandIcon({ size = 24, className, alt }: Props) {
-  const style = size
-    ? { width: size, height: "auto" }
-    : undefined;
-
+export function BrandIcon({ size = 28, className = "", alt = "MindsetFit" }: Props) {
   return (
     <img
-      src="/brand/mindsetfit-logo.png"
-      alt={alt ?? "MindsetFit"}
-      style={style}
-      className={className ?? "w-5 h-5"}
-      draggable={false}
+      src="/brand/mindsetfit-logo.svg"
+      width={size}
+      height={size}
+      alt={alt}
+      className={className}
+      style={{ display: "block" }}
       loading="eager"
+      decoding="async"
     />
   );
 }
+
+export default BrandIcon;
