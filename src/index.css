@@ -158,3 +158,30 @@
 @media (prefers-reduced-motion: reduce) {
   .mf-anim-fadeup, .mf-anim-glow, .mf-anim-shine, .mf-anim-progress { animation: none !important; }
 }
+
+
+/* MindsetFit Brand Tokens — blue/cyan only */
+:root{
+  --mf-blue: 199 100% 55%;   /* cyan-blue */
+  --mf-cyan: 189 100% 50%;   /* cyan */
+  --mf-ink: 222 47% 11%;     /* deep ink */
+  --mf-surface: 220 14% 96%;
+}
+
+.dark{
+  --mf-surface: 222 47% 7%;
+}
+
+
+
+/* MindsetFit — utilities */
+.mf-grad {
+  background-image: linear-gradient(90deg, hsl(var(--mf-blue)), hsl(var(--mf-cyan)));
+}
+.mf-grad-hover:hover{
+  filter: brightness(1.05);
+}
+.mf-ring{
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.10), 0 10px 30px rgba(0, 180, 255, 0.14);
+}
+

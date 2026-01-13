@@ -1,17 +1,21 @@
 type Props = {
-  size?: number;
   className?: string;
+  size?: number;
   alt?: string;
 };
 
-export function BrandIcon({ size = 64, className = "", alt = "MindsetFit" }: Props) {
+export function BrandIcon({ className, size, alt }: Props) {
+  const cls =
+    className ??
+    (typeof size === "number" ? `w-[${size}px] h-[${size}px]` : "w-6 h-6");
+
   return (
     <img
       src="/brand/mindsetfit-logo.png"
-      alt={alt}
+      alt={alt ?? "MindsetFit"}
+      className={cls}
       draggable={false}
-      style={{ width: size, height: size }}
-      className={("select-none object-contain " + className).trim()}
+      loading="eager"
     />
   );
 }
