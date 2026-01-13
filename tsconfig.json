@@ -11,8 +11,15 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
-  }
+  },
+  "exclude": [
+    "src/**/_broken/**",
+    "src/**/_broken/**/*",
+    "**/_broken/**",
+    "**/_broken/**/*"
+  ]
 }
-

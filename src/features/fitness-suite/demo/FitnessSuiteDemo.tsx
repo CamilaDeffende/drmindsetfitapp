@@ -1,7 +1,7 @@
 import { Suspense, lazy, useMemo, useState } from "react";
 import { tokens } from "../ui/tokens";
 import { HistoryScreen } from "../modules/history/HistoryScreen";
-import { DashboardPro } from "../modules/dashboard/DashboardPro";
+import DashboardPro from "../modules/dashboard/DashboardPro.safe";
 
 type Tab = "Library" | "BodyMap" | "Builder" | "Timer" | "Progress" | "Programs" | "History";
 

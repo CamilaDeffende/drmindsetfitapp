@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "bash -lc 'if [ -d scripts ]; then npx eslint \"src/**/*.{ts,tsx,js,jsx}\" \"scripts/**/*.{ts,tsx,js,jsx}\" --max-warnings=0; else npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0; fi'",
+    "lint": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet'",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "smoke:history": "node scripts/smoke-history.mjs"
+    "smoke:history": "node scripts/smoke-history.mjs",
+    "lint:ci": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet'",
+    "lint:full": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\"'"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

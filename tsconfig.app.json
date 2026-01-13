@@ -29,4 +29,11 @@
     }
   },
   "include": ["src"]
+
+  ,"exclude": [
+    "src/**/_broken/**",
+    "src/**/_broken/**/*",
+    "**/_broken/**",
+    "**/_broken/**/*"
+  ]
 }

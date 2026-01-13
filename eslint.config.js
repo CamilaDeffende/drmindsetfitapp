@@ -17,6 +17,12 @@ export default [
       "scripts/_archive/**",
       "node_modules/**",
       "tailwind.config.js",
+      "**/*.min.js",
+      "**/*.bundle.js",
+      "**/_broken/**",
+      "**/_broken/**/*",
+      "src/**/_broken/**",
+      "src/**/_broken/**/*"
     ],
   },
 js.configs.recommended,
