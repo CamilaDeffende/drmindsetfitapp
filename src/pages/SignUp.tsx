@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Lock, Mail, User, Zap, Check } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { Loader2, Lock, Mail, Zap, Check } from "lucide-react";import { useToast } from '@/hooks/use-toast'
+import { BrandIcon } from "@/components/branding/BrandIcon";
 
 export function SignUp() {
   const navigate = useNavigate()
@@ -95,7 +95,7 @@ export function SignUp() {
 
               <div className="space-y-2">
                 <Label htmlFor="fullName" className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
+                  <BrandIcon className="w-4 h-4"  />
                   Nome Completo
                 </Label>
                 <Input

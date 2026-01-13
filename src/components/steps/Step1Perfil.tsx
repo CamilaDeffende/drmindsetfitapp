@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { ArrowRight, User } from 'lucide-react'
-import type { PerfilUsuario } from '@/types'
+import { ArrowRight } from "lucide-react";import type { PerfilUsuario } from '@/types'
+import { BrandIcon } from "@/components/branding/BrandIcon";
 
 const perfilSchema = z.object({
   nomeCompleto: z.string().min(3, 'Nome completo é obrigatório'),
@@ -54,7 +54,7 @@ export function Step1Perfil() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-          <User className="w-8 h-8 text-white" />
+          <BrandIcon className="w-8 h-8 text-white"  />
         </div>
         <h2 className="text-3xl font-bold mb-2">Perfil do Usuário</h2>
         <p className="text-muted-foreground">Vamos conhecer você e seus objetivos</p>
