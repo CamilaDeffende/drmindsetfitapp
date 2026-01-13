@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey, PATIENTS_KEY } from "@/lib/storageKeys";
+import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey, PATIENTS_KEY, PDF_VARIANT_KEY } from "@/lib/storageKeys";
 
 type ReportHistoryItem = {
   id: string;
@@ -115,6 +115,57 @@ const [patients, setPatients] = useState<Patient[]>(() => {
 });
 
 const [newPatientName, setNewPatientName] = useState<string>("");
+
+// Sprint 9C.1 | Timeline + filtros + insights (SAFE)
+const [rangeDays, setRangeDays] = useState<number>(28);
+
+const timeline_9c1 = useMemo(() => {
+  let list: any[] = [];
+  try {
+    const raw = localStorage.getItem(reportKey);
+    const parsed = raw ? JSON.parse(raw) : [];
+    list = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    list = [];
+  }
+  const days = Number(rangeDays) || 0;
+  const now = Date.now();
+  const cutoff = days > 0 ? (now - days * 24 * 60 * 60 * 1000) : -Infinity;
+
+  const within = (iso: any) => {
+    try {
+      const t = Date.parse(String(iso || ""));
+      return Number.isFinite(t) ? t >= cutoff : true;
+    } catch {
+      return true;
+    }
+  };
+
+  const picked = list
+    .filter((it) => it && within((it as any).createdAtISO))
+    .slice(0, 120);
+
+  const groups = new Map<string, any[]>();
+  for (const it of picked) {
+    const iso = String((it as any).createdAtISO || "");
+    const key = iso ? iso.slice(0, 10) : "sem-data";
+    const arr = groups.get(key) || [];
+    arr.push(it);
+    groups.set(key, arr);
+  }
+
+  const keys = Array.from(groups.keys()).sort((a, b) => (a < b ? 1 : -1));
+  const rows = keys.map((k) => ({ date: k, items: (groups.get(k) || []).slice(0, 20) }));
+
+  // Insights simples e confiáveis (sem inventar métrica): volume + frequência
+  const total = picked.length;
+  const daysActive = keys.length;
+  const rate = days > 0 ? (total / Math.max(1, days)) : 0;
+  const badge = total >= 10 ? "Alta" : total >= 4 ? "Boa" : total >= 1 ? "Baixa" : "—";
+
+  return { rows, total, daysActive, rate, badge };
+}, [reportKey, rangeDays]);
+
 
 const writePatients = (list: Patient[]) => {
   const next = (Array.isArray(list) ? list : []).slice(0, 50);
@@ -406,6 +457,70 @@ const [items, setItems] = useState<ReportHistoryItem[]>([]);
           </div>
         </div>
       </div>
+
+  {/* Sprint 9C.1 | Timeline + Insights */}
+  <div data-ui="timeline-9c1" className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <div className="text-[12px] uppercase tracking-wide text-white/50">Timeline</div>
+        <div className="mt-1 text-[12px] text-white/70">
+          <span className="font-semibold text-white/85">{timeline_9c1.total}</span> relatórios •
+          <span className="font-semibold text-white/85"> {timeline_9c1.daysActive}</span> dias ativos •
+          Frequência: <span className="font-semibold text-white/85">{timeline_9c1.badge}</span>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={() => setRangeDays(7)} className={`rounded-xl border border-white/10 px-3 py-2 text-[12px] text-white/85 transition ${rangeDays===7 ? "bg-[rgba(0,149,255,0.18)] border-[rgba(0,149,255,0.35)]" : "bg-black/30 hover:bg-black/40"}`}>7d</button>
+        <button type="button" onClick={() => setRangeDays(14)} className={`rounded-xl border border-white/10 px-3 py-2 text-[12px] text-white/85 transition ${rangeDays===14 ? "bg-[rgba(0,149,255,0.18)] border-[rgba(0,149,255,0.35)]" : "bg-black/30 hover:bg-black/40"}`}>14d</button>
+        <button type="button" onClick={() => setRangeDays(28)} className={`rounded-xl border border-white/10 px-3 py-2 text-[12px] text-white/85 transition ${rangeDays===28 ? "bg-[rgba(0,149,255,0.18)] border-[rgba(0,149,255,0.35)]" : "bg-black/30 hover:bg-black/40"}`}>28d</button>
+        <button type="button" onClick={() => setRangeDays(0)} className={`rounded-xl border border-white/10 px-3 py-2 text-[12px] text-white/85 transition ${rangeDays===0 ? "bg-[rgba(0,149,255,0.18)] border-[rgba(0,149,255,0.35)]" : "bg-black/30 hover:bg-black/40"}`}>Tudo</button>
+      </div>
+    </div>
+
+    <div className="mt-4 grid gap-3">
+      {(timeline_9c1.rows?.length ? timeline_9c1.rows : []).slice(0, 10).map((g: any) => (
+        <div key={g.date} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[12px] font-semibold text-white/85">{g.date === "sem-data" ? "Sem data" : g.date}</div>
+            <div className="text-[11px] text-white/55">{(g.items?.length || 0)} itens</div>
+          </div>
+          <div className="mt-2 grid gap-2">
+            {(g.items?.length ? g.items : []).slice(0, 5).map((it: any) => (
+              <div key={it.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/25 px-3 py-2">
+                <div className="min-w-0">
+                  <div className="truncate text-[12px] font-semibold text-white/85">{it.fileName || "Relatório"}</div>
+                  <div className="text-[11px] text-white/55">{it.variant === "patient" ? "Paciente" : "Coach"} • {it.summary || ""}</div>
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Regerar (mantém lógica existente do app: set variant e aciona botão principal)
+                      try { localStorage.setItem(PDF_VARIANT_KEY, it.variant); } catch {}
+                      try { localStorage.setItem("mindsetfit:currentPatient:v1", patientId || "default"); } catch {}
+                      setTimeout(() => {
+                        const btn = document.querySelector('button[data-action="download-premium-pdf"]');
+                        (btn as any)?.click?.();
+                      }, 60);
+                    }}
+                    className="rounded-xl border border-[rgba(0,149,255,0.35)] bg-[rgba(0,149,255,0.12)] px-3 py-2 text-[11px] text-white hover:bg-[rgba(0,149,255,0.18)] active:scale-[0.98] transition"
+                  >
+                    Gerar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {!timeline_9c1.total ? (
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-[12px] text-white/70">
+          Sem relatórios no período selecionado. Gere um PDF para alimentar a timeline.
+        </div>
+      ) : null}
+    </div>
+  </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
         <div>
