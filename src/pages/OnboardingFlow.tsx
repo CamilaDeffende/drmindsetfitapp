@@ -68,7 +68,7 @@ export function OnboardingFlow() {
       }}
       onNext={() => nextStep()}
       onSkip={() => nextStep()}
-      microcopy="Isso alimenta seu plano e relatório."
+      microcopy="Essas informações refinam sua estratégia personalizada."
     />
   )
 }

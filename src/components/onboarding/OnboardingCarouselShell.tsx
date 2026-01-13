@@ -152,7 +152,7 @@ export function OnboardingCarouselShell({
               className="w-full shrink-0 snap-center px-1"
               style={{ scrollSnapAlign: "center" }}
             >
-              <div className="rounded-3xl border border-white/10 bg-white/5 shadow-xl p-4">
+              <div className="rounded-3xl border border-white/10 bg-white/5 shadow-xl p-4 max-h-[calc(100vh-220px)] overflow-y-auto overscroll-contain">
                 <div className="text-xs text-white/60">{microcopy}</div>
                 <div className="mt-3">{s.content}</div>
               </div>
@@ -162,7 +162,7 @@ export function OnboardingCarouselShell({
       </div>
 
       {/* Espaço do footer */}
-      <div className="h-[104px]" />
+      <div className="h-[120px]" />
 
       {/* Footer fixo */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/80 backdrop-blur">
