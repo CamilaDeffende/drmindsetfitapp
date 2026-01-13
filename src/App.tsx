@@ -1,3 +1,4 @@
+import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { DrMindSetfitProvider } from '@/contexts/DrMindSetfitContext'
@@ -134,6 +135,7 @@ function App() {
               {/* Redirect padrão */}
               <Route path="*" element={<Navigate to="/login" replace />} />
               <Route path="/history" element={<HistoryReports />} />
+  <Route path="/assinatura" element={<Assinatura />} />
 </Routes>
           </BrowserRouter>
           <Toaster />

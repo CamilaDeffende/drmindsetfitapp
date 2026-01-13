@@ -9,6 +9,8 @@ import { getDashboardExportSnapshot } from "./dashboardExport";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey, PDF_VARIANT_KEY } from "@/lib/storageKeys";
 
+import { loadFlags } from "@/lib/featureFlags";
+
 import { PremiumBadge } from "../../premium/PremiumBadge";
 import { isPremium, premiumLabel } from "../../premium/premium";
 import { Skeleton } from "../../ui/Skeleton";
@@ -57,7 +59,7 @@ function flattenHistory(history: any): WorkoutSession[] {
 }
 
 function toneBg(tone: "good" | "warn" | "neutral") {
-  if (tone === "good") return "rgba(16,185,129,0.10)";
+if (tone === "good") return "rgba(16,185,129,0.10)";
   if (tone === "warn") return "rgba(245,158,11,0.10)";
   return "rgba(59,130,246,0.10)";
 }
@@ -1142,6 +1144,7 @@ const html =
   return (
     <div style={{ padding: 14, display: "grid", gap: 12 }}>
         <div className="mb-4 flex flex-wrap gap-2">
+      <a href="/assinatura" className="ml-auto inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-semibold text-white/85 hover:bg-white/10 active:scale-[0.99]">Assinatura</a>
                     {/* === Sprint 5E | seletor de versão (coach/patient) === */}
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
             <span style={{ fontSize: 12, opacity: 0.8 }}>Versão do PDF:</span>
@@ -1390,7 +1393,12 @@ const html =
         })();
 
         // Gera PDF premium
-        await generateMindsetFitPremiumPdf({
+const flags = typeof window !== "undefined" ? loadFlags() : { paywallEnabled: false, premiumUnlocked: false };
+    if (flags.paywallEnabled && !flags.premiumUnlocked) {
+      window.location.href = "/assinatura";
+      return;
+    }
+    await generateMindsetFitPremiumPdf({
 fileName: "Relatorio-MindsetFit-Premium.pdf",
           metaLines: [...mindsetfitSignatureLines] as string[],
           variant: pdfVariant,
