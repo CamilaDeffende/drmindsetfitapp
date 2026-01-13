@@ -748,7 +748,7 @@ const streak = useProgressStore((s: any) => s.streak);
     const onTrack = weeklyPct >= 100 && activePct >= 100;
     const attention = weeklyPct < 70 || activePct < 70;
 
-    let headline = onTrack ? "On track" : attention ? "Atenção" : "Bom ritmo";
+    const headline = onTrack ? "On track" : attention ? "Atenção" : "Bom ritmo";
     let suggestion = "Consistência primeiro, depois progressão.";
 
     const missingWeekly = Math.max(0, weeklyTarget - weeklyDone);

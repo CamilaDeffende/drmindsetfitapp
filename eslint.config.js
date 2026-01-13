@@ -9,7 +9,17 @@ import reactRefresh from "eslint-plugin-react-refresh";
  * Objetivo: não quebrar o build e manter regras essenciais.
  */
 export default [
-  js.configs.recommended,
+  {
+    ignores: [
+      "dist/**",
+      ".scan/**",
+      "Drmindsetfitpro/**",
+      "scripts/_archive/**",
+      "node_modules/**",
+      "tailwind.config.js",
+    ],
+  },
+js.configs.recommended,
 
   // TypeScript (sem type-aware pesado)
   ...tseslint.configs.recommended,
@@ -41,4 +51,20 @@ export default [
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },
+
+  {
+    files: ["scripts/**/*.mjs", "scripts/**/*.js"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        Buffer: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        module: "readonly",
+        require: "readonly",
+      },
+    },
+  },
+
 ];
