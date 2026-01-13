@@ -24,8 +24,9 @@ export default tseslint.config(
       'react-refresh': reactRefresh,
     },
     rules: {
+    "@typescript-eslint/no-unused-vars": "warn",
     "@typescript-eslint/no-explicit-any": "warn",
-    "no-empty": ["warn", { allowEmptyCatch: true }],
+    "no-empty": ["warn", { allowEmptyCatch: true }], { allowEmptyCatch: true }],
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',

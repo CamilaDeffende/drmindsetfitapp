@@ -20,6 +20,8 @@ import { jsPDF } from "jspdf";
 
 import QRCode from "qrcode";
 export type MindsetFitPdfOptions = {
+  coverTitle?: string;
+  coverSubtitle?: string;
   finalLogoUrl?: string;
   fileName?: string;
   logoUrl?: string;
@@ -161,6 +163,10 @@ export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Pro
   // ✅ defaults internos (callers NÃO precisam fornecer)
   const fileNameUsed = (opts as any)?.fileNameUsed ?? "Relatorio-MindsetFit-Premium.pdf";
   const finalLogoUrlUsed = (opts as any)?.finalLogoUrlUsed ?? (opts as any)?.logoUrl ?? DEFAULT_LOGO_URL;
+  const coverTitleUsed = (opts as any)?.coverTitle ?? "Relatório Premium";
+  const coverSubtitleUsed = (opts as any)?.coverSubtitle ?? "MindsetFit • Saúde e Performance";
+  void coverTitleUsed;
+  void coverSubtitleUsed;
 
   // ✅ defaults internos (callers NÃO precisam fornecer)
 

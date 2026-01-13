@@ -50,10 +50,10 @@ export function writeSubscription(plan: SubscriptionPlan, startedAtISO?: string)
   };
   try {
     localStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(next));
-  } catch {}
+  } catch { /* noop */ }
   return { ...next, active: isActiveSubscription(next) };
 }
 
 export function clearSubscription(): void {
-  try { localStorage.removeItem(SUBSCRIPTION_KEY); } catch {}
+  try { localStorage.removeItem(SUBSCRIPTION_KEY); } catch { /* noop */ }
 }

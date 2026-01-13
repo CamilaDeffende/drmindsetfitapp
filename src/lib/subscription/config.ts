@@ -12,7 +12,7 @@ export function readSubscriptionMode(): SubscriptionMode {
 }
 
 export function writeSubscriptionMode(mode: SubscriptionMode) {
-  try { localStorage.setItem(SUBSCRIPTION_MODE_KEY, mode); } catch {}
+  try { localStorage.setItem(SUBSCRIPTION_MODE_KEY, mode); } catch { /* noop */ }
 }
 
 export function isCheckoutMode(): boolean {

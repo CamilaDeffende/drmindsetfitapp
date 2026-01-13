@@ -36,7 +36,7 @@ try {
     // remove query e garante entrada limpa no onboarding
     window.history.replaceState({}, '', '/');
   }
-} catch {}
+} catch { /* noop */ }
 
 
 function App() {

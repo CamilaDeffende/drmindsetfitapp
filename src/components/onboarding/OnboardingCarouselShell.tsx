@@ -166,7 +166,7 @@ export function OnboardingCarouselShell({
               className="w-full shrink-0 snap-center px-1"
               style={{ scrollSnapAlign: "center" }}
             >
-              <div className="rounded-3xl border border-white/10 bg-white/5 shadow-xl p-4 max-h-[calc(100vh-220px)] overflow-y-auto overscroll-contain">
+              <div className="rounded-3xl border border-white/10 bg-white/5 shadow-xl p-4 max-h-[calc(100vh-10px)] overflow-y-auto overscroll-contain">
                 <div className="text-xs text-white/60">{microcopy}</div>
                 <div className="mt-3">{s.content}</div>
               </div>

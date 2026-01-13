@@ -11,7 +11,7 @@ function useHashRoute_10c() {
     return () => window.removeEventListener("hashchange", on);
   }, []);
   const is = (p: string) => hash.includes(p);
-  const go = (p: string) => { try { window.location.hash = p; } catch {} };
+  const go = (p: string) => { try { window.location.hash = p; } catch { /* noop */ } };
   return { hash, is, go };
 }
 
@@ -37,7 +37,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   });
 
   React.useEffect(() => {
-    try { writeSubscriptionMode(mode_10c); } catch {}
+    try { writeSubscriptionMode(mode_10c); } catch { /* noop */ }
   }, [mode_10c]);
 
   if (active) return <>{children}</>;

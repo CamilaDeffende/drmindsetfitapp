@@ -8,5 +8,5 @@ export function loadJSON<T>(key: string, fallback: T): T {
   }
 }
 export function saveJSON(key: string, value: unknown) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* noop */ }
 }
