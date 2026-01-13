@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "bash -lc 'if [ -d scripts ]; then npx eslint \"src/**/*.{ts,tsx,js,jsx}\" \"scripts/**/*.{ts,tsx,js,jsx}\" --max-warnings=0; else npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0; fi'",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "smoke:history": "node scripts/smoke-history.mjs"

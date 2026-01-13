@@ -1023,23 +1023,23 @@ const streak = useProgressStore((s: any) => s.streak);
         "@media print{body{background:#ffffff;color:#0b0f16;} .top,.card{background:#ffffff;border-color:#e6e8ee;} .sub,.muted,.meta{color:#4b5563;} .p,.li{color:#111827;} .h{color:#6b7280;} .row{background:#f8fafc;border-color:#e6e8ee;} .row td{color:#111827;} .row td:last-child{color:#4b5563;} .footer{position:fixed;left:12mm;right:12mm;bottom:8mm;color:#6b7280;} .pg:after{content: counter(page);} .pgs:after{content: counter(pages);} }";
 
       const htmlTop =
-        "<!doctype html><html><head><meta charset=\"utf-8\"/>" +
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>" +
+        '<!doctype html><html><head><meta charset="utf-8"/>' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1"/>' +
         "<title>" + title + "</title><style>" + css + "</style></head><body>" +
-        "<div class=\\"page\\">" +
+        '<div class=\"page\">' +
 
 "" +
 
         "" +
-        "<div class=\\"watermark\\">MindsetFit</div>" +
-        "<div class=\"top\">" +
+        '<div class=\"watermark\">MindsetFit</div>' +
+        '<div class="top">' +
         "<div>" +
-        "<img src=\\"/logo-mindsetfit.svg\\" alt=\\"MindsetFit\\" style=\\"height:22px;width:auto;opacity:0.95;margin-bottom:10px\\" onerror=\\"this.style.display='none'\\"/>" +
-        "<div class=\"brand\">" + esc(title) + "</div>" +
-        "<div class=\"sub\">" + esc(sub) + "</div>" +
-        "<div class=\"pill\"><span>Score</span><strong>" + String(pwScore) + "/100</strong><span class=\"muted\">" + pwTier + "</span></div>" +
+        '<img src=\"/logo-mindsetfit.svg\" alt=\"MindsetFit\" style=\"height:22px;width:auto;opacity:0.95;margin-bottom:10px\" onerror=\"this.style.display=\'none\'\"/>' +
+        '<div class="brand">" + esc(title) + "</div>' +
+        '<div class="sub">" + esc(sub) + "</div>' +
+        '<div class="pill"><span>Score</span><strong>" + String(pwScore) + "/100</strong><span class="muted">" + pwTier + "</span></div>' +
         "</div>" +
-        "<div class=\"meta\">" +
+        '<div class="meta">' +
         "<div><strong>Data</strong>: " + esc(dateStr) + "</div>" +
         "<div><strong>Hora</strong>: " + esc(timeStr) + "</div>" +
         "<div><strong>Janela</strong>: 7d vs 7d</div>" +
@@ -1048,30 +1048,30 @@ const streak = useProgressStore((s: any) => s.streak);
         "</div>";
 
       const execHtml =
-        "<div class=\"grid\">" +
-        "<div class=\"card\">" +
-        "<h3 class=\"h\">Executive Summary</h3>" +
-        "<ul class=\"ul\">" + execBullets.map((b) => "<li class=\"li\">" + esc(b) + "</li>").join("") + "</ul>" +
+        '<div class="grid">' +
+        '<div class="card">' +
+        '<h3 class="h">Executive Summary</h3>' +
+        '<ul class="ul">" + execBullets.map((b) => "<li class="li">" + esc(b) + "</li>").join("") + "</ul>' +
         "</div>";
 
       const goalsHtml =
-        "<div class=\"card\">" +
-        "<h3 class=\"h\">Goals Status</h3>" +
-        "<table class=\"tbl\">" +
+        '<div class="card">' +
+        '<h3 class="h">Goals Status</h3>' +
+        '<table class="tbl">' +
         goalsRows.map((r) =>
-          "<tr class=\"row\"><td>" + esc(r.k) + "</td><td>" + esc(r.cur) + "/" + esc(r.tgt) + " • " + esc(r.pct) + "</td></tr>"
+          '<tr class="row"><td>" + esc(r.k) + "</td><td>" + esc(r.cur) + "/" + esc(r.tgt) + " • " + esc(r.pct) + "</td></tr>'
         ).join("") +
         "</table>" +
-        "<div class=\"p muted\">" + esc(String(goalsView?.suggestion ?? "")) + "</div>" +
+        '<div class="p muted">" + esc(String(goalsView?.suggestion ?? "")) + "</div>' +
         "</div>";
 
       const reviewHtml =
-        "<div class=\"card\">" +
-        "<h3 class=\"h\">Weekly Review</h3>" +
-        "<div class=\"p\"><strong>" + wrTitle + "</strong></div>" +
-        "<div class=\"p muted\" style=\"margin-top:6px\">" + wrAction + "</div>" +
-        "<hr class=\"hr\"/>" +
-        "<ul class=\"ul\">" +
+        '<div class="card">' +
+        '<h3 class="h">Weekly Review</h3>' +
+        '<div class="p"><strong>" + wrTitle + "</strong></div>' +
+        '<div class="p muted" style="margin-top:6px">" + wrAction + "</div>' +
+        '<hr class="hr"/>' +
+        '<ul class="ul">' +
         wrHighlights.map((h) => {
           const label = esc(h?.label ?? "");
           const value = esc(h?.value ?? "");
@@ -1082,33 +1082,33 @@ const streak = useProgressStore((s: any) => s.streak);
         "</div>";
 
       const consistencyHtml =
-        "<div class=\"card\">" +
-        "<h3 class=\"h\">Consistency & Workload</h3>" +
-        "<div class=\"p\">" + esc(consLine) + "</div>" +
-        "<div class=\"p\" style=\"margin-top:8px\">" + esc(volLine) + "</div>" +
+        '<div class="card">' +
+        '<h3 class="h">Consistency & Workload</h3>' +
+        '<div class="p">" + esc(consLine) + "</div>' +
+        '<div class="p" style="margin-top:8px">" + esc(volLine) + "</div>' +
         "</div>";
 
       const actionsHtml =
-        "<div class=\"card\">" +
-        "<h3 class=\"h\">Next Actions</h3>" +
-        "<ul class=\"ul\">" + nextActions.map((a) => "<li class=\"li\">" + esc(a) + "</li>").join("") + "</ul>" +
-        "<div class=\"p muted\" style=\"margin-top:10px\">Gerado pelo DrMindSetFitApp • Exportação via impressão (Salvar como PDF)</div>" +
+        '<div class="card">' +
+        '<h3 class="h">Next Actions</h3>' +
+        '<ul class="ul">" + nextActions.map((a) => "<li class="li">" + esc(a) + "</li>").join("") + "</ul>' +
+        '<div class="p muted" style="margin-top:10px">Gerado pelo DrMindSetFitApp • Exportação via impressão (Salvar como PDF)</div>' +
         "</div>";
 
       const footer =
-        "<div class=\"footer\">" +
+        '<div class="footer">' +
         "<span>Confidential • Personal Use • v" + esc(appVersion) + "</span>" +
-        "<span style=\"float:right\">Página <span class=\"pg\"></span>/<span class=\"pgs\"></span></span>" +
+        '<span style="float:right">Página <span class="pg"></span>/<span class="pgs"></span></span>' +
         "</div>";
 
       
       const snapshotHtml =
         isDetailed
           ? "<div class="card">" +
-            "<h3 class=\"h\">Full Snapshot</h3>" +
-            "<div class=\"p muted\">Versão detalhada: inclui o resumo completo copiado do app.</div>" +
-            "<hr class=\"hr\"/>" +
-            "<pre style=\"margin:0;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.55;color:rgba(233,238,248,0.82)\">" +
+            '<h3 class="h">Full Snapshot</h3>' +
+            '<div class="p muted">Versão detalhada: inclui o resumo completo copiado do app.</div>' +
+            '<hr class="hr"/>' +
+            '<pre style="margin:0;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.55;color:rgba(233,238,248,0.82)">' +
             esc(reportSnapshot?.text ?? "") +
             "</pre>" +
             "</div>"
