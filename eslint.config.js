@@ -1,37 +1,44 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
+import js from "@eslint/js";
+import globals from "globals";
+import tseslint from "typescript-eslint";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
 
-export default tseslint.config(
-  { ignores: [
-  "'dist'",
-  "Drmindsetfitpro/**",
-  ".bak.*/**",
-  "dist/**",
-  "node_modules/**"
-] },
+/**
+ * ESLint v9+ (Flat Config) — configuração mínima e estável
+ * Objetivo: não quebrar o build e manter regras essenciais.
+ */
+export default [
+  js.configs.recommended,
+
+  // TypeScript (sem type-aware pesado)
+  ...tseslint.configs.recommended,
+
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
     },
     plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
     },
     rules: {
-    "@typescript-eslint/no-unused-vars": "warn",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "no-empty": ["warn", { allowEmptyCatch: true }], { allowEmptyCatch: true }],
+      // React Hooks (essencial)
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+
+      // Fast refresh (aviso apenas)
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+
+      // Alívio controlado (seu código já tinha vários casos)
+      "no-empty": ["warn", { allowEmptyCatch: true }],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },
-)
+];
