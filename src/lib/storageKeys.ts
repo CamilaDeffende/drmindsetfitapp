@@ -14,3 +14,6 @@ export const PATIENTS_KEY = "mindsetfit:patients:v1" as const;
 
 // Sprint Assinatura | Estado da assinatura (local-first)
 export const SUBSCRIPTION_KEY = "mindsetfit:subscription:v1";
+
+// Sprint 10C | Modo de assinatura (local vs checkout)
+export const SUBSCRIPTION_MODE_KEY = "mindsetfit:subscriptionMode:v1";
