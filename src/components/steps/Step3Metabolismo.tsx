@@ -28,7 +28,7 @@ export function Step3Metabolismo() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Card>
           <CardContent className="py-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E6BFF] mx-auto mb-4"></div>
             <p className="text-muted-foreground">Calculando seu metabolismo...</p>
           </CardContent>
         </Card>
@@ -55,12 +55,12 @@ export function Step3Metabolismo() {
       </div>
 
       {/* Equação Escolhida */}
-      <Alert className="mb-6 border-blue-600 bg-blue-50 dark:bg-blue-950">
-        <CheckCircle2 className="h-5 w-5 text-blue-600" />
-        <AlertTitle className="text-blue-900 dark:text-blue-100 font-bold">
+      <Alert className="mb-6 border-[#1E6BFF] bg-[#1E6BFF] dark:bg-[#1E6BFF]">
+        <CheckCircle2 className="h-5 w-5 text-[#1E6BFF]" />
+        <AlertTitle className="text-[#1E6BFF] dark:text-[#1E6BFF] font-bold">
           Equação Selecionada: {nomeEquacoes[resultado.equacaoUtilizada]}
         </AlertTitle>
-        <AlertDescription className="text-blue-800 dark:text-blue-200">
+        <AlertDescription className="text-[#1E6BFF] dark:text-[#1E6BFF]">
           {resultado.justificativa}
         </AlertDescription>
       </Alert>
@@ -70,7 +70,7 @@ export function Step3Metabolismo() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Taxa Metabólica Basal</CardDescription>
-            <CardTitle className="text-3xl font-bold text-blue-600">
+            <CardTitle className="text-3xl font-bold text-[#1E6BFF]">
               {resultado.tmb}
               <span className="text-lg font-normal text-muted-foreground ml-1">kcal</span>
             </CardTitle>
@@ -139,7 +139,7 @@ export function Step3Metabolismo() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
+            <TrendingUp className="w-5 h-5 text-[#1E6BFF]" />
             Comparativo Entre Equações
           </CardTitle>
           <CardDescription>Todas as fórmulas calculadas para seu perfil</CardDescription>

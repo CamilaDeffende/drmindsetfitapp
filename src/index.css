@@ -100,11 +100,11 @@
 }
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#1E6BFF] to-cyan-500;
   }
 
   .text-neon {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-cyan-500 to-green-500;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#1E6BFF] via-cyan-500 to-green-500;
   }
 
   .glow-blue {

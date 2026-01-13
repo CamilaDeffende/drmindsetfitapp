@@ -142,7 +142,7 @@ export function Dashboard() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
-                <Footprints className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                <Footprints className="w-3 h-3 sm:w-4 sm:h-4 text-[#1E6BFF]" />
                 <span className="truncate">Passos</span>
               </CardTitle>
             </CardHeader>

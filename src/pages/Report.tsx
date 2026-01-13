@@ -79,18 +79,18 @@ export function Report() {
         <Card className="glass-effect neon-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-400" />
+              <FileText className="w-5 h-5 text-[#1E6BFF]" />
               Resumo do Seu Protocolo
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30">
+              <div className="p-4 rounded-lg bg-gradient-to-br from-[#1E6BFF]/20 to-[#00B7FF]/10 border border-[#1E6BFF]/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <Target className="w-4 h-4 text-blue-400" />
+                  <Target className="w-4 h-4 text-[#1E6BFF]" />
                   <span className="text-sm text-gray-400">Objetivo</span>
                 </div>
-                <p className="text-lg font-bold text-blue-400 capitalize">
+                <p className="text-lg font-bold text-[#1E6BFF] capitalize">
                   {state.perfil?.objetivo || 'Não definido'}
                 </p>
               </div>
@@ -153,9 +153,9 @@ export function Report() {
             <CardContent className="space-y-6">
               {/* Macros Diários */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                <div className="p-4 rounded-lg bg-[#1E6BFF]/10 border border-[#1E6BFF]/30">
                   <p className="text-xs text-gray-400 mb-1">Calorias</p>
-                  <p className="text-2xl font-bold text-blue-400">{dietaAtiva.nutricao.macros.calorias}</p>
+                  <p className="text-2xl font-bold text-[#1E6BFF]">{dietaAtiva.nutricao.macros.calorias}</p>
                   <p className="text-xs text-gray-500">kcal/dia</p>
                 </div>
                 <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
@@ -189,7 +189,7 @@ export function Report() {
                         <p className="text-xs text-gray-400">{refeicao.horario}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-blue-400">
+                        <p className="text-sm font-bold text-[#1E6BFF]">
                           {refeicao.alimentos.reduce((acc, a) => acc + a.calorias, 0).toFixed(0)} kcal
                         </p>
                       </div>
@@ -222,10 +222,10 @@ export function Report() {
 
         {/* Plano de Treino Detalhado */}
         {treinoAtivo && (
-          <Card className="glass-effect border-blue-500/30">
+          <Card className="glass-effect border-[#1E6BFF]/30">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Dumbbell className="w-5 h-5 text-blue-400" />
+                <Dumbbell className="w-5 h-5 text-[#1E6BFF]" />
                 Plano de Treino - {diasTreino} Dias
               </CardTitle>
               <p className="text-sm text-gray-400">
@@ -236,9 +236,9 @@ export function Report() {
             <CardContent className="space-y-6">
               {/* Info do Treino */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                <div className="p-4 rounded-lg bg-[#1E6BFF]/10 border border-[#1E6BFF]/30">
                   <p className="text-xs text-gray-400 mb-1">Divisão</p>
-                  <p className="text-xl font-bold text-blue-400">{treinoAtivo.treino.divisao.tipo}</p>
+                  <p className="text-xl font-bold text-[#1E6BFF]">{treinoAtivo.treino.divisao.tipo}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
                   <p className="text-xs text-gray-400 mb-1">Frequência</p>
@@ -253,7 +253,7 @@ export function Report() {
               {/* Treinos por Dia */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-blue-400" />
+                  <Activity className="w-4 h-4 text-[#1E6BFF]" />
                   Treinos Semanais (Ciclo completo por {Math.floor(diasTreino / 7)} semanas)
                 </h3>
                 {treinoAtivo.treino.treinos.map((treino, idx) => (
@@ -273,7 +273,7 @@ export function Report() {
                               <p className="text-xs text-gray-500">{ex.exercicio.grupoMuscular}</p>
                             </div>
                             <div className="text-right text-sm">
-                              <p className="font-bold text-blue-400">{ex.series}x{ex.repeticoes}</p>
+                              <p className="font-bold text-[#1E6BFF]">{ex.series}x{ex.repeticoes}</p>
                               <p className="text-xs text-gray-400">{ex.descanso}s descanso</p>
                             </div>
                           </div>

@@ -170,9 +170,9 @@ export function TreinoAtivoView({ treinoAtivo }: TreinoAtivoViewProps) {
               <p className="text-xs text-gray-400 mb-1">Divisão</p>
               <p className="text-xl font-bold text-green-400">{treino.divisao.tipo}</p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl border border-blue-500/30">
+            <div className="text-center p-4 bg-gradient-to-br from-[#1E6BFF]/20 to-[#00B7FF]/10 rounded-xl border border-[#1E6BFF]/30">
               <p className="text-xs text-gray-400 mb-1">Frequência</p>
-              <p className="text-xl font-bold text-blue-400">{treino.frequencia}x/semana</p>
+              <p className="text-xl font-bold text-[#1E6BFF]">{treino.frequencia}x/semana</p>
             </div>
             <div className="text-center p-4 bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-xl border border-purple-500/30">
               <p className="text-xs text-gray-400 mb-1">Intensidade</p>

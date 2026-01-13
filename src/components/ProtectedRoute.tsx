@@ -21,7 +21,7 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-black">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-400 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-[#1E6BFF] mx-auto mb-4" />
           <p className="text-gray-400">Carregando...</p>
         </div>
       </div>
@@ -48,7 +48,7 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-600/10 border border-white/10">
+            <div className="p-4 rounded-lg bg-gradient-to-br from-[#1E6BFF]/10 to-purple-600/10 border border-white/10">
               <p className="text-sm text-gray-300 mb-3">Com o plano Premium você tem acesso a:</p>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li className="flex items-center gap-2">

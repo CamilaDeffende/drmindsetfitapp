@@ -94,7 +94,7 @@ export function getMensagemStatus(status: 'antes' | 'ativo' | 'finalizado'): {
     case 'antes':
       return {
         texto: 'Plano ainda não iniciado',
-        cor: 'text-blue-400'
+        cor: 'text-[#1E6BFF]'
       }
     case 'ativo':
       return {

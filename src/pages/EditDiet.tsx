@@ -297,12 +297,12 @@ return (
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Info Card */}
-        <Card className="glass-effect border-blue-500/30">
+        <Card className="glass-effect border-[#1E6BFF]/30">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-blue-400 mt-0.5" />
+              <Info className="w-5 h-5 text-[#1E6BFF] mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-blue-400 mb-1">Personalize sua dieta</p>
+                <p className="text-sm font-semibold text-[#1E6BFF] mb-1">Personalize sua dieta</p>
                 <p className="text-xs text-gray-400">
                   Cada alimento possui pelo menos 10 substitutos respeitando a mesma categoria e calorias equivalentes.
                   As gramas são ajustadas automaticamente para manter o valor calórico.

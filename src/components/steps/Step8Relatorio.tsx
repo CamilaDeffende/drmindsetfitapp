@@ -64,7 +64,7 @@ export function Step8Relatorio() {
           </div>
 
           {state.avaliacao?.composicao.percentualGordura && (
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+            <div className="mt-4 p-4 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg">
               <h4 className="font-semibold mb-2">Composição Corporal</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -92,9 +92,9 @@ export function Step8Relatorio() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4 mb-4">
-            <div className="text-center p-3 bg-blue-50 dark:bg-blue-950 rounded">
+            <div className="text-center p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded">
               <p className="text-sm text-muted-foreground">TMB</p>
-              <p className="text-xl font-bold text-blue-600">{state.metabolismo?.tmb} kcal</p>
+              <p className="text-xl font-bold text-[#1E6BFF]">{state.metabolismo?.tmb} kcal</p>
             </div>
             <div className="text-center p-3 bg-purple-50 dark:bg-purple-950 rounded">
               <p className="text-sm text-muted-foreground">GET</p>
@@ -117,9 +117,9 @@ export function Step8Relatorio() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4 mb-4">
-            <div className="text-center p-3 bg-blue-50 dark:bg-blue-950 rounded">
+            <div className="text-center p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded">
               <p className="text-sm text-muted-foreground">Proteína</p>
-              <p className="text-xl font-bold text-blue-600">{state.nutricao?.macros.proteina}g</p>
+              <p className="text-xl font-bold text-[#1E6BFF]">{state.nutricao?.macros.proteina}g</p>
             </div>
             <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950 rounded">
               <p className="text-sm text-muted-foreground">Gorduras</p>

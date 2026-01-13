@@ -47,7 +47,7 @@ export function Login() {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#1E6BFF] to-purple-600 mb-4">
             <Zap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-neon mb-2">DrMindSetfit</h1>
@@ -106,7 +106,7 @@ export function Login() {
               <div className="flex items-center justify-end">
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-sm text-[#1E6BFF] hover:text-[#1E6BFF] transition-colors"
                 >
                   Esqueceu a senha?
                 </Link>
@@ -125,7 +125,7 @@ export function Login() {
 
               <div className="text-center text-sm text-gray-400">
                 Não tem uma conta?{' '}
-                <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-semibold">
+                <Link to="/signup" className="text-[#1E6BFF] hover:text-[#1E6BFF] font-semibold">
                   Criar conta grátis
                 </Link>
               </div>

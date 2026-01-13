@@ -40,7 +40,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                   className={cn(
                     'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300',
                     isCompleted && 'bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] text-white',
-                    isCurrent && 'bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] text-white ring-4 ring-blue-200 dark:ring-blue-900',
+                    isCurrent && 'bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] text-white ring-4 ring-[#1E6BFF] dark:ring-[#1E6BFF]',
                     !isCompleted && !isCurrent && 'bg-white dark:bg-gray-900 text-gray-400 border-2 border-gray-200 dark:border-gray-800'
                   )}
                 >

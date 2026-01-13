@@ -194,7 +194,7 @@ export function DashboardPremium() {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <Footprints className="w-8 h-8 text-blue-400 mb-2" />
+                <Footprints className="w-8 h-8 text-[#1E6BFF] mb-2" />
                 <div className="text-3xl font-bold text-neon">{passosHoje.toLocaleString()}</div>
                 <div className="text-xs text-gray-400">de {metaPassos.toLocaleString()}</div>
                 <div className="text-sm text-green-400 mt-1">{progressoPassos.toFixed(0)}%</div>
@@ -204,7 +204,7 @@ export function DashboardPremium() {
             {/* Métricas Rápidas */}
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">{caloriasQueimadas}</div>
+                <div className="text-2xl font-bold text-[#1E6BFF]">{caloriasQueimadas}</div>
                 <div className="text-xs text-gray-400">KCAL</div>
               </div>
               <div className="text-center">
@@ -221,11 +221,11 @@ export function DashboardPremium() {
 
         {/* Cards de Métricas Premium */}
         <div className="grid grid-cols-2 gap-4">
-          <Card className="glass-effect border-blue-500/30">
+          <Card className="glass-effect border-[#1E6BFF]/30">
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-xl bg-blue-500/20">
-                  <Activity className="w-5 h-5 text-blue-400" />
+                <div className="p-2 rounded-xl bg-[#1E6BFF]/20">
+                  <Activity className="w-5 h-5 text-[#1E6BFF]" />
                 </div>
                 <div>
                   <div className="text-xs text-gray-400">Calorias</div>
@@ -286,7 +286,7 @@ export function DashboardPremium() {
             </ResponsiveContainer>
             <div className="flex items-center justify-center gap-6 mt-4 text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <div className="w-3 h-3 rounded-full bg-[#1E6BFF]"></div>
                 <span className="text-gray-400">Passos (x100)</span>
               </div>
               <div className="flex items-center gap-2">
@@ -312,21 +312,21 @@ export function DashboardPremium() {
           <Button
             onClick={() => navigate('/report')}
             variant="outline"
-            className="h-16 glass-effect border-blue-500/50 bg-gradient-to-br from-blue-500/10 to-blue-600/5"
+            className="h-16 glass-effect border-[#1E6BFF]/50 bg-gradient-to-br from-[#1E6BFF]/10 to-[#00B7FF]/5"
           >
             <div className="flex flex-col items-center gap-1">
-              <Activity className="w-5 h-5 text-blue-400" />
-              <span className="text-xs text-blue-400 font-semibold">Relatório</span>
+              <Activity className="w-5 h-5 text-[#1E6BFF]" />
+              <span className="text-xs text-[#1E6BFF] font-semibold">Relatório</span>
             </div>
           </Button>
 
           <Button
             onClick={() => navigate('/treino')}
             variant="outline"
-            className="h-16 glass-effect border-blue-500/50"
+            className="h-16 glass-effect border-[#1E6BFF]/50"
           >
             <div className="flex flex-col items-center gap-1">
-              <Dumbbell className="w-5 h-5 text-blue-400" />
+              <Dumbbell className="w-5 h-5 text-[#1E6BFF]" />
               <span className="text-xs">Treinar</span>
             </div>
           </Button>

@@ -125,10 +125,10 @@ export function Step5Treino() {
                   </div>
 
                   <details className="text-sm">
-                    <summary className="cursor-pointer text-blue-600 hover:underline">
+                    <summary className="cursor-pointer text-[#1E6BFF] hover:underline">
                       Ver substituições
                     </summary>
-                    <div className="mt-2 pl-4 border-l-2 border-blue-600">
+                    <div className="mt-2 pl-4 border-l-2 border-[#1E6BFF]">
                       <p className="text-muted-foreground">Você pode substituir por:</p>
                       <ul className="list-disc list-inside mt-1">
                         {ex.exercicio.substituicoes.map((sub, i) => (

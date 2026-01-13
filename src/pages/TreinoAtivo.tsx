@@ -247,7 +247,7 @@ return (
               </p>
             </div>
             {timerAtivo && (
-              <div className="px-3 py-1 rounded-full bg-blue-500 text-white font-bold text-sm mr-2">
+              <div className="px-3 py-1 rounded-full bg-[#1E6BFF] text-white font-bold text-sm mr-2">
                 <Timer className="w-4 h-4 inline mr-1" />
                 {formatarTempo(tempoDecorrido)}
               </div>
@@ -299,7 +299,7 @@ return (
           <CardContent className="space-y-4">
             {/* Info Cards - Mobile Grid */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              <div className="p-2 sm:p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-center">
+              <div className="p-2 sm:p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg text-center">
                 <p className="text-xs text-muted-foreground mb-1">Séries</p>
                 <p className="text-xl sm:text-2xl font-bold">{exercicio.series}</p>
               </div>
@@ -416,7 +416,7 @@ return (
                   onClick={() => setExercicioAtual(idx)}
                   className={`p-3 border rounded-lg cursor-pointer transition-all ${
                     idx === exercicioAtual
-                      ? 'bg-blue-50 dark:bg-blue-950 border-blue-600'
+                      ? 'bg-[#1E6BFF] dark:bg-[#1E6BFF] border-[#1E6BFF]'
                       : idx < exercicioAtual
                       ? 'bg-green-50 dark:bg-green-950 border-green-600'
                       : 'hover:bg-muted/50'

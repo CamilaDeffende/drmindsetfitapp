@@ -67,9 +67,9 @@ export function DietaAtivaView({ dietaAtiva }: DietaAtivaViewProps) {
               <p className="text-2xl font-bold text-green-400">{nutricao.macros.calorias}</p>
               <p className="text-xs text-gray-500">kcal</p>
             </div>
-            <div className="text-center p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl border border-blue-500/30">
+            <div className="text-center p-4 bg-gradient-to-br from-[#1E6BFF]/20 to-[#00B7FF]/10 rounded-xl border border-[#1E6BFF]/30">
               <p className="text-xs text-gray-400 mb-1">Proteína</p>
-              <p className="text-2xl font-bold text-blue-400">{nutricao.macros.proteina}</p>
+              <p className="text-2xl font-bold text-[#1E6BFF]">{nutricao.macros.proteina}</p>
               <p className="text-xs text-gray-500">gramas</p>
             </div>
             <div className="text-center p-4 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-xl border border-yellow-500/30">
@@ -119,7 +119,7 @@ export function DietaAtivaView({ dietaAtiva }: DietaAtivaViewProps) {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2 text-xs">
-                    <Badge variant="outline" className="bg-blue-500/20 border-blue-500/30 text-blue-400">
+                    <Badge variant="outline" className="bg-[#1E6BFF]/20 border-[#1E6BFF]/30 text-[#1E6BFF]">
                       P: {totalProteinas.toFixed(1)}g
                     </Badge>
                     <Badge variant="outline" className="bg-green-500/20 border-green-500/30 text-green-400">

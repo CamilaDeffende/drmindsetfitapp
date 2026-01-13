@@ -27,7 +27,7 @@ export function Step7Acompanhamento() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+          <div className="p-4 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg">
             <h4 className="font-semibold mb-2">📊 Registre suas medidas regularmente</h4>
             <ul className="text-sm space-y-1 text-muted-foreground list-disc list-inside">
               <li>Peso corporal: semanalmente</li>

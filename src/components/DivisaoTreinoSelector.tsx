@@ -140,7 +140,7 @@ export function DivisaoTreinoSelector({ onSelect }: DivisaoTreinoSelectorProps) 
             ))}
           </div>
           {diasSelecionados.length > 0 && (
-            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+            <div className="mt-4 p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg">
               <p className="text-sm">
                 <span className="font-semibold">{diasSelecionados.length} dias selecionados:</span>{' '}
                 {diasSelecionados.map(d => DIAS_SEMANA.find(ds => ds.value === d)?.label).join(', ')}

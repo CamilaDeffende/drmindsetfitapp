@@ -320,7 +320,7 @@ export function Step4Nutricao() {
                 onClick={() => toggleRefeicao(ref.value)}
                 className={`p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   refeicoesSelecionadas.includes(ref.value)
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-950'
+                    ? 'border-[#1E6BFF] bg-[#1E6BFF] dark:bg-[#1E6BFF]'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -330,7 +330,7 @@ export function Step4Nutricao() {
                     <p className="text-xs sm:text-sm text-muted-foreground">{ref.horarioPadrao}</p>
                   </div>
                   {refeicoesSelecionadas.includes(ref.value) && (
-                    <Check className="w-5 h-5 text-blue-600" />
+                    <Check className="w-5 h-5 text-[#1E6BFF]" />
                   )}
                 </div>
               </div>
@@ -375,9 +375,9 @@ export function Step4Nutricao() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            <div className="text-center p-3 sm:p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg">
               <p className="text-xs sm:text-sm text-muted-foreground mb-1">Proteína</p>
-              <p className="text-xl sm:text-2xl font-bold text-blue-600">{Math.round((state.avaliacao?.peso || 70) * 2)}g</p>
+              <p className="text-xl sm:text-2xl font-bold text-[#1E6BFF]">{Math.round((state.avaliacao?.peso || 70) * 2)}g</p>
             </div>
             <div className="text-center p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
               <p className="text-xs sm:text-sm text-muted-foreground mb-1">Gorduras</p>
