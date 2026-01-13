@@ -26,7 +26,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
           <div className="absolute top-5 left-0 h-0.5 bg-gray-200 dark:bg-gray-800"
                style={{ width: '100%', zIndex: 0 }} />
           <div
-            className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-500"
+            className="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] transition-all duration-500"
             style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`, zIndex: 1 }}
           />
 
@@ -39,8 +39,8 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 <div
                   className={cn(
                     'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300',
-                    isCompleted && 'bg-gradient-to-r from-blue-600 to-purple-600 text-white',
-                    isCurrent && 'bg-gradient-to-r from-blue-600 to-purple-600 text-white ring-4 ring-blue-200 dark:ring-blue-900',
+                    isCompleted && 'bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] text-white',
+                    isCurrent && 'bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] text-white ring-4 ring-blue-200 dark:ring-blue-900',
                     !isCompleted && !isCurrent && 'bg-white dark:bg-gray-900 text-gray-400 border-2 border-gray-200 dark:border-gray-800'
                   )}
                 >

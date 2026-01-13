@@ -104,7 +104,7 @@ export function Dashboard() {
       <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between mb-2 sm:mb-0">
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] bg-clip-text text-transparent">
               Dashboard
             </h1>
             <div className="flex gap-2">

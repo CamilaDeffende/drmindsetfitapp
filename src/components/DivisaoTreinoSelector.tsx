@@ -210,7 +210,7 @@ export function DivisaoTreinoSelector({ onSelect }: DivisaoTreinoSelectorProps) 
         onClick={handleConfirmar}
         disabled={!diasValidos}
         size="lg"
-        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+        className="w-full bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
       >
         Gerar Treino Personalizado
       </Button>

@@ -132,7 +132,7 @@ export function Step6Saude() {
             <ArrowLeft className="mr-2 w-4 h-4" />
             Voltar
           </Button>
-          <Button type="submit" size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+          <Button type="submit" size="lg" className="bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]">
             Próxima Etapa
             <ArrowRight className="ml-2 w-4 h-4" />
           </Button>

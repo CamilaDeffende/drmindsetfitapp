@@ -459,7 +459,7 @@ return (
             <span className="hidden sm:inline">Anterior</span>
           </Button>
           <Button
-            className="flex-[2] bg-gradient-to-r from-blue-600 to-purple-600 text-sm sm:text-base"
+            className="flex-[2] bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] text-sm sm:text-base"
             onClick={proximoExercicio}
             disabled={seriesCompletas < exercicio.series}
           >

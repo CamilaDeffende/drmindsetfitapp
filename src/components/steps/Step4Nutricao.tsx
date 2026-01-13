@@ -262,7 +262,7 @@ export function Step4Nutricao() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
       <div className="mb-6 sm:mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mb-3 sm:mb-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] mb-3 sm:mb-4">
           <UtensilsCrossed className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold mb-2">Planejamento Nutricional</h2>
@@ -408,7 +408,7 @@ export function Step4Nutricao() {
           size="lg"
           onClick={gerarPlanejamento}
           disabled={refeicoesSelecionadas.length === 0}
-          className="w-full sm:flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          className="w-full sm:flex-1 bg-gradient-to-r from-[#1E6BFF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
         >
           Gerar Planejamento
           <ArrowRight className="ml-2 w-4 h-4" />
