@@ -1,18 +1,28 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { ErrorBoundary } from './components/error-boundary'
-import { SubscriptionGate } from "@/components/SubscriptionGate";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import { SplashScreen } from "./components/branding/SplashScreen";
+import "./index.css";
 
-createRoot(document.getElementById('root')!).render(
-<SubscriptionGate>
-<StrictMode>
-    <ErrorBoundary>
+function BootSplash({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = React.useState(false);
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setReady(true), 850);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (!ready) return <SplashScreen />;
+  return <>{children}</>;
+}
+
+const el = document.getElementById("root");
+if (!el) throw new Error("Root element #root not found");
+
+createRoot(el).render(
+  <React.StrictMode>
+    <BootSplash>
       <App />
-    </ErrorBoundary>
-  </StrictMode>,
-</SubscriptionGate>
-)
-
-// data-ui="subscription-gate-main"
+    </BootSplash>
+  </React.StrictMode>
+);
