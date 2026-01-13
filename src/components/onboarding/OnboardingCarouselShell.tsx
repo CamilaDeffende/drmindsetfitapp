@@ -24,7 +24,7 @@ export function OnboardingCarouselShell({
   onBack,
   onNext,
   onSkip,
-  microcopy = "Isso alimenta seu plano e relatório.",
+  microcopy = "Base do seu plano e relatório.",
 }: Props) {
   const scrollerRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -58,7 +58,7 @@ export function OnboardingCarouselShell({
   const allowSkip = !!steps[currentIndex]?.allowSkip;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white mf-fade-in">
 
         <div className="flex items-center gap-3" data-ui="mindsetfit-logo-header">
           <img
@@ -69,7 +69,7 @@ export function OnboardingCarouselShell({
           />
           <div className="leading-tight">
             <div className="text-[12px] uppercase tracking-wider text-white/60">MindsetFit</div>
-            <div className="text-[11px] text-white/45">Onboarding premium</div>
+            <div className="text-[11px] text-white/45">Configuração</div>
           </div>
         </div>
 
@@ -186,18 +186,14 @@ export function OnboardingCarouselShell({
               type="button"
               onClick={onNext}
               className="w-full rounded-2xl bg-white text-black font-extrabold py-3 active:scale-[0.99] transition"
-            >
-              Salvar e continuar
-            </button>
+            >Continuar</button>
 
             {allowSkip ? (
               <button
                 type="button"
                 onClick={onSkip}
                 className="w-full rounded-2xl border border-white/15 bg-white/5 text-white/85 py-2.5 active:scale-[0.99] transition"
-              >
-                Pular por enquanto
-              </button>
+              >Pular</button>
             ) : null}
           </div>
         </div>

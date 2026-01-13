@@ -185,3 +185,38 @@
   box-shadow: 0 0 0 1px rgba(255,255,255,0.10), 0 10px 30px rgba(0, 180, 255, 0.14);
 }
 
+
+
+/* MindsetFit Premium Motion */
+@keyframes mfFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mfSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes mfIndeterminate {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(220%); }
+}
+
+.mf-fade-in { animation: mfFadeIn 420ms ease-out both; }
+.mf-slide-up { animation: mfSlideUp 520ms ease-out both; }
+.mf-progress {
+  position: relative;
+  height: 3px;
+  width: 160px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  overflow: hidden;
+}
+.mf-progress::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  width:40%;
+  background: rgba(0, 180, 255, 0.85);
+  border-radius: 999px;
+  animation: mfIndeterminate 1.05s ease-in-out infinite;
+}

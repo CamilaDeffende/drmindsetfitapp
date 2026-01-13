@@ -3,18 +3,20 @@ import { BrandIcon } from "./BrandIcon";
 export function SplashScreen() {
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center">
-      <div className="flex flex-col items-center text-center gap-6">
+      <div className="flex flex-col items-center text-center gap-5 mf-fade-in">
+        <div className="mf-slide-up">
+          <BrandIcon size={52} />
+        </div>
 
-        <BrandIcon size={52} />
-
-        <div className="text-sm uppercase tracking-[0.28em] text-white/45">
+        <div className="text-[11px] uppercase tracking-[0.32em] text-white/45 mf-slide-up">
           MindsetFit
         </div>
 
-        <div className="text-xs text-white/30">
-          Carregando experiência premium…
-        </div>
+        <div className="mf-progress" aria-label="Carregando" />
 
+        <div className="text-[11px] text-white/28">
+          Preparando sua experiência…
+        </div>
       </div>
     </div>
   );
