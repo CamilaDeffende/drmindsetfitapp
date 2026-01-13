@@ -1231,13 +1231,148 @@ const html =
           }
         })();
 
+        // Sprint 9A.1 | PDF PRO v3 — bloco de Evolução (últimos 28 dias)
+        const historyKpiText = (() => {
+          try {
+            const now = Date.now();
+            const day = 24 * 60 * 60 * 1000;
+
+            const toTime = (v: any) => {
+              if (!v) return 0;
+              const d = new Date(v);
+              const t = d.getTime();
+              return Number.isFinite(t) ? t : 0;
+            };
+
+            const tOf = (ss: any) =>
+              toTime(
+                ss?.date ||
+                  ss?.ymd ||
+                  ss?.createdAtISO ||
+                  ss?.createdAt ||
+                  ss?.performedAt ||
+                  ss?.timestamp ||
+                  ss?.ts
+              );
+
+            const list: any[] = Array.isArray(sessions) ? (sessions as any[]) : [];
+            const inDays = (n: number) => list.filter((x) => {
+              const t = tOf(x);
+              return t > 0 && (now - t) <= (n * day);
+            });
+
+            const s7 = inDays(7);
+            const s14 = inDays(14);
+            const s28 = inDays(28);
+
+            const vol28 = s28.reduce((acc, x) => {
+              const v = Number(x?.totalVolumeKg ?? x?.volumeKg ?? x?.volume ?? 0) || 0;
+              return acc + v;
+            }, 0);
+
+            const prs28 = s28.reduce((acc, x) => {
+              const p = Array.isArray(x?.prs) ? x.prs.length : (Array.isArray(x?.pr) ? x.pr.length : 0);
+              return acc + (Number(p) || 0);
+            }, 0);
+
+            const consistency = Math.min(100, Math.round((s28.length / 28) * 100));
+
+            const fmt = (n: number) => (Number.isFinite(n) ? n : 0);
+            const fmtVol = (n: number) => {
+              const v = Math.round((n || 0) * 10) / 10;
+              return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+            };
+
+            return [
+              "📈 Evolução (últimos 28 dias)",
+              `• Sessões: 7d ${fmt(s7.length)} | 14d ${fmt(s14.length)} | 28d ${fmt(s28.length)}`,
+              `• Volume total (28d): ${fmtVol(vol28)} kg`,
+              `• PRs (28d): ${fmt(prs28)}`,
+              `• Consistência (28d): ${fmt(consistency)}%`,
+            ].join("\n");
+          } catch {
+            return "📈 Evolução (últimos 28 dias)\n• Dados indisponíveis neste dispositivo.";
+          }
+        })();
+
+        // Sprint 9A.2 | PDF PRO v3 — Últimos relatórios + Score (texto seguro)
+        const reportHistoryMiniText = (() => {
+          try {
+            const now = Date.now();
+            const day = 24 * 60 * 60 * 1000;
+
+            const toTime = (v: any) => {
+              if (!v) return 0;
+              const d = new Date(v);
+              const t = d.getTime();
+              return Number.isFinite(t) ? t : 0;
+            };
+            const tOf = (ss: any) =>
+              toTime(
+                ss?.date ||
+                  ss?.ymd ||
+                  ss?.createdAtISO ||
+                  ss?.createdAt ||
+                  ss?.performedAt ||
+                  ss?.timestamp ||
+                  ss?.ts
+              );
+
+            const list = Array.isArray(sessions) ? sessions : [];
+            const s28 = list.filter((x) => {
+              const t = tOf(x);
+              return t > 0 && (now - t) <= (28 * day);
+            });
+
+            const consistency = Math.min(100, Math.round((s28.length / 28) * 100));
+            const scoreLabel =
+              consistency >= 80 ? "Elite" :
+              consistency >= 60 ? "Forte" :
+              consistency >= 40 ? "Em evolução" : "Recomeço";
+
+            const rh = Array.isArray(reportHistory) ? reportHistory : [];
+            const top = rh.slice(0, 5);
+
+            const lines = [];
+            lines.push("📌 Últimos Relatórios (Top 5)");
+            lines.push(`• Score de Consistência (28d): ${consistency}/100 • ${scoreLabel}`);
+
+            if (!top.length) {
+              lines.push("• Ainda não há relatórios salvos neste dispositivo.");
+              return lines.join("\n");
+            }
+
+            lines.push("");
+            lines.push("Data | Versão | Relatório");
+            lines.push("----------------------------------------");
+
+            for (const it of top) {
+              const iso = String(it?.createdAtISO ?? "");
+              const d = iso ? new Date(iso) : null;
+              const dateTxt = d && Number.isFinite(d.getTime())
+                ? d.toLocaleDateString()
+                : (iso ? iso.slice(0,10) : "—");
+
+              const v = it?.variant === "patient" ? "Paciente" : "Coach";
+              const name = String(it?.label || it?.fileName || "Relatório").slice(0, 46);
+              lines.push(`${dateTxt} | ${v} | ${name}`);
+            }
+
+            lines.push("");
+            lines.push("Dica PRO: mantenha consistência por 28 dias para insights mais confiáveis.");
+            return lines.join("\n");
+          } catch {
+            return "📌 Últimos Relatórios\n• Dados indisponíveis neste dispositivo.";
+          }
+        })();
+
         // Gera PDF premium
         await generateMindsetFitPremiumPdf({
 logoUrl,
           fileName: "Relatorio-MindsetFit-Premium.pdf",
           metaLines: [...mindsetfitSignatureLines] as string[],
           variant: pdfVariant,
-          bodyText,
+          bodyText: (String(bodyText ?? "") + "\n\n" + String(historyKpiText ?? "") + "\n\n" + String(reportHistoryMiniText ?? "")),
           bodyHtml,
 });
 
