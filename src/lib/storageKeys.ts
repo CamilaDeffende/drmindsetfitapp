@@ -11,3 +11,6 @@ export const REPORT_HISTORY_KEY = REPORT_HISTORY_BASE_KEY as unknown as typeof R
 
 // Sprint 9B.2 | Lista de pacientes (local, sem login)
 export const PATIENTS_KEY = "mindsetfit:patients:v1" as const;
+
+// Sprint Assinatura | Estado da assinatura (local-first)
+export const SUBSCRIPTION_KEY = "mindsetfit:subscription:v1";
