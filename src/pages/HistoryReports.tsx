@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { REPORT_HISTORY_KEY } from "@/lib/storageKeys";
+import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey } from "@/lib/storageKeys";
 
 type ReportHistoryItem = {
   id: string;
@@ -74,7 +74,26 @@ function Chip({ variant }: { variant: "coach" | "patient" }) {
 }
 
 export default function HistoryReports() {
-  const [items, setItems] = useState<ReportHistoryItem[]>([]);
+  const [patientId, _setPatientId] = useState<string>(() => {
+  try { return localStorage.getItem(CURRENT_PATIENT_KEY) || "default"; } catch { return "default"; }
+});
+const reportKey = useMemo(() => reportHistoryKey(patientId), [patientId]);
+useEffect(() => {
+  try { localStorage.setItem(CURRENT_PATIENT_KEY, patientId || "default"); } catch {}
+}, [patientId]);
+
+useEffect(() => {
+  // migração automática (legado -> default)
+  try {
+    const legacy = localStorage.getItem(REPORT_HISTORY_BASE_KEY);
+    const destKey = reportHistoryKey("default");
+    if (legacy && !localStorage.getItem(destKey)) {
+      localStorage.setItem(destKey, legacy);
+      localStorage.removeItem(REPORT_HISTORY_BASE_KEY);
+    }
+  } catch {}
+}, []);
+const [items, setItems] = useState<ReportHistoryItem[]>([]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "coach" | "patient">("all");
   const [showAll, setShowAll] = useState(false);
@@ -138,14 +157,14 @@ export default function HistoryReports() {
 
   const refresh = () => {
     if (typeof window === "undefined") return;
-    const parsed = safeParse(window.localStorage.getItem(REPORT_HISTORY_KEY));
+    const parsed = safeParse(window.localStorage.getItem(reportKey));
     setItems(normalizeList(parsed));
   };
 
   const write = (list: any) => {
     const next = normalizeList(list);
     try {
-      window.localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(next));
+      window.localStorage.setItem(reportKey, JSON.stringify(next));
     } catch {}
     setItems(next);
   };
