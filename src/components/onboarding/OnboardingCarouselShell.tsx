@@ -59,6 +59,20 @@ export function OnboardingCarouselShell({
 
   return (
     <div className="min-h-screen bg-black text-white">
+
+        <div className="flex items-center gap-3" data-ui="mindsetfit-logo-header">
+          <img
+            src="/brand/mindsetfit-logo.png"
+            alt="MindsetFit"
+            className="h-7 w-auto select-none"
+            draggable={false}
+          />
+          <div className="leading-tight">
+            <div className="text-[12px] uppercase tracking-wider text-white/60">MindsetFit</div>
+            <div className="text-[11px] text-white/45">Onboarding premium</div>
+          </div>
+        </div>
+
       {/* Header fixo */}
       <div className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur">
         <div className="mx-auto w-full max-w-[720px] px-4 py-3">
@@ -162,7 +176,7 @@ export function OnboardingCarouselShell({
       </div>
 
       {/* Espaço do footer */}
-      <div className="h-[120px]" />
+      <div className="pb-[calc(104px+env(safe-area-inset-bottom))]" />
 
       {/* Footer fixo */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/80 backdrop-blur">
