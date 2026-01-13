@@ -1,16 +1,16 @@
 import { Button } from '@/components/ui/button'
+import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { ArrowLeft, ArrowRight, TrendingUp, Calendar } from 'lucide-react'
-
+import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react'
 export function Step7Acompanhamento() {
   const { state, nextStep, prevStep } = useDrMindSetfit()
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-          <TrendingUp className="w-8 h-8 text-white" />
+        <div className="mb-4 flex items-center justify-center">
+          <BrandIcon size={64} />
         </div>
         <h2 className="text-3xl font-bold mb-2">Acompanhamento e Evolução</h2>
         <p className="text-muted-foreground">Monitore seu progresso ao longo do tempo</p>

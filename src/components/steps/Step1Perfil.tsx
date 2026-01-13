@@ -53,8 +53,8 @@ export function Step1Perfil() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-          <BrandIcon className="w-8 h-8 text-white"  />
+        <div className="mb-4 flex items-center justify-center">
+          <BrandIcon size={64} />
         </div>
         <h2 className="text-3xl font-bold mb-2">Perfil do Usuário</h2>
         <p className="text-muted-foreground">Vamos conhecer você e seus objetivos</p>

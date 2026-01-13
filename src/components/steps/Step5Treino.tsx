@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { DivisaoTreinoSelector } from '@/components/DivisaoTreinoSelector'
 import { gerarTreinoPersonalizado } from '@/utils/geradorTreino'
-import { ArrowLeft, ArrowRight, Dumbbell } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 
 export function Step5Treino() {
@@ -34,9 +35,9 @@ export function Step5Treino() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-            <Dumbbell className="w-8 h-8 text-white" />
-          </div>
+          <div className="mb-4 flex items-center justify-center">
+          <BrandIcon size={64} />
+        </div>
           <h2 className="text-3xl font-bold mb-2">Treinamento Inteligente</h2>
           <p className="text-muted-foreground">Configure seu programa personalizado de treino</p>
         </div>
@@ -58,8 +59,8 @@ export function Step5Treino() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-          <Dumbbell className="w-8 h-8 text-white" />
+        <div className="mb-4 flex items-center justify-center">
+          <BrandIcon size={64} />
         </div>
         <h2 className="text-3xl font-bold mb-2">Seu Treino Personalizado</h2>
         <p className="text-muted-foreground">Treino gerado baseado no seu perfil e disponibilidade</p>

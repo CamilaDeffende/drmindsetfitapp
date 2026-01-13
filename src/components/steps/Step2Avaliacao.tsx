@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { BrandIcon } from "@/components/branding/BrandIcon";
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { ArrowLeft, ArrowRight, Ruler } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { AvaliacaoFisica, MetodoComposicao } from '@/types'
 import { useState } from 'react'
 
@@ -160,8 +161,8 @@ export function Step2Avaliacao() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-          <Ruler className="w-8 h-8 text-white" />
+        <div className="mb-4 flex items-center justify-center">
+          <BrandIcon size={64} />
         </div>
         <h2 className="text-3xl font-bold mb-2">Avaliação Física Completa</h2>
         <p className="text-muted-foreground">Dados antropométricos e composição corporal</p>
