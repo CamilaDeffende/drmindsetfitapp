@@ -24,8 +24,9 @@ export function OnboardingCarouselShell({
   onBack,
   onSkip,
   microcopy = "Base do seu plano e relatório.",
+  onNext
 }: Props) {
-  const scrollerRef = React.useRef<HTMLDivElement | null>(null);
+const scrollerRef = React.useRef<HTMLDivElement | null>(null);
 
   // scroll programático quando o index muda (botões/estado)
   React.useEffect(() => {
@@ -193,6 +194,36 @@ export function OnboardingCarouselShell({
           </div>
         </div>
       </div>
-    </div>
+    
+
+      {/* FOOTER STICKY (mobile-safe) */}
+      <div
+        data-onboarding-footer
+        className="sticky bottom-0 left-0 right-0 z-50 mt-6 border-t border-white/10 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/40"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
+      >
+        <div className="mx-auto flex max-w-[520px] items-center justify-between gap-3 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => { try { onBack && onBack(); } catch {} }}
+            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 hover:bg-white/10 active:scale-[0.99] transition"
+          >
+            Voltar
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { try { onNext && onNext(); } catch {} }}
+            className="flex-1 rounded-xl bg-emerald-500/90 px-4 py-3 text-sm font-semibold text-black hover:bg-emerald-400 active:scale-[0.99] transition"
+          >
+            Próxima etapa
+          </button>
+        </div>
+      </div>
+
+</div>
+
+      
+
   );
 }
