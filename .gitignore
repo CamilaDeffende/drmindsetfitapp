@@ -26,3 +26,9 @@ Drmindsetfitpro/
 
 # Local backups
 .bk_*.tgz
+
+# Playwright artifacts (do not commit)
+test-results/
+playwright-report/
+.playwright/
+
