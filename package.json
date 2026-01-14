@@ -11,7 +11,11 @@
     "type-check": "tsc --noEmit",
     "smoke:history": "node scripts/smoke-history.mjs",
     "lint:ci": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet'",
-    "lint:full": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\"'"
+    "lint:full": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\"'",
+    "verify": "npm run lint && npm run type-check && npm run build",
+    "ci": "npm run lint && npm run type-check && npm run build",
+    "predeploy": "npm run verify",
+    "dev:green": "npm run verify && npm run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
