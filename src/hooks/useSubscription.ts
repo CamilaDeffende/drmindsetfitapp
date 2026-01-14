@@ -15,6 +15,11 @@ export interface Subscription {
 }
 
 export function useSubscription() {
+  // DEV_PASS_SUBSCRIPTION: ?dev=1 força premium para testes locais (sem quebrar hooks)
+  const __devPass = (() => { try { return new URLSearchParams(window.location.search).get("dev") === "1"; } catch { return false; } })();
+
+  
+  void __devPass;
   const { user } = useAuth()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
