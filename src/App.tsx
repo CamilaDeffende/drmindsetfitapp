@@ -25,6 +25,8 @@ import Download from '@/pages/Download'
 import { Report } from '@/pages/Report'
 import { EditDiet } from '@/pages/EditDiet'
 import HiitPlan from "@/pages/HiitPlan";
+import RouteGuard from "src/features/fitness-suite/router/RouteGuard";
+
 // RESET_STORAGE_QUERY_SYNC: limpa estado salvo via ?reset=1 ANTES do Provider montar (sem loop)
 try {
   const qs = new URLSearchParams(window.location.search);
@@ -48,6 +50,7 @@ function App() {
       <AuthProvider>
         <DrMindSetfitProvider>
           <BrowserRouter>
+  <RouteGuard />
             <Routes>
               {/* Rotas Públicas */}
               <Route path="/login" element={<Login />} />
