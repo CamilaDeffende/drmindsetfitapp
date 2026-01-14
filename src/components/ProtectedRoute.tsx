@@ -34,9 +34,15 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
   }
 
   // Rota requer premium mas usuário não tem
-  // NO_PAYWALL_SIGNATURE_V2
-  // assinatura desabilitada por enquanto: não bloquear rotas premium (login continua obrigatório)
-  if (false) {
+  // NO_PAYWALL_SIGNATURE_V3
+  // assinatura desabilitada por enquanto: só bloqueia premium se paywallEnabled=true no device
+  const paywallEnabled = (() => {
+    try { return (localStorage.getItem("mindsetfit:paywallEnabled") || "").toLowerCase() === "true"; }
+    catch { return false; }
+  })();
+
+  // Rota requer premium mas usuário não tem (paywall OFF por padrão)
+  if (requiresPremium && !isPremium && paywallEnabled) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-black p-4">
         <Card className="w-full max-w-md glass-effect neon-border">

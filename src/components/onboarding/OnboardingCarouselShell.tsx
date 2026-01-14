@@ -8,8 +8,7 @@ type StepDef = {
 };
 
 type Props = {
-    onNext?: () => void;
-currentIndex: number;
+  currentIndex: number;
   onIndexChange: (next: number) => void;
   steps: StepDef[];
   onBack?: () => void;
@@ -17,6 +16,11 @@ currentIndex: number;
   microcopy?: string;
 };
 
+/**
+ * FIX_SHELL_V1
+ * - Remove a barra verde/sticky "Próxima etapa" (mobile-safe)
+ * - Mantém: header fixo + carrossel swipe + setas laterais + footer fixo com "Pular" (quando permitido)
+ */
 export function OnboardingCarouselShell({
   currentIndex,
   onIndexChange,
@@ -24,15 +28,14 @@ export function OnboardingCarouselShell({
   onBack,
   onSkip,
   microcopy = "Base do seu plano e relatório.",
-  onNext
 }: Props) {
-const scrollerRef = React.useRef<HTMLDivElement | null>(null);
+  const scrollerRef = React.useRef<HTMLDivElement | null>(null);
 
   // scroll programático quando o index muda (botões/estado)
   React.useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    const w = el.clientWidth;
+    const w = el.clientWidth || 1;
     el.scrollTo({ left: currentIndex * w, behavior: "smooth" });
   }, [currentIndex]);
 
@@ -59,20 +62,6 @@ const scrollerRef = React.useRef<HTMLDivElement | null>(null);
 
   return (
     <div className="min-h-screen bg-black text-white mf-fade-in">
-
-        <div className="flex items-center gap-3" data-ui="mindsetfit-logo-header">
-          <img
-            src="/brand/mindsetfit-logo.svg"
-            alt="MindsetFit"
-            className="h-5 w-auto select-none select-none opacity-95"
-            draggable={false}
-          />
-          <div className="leading-tight">
-            <div className="text-[12px] uppercase tracking-wider text-white/60">MindsetFit</div>
-            <div className="text-[11px] text-white/45">Configuração</div>
-          </div>
-        </div>
-
       {/* Header fixo */}
       <div className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur">
         <div className="mx-auto w-full max-w-[720px] px-4 py-3">
@@ -99,10 +88,7 @@ const scrollerRef = React.useRef<HTMLDivElement | null>(null);
             {steps.map((_, i) => (
               <div
                 key={i}
-                className={[
-                  "h-1.5 rounded-full",
-                  i <= currentIndex ? "bg-white/80" : "bg-white/15",
-                ].join(" ")}
+                className={["h-1.5 rounded-full", i <= currentIndex ? "bg-white/80" : "bg-white/15"].join(" ")}
               />
             ))}
           </div>
@@ -112,10 +98,7 @@ const scrollerRef = React.useRef<HTMLDivElement | null>(null);
             {steps.map((_, i) => (
               <div
                 key={i}
-                className={[
-                  "h-1.5 w-1.5 rounded-full",
-                  i === currentIndex ? "bg-white/90" : "bg-white/25",
-                ].join(" ")}
+                className={["h-1.5 w-1.5 rounded-full", i === currentIndex ? "bg-white/90" : "bg-white/25"].join(" ")}
               />
             ))}
           </div>
@@ -161,11 +144,7 @@ const scrollerRef = React.useRef<HTMLDivElement | null>(null);
           style={{ scrollSnapType: "x mandatory" }}
         >
           {steps.map((s) => (
-            <div
-              key={s.key}
-              className="w-full shrink-0 snap-center px-1"
-              style={{ scrollSnapAlign: "center" }}
-            >
+            <div key={s.key} className="w-full shrink-0 snap-center px-1" style={{ scrollSnapAlign: "center" }}>
               <div className="rounded-3xl border border-white/10 bg-white/5 shadow-xl p-4 max-h-[calc(100vh-10px)] overflow-y-auto overscroll-contain">
                 <div className="text-xs text-white/60">{microcopy}</div>
                 <div className="mt-3">{s.content}</div>
@@ -178,52 +157,22 @@ const scrollerRef = React.useRef<HTMLDivElement | null>(null);
       {/* Espaço do footer */}
       <div className="pb-[calc(104px+env(safe-area-inset-bottom))]" />
 
-      {/* Footer fixo */}
+      {/* Footer fixo (sem barra verde) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/80 backdrop-blur">
         <div className="mx-auto w-full max-w-[720px] px-4 py-3">
           <div className="flex flex-col gap-2">
-            {/* removed: stray white 'Continuar' button */}
-
             {allowSkip ? (
               <button
                 type="button"
                 onClick={onSkip}
                 className="w-full rounded-2xl border border-white/15 bg-white/5 text-white/85 py-2.5 active:scale-[0.99] transition"
-              >Pular</button>
+              >
+                Pular
+              </button>
             ) : null}
           </div>
         </div>
       </div>
-    
-
-      {/* FOOTER STICKY (mobile-safe) */}
-      <div
-        data-onboarding-footer
-        className="sticky bottom-0 left-0 right-0 z-50 mt-6 border-t border-white/10 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/40"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
-      >
-        <div className="mx-auto flex max-w-[520px] items-center justify-between gap-3 px-4 py-3">
-          <button
-            type="button"
-            onClick={() => { try {(() => { if (onBack) onBack();; return null; })()} catch {} }}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 hover:bg-white/10 active:scale-[0.99] transition"
-          >
-            Voltar
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { try {(() => { if (onNext) onNext();; return null; })()} catch {} }}
-            className="flex-1 rounded-xl bg-emerald-500/90 px-4 py-3 text-sm font-semibold text-black hover:bg-emerald-400 active:scale-[0.99] transition"
-          >
-            Próxima etapa
-          </button>
-        </div>
-      </div>
-
-</div>
-
-      
-
+    </div>
   );
 }
