@@ -22,13 +22,13 @@ import { DashboardPremium } from '@/pages/DashboardPremium'
 import { Running } from '@/pages/Running'
 import { TreinoAtivo } from '@/pages/TreinoAtivo'
 import { NutritionPlan } from '@/pages/NutritionPlan'
-import { CardioPlan } from '@/pages/CardioPlan'
 import { PlanosAtivos } from '@/pages/PlanosAtivos'
 import Download from '@/pages/Download'
 import { Report } from '@/pages/Report'
 import { EditDiet } from '@/pages/EditDiet'
-import HiitPlan from "@/pages/HiitPlan";
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
+import { CardioPlan } from '@/pages/CardioPlan'
+import HiitPlan from "@/pages/HiitPlan";
 
 // RESET_STORAGE_QUERY_SYNC: limpa estado salvo via ?reset=1 ANTES do Provider montar (sem loop)
 try {
@@ -114,9 +114,24 @@ function App() {
                 element={
                   <ProtectedRoute requiresPremium>
                     <NutritionPlan />
-            <Route path="/cardio" element={<CardioPlan />} />
-<Route path="/hiit" element={<HiitPlan />} />
+              <Route
+                path="/cardio"
+                element={
+                  <ProtectedRoute requiresPremium>
+                    <CardioPlan />
                   </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/hiit"
+                element={
+                  <ProtectedRoute requiresPremium>
+                    <HiitPlan />
+                  </ProtectedRoute>
+                }
+              />
+
+</ProtectedRoute>
                 }
               />
               <Route
@@ -154,7 +169,14 @@ function App() {
 
               {/* Redirect padrão */}
               <Route path="*" element={<Navigate to="/login" replace />} />
-              <Route path="/history" element={<HistoryReports />} />
+              <Route
+                path="/history"
+                element={
+                  <ProtectedRoute requiresPremium>
+                    <HistoryReports />
+                  </ProtectedRoute>
+                }
+              />
   <Route path="/assinatura" element={<Assinatura />} />
 </Routes>
           </BrowserRouter>

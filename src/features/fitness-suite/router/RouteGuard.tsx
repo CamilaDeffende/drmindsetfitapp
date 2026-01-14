@@ -75,7 +75,11 @@ export default function RouteGuard() {
   const nav = useNavigate();
 
   useEffect(() => {
-    const path = (loc.pathname || "/").toLowerCase();
+        const path = (loc.pathname || "/").toLowerCase();
+
+    // Rotas públicas (nunca devem ser bloqueadas por assinatura)
+    const publicRoutes = ["/login", "/signup", "/pricing", "/assinatura"];
+    if (publicRoutes.some(p => path === p || path.startsWith(p + "/"))) return;
     let subscribed = false;
     let onboardingDone = false;
 
@@ -85,14 +89,26 @@ export default function RouteGuard() {
       onboardingDone = f.onboardingDone;
     } catch {}
 
-    // Se já terminou e está no onboarding: sai
-    if (path.startsWith("/onboarding") && onboardingDone) {
+        // Se já terminou o onboarding e está na entrada (/): vai pro dashboard
+    if (path === "/" && onboardingDone && subscribed) {
       nav("/dashboard", { replace: true });
       return;
     }
 
     // Proteção de rotas internas sem assinatura
-    const internal = ["/dashboard","/workout","/nutrition","/cardio","/hiit","/history","/report"];
+        const internal = [
+      "/dashboard",
+      "/running",
+      "/treino",
+      "/nutrition",
+      "/cardio",
+      "/hiit",
+      "/planos-ativos",
+      "/report",
+      "/history",
+      "/edit-diet",
+      "/download"
+    ];
     if (internal.some(p => path.startsWith(p)) && !subscribed) {
       nav("/assinatura", { replace: true });
       return;
