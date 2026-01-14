@@ -12,7 +12,6 @@ type Props = {
   onIndexChange: (next: number) => void;
   steps: StepDef[];
   onBack?: () => void;
-  onNext?: () => void;
   onSkip?: () => void;
   microcopy?: string;
 };
@@ -22,7 +21,6 @@ export function OnboardingCarouselShell({
   onIndexChange,
   steps,
   onBack,
-  onNext,
   onSkip,
   microcopy = "Base do seu plano e relatório.",
 }: Props) {
@@ -182,11 +180,7 @@ export function OnboardingCarouselShell({
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/80 backdrop-blur">
         <div className="mx-auto w-full max-w-[720px] px-4 py-3">
           <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={onNext}
-              className="w-full rounded-2xl bg-white text-black font-extrabold py-3 active:scale-[0.99] transition"
-            >Continuar</button>
+            {/* removed: stray white 'Continuar' button */}
 
             {allowSkip ? (
               <button
