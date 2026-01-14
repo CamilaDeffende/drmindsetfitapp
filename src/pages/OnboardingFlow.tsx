@@ -66,8 +66,7 @@ export function OnboardingFlow() {
         if ((state.etapaAtual ?? 1) > 1) prevStep()
         else navigate(-1)
       }}
-      onNext={() => nextStep()}
-      onSkip={() => nextStep()}
+onSkip={() => nextStep()}
       microcopy="Rápido, elegante e feito para você. Ajuste o essencial e siga para o Dashboard."
     />
   )

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet'",
+    "lint": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet' --ignore-pattern dist/** --ignore-pattern .scan/** --ignore-pattern Drmindsetfitpro/**",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "smoke:history": "node scripts/smoke-history.mjs",

@@ -14,3 +14,15 @@ dist
 *.bak.*
 src/**/*.bak.*
 .scan
+
+# Build / generated
+dist/
+
+# Scans / local tooling
+.scan/
+
+# Local experimental folder inside repo (must not be linted/committed)
+Drmindsetfitpro/
+
+# Local backups
+.bk_*.tgz

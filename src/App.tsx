@@ -25,16 +25,29 @@ import Download from '@/pages/Download'
 import { Report } from '@/pages/Report'
 import { EditDiet } from '@/pages/EditDiet'
 import HiitPlan from "@/pages/HiitPlan";
+import RouteGuard from "./features/fitness-suite/router/RouteGuard";
+
 // RESET_STORAGE_QUERY_SYNC: limpa estado salvo via ?reset=1 ANTES do Provider montar (sem loop)
 try {
   const qs = new URLSearchParams(window.location.search);
   if (qs.get('reset') === '1') {
     // evita loop/reexecução constante
-    if (sessionStorage.getItem('drmindsetfit_reset_done') !== '1') {
-      sessionStorage.setItem('drmindsetfit_reset_done', '1');
-      localStorage.removeItem('drmindsetfit_state');
-    }
-    // remove query e garante entrada limpa no onboarding
+    // Reset CONTROLADO (somente quando você pedir):
+// Abra: http://localhost:8080/#/?reset=1
+try {
+  const href = String(window.location.href || "");
+  const wantsReset = href.includes("reset=1");
+  if (wantsReset) {
+    localStorage.removeItem("drmindsetfit_state");
+    // também limpa flags conhecidas (se existirem)
+    localStorage.removeItem("mindsetfit:isSubscribed");
+    localStorage.removeItem("mindsetfit:onboardingCompleted");
+    // remove o reset=1 da URL (mantém o hash)
+    const cleaned = href.replace(/([?&])reset=1(&?)/, (_m, a, b) => (a === "?" && b ? "?" : a === "?" ? "" : b ? "&" : ""));
+    window.history.replaceState({}, "", cleaned);
+  }
+} catch {}
+// remove query e garante entrada limpa no onboarding
     window.history.replaceState({}, '', '/');
   }
 } catch { /* noop */ }
@@ -48,6 +61,7 @@ function App() {
       <AuthProvider>
         <DrMindSetfitProvider>
           <BrowserRouter>
+  <RouteGuard />
             <Routes>
               {/* Rotas Públicas */}
               <Route path="/login" element={<Login />} />
