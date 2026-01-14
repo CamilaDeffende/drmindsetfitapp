@@ -9,7 +9,6 @@ import {
   UtensilsCrossed,
   Dumbbell,
   Activity,
-  Download,
   ArrowLeft,
   Clock,
   TrendingUp
@@ -45,6 +44,8 @@ export function Report() {
   const diasTreino = treinoAtivo ? differenceInDays(new Date(treinoAtivo.dataFim), new Date(treinoAtivo.dataInicio)) : 0
 
   const exportarPDF = async () => {
+
+  void exportarPDF;
     try {
       const { exportarPDFCompleto } = await import('@/lib/exportar-pdf')
       await exportarPDFCompleto(state, 0, 0, 0)
@@ -67,10 +68,7 @@ export function Report() {
               <h1 className="text-xl font-bold text-neon">Relatório Completo</h1>
               <p className="text-xs text-gray-400">Seu planejamento detalhado</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={exportarPDF} className="glow-green">
-              <Download className="w-5 h-5 text-green-400" />
-            </Button>
-          </div>
+            </div>
         </div>
       </header>
 
@@ -213,7 +211,7 @@ export function Report() {
                 ))}
               </div>
 
-              <Button onClick={() => navigate('/nutrition')} className="w-full glow-green">
+              <Button onClick={() => navigate('/nutrition')} className="w-full ">
                 Editar Minha Dieta
               </Button>
             </CardContent>

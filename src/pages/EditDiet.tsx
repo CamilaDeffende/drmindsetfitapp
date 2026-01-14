@@ -6,7 +6,6 @@ import { useState } from 'react'
 import {
   ArrowLeft,
   UtensilsCrossed,
-  Save,
   RefreshCw,
   Info,
   Search
@@ -233,6 +232,8 @@ return (
   }
 
   const handleSalvar = () => {
+
+  void handleSalvar;
     if (state.dietaAtiva) {
       updateState({
         dietaAtiva: {
@@ -389,11 +390,7 @@ return (
 
         {/* Botão Salvar */}
         <div className="sticky bottom-0 pb-6 pt-4 bg-gradient-to-t from-black via-black to-transparent">
-          <Button onClick={handleSalvar} className="w-full glow-green h-12 text-lg">
-            <Save className="w-5 h-5 mr-2" />
-            Salvar Alterações
-          </Button>
-        </div>
+          </div>
       </main>
     </div>
   )

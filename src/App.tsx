@@ -62,27 +62,35 @@ function App() {
 
   const __suite = new URLSearchParams(window.location.search).get("suite") === "1";
 
-  return __suite ? <FitnessSuiteDemo /> : (
-<ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+  return __suite ? (
+    <FitnessSuiteDemo />
+  ) : (
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <AuthProvider>
         <DrMindSetfitProvider>
           <BrowserRouter>
-  <RouteGuard />
+            <RouteGuard />
             <Routes>
-              {/* Rotas Públicas */}
+              {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
+              <Route path="/" element={<Navigate to="/assinatura" replace />} />
+
+              {/* Públicas */}
+              <Route path="/assinatura" element={<Assinatura />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/pricing" element={<Pricing />} />
 
-              {/* Rotas Protegidas - Requer Login */}
+              {/* Onboarding (Premium) — etapas 1..8 */}
               <Route
-                path="/"
+                path="/onboarding"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiresPremium>
                     <OnboardingFlow />
                   </ProtectedRoute>
                 }
               />
+
+              {/* Dashboard (após onboarding completo) */}
               <Route
                 path="/dashboard"
                 element={
@@ -92,7 +100,7 @@ function App() {
                 }
               />
 
-              {/* Rotas Premium - Requer Assinatura */}
+              {/* Premium */}
               <Route
                 path="/running"
                 element={
@@ -114,6 +122,9 @@ function App() {
                 element={
                   <ProtectedRoute requiresPremium>
                     <NutritionPlan />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/cardio"
                 element={
@@ -128,10 +139,6 @@ function App() {
                   <ProtectedRoute requiresPremium>
                     <HiitPlan />
                   </ProtectedRoute>
-                }
-              />
-
-</ProtectedRoute>
                 }
               />
               <Route
@@ -159,6 +166,14 @@ function App() {
                 }
               />
               <Route
+                path="/history"
+                element={
+                  <ProtectedRoute requiresPremium>
+                    <HistoryReports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/download"
                 element={
                   <ProtectedRoute>
@@ -167,24 +182,16 @@ function App() {
                 }
               />
 
-              {/* Redirect padrão */}
+              {/* Fallback */}
               <Route path="*" element={<Navigate to="/login" replace />} />
-              <Route
-                path="/history"
-                element={
-                  <ProtectedRoute requiresPremium>
-                    <HistoryReports />
-                  </ProtectedRoute>
-                }
-              />
-  <Route path="/assinatura" element={<Assinatura />} />
-</Routes>
+            </Routes>
           </BrowserRouter>
           <Toaster />
         </DrMindSetfitProvider>
       </AuthProvider>
     </ThemeProvider>
-  )
+  );
 }
 
 export default App
+

@@ -37,7 +37,7 @@ export function Login() {
       description: 'Bem-vindo de volta ao DrMindSetfit',
     })
 
-    navigate('/dashboard')
+    navigate("/onboarding")
     setLoading(false)
   }
 

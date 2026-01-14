@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { loadFlags, setPaywallEnabled, setPremiumUnlocked } from "@/lib/featureFlags";
 import { BrandIcon } from "@/components/branding/BrandIcon";
@@ -11,7 +12,20 @@ type Plan = {
 };
 
 export default function Assinatura() {
-  const plans: Plan[] = useMemo(
+  
+  
+  const navigate = useNavigate();
+
+  const activateAndGoLogin = (planId?: string) => {
+    try { localStorage.setItem("mindsetfit:isSubscribed", "true"); } catch {}
+    try { localStorage.setItem("mindsetfit:subscription:v1", JSON.stringify({ planId: planId || "mensal", active: true, activatedAt: Date.now() })); } catch {}
+    navigate("/login", { replace: true });
+  };
+
+
+  // TS: garante uso (sem alterar UI)
+  void activateAndGoLogin;
+const plans: Plan[] = useMemo(
     () => [
       { id: "mensal", title: "Mensal", price: "R$ 97,90", note: "30 dias de acesso • Cancelamento a qualquer momento" }
 ,

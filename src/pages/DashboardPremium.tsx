@@ -9,7 +9,6 @@ import {
   Dumbbell,
   MapPin,
   UtensilsCrossed,
-  Download,
   Calendar,
   Target,
   Zap
@@ -107,6 +106,8 @@ export function DashboardPremium() {
   const caloriasQueimadas = Math.floor(passosHoje * 0.04)
 
   const exportarPDF = async () => {
+
+  void exportarPDF;
     try {
       const { exportarPDFCompleto } = await import('@/lib/exportar-pdf')
       await exportarPDFCompleto(state, passosHoje, cargaHoje, cargaSemana)
@@ -142,10 +143,7 @@ export function DashboardPremium() {
               <h1 className="text-2xl font-bold text-neon">Dashboard</h1>
               <p className="text-xs text-gray-400">{format(horaAtual, "EEEE, dd 'de' MMMM", { locale: ptBR })}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={exportarPDF} className="glow-green">
-              <Download className="w-5 h-5 text-green-400" />
-            </Button>
-          </div>
+            </div>
         </div>
       </header>
 

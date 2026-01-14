@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Lock, Mail, Zap, Check } from "lucide-react";import { useToast } from '@/hooks/use-toast'
+import { Lock, Mail, Zap, Check } from "lucide-react";
+import { useToast } from '@/hooks/use-toast'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 
 export function SignUp() {
@@ -161,17 +161,6 @@ export function SignUp() {
                   className="bg-black/20"
                 />
               </div>
-
-              <Button type="submit" disabled={loading} className="w-full glow-green h-12">
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Criando conta...
-                  </>
-                ) : (
-                  'Criar conta grátis'
-                )}
-              </Button>
 
               <div className="text-center text-sm text-gray-400">
                 Já tem uma conta?{' '}

@@ -57,7 +57,7 @@ export function NutritionPlan() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/edit-diet')} className="glow-green">
+            <Button variant="outline" size="sm" onClick={() => navigate('/edit-diet')} className="">
               <Edit className="w-4 h-4 mr-2" />
               Editar Dieta
             </Button>
