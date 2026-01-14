@@ -1,3 +1,4 @@
+import * as React from "react";
 import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -7,6 +8,8 @@ import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { FitnessSuiteDemo } from "./features/fitness-suite";
+import { maybeResetFromUrl } from "@/lib/resetApp";
+
 
 // Páginas Públicas
 import { Login } from '@/pages/Login'
@@ -54,6 +57,9 @@ try {
 
 
 function App() {
+  // reset premium via URL: /?reset=soft | /?reset=hard
+  React.useEffect(() => { maybeResetFromUrl(); }, []);
+
   const __suite = new URLSearchParams(window.location.search).get("suite") === "1";
 
   return __suite ? <FitnessSuiteDemo /> : (

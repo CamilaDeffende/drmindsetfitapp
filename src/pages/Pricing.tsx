@@ -180,7 +180,7 @@ export function Pricing() {
                 <Crown className="w-8 h-8 text-yellow-400" />
               </div>
               <div className="mb-4">
-                <span className="text-5xl font-bold text-neon">R$ 97</span>
+                <span className="text-5xl font-bold text-neon">R$ 97,90</span>
                 <span className="text-xl text-gray-400">,99/mês</span>
               </div>
               <CardDescription>Acesso completo a todas as funcionalidades</CardDescription>

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Lock, Mail, Zap } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { BrandIcon } from "@/components/branding/BrandIcon";
 
 export function Login() {
   const navigate = useNavigate()
@@ -43,7 +44,11 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center p-4">
+<div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center p-4">
+        <div className="flex justify-center pt-8 pb-6" data-ui="mindsetfit-auth-logo">
+          <BrandIcon size={46} className="bg-transparent" />
+        </div>
+
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">

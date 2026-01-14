@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import BrandIcon from "@/components/branding/BrandIcon";
 import { loadFlags, setPaywallEnabled, setPremiumUnlocked } from "@/lib/featureFlags";
+import { BrandIcon } from "@/components/branding/BrandIcon";
 
 type Plan = {
   id: "mensal" | "semestral" | "anual";
@@ -13,9 +13,9 @@ type Plan = {
 export default function Assinatura() {
   const plans: Plan[] = useMemo(
     () => [
-      { id: "mensal", title: "Mensal", price: "R$ 399", note: "Acesso completo • Cancelamento a qualquer momento" },
+      { id: "mensal", title: "Mensal", price: "R$ 97,90", note: "30 dias de acesso • Cancelamento a qualquer momento" },
       { id: "semestral", title: "Semestral", price: "R$ 2.097", note: "Melhor custo-benefício no médio prazo", highlight: true },
-      { id: "anual", title: "Anual", price: "12× R$ 329", note: "Plano elite • Prioridade em novidades" },
+      { id: "anual", title: "Anual", price: "R$ 597,90", note: "12 meses de acesso • Plano anual" },
     ],
     []
   );
@@ -41,7 +41,7 @@ export default function Assinatura() {
   };
 
   return (
-    <div className="min-h-dvh bg-[#070A12] text-white">
+<div className="min-h-dvh bg-[#070A12] text-white">
       <div className="mx-auto w-full max-w-[520px] px-4 pb-10 pt-8">
         <div className="flex items-center gap-3">
           <div className="shrink-0">
