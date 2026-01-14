@@ -111,10 +111,7 @@ const plans: Plan[] = useMemo(
                   <button
                     type="button"
                     className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-[12px] font-semibold text-black hover:opacity-95 active:scale-[0.99]"
-                    onClick={() => {
-                      // Placeholder: checkout futuro
-                      alert("Checkout será conectado na próxima sprint.");
-                    }}
+                    onClick={() => { activateAndGoLogin(pl.id); }}
                   >
                     Assinar {pl.title}
                   </button>

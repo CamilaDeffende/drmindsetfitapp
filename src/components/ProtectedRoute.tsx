@@ -34,7 +34,9 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
   }
 
   // Rota requer premium mas usuário não tem
-  if (requiresPremium && !isPremium) {
+  // NO_PAYWALL_SIGNATURE_V2
+  // assinatura desabilitada por enquanto: não bloquear rotas premium (login continua obrigatório)
+  if (false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-black p-4">
         <Card className="w-full max-w-md glass-effect neon-border">

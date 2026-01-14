@@ -72,7 +72,7 @@ function App() {
             <RouteGuard />
             <Routes>
               {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
-              <Route path="/" element={<Navigate to="/assinatura" replace />} />
+              <Route path="/" element={<Navigate to="/login" replace />} />
 
               {/* Públicas */}
               <Route path="/assinatura" element={<Assinatura />} />
