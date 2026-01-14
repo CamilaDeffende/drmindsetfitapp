@@ -1,12 +1,14 @@
 import path from "path"
+const ANALYZE_BUNDLE = process.env.ANALYZE_BUNDLE === "1";
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig({
   
-  plugins: [react()
-      ...(ANALYZE_BUNDLE ? [visualizer({ filename: "dist/bundle-report.html", template: "treemap", gzipSize: true, brotliSize: true })] : []),
+  plugins: [
+      ANALYZE_BUNDLE ? visualizer({ filename: "dist/bundle-report.html", template: "treemap", gzipSize: true, brotliSize: true }) : undefined,
+react()
     ],
   resolve: {
     alias: {
