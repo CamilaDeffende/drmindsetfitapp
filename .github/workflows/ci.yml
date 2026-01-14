@@ -28,3 +28,5 @@ jobs:
 
       - name: Verify
         run: npm run verify
+      - name: E2E
+        run: npm run test:e2e
