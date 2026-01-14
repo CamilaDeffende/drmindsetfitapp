@@ -8,7 +8,8 @@ type StepDef = {
 };
 
 type Props = {
-  currentIndex: number;
+    onNext?: () => void;
+currentIndex: number;
   onIndexChange: (next: number) => void;
   steps: StepDef[];
   onBack?: () => void;
