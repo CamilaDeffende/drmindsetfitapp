@@ -8,8 +8,6 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Lock, Mail, Zap } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { BrandIcon } from "@/components/branding/BrandIcon";
-
 export function Login() {
   const navigate = useNavigate()
   const { signIn } = useAuth()
@@ -45,17 +43,23 @@ export function Login() {
 
   return (
 <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center p-4">
-        <div className="flex justify-center pt-8 pb-6" data-ui="mindsetfit-auth-logo">
-          <BrandIcon size={46} className="bg-transparent" />
-        </div>
+      {/* HERO: logo MindsetFit ocupando o topo (fundo transparente) */}
+      <div className="flex flex-col items-center justify-center pt-10 pb-8" data-ui="mindsetfit-login-hero">
+        <img
+          src="/brand/mindsetfit-wordmark.png"
+          alt="MindsetFit"
+          className="mx-auto w-auto bg-transparent h-20 sm:h-24 md:h-28 lg:h-32"
+          draggable={false}
+        />
+      </div>
 
-      <div className="w-full max-w-md">
+<div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#1E6BFF] to-[#00B7FF] mb-4">
             <Zap className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-neon mb-2"><img src="/brand/mindsetfit-wordmark.png" alt="MindsetFit" className="mx-auto h-10 w-auto bg-transparent" /></h1>
+          <h1 className="text-3xl font-bold text-neon mb-2"></h1>
           <p className="text-gray-400">Entre na sua conta</p>
         </div>
 
