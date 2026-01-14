@@ -13,8 +13,8 @@ type Plan = {
 export default function Assinatura() {
   const plans: Plan[] = useMemo(
     () => [
-      { id: "mensal", title: "Mensal", price: "R$ 97,90", note: "30 dias de acesso • Cancelamento a qualquer momento" },
-      { id: "semestral", title: "Semestral", price: "R$ 2.097", note: "Melhor custo-benefício no médio prazo", highlight: true },
+      { id: "mensal", title: "Mensal", price: "R$ 97,90", note: "30 dias de acesso • Cancelamento a qualquer momento" }
+,
       { id: "anual", title: "Anual", price: "R$ 597,90", note: "12 meses de acesso • Plano anual" },
     ],
     []

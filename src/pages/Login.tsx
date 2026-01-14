@@ -55,7 +55,7 @@ export function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#1E6BFF] to-[#00B7FF] mb-4">
             <Zap className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-neon mb-2">DrMindSetfit</h1>
+          <h1 className="text-3xl font-bold text-neon mb-2"><img src="/brand/mindsetfit-wordmark.png" alt="MindsetFit" className="mx-auto h-10 w-auto bg-transparent" /></h1>
           <p className="text-gray-400">Entre na sua conta</p>
         </div>
 
