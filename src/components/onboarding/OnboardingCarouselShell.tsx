@@ -205,7 +205,7 @@ const scrollerRef = React.useRef<HTMLDivElement | null>(null);
         <div className="mx-auto flex max-w-[520px] items-center justify-between gap-3 px-4 py-3">
           <button
             type="button"
-            onClick={() => { try { onBack && onBack(); } catch {} }}
+            onClick={() => { try {(() => { if (onBack) onBack();; return null; })()} catch {} }}
             className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 hover:bg-white/10 active:scale-[0.99] transition"
           >
             Voltar
@@ -213,7 +213,7 @@ const scrollerRef = React.useRef<HTMLDivElement | null>(null);
 
           <button
             type="button"
-            onClick={() => { try { onNext && onNext(); } catch {} }}
+            onClick={() => { try {(() => { if (onNext) onNext();; return null; })()} catch {} }}
             className="flex-1 rounded-xl bg-emerald-500/90 px-4 py-3 text-sm font-semibold text-black hover:bg-emerald-400 active:scale-[0.99] transition"
           >
             Próxima etapa
