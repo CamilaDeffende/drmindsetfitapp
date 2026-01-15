@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
+import { loadFlags } from "@/lib/featureFlags"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Lock, Crown, Loader2 } from 'lucide-react'
@@ -16,6 +17,15 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
   const { isPremium, loading: subLoading } = useSubscription()
   const navigate = useNavigate()
 
+
+  // PAYWALL_RUNTIME_FLAG_V1: evita "if(false)" (lint) e mantém assinatura desligada por enquanto
+  const paywallEnabled = (() => {
+    try {
+      // se tiver featureFlags, usa; senão, mantém OFF
+      if (typeof loadFlags === "function") return !!loadFlags().paywallEnabled;
+      return false;
+    } catch { return false; }
+  })();
   // Aguardar carregamento
   if (authLoading || subLoading) {
     return (
@@ -36,11 +46,7 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
   // Rota requer premium mas usuário não tem
   // NO_PAYWALL_SIGNATURE_V3
   // assinatura desabilitada por enquanto: só bloqueia premium se paywallEnabled=true no device
-  const paywallEnabled = (() => {
-    try { return (localStorage.getItem("mindsetfit:paywallEnabled") || "").toLowerCase() === "true"; }
-    catch { return false; }
-  })();
-
+  
   // Rota requer premium mas usuário não tem (paywall OFF por padrão)
   if (requiresPremium && !isPremium && paywallEnabled) {
     return (
