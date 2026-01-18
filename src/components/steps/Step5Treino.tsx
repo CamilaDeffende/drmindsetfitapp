@@ -10,9 +10,6 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
-
-const HIDE_ADVANCED_MODALITY_UI = true;
-
 export function Step5Treino() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
   const [treinoGerado, setTreinoGerado] = useState<PlanejamentoTreino | null>(state.treino || null)
@@ -39,136 +36,9 @@ export function Step5Treino() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
 
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          
-          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">opcional</span>
-        </div>
+      
 
-        <select
-          className="w-full rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-white/10"
-          value={String(((state as any)?.workoutSecondaryModality ?? "none"))}
-          onChange={(e) => updateState({ workoutSecondaryModality: e.target.value } as any)}
-        >
-          <option value="none">Sem modalidade secundária</option>
-          {MODALITIES.map((m) => (
-            <option key={m.key} value={m.key}>{m.label}</option>
-          ))}
-        </select>
-
-        <p className="text-[11px] text-muted-foreground">
-          Isso cria um segundo protocolo completo de treino (semanal), respeitando seu nível e os dias escolhidos.
-        </p>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          {!HIDE_ADVANCED_MODALITY_UI && (
-<div>
-            <h3 className="text-base sm:text-lg font-semibold">Dias por modalidade</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Selecione em quais dias você quer executar cada modalidade. Se você não marcar nada, a distribuição automática continua valendo.
-            </p>
-          </div>
-)}
-          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">agenda</span>
-        </div>
-
-        {(() => {
-          const days = [
-            { key: "Seg", label: "Seg" },
-            { key: "Ter", label: "Ter" },
-            { key: "Qua", label: "Qua" },
-            { key: "Qui", label: "Qui" },
-            { key: "Sex", label: "Sex" },
-            { key: "Sab", label: "Sáb" },
-            { key: "Dom", label: "Dom" },
-          ];
-
-          const primarySelected = ((state as any)?.workoutModalities?.length
-            ? (state as any).workoutModalities
-            : ((state as any)?.workoutModality ? [(state as any).workoutModality] : [])) as string[];
-
-          const sec = String(((state as any)?.workoutSecondaryModality ?? "none"));
-          const selected = Array.from(new Set([...
-            (Array.isArray(primarySelected) ? primarySelected : []),
-            ...(sec && sec !== "none" ? [sec] : []),
-          ].filter(Boolean)));
-
-          const schedule = ((state as any)?.workoutScheduleByModality ?? {}) as Record<string, string[]>;
-
-          if (!selected.length) {
-            return (
-              <div className="text-sm text-muted-foreground">Selecione ao menos uma modalidade acima para configurar os dias.</div>
-            );
-          }
-
-          return (
-            <div className="space-y-4">
-              {selected.map((modKey) => {
-                const mod = MODALITIES.find((m) => m.key === modKey);
-                const label = mod?.label ?? modKey;
-                const cur = Array.isArray(schedule[modKey]) ? schedule[modKey] : [];
-
-                return (
-                  <div key={modKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold">{label}</div>
-                        <div className="text-[11px] text-muted-foreground">Escolha os dias desta modalidade</div>
-                      </div>
-                      <span className="text-[11px] text-muted-foreground">{cur.length ? cur.join(" • ") : "auto"}</span>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {days.map((d) => {
-                        const on = cur.includes(d.key);
-                        return (
-                          <button
-                            key={d.key}
-                            type="button"
-                            onClick={() => {
-                              const nextSet = new Set(cur);
-                              if (nextSet.has(d.key)) nextSet.delete(d.key);
-                              else nextSet.add(d.key);
-                              const nextDays = Array.from(nextSet);
-                              updateState({
-                                workoutScheduleByModality: {
-                                  ...(schedule || {}),
-                                  [modKey]: nextDays,
-                                },
-                              } as any);
-                            }}
-                            className={`rounded-full px-3 py-1 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
-                          >
-                            {d.label}
-                          </button>
-                        );
-                      })}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = { ...(schedule || {}) };
-                          delete next[modKey];
-                          updateState({ workoutScheduleByModality: next } as any);
-                        }}
-                        className="rounded-full px-3 py-1 text-xs border border-white/10 bg-transparent hover:bg-white/5 text-muted-foreground"
-                      >
-                        Limpar
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-
-              <p className="text-[11px] text-muted-foreground">
-                Se você deixar tudo em “auto”, o sistema distribui as modalidades ao longo da semana mantendo seu nível.
-              </p>
-            </div>
-          );
-        })()}
-      </div>
+      
 
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
