@@ -11,6 +11,40 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export function Step3Metabolismo() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
+
+  // Preview objetivo do treino (pós-metabolismo)
+  const __mfTreinoAtivo: any = (state as any)?.treinoAtivo;
+  const __mfSessions: any[] = Array.isArray(__mfTreinoAtivo?.sessions) ? __mfTreinoAtivo.sessions : [];
+  const __mfModalities: any[] = Array.isArray(__mfTreinoAtivo?.modalities) ? __mfTreinoAtivo.modalities : [];
+  const __mfTreinoPreview = __mfSessions.length ? (
+    <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base sm:text-lg font-semibold">Treino gerado para você</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Prévia objetiva da sua semana. O plano respeita seu nível e suas modalidades selecionadas.
+          </p>
+        </div>
+        <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">
+          {(__mfModalities.length || 1)} modalidade(s)
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-2">
+        {__mfSessions.slice(0, 7).map((x, i) => (
+          <div key={x?.day ?? i} className="rounded-xl border border-white/10 bg-black/10 px-3 py-2 flex items-center justify-between">
+            <div className="text-sm font-semibold">{String(x?.day ?? "Dia")}</div>
+            <div className="text-xs text-muted-foreground">{String(x?.title ?? x?.modalityKey ?? "")}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 text-[11px] text-muted-foreground">
+        Você pode ajustar detalhes do treino nas próximas etapas, se necessário.
+      </div>
+    </div>
+  ) : null;
+
   const [resultado, setResultado] = useState<ResultadoMetabolico | null>(null)
 
   useEffect(() => {
@@ -26,6 +60,8 @@ export function Step3Metabolismo() {
   if (!resultado) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
+      {__mfTreinoPreview}
+
         /* MF_STEP3_PREMIUM_COPY_V1 */
         {/* MF_STEP3_HEADER */}
         <div className="space-y-2">
