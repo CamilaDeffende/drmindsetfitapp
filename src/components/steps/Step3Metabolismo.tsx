@@ -26,6 +26,16 @@ export function Step3Metabolismo() {
   if (!resultado) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
+        /* MF_STEP3_PREMIUM_COPY_V1 */
+        {/* MF_STEP3_HEADER */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Metabolismo e gasto diário</h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Aqui estimamos seu gasto energético (TMB e gasto total diário) usando seus dados e rotina.
+            Isso define a base de calorias e macros do plano, tornando as próximas recomendações mais consistentes.
+          </p>
+        </div>
+
         <Card>
           <CardContent className="py-12 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E6BFF] mx-auto mb-4"></div>
