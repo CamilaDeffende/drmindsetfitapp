@@ -35,12 +35,12 @@ export function OnboardingFlow() {
       { key: "perfil", title: "Perfil", allowSkip: false, content: <Step1Perfil /> },
       { key: "avaliacao", title: "Avaliação", allowSkip: true, content: <Step2Avaliacao /> },
       { key: "metabolismo", title: "Metabolismo", allowSkip: true, content: <Step3Metabolismo /> },
-      { key: "nutricao", title: "Nutrição", allowSkip: true, content: <Step4Nutricao /> },
       { key: "treino", title: "Treino", allowSkip: true, content: <Step5Treino /> },
+      { key: "nutricao", title: "Nutrição", allowSkip: true, content: <Step4Nutricao /> },
       { key: "saude", title: "Saúde", allowSkip: true, content: <Step6Saude /> },
       { key: "acomp", title: "Acompanhamento", allowSkip: true, content: <Step7Acompanhamento /> },
-      { key: "revisao", title: "Revisão", allowSkip: false, content: <Step8Relatorio /> },
-    ]
+      { key: "revisao", title: "Revisão", allowSkip: false, content: <Step8Relatorio /> }
+]
   ), []);
 
   const currentIndex = Math.max(0, Math.min(steps.length - 1, (state.etapaAtual ?? 1) - 1));
