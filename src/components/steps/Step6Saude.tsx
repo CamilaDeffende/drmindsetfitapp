@@ -67,7 +67,8 @@ export function Step6Saude() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
-        <Card className="border-0 bg-transparent shadow-none p-0">
+        {/* MF_HIDE_DORES_ARTICULARES_V1 */}
+<Card className="border-0 bg-transparent shadow-none p-0 hidden">
           <CardHeader>
             <CardTitle>Dores Articulares</CardTitle>
             <CardDescription>Selecione as regiões com dor ou desconforto</CardDescription>
