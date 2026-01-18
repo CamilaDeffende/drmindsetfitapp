@@ -34,6 +34,16 @@ export function Step5Treino() {
   if (mostrandoSelector) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
+        /* MF_STEP5_PREMIUM_COPY_V1 */
+        {/* MF_STEP5_HEADER */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Treino e estratégia</h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Esses dados definem frequência, volume e nível de experiência para equilibrar estímulo e recuperação.
+            Assim, o treino fica coerente com seu objetivo, tempo disponível e rotina, com progressão mais segura.
+          </p>
+        </div>
+
         <div className="mb-8 text-center">
           <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
