@@ -8,6 +8,16 @@ export function Step7Acompanhamento() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+        /* MF_STEP7_PREMIUM_COPY_V1 */
+        {/* MF_STEP7_HEADER */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Acompanhamento e consistência</h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Nesta etapa alinhamos a frequência de ajustes e o ritmo de evolução. A consistência do acompanhamento influencia aderência,
+            tomada de decisão e expectativas realistas de resultado ao longo das semanas.
+          </p>
+        </div>
+
       <div className="mb-8 text-center">
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
