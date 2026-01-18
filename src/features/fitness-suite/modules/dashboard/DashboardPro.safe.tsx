@@ -1,3 +1,46 @@
+
+/* MF_REPORT_GUT_STRESS_SLEEP_EDU_V2 */
+const mfEduGutStressSleep = (v: any) => {
+  const intestinal = (v?.intestinalFrequencia ?? "").toString().trim();
+  const fezes = (v?.fezesConsistencia ?? "").toString().trim();
+  const sono = (v?.sonoQualidade ?? "").toString().trim();
+  const est = Number(v?.estresseNivel ?? 0);
+
+  const gutTip =
+    /diarre|mole/i.test(fezes) ? "Intestino: fezes muito moles podem indicar gatilhos alimentares. Ajuste gordura/ultraprocessados e hidrate-se. Persistindo, avalie com profissional."
+  : /resseca|duro|bolinha|pris/i.test(fezes + " " + intestinal) ? "Intestino: sinais de constipação pedem mais água, fibras graduais e rotina. Caminhada leve diária ajuda."
+  : "Intestino: mantenha hidratação, fibras e horários regulares para estabilidade.";
+
+  const stressTip =
+    est >= 8 ? "Estresse alto: inclua pausas curtas (2–5 min), respiração guiada e reduza telas/cafeína à noite. Persistindo, procure suporte profissional."
+  : est >= 5 ? "Estresse moderado: crie 1 hábito diário de descarga (caminhada, alongamento, 10 min sem tela) e mantenha sono consistente."
+  : "Estresse baixo: mantenha consistência e um hábito leve de relaxamento para prevenção.";
+
+  const sleepTip =
+    /ruim|pessim|péssim/i.test(sono) ? "Sono ruim: horário fixo, reduzir telas 60 min antes, luz baixa à noite e sol pela manhã."
+  : /regular/i.test(sono) ? "Sono regular: ajuste consistência, evite refeições pesadas tarde e faça rotina de desaceleração."
+  : sono ? "Sono bom: mantenha ambiente escuro/fresco e cafeína até no máximo 8h antes de dormir."
+  : "Sono: informe como ruim/regular/bom/ótimo para orientar ajustes.";
+
+  return `
+    <section style="margin-top:16px;padding:14px;border:1px solid rgba(255,255,255,0.10);border-radius:12px;">
+      <h3 style="margin:0 0 8px 0;font-size:16px;">Equilíbrio: intestino, estresse e sono</h3>
+      <p style="margin:0 0 8px 0;opacity:0.9;font-size:13px;line-height:1.45;">
+        <strong>Intestino:</strong> ${intestinal || "não informado"} • <strong>Consistência:</strong> ${fezes || "não informado"}<br/>
+        <strong>Estresse:</strong> ${Number.isFinite(est) ? est : 0}/10 • <strong>Sono:</strong> ${sono || "não informado"}
+      </p>
+      <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.45;opacity:0.92;">
+        <li>${gutTip}</li>
+        <li>${stressTip}</li>
+        <li>${sleepTip}</li>
+      </ul>
+      <p style="margin:10px 0 0 0;font-size:12px;opacity:0.85;line-height:1.45;">
+        Observação: orientações educativas. Se houver sintomas persistentes, dor, sangue nas fezes, insônia severa ou sofrimento emocional, busque avaliação profissional.
+      </p>
+    </section>
+  `;
+};
+
 export default function DashboardProSafe() {
   const exportReportPdf = () => {
     try {
@@ -22,7 +65,8 @@ export default function DashboardProSafe() {
         <p><a href="/assinatura">Assinatura</a></p>
       </div>
       <p style="opacity:.8">${new Date().toLocaleString("pt-BR")}</p>
-      </body></html>`;
+      ${mfEduGutStressSleep({})}
+</body></html>`;
       w.document.open();
       w.document.write(html);
       w.document.close();
