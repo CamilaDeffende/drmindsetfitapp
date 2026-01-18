@@ -9,6 +9,7 @@ import { TreinoAtivoView } from '@/components/planos/TreinoAtivoView'
 import { useEffect } from 'react'
 import type { DietaAtiva, TreinoAtivo } from '@/types'
 
+import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
 export function PlanosAtivos() {
   const { state, updateState } = useDrMindSetfit()
   const navigate = useNavigate()
@@ -62,8 +63,65 @@ export function PlanosAtivos() {
   }, [state.nutricao, state.treino, state.dietaAtiva, state.treinoAtivo, updateState])
 
   if (!state.concluido) {
-    return (
+    
+  // MF_WEEKLY_PLAN_STATE_V1 (safe)
+  const __mfWeeklyPlan = (typeof mfBuildWeeklyPlanFromState === "function")
+    ? mfBuildWeeklyPlanFromState(state as any)
+    : null;
+  const __mfHasMulti = Array.isArray((state as any)?.workoutModalities) && ((state as any).workoutModalities.length > 0);
+return (
       <div className="min-h-screen flex items-center justify-center bg-black">
+      {/* MF_RENDER_WEEKLY_PLAN_V1 */}
+      {__mfHasMulti && __mfWeeklyPlan?.sessions?.length ? (
+        <div className="mt-6 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold">Treinos da semana</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Distribuição automática por dia, alternando as modalidades selecionadas.
+              </p>
+            </div>
+            <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">
+              {(__mfWeeklyPlan.modalities || []).length} modalidades
+            </span>
+          </div>
+
+          <div className="grid gap-3">
+            {__mfWeeklyPlan.sessions.map((sesh: any) => (
+              <div key={sesh.day} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold">{sesh.day}</div>
+                  <div className="text-[11px] text-muted-foreground">{__mfWeeklyPlan.level}</div>
+                </div>
+
+                <div className="mt-3 space-y-3">
+                  {(sesh.blocks || []).map((b: any, bi: number) => (
+                    <div key={bi} className="rounded-xl border border-white/10 bg-black/10 p-3">
+                      <div className="text-sm font-medium">{b.title}</div>
+                      <div className="text-xs text-muted-foreground">{b.goal}</div>
+
+                      <div className="mt-3 space-y-2">
+                        {(b.main || []).slice(0, 8).map((it: any, ii: number) => (
+                          <div key={ii} className="flex items-start justify-between gap-3 text-xs">
+                            <div className="text-foreground/90">{it.name}</div>
+                            <div className="text-muted-foreground whitespace-nowrap">
+                              {it.time ? it.time : String((it.sets ?? "")) + "x " + String((it.reps ?? ""))} {it.rest ? "• " + it.rest : ""}
+                            </div>
+                          </div>
+                        ))}
+                        {Array.isArray(b.main) && b.main.length > 8 ? (
+                          <div className="text-[11px] text-muted-foreground">+ {b.main.length - 8} exercícios (variações no plano)</div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
         <Card className="w-full max-w-md mx-4 glass-effect neon-border">
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
@@ -181,4 +239,15 @@ export function PlanosAtivos() {
       </main>
     </div>
   )
+}
+
+
+/* MF_WEEKLY_PLAN_V1
+ * Integração segura: usa state como any. Não altera estruturas existentes.
+ */
+export function mfBuildWeeklyPlanFromState(state: any) {
+  const modalities = (state?.workoutModalities?.length ? state.workoutModalities : (state?.workoutModality ? [state.workoutModality] : ["musculacao"])) as any[];
+  const level = (state?.workoutLevel ?? state?.nivelTreino ?? "intermediario") as any;
+  const days = (state?.workoutDays ?? state?.diasTreino ?? ["Seg", "Qua", "Sex"]) as any[];
+  return buildWeeklyPlan({ modalities, level, days });
 }
