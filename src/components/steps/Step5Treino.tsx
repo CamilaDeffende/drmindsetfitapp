@@ -9,6 +9,7 @@ import { gerarTreinoPersonalizado } from '@/utils/geradorTreino'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 
+import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 export function Step5Treino() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
   const [treinoGerado, setTreinoGerado] = useState<PlanejamentoTreino | null>(state.treino || null)
@@ -34,6 +35,192 @@ export function Step5Treino() {
   if (mostrandoSelector) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* MF_MULTI_MODALIDADES_V1 */}
+
+      {/* MF_SECONDARY_MODALITY_V1 */}
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold">Modalidade secundária</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Opcional. Use para combinar dois focos na semana (ex.: musculação + crossfit). Se não quiser, marque “Sem modalidade secundária”.
+            </p>
+          </div>
+          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">opcional</span>
+        </div>
+
+        <select
+          className="w-full rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-white/10"
+          value={String(((state as any)?.workoutSecondaryModality ?? "none"))}
+          onChange={(e) => updateState({ workoutSecondaryModality: e.target.value } as any)}
+        >
+          <option value="none">Sem modalidade secundária</option>
+          {MODALITIES.map((m) => (
+            <option key={m.key} value={m.key}>{m.label}</option>
+          ))}
+        </select>
+
+        <p className="text-[11px] text-muted-foreground">
+          Observação: a modalidade secundária entra como um segundo protocolo completo, respeitando seu nível.
+        </p>
+      </div>
+
+      {/* MF_SCHEDULE_BY_MODALITY_V1 */}
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold">Dias por modalidade</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Selecione em quais dias você quer executar cada modalidade. Se você não marcar nada, a distribuição automática continua valendo.
+            </p>
+          </div>
+          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">agenda</span>
+        </div>
+
+        {(() => {
+          const days = [
+            { key: "Seg", label: "Seg" },
+            { key: "Ter", label: "Ter" },
+            { key: "Qua", label: "Qua" },
+            { key: "Qui", label: "Qui" },
+            { key: "Sex", label: "Sex" },
+            { key: "Sab", label: "Sáb" },
+            { key: "Dom", label: "Dom" },
+          ];
+
+          const primarySelected = ((state as any)?.workoutModalities?.length
+            ? (state as any).workoutModalities
+            : ((state as any)?.workoutModality ? [(state as any).workoutModality] : [])) as string[];
+
+          const sec = String(((state as any)?.workoutSecondaryModality ?? "none"));
+          const selected = Array.from(new Set([...
+            (Array.isArray(primarySelected) ? primarySelected : []),
+            ...(sec && sec !== "none" ? [sec] : []),
+          ].filter(Boolean)));
+
+          const schedule = ((state as any)?.workoutScheduleByModality ?? {}) as Record<string, string[]>;
+
+          if (!selected.length) {
+            return (
+              <div className="text-sm text-muted-foreground">Selecione ao menos uma modalidade acima para configurar os dias.</div>
+            );
+          }
+
+          return (
+            <div className="space-y-4">
+              {selected.map((modKey) => {
+                const mod = MODALITIES.find((m) => m.key === modKey);
+                const label = mod?.label ?? modKey;
+                const cur = Array.isArray(schedule[modKey]) ? schedule[modKey] : [];
+
+                return (
+                  <div key={modKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold">{label}</div>
+                        <div className="text-[11px] text-muted-foreground">Escolha os dias desta modalidade</div>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground">{cur.length ? cur.join(" • ") : "auto"}</span>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {days.map((d) => {
+                        const on = cur.includes(d.key);
+                        return (
+                          <button
+                            key={d.key}
+                            type="button"
+                            onClick={() => {
+                              const nextSet = new Set(cur);
+                              if (nextSet.has(d.key)) nextSet.delete(d.key);
+                              else nextSet.add(d.key);
+                              const nextDays = Array.from(nextSet);
+                              updateState({
+                                workoutScheduleByModality: {
+                                  ...(schedule || {}),
+                                  [modKey]: nextDays,
+                                },
+                              } as any);
+                            }}
+                            className={`rounded-full px-3 py-1 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
+                          >
+                            {d.label}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = { ...(schedule || {}) };
+                          delete next[modKey];
+                          updateState({ workoutScheduleByModality: next } as any);
+                        }}
+                        className="rounded-full px-3 py-1 text-xs border border-white/10 bg-transparent hover:bg-white/5 text-muted-foreground"
+                      >
+                        Limpar
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <p className="text-[11px] text-muted-foreground">
+                Se você deixar tudo em “auto”, o sistema distribui as modalidades ao longo da semana mantendo seu nível.
+              </p>
+            </div>
+          );
+        })()}
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold">Modalidades da semana</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Você pode combinar mais de uma modalidade. O sistema alterna as modalidades pelos dias escolhidos, mantendo seu nível.
+            </p>
+          </div>
+          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">multi</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {MODALITIES.map((m) => {
+            const selected: string[] =
+              ((state as any)?.workoutModalities?.length
+                ? (state as any).workoutModalities
+                : ((state as any)?.workoutModality ? [(state as any).workoutModality] : [])) as any;
+
+            const isOn = selected.includes(m.key);
+
+            return (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => {
+                  const cur = new Set(selected);
+                  if (cur.has(m.key)) cur.delete(m.key);
+                  else cur.add(m.key);
+                  const next = Array.from(cur);
+                  updateState({
+                    workoutModalities: next,
+                    workoutModality: next[0] ?? (state as any)?.workoutModality,
+                  } as any);
+                }}
+                className={`w-full text-left rounded-xl border px-3 py-3 transition ${isOn ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
+              >
+                <div className="text-sm font-medium">{m.label}</div>
+                <div className="text-xs text-muted-foreground">{m.desc}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="text-[11px] text-muted-foreground">
+          Dica: selecione 2–3 modalidades para uma semana equilibrada (ex.: musculação + cardio + mobilidade).
+        </p>
+      </div>
+
         /* MF_STEP5_PREMIUM_COPY_V1 */
         {/* MF_STEP5_HEADER */}
         <div className="space-y-2">
