@@ -15,6 +15,16 @@ export function Step8Relatorio() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+        /* MF_STEP8_PREMIUM_COPY_V1 */
+        {/* MF_STEP8_HEADER */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Revisão e geração do relatório</h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Agora consolidamos seus dados para gerar um resumo executivo do plano: treino, dieta e recomendações com base no seu perfil,
+            avaliação corporal, metabolismo e rotina.
+          </p>
+        </div>
+
       <div className="mb-8 text-center">
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
