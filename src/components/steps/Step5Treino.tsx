@@ -10,6 +10,9 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
+
+const MF_HIDE_ADVANCED_MODALITY_UI = true;
+
 export function Step5Treino() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
   const [treinoGerado, setTreinoGerado] = useState<PlanejamentoTreino | null>(state.treino || null)
@@ -43,12 +46,14 @@ export function Step5Treino() {
       {/* MF_SECONDARY_MODALITY_V1 */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          {!MF_HIDE_ADVANCED_MODALITY_UI && (
+<div>
             <h3 className="text-base sm:text-lg font-semibold">Modalidade secundária</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
               Opcional. Combine dois focos na semana (ex.: musculação + crossfit). Se não quiser, selecione “Sem modalidade secundária”.
             </p>
           </div>
+)}
           <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">opcional</span>
         </div>
 
@@ -71,12 +76,14 @@ export function Step5Treino() {
 {/* MF_SCHEDULE_BY_MODALITY_V1 */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          {!MF_HIDE_ADVANCED_MODALITY_UI && (
+<div>
             <h3 className="text-base sm:text-lg font-semibold">Dias por modalidade</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
               Selecione em quais dias você quer executar cada modalidade. Se você não marcar nada, a distribuição automática continua valendo.
             </p>
           </div>
+)}
           <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">agenda</span>
         </div>
 
