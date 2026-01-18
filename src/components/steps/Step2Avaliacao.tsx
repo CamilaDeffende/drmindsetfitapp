@@ -160,6 +160,16 @@ export function Step2Avaliacao() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+        /* MF_STEP2_PREMIUM_COPY_V1 */
+        {/* MF_STEP2_HEADER */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Avaliação corporal</h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Essas medidas ajudam a estimar composição corporal e padrões de distribuição de gordura.
+            Com isso, os cálculos das próximas etapas ficam mais precisos e o acompanhamento consegue evoluir com segurança.
+          </p>
+        </div>
+
       <div className="mb-8 text-center">
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
@@ -169,7 +179,7 @@ export function Step2Avaliacao() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
 
           {/* Antropometria Básica */}
           <Card>
