@@ -246,6 +246,18 @@ return (
  * Integração segura: usa state como any. Não altera estruturas existentes.
  */
 export function mfBuildWeeklyPlanFromState(state: any) {
+  // MF_PICK_MODALITY_BY_SCHEDULE_V1
+  const __mfPickModalityForDay = (day: string, idx: number, modalities: string[], rawState: any): string | null => {
+    const sch = (rawState && rawState.workoutScheduleByModality) ? rawState.workoutScheduleByModality : null;
+    if (sch && typeof sch === "object") {
+      for (const mk of (modalities || [])) {
+        const arr = sch[mk];
+        if (Array.isArray(arr) && arr.includes(day)) return mk;
+      }
+    }
+    return (modalities && modalities.length) ? __mfPickModalityForDay(day, idx, modalities, state as any) : null;
+  };
+
   const modalities = (state?.workoutModalities?.length ? state.workoutModalities : (state?.workoutModality ? [state.workoutModality] : ["musculacao"])) as any[];
   const level = (state?.workoutLevel ?? state?.nivelTreino ?? "intermediario") as any;
   const days = (state?.workoutDays ?? state?.diasTreino ?? ["Seg", "Qua", "Sex"]) as any[];
