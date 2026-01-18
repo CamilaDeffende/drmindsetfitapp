@@ -52,6 +52,16 @@ export function Step1Perfil() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+        /* MF_STEP1_PREMIUM_COPY_V1 */
+        {/* MF_STEP1_HEADER */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Seu perfil</h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Esses dados calibram as estimativas iniciais (metabolismo, necessidades energéticas e distribuição de macros).
+            Quanto mais preciso aqui, mais assertivo fica o plano nas próximas etapas.
+          </p>
+        </div>
+
       <div className="mb-8 text-center">
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
@@ -67,7 +77,7 @@ export function Step1Perfil() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
               {/* Dados Pessoais Essenciais */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Dados Essenciais</h3>
