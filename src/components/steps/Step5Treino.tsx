@@ -11,7 +11,7 @@ import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 
-const MF_HIDE_ADVANCED_MODALITY_UI = true;
+const HIDE_ADVANCED_MODALITY_UI = true;
 
 export function Step5Treino() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
@@ -38,22 +38,10 @@ export function Step5Treino() {
   if (mostrandoSelector) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
-      {/* MF_MULTI_MODALIDADES_V1 */}
 
-      
-
-      
-      {/* MF_SECONDARY_MODALITY_V1 */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
-          {!MF_HIDE_ADVANCED_MODALITY_UI && (
-<div>
-            <h3 className="text-base sm:text-lg font-semibold">Modalidade secundária</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Opcional. Combine dois focos na semana (ex.: musculação + crossfit). Se não quiser, selecione “Sem modalidade secundária”.
-            </p>
-          </div>
-)}
+          
           <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">opcional</span>
         </div>
 
@@ -73,10 +61,9 @@ export function Step5Treino() {
         </p>
       </div>
 
-{/* MF_SCHEDULE_BY_MODALITY_V1 */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
-          {!MF_HIDE_ADVANCED_MODALITY_UI && (
+          {!HIDE_ADVANCED_MODALITY_UI && (
 <div>
             <h3 className="text-base sm:text-lg font-semibold">Dias por modalidade</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
@@ -231,8 +218,6 @@ export function Step5Treino() {
         </p>
       </div>
 
-        /* MF_STEP5_PREMIUM_COPY_V1 */
-        {/* MF_STEP5_HEADER */}
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Treino e estratégia</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
