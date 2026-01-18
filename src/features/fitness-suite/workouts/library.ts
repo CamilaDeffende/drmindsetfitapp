@@ -7,6 +7,10 @@
 export type WorkoutLevel = "iniciante" | "intermediario" | "avancado" | "atleta";
 export type WorkoutModality =
   | "musculacao"
+  | "spinning"
+
+  | "crossfit"
+
   | "hiit"
   | "cardio"
   | "funcional"
@@ -52,10 +56,23 @@ export const MODALITIES: Array<{ key: WorkoutModality; label: string; desc: stri
   { key: "funcional", label: "Funcional", desc: "Movimentos, estabilidade, capacidade atlética." },
   { key: "mobilidade", label: "Mobilidade", desc: "Amplitude, controle, prevenção e recuperação." },
   { key: "corrida", label: "Corrida", desc: "Base aeróbia, técnica e progressão semanal." },
+
+  {
+    key: "crossfit",
+    label: "CrossFit",
+    desc: "Força, condicionamento metabólico e alta intensidade.",
+  },
+  {
+    key: "spinning",
+    label: "Spinning / Bike Indoor",
+    desc: "Cardiorrespiratório, resistência e gasto energético.",
+  },
 ];
 
 // >= 30 exercícios/variações por modalidade (por simplicidade: base + variações por nível)
-export const EXERCISES: Record<WorkoutModality, Exercise[]> = {
+type WorkoutModalityBase = Exclude<WorkoutModality, "crossfit" | "spinning">;
+
+const EXERCISES_BASE: Record<WorkoutModalityBase, Exercise[]> = {
   musculacao: [
     { id: "sq-1", name: "Agachamento (livre)", pattern: "squat", equipment: "barra", variants: ["goblet squat", "front squat", "box squat"] },
     { id: "hi-1", name: "Levantamento terra (hinge)", pattern: "hinge", equipment: "barra", variants: ["romeno", "sumô", "trap bar (se houver)"] },
@@ -152,7 +169,16 @@ export const EXERCISES: Record<WorkoutModality, Exercise[]> = {
       variants: ["progressivo", "subida", "intervalado"],
     } as const)),
   ],
+}
+
+export const EXERCISES: Record<WorkoutModality, Exercise[]> = {
+  ...EXERCISES_BASE,
+  crossfit: EXERCISES_BASE.funcional,
+  spinning: EXERCISES_BASE.corrida,
 };
+
+
+;
 
 const levelPreset: Record<WorkoutLevel, { volume: number; intensity: string; rest: string }> = {
   iniciante: { volume: 3, intensity: "técnica + controle", rest: "60–90s" },
