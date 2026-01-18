@@ -32,3 +32,4 @@ test-results/
 playwright-report/
 .playwright/
 
+.backups/
