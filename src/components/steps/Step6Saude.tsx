@@ -48,6 +48,16 @@ export function Step6Saude() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+        /* MF_STEP6_PREMIUM_COPY_V1 */
+        {/* MF_STEP6_HEADER */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Saúde e sinais do corpo</h1>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Essas informações ajudam a ajustar o plano com segurança: sono, estresse, histórico e sinais do corpo influenciam recuperação e aderência.
+            Quanto mais fiel à sua rotina real, mais consistente fica a estratégia.
+          </p>
+        </div>
+
       <div className="mb-8 text-center">
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
@@ -56,7 +66,7 @@ export function Step6Saude() {
         <p className="text-muted-foreground">Informações importantes para sua segurança</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
         <Card>
           <CardHeader>
             <CardTitle>Dores Articulares</CardTitle>
