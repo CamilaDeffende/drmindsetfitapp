@@ -10,6 +10,7 @@ import { useEffect } from 'react'
 import type { DietaAtiva, TreinoAtivo } from '@/types'
 
 import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
+import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 export function PlanosAtivos() {
   const { state, updateState } = useDrMindSetfit()
   const navigate = useNavigate()
@@ -71,6 +72,134 @@ export function PlanosAtivos() {
   const __mfHasMulti = Array.isArray((state as any)?.workoutModalities) && ((state as any).workoutModalities.length > 0);
 return (
       <div className="min-h-screen flex items-center justify-center bg-black">
+      {/* MF_SECONDARY_MODALITY_V1 */}
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold">Modalidade secundária</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Opcional. Combine dois focos na semana (ex.: musculação + crossfit). Se não quiser, selecione “Sem modalidade secundária”.
+            </p>
+          </div>
+          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">opcional</span>
+        </div>
+
+        <select
+          className="w-full rounded-xl border border-white/10 bg-black/10 px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-white/10"
+          value={String(((state as any)?.workoutSecondaryModality ?? "none"))}
+          onChange={(e) => updateState({ workoutSecondaryModality: e.target.value } as any)}
+        >
+          <option value="none">Sem modalidade secundária</option>
+          {MODALITIES.map((m) => (
+            <option key={m.key} value={m.key}>{m.label}</option>
+          ))}
+        </select>
+
+        <p className="text-[11px] text-muted-foreground">
+          Isso cria um segundo protocolo completo de treino (semanal), respeitando seu nível e os dias escolhidos.
+        </p>
+      </div>
+
+      {/* MF_SCHEDULE_BY_MODALITY_V1 */}
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold">Dias por modalidade</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Selecione em quais dias você quer executar cada modalidade. Se você não marcar nada, a distribuição automática continua valendo.
+            </p>
+          </div>
+          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">agenda</span>
+        </div>
+
+        {(() => {
+          const days = [
+            { key: "Seg", label: "Seg" },
+            { key: "Ter", label: "Ter" },
+            { key: "Qua", label: "Qua" },
+            { key: "Qui", label: "Qui" },
+            { key: "Sex", label: "Sex" },
+            { key: "Sab", label: "Sáb" },
+            { key: "Dom", label: "Dom" },
+          ];
+
+          const primarySelected = ((state as any)?.workoutModalities?.length
+            ? (state as any).workoutModalities
+            : ((state as any)?.workoutModality ? [(state as any).workoutModality] : [])) as string[];
+
+          const sec = String(((state as any)?.workoutSecondaryModality ?? "none"));
+          const selected = Array.from(new Set([
+            ...(Array.isArray(primarySelected) ? primarySelected : []),
+            ...(sec && sec !== "none" ? [sec] : []),
+          ].filter(Boolean)));
+
+          const schedule = ((state as any)?.workoutScheduleByModality ?? {}) as Record<string, string[]>;
+
+          if (!selected.length) {
+            return (
+              <div className="text-sm text-muted-foreground">Selecione ao menos uma modalidade para configurar os dias.</div>
+            );
+          }
+
+          const toggle = (modKey: string, dayKey: string) => {
+            const cur = Array.isArray(schedule[modKey]) ? schedule[modKey] : [];
+            const next = cur.includes(dayKey) ? cur.filter((d) => d !== dayKey) : [...cur, dayKey];
+            updateState({ workoutScheduleByModality: { ...schedule, [modKey]: next } } as any);
+          };
+
+          const clear = (modKey: string) => {
+            const next = { ...schedule };
+            delete next[modKey];
+            updateState({ workoutScheduleByModality: next } as any);
+          };
+
+          return (
+            <div className="space-y-4">
+              {selected.map((modKey) => {
+                const mod = MODALITIES.find((m) => m.key === modKey);
+                const label = mod?.label ?? modKey;
+                const cur = Array.isArray(schedule[modKey]) ? schedule[modKey] : [];
+
+                return (
+                  <div key={modKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold">{label}</div>
+                      <button
+                        type="button"
+                        className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground hover:text-white"
+                        onClick={() => clear(modKey)}
+                      >
+                        Limpar
+                      </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {days.map((d) => {
+                        const active = cur.includes(d.key);
+                        return (
+                          <button
+                            key={d.key}
+                            type="button"
+                            onClick={() => toggle(modKey, d.key)}
+                            className={
+                              "px-3 py-2 rounded-xl text-xs border transition " +
+                              (active
+                                ? "border-white/20 bg-white/10 text-white"
+                                : "border-white/10 bg-black/10 text-muted-foreground hover:text-white")
+                            }
+                          >
+                            {d.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
+
       {/* MF_RENDER_WEEKLY_PLAN_V1 */}
       {__mfHasMulti && __mfWeeklyPlan?.sessions?.length ? (
         <div className="mt-6 space-y-4">
