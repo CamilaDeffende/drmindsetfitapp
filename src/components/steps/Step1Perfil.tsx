@@ -232,6 +232,30 @@ export function Step1Perfil() {
                           <SelectItem value="spinning">Spinning/Bike Indoor</SelectItem>
                         </SelectContent>
                       </Select>
+
+                      {/* MF_SECONDARY_MODALITY_PROFILE_V1 */}
+                      <div className="mt-4">
+                        <div className="text-sm font-medium">Modalidade secundária (opcional)</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Se não quiser combinar duas modalidades na semana, selecione “Sem modalidade secundária”.
+                        </div>
+                        <Select
+                          value={String(((state as any)?.workoutSecondaryModality ?? "none"))}
+                          onValueChange={(v: string) => updateState({ workoutSecondaryModality: v } as any)}
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sem modalidade secundária</SelectItem>
+                            <SelectItem value="corrida">Corrida</SelectItem>
+                            <SelectItem value="funcional">Funcional</SelectItem>
+                            <SelectItem value="crossfit">Crossfit</SelectItem>
+                            <SelectItem value="spinning">Bike indoor/spinning</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <FormMessage />
                     </FormItem>
                   )}
