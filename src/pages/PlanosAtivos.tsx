@@ -12,7 +12,7 @@ import type { DietaAtiva, TreinoAtivo } from '@/types'
 import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 
-const MF_HIDE_ADVANCED_MODALITY_UI = true;
+const HIDE_ADVANCED_MODALITY_UI = true;
 
 export function PlanosAtivos() {
   const { state, updateState } = useDrMindSetfit()
@@ -68,17 +68,16 @@ export function PlanosAtivos() {
 
   if (!state.concluido) {
     
-  // MF_WEEKLY_PLAN_STATE_V1 (safe)
   const __mfWeeklyPlan = (typeof mfBuildWeeklyPlanFromState === "function")
     ? mfBuildWeeklyPlanFromState(state as any)
     : null;
   const __mfHasMulti = Array.isArray((state as any)?.workoutModalities) && ((state as any).workoutModalities.length > 0);
 return (
       <div className="min-h-screen flex items-center justify-center bg-black">
-      {/* MF_SECONDARY_MODALITY_V1 */}
+      {}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
-          {!MF_HIDE_ADVANCED_MODALITY_UI && (
+          {!HIDE_ADVANCED_MODALITY_UI && (
 <div>
             <h3 className="text-base sm:text-lg font-semibold">Modalidade secundária</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
@@ -105,10 +104,10 @@ return (
         </p>
       </div>
 
-      {/* MF_SCHEDULE_BY_MODALITY_V1 */}
+      {}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
-          {!MF_HIDE_ADVANCED_MODALITY_UI && (
+          {!HIDE_ADVANCED_MODALITY_UI && (
 <div>
             <h3 className="text-base sm:text-lg font-semibold">Dias por modalidade</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
@@ -207,7 +206,7 @@ return (
         })()}
       </div>
 
-      {/* MF_RENDER_WEEKLY_PLAN_V1 */}
+      {}
       {__mfHasMulti && __mfWeeklyPlan?.sessions?.length ? (
         <div className="mt-6 space-y-4">
           <div className="flex items-start justify-between gap-3">
@@ -377,12 +376,7 @@ return (
   )
 }
 
-
-/* MF_WEEKLY_PLAN_V1
- * Integração segura: usa state como any. Não altera estruturas existentes.
- */
 export function mfBuildWeeklyPlanFromState(state: any) {
-  // MF_PICK_MODALITY_BY_SCHEDULE_V1
   const __mfPickModalityForDay = (day: string, idx: number, modalities: string[], rawState: any): string | null => {
     const sch = (rawState && rawState.workoutScheduleByModality) ? rawState.workoutScheduleByModality : null;
     if (sch && typeof sch === "object") {
