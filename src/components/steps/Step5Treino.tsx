@@ -37,13 +37,16 @@ export function Step5Treino() {
       <div className="max-w-5xl mx-auto px-4 py-8">
       {/* MF_MULTI_MODALIDADES_V1 */}
 
+      
+
+      
       {/* MF_SECONDARY_MODALITY_V1 */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-base sm:text-lg font-semibold">Modalidade secundária</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Opcional. Use para combinar dois focos na semana (ex.: musculação + crossfit). Se não quiser, marque “Sem modalidade secundária”.
+              Opcional. Combine dois focos na semana (ex.: musculação + crossfit). Se não quiser, selecione “Sem modalidade secundária”.
             </p>
           </div>
           <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">opcional</span>
@@ -61,11 +64,11 @@ export function Step5Treino() {
         </select>
 
         <p className="text-[11px] text-muted-foreground">
-          Observação: a modalidade secundária entra como um segundo protocolo completo, respeitando seu nível.
+          Isso cria um segundo protocolo completo de treino (semanal), respeitando seu nível e os dias escolhidos.
         </p>
       </div>
 
-      {/* MF_SCHEDULE_BY_MODALITY_V1 */}
+{/* MF_SCHEDULE_BY_MODALITY_V1 */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
