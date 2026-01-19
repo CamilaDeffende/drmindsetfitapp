@@ -235,7 +235,8 @@ export function Step1Perfil() {
 
                       {/* MF_SECONDARY_MODALITY_PROFILE_V1 */}
                       <div className="mt-4">
-                        <div className="text-sm font-medium">Modalidade secundária (opcional)</div>
+                        
+
                         <div className="text-xs text-muted-foreground mt-1">
                           Se não quiser combinar duas modalidades na semana, selecione “Sem modalidade secundária”.
                         </div>
