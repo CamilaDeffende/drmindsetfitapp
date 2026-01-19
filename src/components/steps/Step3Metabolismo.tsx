@@ -60,10 +60,30 @@ export function Step3Metabolismo() {
   if (!resultado) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
+{/* PREMIUM_TREINO_PREVIEW_V1 */}
+<Card className="mt-4 border-white/10 bg-white/5">
+  <CardHeader className="pb-3">
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <CardTitle className="text-base sm:text-lg">Prévia do seu treino</CardTitle>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Um resumo objetivo do protocolo semanal, baseado no seu metabolismo e perfil.
+        </p>
+      </div>
+      <Badge variant="secondary" className="border-white/10 bg-black/20">inteligente</Badge>
+    </div>
+  </CardHeader>
+  <CardContent className="pt-0">
+    <div className="text-sm text-muted-foreground">
+      Conclua as próximas etapas para gerar o protocolo completo com dias, modalidades e progressão.
+    </div>
+  </CardContent>
+</Card>
+
       {__mfTreinoPreview}
 
-        /* MF_STEP3_PREMIUM_COPY_V1 */
-        {/* MF_STEP3_HEADER */}
+        
+        
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Metabolismo e gasto diário</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">

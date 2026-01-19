@@ -382,7 +382,10 @@ export function mfBuildWeeklyPlanFromState(state: any) {
     
     const mfLevelByModality = ((rawState && rawState.workoutLevelByModality) ? rawState.workoutLevelByModality : null) as any;
 
+    
     void mfLevelByModality;
+    // PREMIUM_LEVEL_BY_MODALITY_EXPORT_V1
+void mfLevelByModality;
 if (sch && typeof sch === "object") {
       for (const mk of (modalities || [])) {
         const arr = sch[mk];

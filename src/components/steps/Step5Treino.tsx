@@ -12,6 +12,26 @@ import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 export function Step5Treino() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
+
+  const __mfLevels = ["iniciante","intermediario","avancado","atleta"] as const;
+  type __MfLevel = typeof __mfLevels[number];
+
+  const __mfGetSelectedModalities = (): string[] => {
+    const primary = (state as any)?.workoutModalities?.length
+      ? (state as any).workoutModalities
+      : ((state as any)?.workoutModality ? [(state as any).workoutModality] : []);
+    const sec = String(((state as any)?.workoutSecondaryModality ?? "none"));
+    const all = [
+      ...(Array.isArray(primary) ? primary : []),
+      ...(sec && sec !== "none" ? [sec] : []),
+    ].filter(Boolean);
+    return Array.from(new Set(all));
+  };
+
+  const __mfLevelByModality = (((state as any)?.workoutLevelByModality ?? {}) as Record<string, __MfLevel>);
+  const __mfSetLevel = (modKey: string, lvl: __MfLevel) => {
+    updateState({ workoutLevelByModality: { ...__mfLevelByModality, [modKey]: lvl } } as any);
+  };
   const [treinoGerado, setTreinoGerado] = useState<PlanejamentoTreino | null>(state.treino || null)
   const [mostrandoSelector, setMostrandoSelector] = useState(!state.treino)
 
@@ -35,6 +55,61 @@ export function Step5Treino() {
   if (mostrandoSelector) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
+
+      
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold">Nível por modalidade</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Defina seu nível em cada modalidade escolhida. Ex.: atleta na musculação e iniciante no crossfit.
+            </p>
+          </div>
+          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">perfil</span>
+        </div>
+
+        {(() => {
+          const selected = __mfGetSelectedModalities();
+          if (!selected.length) {
+            return <div className="text-sm text-muted-foreground">Selecione ao menos uma modalidade para ajustar o nível.</div>;
+          }
+          return (
+            <div className="space-y-3">
+              {selected.map((modKey) => {
+                const current = (__mfLevelByModality[modKey] ?? (state as any)?.perfil?.nivelAtividade ?? "iniciante") as any;
+                const mod = MODALITIES.find((m) => m.key === modKey);
+                const label = mod?.label ?? modKey;
+
+                return (
+                  <div key={modKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold">{label}</div>
+                      <div className="text-[11px] text-muted-foreground">{String(current)}</div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(__mfLevels as any).map((lvl: any) => {
+                        const on = String(current) === String(lvl);
+                        return (
+                          <button
+                            key={lvl}
+                            type="button"
+                            onClick={() => __mfSetLevel(modKey, lvl)}
+                            className={`rounded-full px-3 py-1 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
+                          >
+                            {lvl}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
+
 
       
 
@@ -77,6 +152,85 @@ export function Step5Treino() {
                 className={`w-full text-left rounded-xl border px-3 py-3 transition ${isOn ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
               >
                 <div className="text-sm font-medium">{m.label}</div>
+{/* PREMIUM_LEVEL_BY_MODALITY_V1 */}
+<div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
+  <div className="flex items-start justify-between gap-3">
+    <div>
+      <h3 className="text-base sm:text-lg font-semibold">Nível por modalidade</h3>
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+        Ajuste o nível por modalidade (ex.: atleta em musculação, iniciante em crossfit). Se não escolher, usamos seu nível geral como padrão.
+      </p>
+    </div>
+    <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">personalização</span>
+  </div>
+
+  {(() => {
+    const selected = (((state as any)?.workoutModalities?.length ? (state as any).workoutModalities : ((state as any)?.workoutModality ? [(state as any).workoutModality] : [])) || []) as string[];
+    const sec = String(((state as any)?.workoutSecondaryModality ?? "none"));
+    const all = Array.from(new Set([...(Array.isArray(selected) ? selected : []), ...(sec && sec !== "none" ? [sec] : [])].filter(Boolean)));
+    const levels = (((state as any)?.workoutLevelByModality ?? {}) as Record<string, string>);
+    const fallback = String(((state as any)?.perfil?.nivelAtividade ?? (state as any)?.perfil?.nivel ?? "intermediario"));
+
+    if (!all.length) return <div className="text-sm text-muted-foreground">Selecione ao menos uma modalidade para definir níveis.</div>;
+
+    const opts = [
+      { v: "iniciante", l: "Iniciante" },
+      { v: "intermediario", l: "Intermediário" },
+      { v: "avancado", l: "Avançado" },
+      { v: "atleta", l: "Atleta" },
+    ];
+
+    return (
+      <div className="grid gap-3">
+        {all.map((modKey) => {
+          const mod = MODALITIES.find((m) => m.key === modKey);
+          const label = mod?.label ?? modKey;
+          const cur = levels[modKey] || fallback;
+
+          return (
+            <div key={modKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-medium">{label}</div>
+                <div className="text-[11px] text-muted-foreground">padrão: {fallback}</div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {opts.map((o) => {
+                  const on = cur === o.v;
+                  return (
+                    <button
+                      key={o.v}
+                      type="button"
+                      onClick={() => {
+                        const next = { ...(levels || {}), [modKey]: o.v };
+                        updateState({ workoutLevelByModality: next } as any);
+                      }}
+                      className={`rounded-full px-3 py-1 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
+                    >
+                      {o.l}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = { ...(levels || {}) };
+                    delete next[modKey];
+                    updateState({ workoutLevelByModality: next } as any);
+                  }}
+                  className="rounded-full px-3 py-1 text-xs border border-white/10 bg-transparent hover:bg-white/5 text-muted-foreground"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  })()}
+</div>
+
                 <div className="text-xs text-muted-foreground">{m.desc}</div>
               </button>
             );
