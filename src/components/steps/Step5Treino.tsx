@@ -10,7 +10,6 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 
 import { buildWeeklyProtocol } from '@/features/fitness-suite/engine/weeklyProtocol';
-import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 
 // MF_STEP5_CLEAN_V2
 const __mfAllowedModalities = ["musculacao","funcional","corrida","spinning","crossfit"] as const;
@@ -271,120 +270,9 @@ const handleContinuar = () => {
 
       
 
-      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
-        
-{/* MF_PURGE_LEGACY_TREINO_UI */}
+      
+{/* MF_PURGE_MODALITY_LEGACY */}
 
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {MODALITIES.map((m) => {
-            const selected: string[] =
-              ((state as any)?.workoutModalities?.length
-                ? (state as any).workoutModalities
-                : ((state as any)?.workoutModality ? [(state as any).workoutModality] : [])) as any;
-
-            const isOn = selected.includes(m.key);
-
-            return (
-              <button
-                key={m.key}
-                type="button"
-                onClick={() => {
-                  const cur = new Set(selected);
-                  if (cur.has(m.key)) cur.delete(m.key);
-                  else cur.add(m.key);
-                  const next = Array.from(cur);
-                  updateState({
-                    workoutModalities: next,
-                    workoutModality: next[0] ?? (state as any)?.workoutModality,
-                  } as any);
-                }}
-                className={`w-full text-left rounded-xl border px-3 py-3 transition ${isOn ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
-              >
-                <div className="text-sm font-medium">{m.label}</div>
-
-<div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
-  
-{/* MF_PURGE_LEGACY_TREINO_UI */}
-
-
-  {(() => {
-    const selected = (((state as any)?.workoutModalities?.length ? (state as any).workoutModalities : ((state as any)?.workoutModality ? [(state as any).workoutModality] : [])) || []) as string[];
-    const sec = String(((state as any)?.workoutSecondaryModality ?? "none"));
-    const all = Array.from(new Set([...(Array.isArray(selected) ? selected : []), ...(sec && sec !== "none" ? [sec] : [])].filter(Boolean)));
-    const levels = (((state as any)?.workoutLevelByModality ?? {}) as Record<string, string>);
-    const fallback = String(((state as any)?.perfil?.nivelAtividade ?? (state as any)?.perfil?.nivel ?? "intermediario"));
-
-    if (!all.length) return <div className="text-sm text-muted-foreground">Selecione ao menos uma modalidade para definir níveis.</div>;
-
-    const opts = [
-      { v: "iniciante", l: "Iniciante" },
-      { v: "intermediario", l: "Intermediário" },
-      { v: "avancado", l: "Avançado" },
-      { v: "atleta", l: "Atleta" },
-    ];
-
-    return (
-      <div className="grid gap-3">
-        {all.map((modKey) => {
-          const mod = MODALITIES.find((m) => m.key === modKey);
-          const label = mod?.label ?? modKey;
-          const cur = levels[modKey] || fallback;
-
-          return (
-            <div key={modKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-medium">{label}</div>
-                <div className="text-[11px] text-muted-foreground">padrão: {fallback}</div>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {opts.map((o) => {
-                  const on = cur === o.v;
-                  return (
-                    <button
-                      key={o.v}
-                      type="button"
-                      onClick={() => {
-                        const next = { ...(levels || {}), [modKey]: o.v };
-                        updateState({ workoutLevelByModality: next } as any);
-                      }}
-                      className={`rounded-full px-3 py-1 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
-                    >
-                      {o.l}
-                    </button>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = { ...(levels || {}) };
-                    delete next[modKey];
-                    updateState({ workoutLevelByModality: next } as any);
-                  }}
-                  className="rounded-full px-3 py-1 text-xs border border-white/10 bg-transparent hover:bg-white/5 text-muted-foreground"
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  })()}
-</div>
-
-                <div className="text-xs text-muted-foreground">{m.desc}</div>
-              </button>
-            );
-          })}
-        </div>
-
-        <p className="text-[11px] text-muted-foreground">
-          Dica: selecione 2–3 modalidades para uma semana equilibrada (ex.: musculação + cardio + mobilidade).
-        </p>
-      </div>
 
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Treino e estratégia</h1>
