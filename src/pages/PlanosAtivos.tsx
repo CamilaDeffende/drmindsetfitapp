@@ -74,6 +74,18 @@ export function PlanosAtivos() {
   const __mfHasMulti = Array.isArray((state as any)?.workoutModalities) && ((state as any).workoutModalities.length > 0);
 
   const __mfLevelByModality = ((state as any)?.workoutLevelByModality ?? null) as any;
+
+  /* PREMIUM_MODALITY_LEVEL_HELPER */
+  const getModalityLevelLabel = (key: string | null) => {
+    if (!key) return null;
+    const label =
+      (typeof MODALITIES !== "undefined"
+        ? MODALITIES.find((m) => m.key === key)?.label
+        : null) || key;
+    const level = __mfLevelByModality ? __mfLevelByModality[key] : null;
+    return level ? `${label} • ${level}` : label;
+  };
+
 return (
       <div className="min-h-screen flex items-center justify-center bg-black">
       {}
@@ -227,7 +239,14 @@ return (
             {__mfWeeklyPlan.sessions.map((sesh: any) => (
               <div key={sesh.day} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">{sesh.day}</div>
+                  <div className="text-sm font-semibold">{sesh.day}
+        {/* PREMIUM_DAY_HEADER */}
+        {(sesh as any)?.modality && (
+          <span className="ml-2 text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">
+            {getModalityLevelLabel((sesh as any).modality)}
+          </span>
+        )}
+      </div>
                   <div className="text-[11px] text-muted-foreground flex items-center gap-2">
                     <span>{__mfWeeklyPlan.level}</span>
                     {/* PREMIUM_LEVEL_RENDER_V1 */}
@@ -256,6 +275,12 @@ const __lvl = (__k && __mfLevelByModality) ? __mfLevelByModality[__k] : null;
                 </div>
 
                 <div className="mt-3 space-y-3">
+    {(sesh as any)?.modality && (
+      <div className="text-xs text-muted-foreground">
+        {getModalityLevelLabel((sesh as any).modality)}
+      </div>
+    )}
+  
                   {(sesh.blocks || []).map((b: any, bi: number) => (
                     <div key={bi} className="rounded-xl border border-white/10 bg-black/10 p-3">
                       <div className="text-sm font-medium">{b.title}</div>
