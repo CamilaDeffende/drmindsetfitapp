@@ -16,6 +16,9 @@ export type WorkoutStructure = {
   duracaoEstimada: string;
 };
 
+import { buildSessionPlan } from "./sessionPlanner";
+import type { SessionWorkoutPlan } from "./sessionPlanner";
+
 export type WeeklyWorkoutProtocol = {
   generatedAt: string;
   modalities: WorkoutModality[];
@@ -26,6 +29,7 @@ export type WeeklyWorkoutProtocol = {
     modalityLevel: ActivityLevel;
     goal: string;
     structure: WorkoutStructure;
+    plan?: SessionWorkoutPlan;
   }[];
 };
 
@@ -131,6 +135,7 @@ export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocol => {
         modalityLevel: level,
         goal: goalByModality[modality],
         structure: structureForSession(modality, level, idx),
+        plan: buildSessionPlan({ modality, modalityLevel: level, structure: structureForSession(modality, level, idx) }),
       };
     }),
   };
