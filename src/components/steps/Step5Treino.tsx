@@ -101,7 +101,9 @@ export function Step5Treino() {
     <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4">
       {/* Modalidades */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
-        <div className="text-sm font-semibold">Modalidades da semana</div>
+        
+{/* MF_PURGE_LEGACY_TREINO_UI */}
+
         <div className="mt-1 text-xs text-muted-foreground">Selecione apenas as modalidades que você vai realizar ao longo da semana.</div>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -259,15 +261,9 @@ const handleContinuar = () => {
 
       
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-base sm:text-lg font-semibold">Nível por modalidade</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Defina seu nível em cada modalidade escolhida. Ex.: atleta na musculação e iniciante no crossfit.
-            </p>
-          </div>
-          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">perfil</span>
-        </div>
+        
+{/* MF_PURGE_LEGACY_TREINO_UI */}
+
 
         </div>
 
@@ -276,15 +272,9 @@ const handleContinuar = () => {
       
 
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-base sm:text-lg font-semibold">Modalidades da semana</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Você pode combinar mais de uma modalidade. O sistema alterna as modalidades pelos dias escolhidos, mantendo seu nível.
-            </p>
-          </div>
-          <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">multi</span>
-        </div>
+        
+{/* MF_PURGE_LEGACY_TREINO_UI */}
+
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {MODALITIES.map((m) => {
@@ -314,15 +304,9 @@ const handleContinuar = () => {
                 <div className="text-sm font-medium">{m.label}</div>
 
 <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
-  <div className="flex items-start justify-between gap-3">
-    <div>
-      <h3 className="text-base sm:text-lg font-semibold">Nível por modalidade</h3>
-      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-        Ajuste o nível por modalidade (ex.: atleta em musculação, iniciante em crossfit). Se não escolher, usamos seu nível geral como padrão.
-      </p>
-    </div>
-    <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">personalização</span>
-  </div>
+  
+{/* MF_PURGE_LEGACY_TREINO_UI */}
+
 
   {(() => {
     const selected = (((state as any)?.workoutModalities?.length ? (state as any).workoutModalities : ((state as any)?.workoutModality ? [(state as any).workoutModality] : [])) || []) as string[];
