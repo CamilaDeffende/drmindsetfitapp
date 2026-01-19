@@ -379,7 +379,11 @@ return (
 export function mfBuildWeeklyPlanFromState(state: any) {
   const __mfPickModalityForDay = (day: string, idx: number, modalities: string[], rawState: any): string | null => {
     const sch = (rawState && rawState.workoutScheduleByModality) ? rawState.workoutScheduleByModality : null;
-    if (sch && typeof sch === "object") {
+    
+    const mfLevelByModality = ((rawState && rawState.workoutLevelByModality) ? rawState.workoutLevelByModality : null) as any;
+
+    void mfLevelByModality;
+if (sch && typeof sch === "object") {
       for (const mk of (modalities || [])) {
         const arr = sch[mk];
         if (Array.isArray(arr) && arr.includes(day)) return mk;
