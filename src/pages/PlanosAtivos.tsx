@@ -68,9 +68,13 @@ export function PlanosAtivos() {
 
   if (!state.concluido) {
     
-  const __mfWeeklyPlan = (typeof mfBuildWeeklyPlanFromState === "function")
-    ? mfBuildWeeklyPlanFromState(state as any)
-    : null;
+  const __mfWeeklyPlan = (typeof buildDeterministicWeeklyPlan === "function")
+    ? buildDeterministicWeeklyPlan(state as any)
+    : ((typeof mfBuildWeeklyPlanFromState === "function") ? mfBuildWeeklyPlanFromState(state as any) : null);
+  const __mfSessions = Array.isArray((__mfWeeklyPlan as any)?.sessions) ? (__mfWeeklyPlan as any).sessions : [];
+  const __mfModalities = Array.from(new Set(__mfSessions.map((x: any) => String(x?.modality ?? ""))).values()).filter(Boolean);
+  const __mfPlanLevel = (__mfModalities.length <= 1) ? "foco" : "misto";
+
   const __mfHasMulti = Array.isArray((state as any)?.workoutModalities) && ((state as any).workoutModalities.length > 0);
 
   const __mfLevelByModality = ((state as any)?.workoutLevelByModality ?? null) as any;
@@ -231,7 +235,7 @@ return (
               </p>
             </div>
             <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">
-              {(__mfWeeklyPlan.modalities || []).length} modalidades
+              {__mfModalities.length} modalidades
             </span>
           </div>
 
@@ -248,7 +252,7 @@ return (
         )}
       </div>
                   <div className="text-[11px] text-muted-foreground flex items-center gap-2">
-                    <span>{__mfWeeklyPlan.level}</span>
+                    <span>{__mfPlanLevel}</span>
                     
                     {(() => {
                       try {
@@ -450,4 +454,34 @@ if (sch && typeof sch === "object") {
   const level = (state?.workoutLevel ?? state?.nivelTreino ?? "intermediario") as any;
   const days = (state?.workoutDays ?? state?.diasTreino ?? ["Seg", "Qua", "Sex"]) as any[];
   return buildWeeklyPlan({ modalities, level, days });
+}
+
+
+function buildDeterministicWeeklyPlan(state: any) {
+  const raw = (state || {}) as any;
+
+  const modalities: string[] = Array.isArray(raw.workoutModalities) && raw.workoutModalities.length
+    ? raw.workoutModalities
+    : (raw.workoutModality ? [raw.workoutModality] : []);
+
+  const levels = (raw.workoutLevelByModality || {}) as Record<string, string>;
+  const sched = (raw.workoutScheduleByModality || {}) as Record<string, string[]>;
+  const days = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+  const picked = modalities.filter(Boolean);
+  if (!picked.length) return { sessions: [], levelByModality: levels };
+
+  // agenda determinística por dia
+  const byDay: Record<string, string[]> = {};
+  for (const d of days) {
+    const dayPicked = picked.filter((m) => Array.isArray(sched[m]) ? sched[m].includes(d) : false);
+    byDay[d] = dayPicked.length ? dayPicked : [picked[days.indexOf(d) % picked.length]];
+  }
+
+  const sessions = days.map((d) => {
+    const m = byDay[d][0];
+    return { day: d, modality: m, modalityLevel: (levels && m) ? (levels[m] || null) : null };
+  });
+
+  return { sessions, levelByModality: levels };
 }
