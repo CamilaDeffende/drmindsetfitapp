@@ -72,6 +72,8 @@ export function PlanosAtivos() {
     ? mfBuildWeeklyPlanFromState(state as any)
     : null;
   const __mfHasMulti = Array.isArray((state as any)?.workoutModalities) && ((state as any).workoutModalities.length > 0);
+
+  const __mfLevelByModality = ((state as any)?.workoutLevelByModality ?? null) as any;
 return (
       <div className="min-h-screen flex items-center justify-center bg-black">
       {}
@@ -226,7 +228,27 @@ return (
               <div key={sesh.day} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold">{sesh.day}</div>
-                  <div className="text-[11px] text-muted-foreground">{__mfWeeklyPlan.level}</div>
+                  <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                    <span>{__mfWeeklyPlan.level}</span>
+                    {/* PREMIUM_LEVEL_RENDER_V1 */}
+                    {(() => {
+                      try {
+                        const __k =
+                          (sesh as any)?.modality ||
+                          (sesh as any)?.modalityKey ||
+                          (sesh as any)?.modKey ||
+                          null;
+                        const __lvl = (__k && __mfLevelByModality) ? __mfLevelByModality[__k] : null;
+                        return __lvl ? (
+                          <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">
+                            {String(__lvl)}
+                          </span>
+                        ) : null;
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  </div>
                 </div>
 
                 <div className="mt-3 space-y-3">
