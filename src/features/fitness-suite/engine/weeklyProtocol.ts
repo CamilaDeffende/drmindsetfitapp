@@ -118,8 +118,19 @@ const structureForSession = (
 };
 
 export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocol => {
-  const days: string[] = rawState?.diasTreino ?? WEEK_DAYS.slice(0, 5);
-  const modalities: WorkoutModality[] = rawState?.workoutModalities ?? ["musculacao"];
+  // MF_ENGINE_DAY_MAP_V1
+  const __dayKeys: string[] = Array.isArray(rawState?.workoutDaysSelected) ? rawState.workoutDaysSelected : [];
+  const days: string[] = __dayKeys.length
+    ? __dayKeys.map((k: string) => {
+        const map: any = { seg: "Segunda", ter: "Terça", qua: "Quarta", qui: "Quinta", sex: "Sexta", sab: "Sábado", dom: "Domingo" };
+        return map[String(k)] || String(k);
+      })
+    : (rawState?.diasTreino ?? WEEK_DAYS.slice(0, 5));
+  const __allowed: WorkoutModality[] = ["musculacao","funcional","corrida","spinning","crossfit"];
+// MF_ENGINE_ALLOWED_MODALITIES_V2
+  const modalities: WorkoutModality[] = Array.isArray(rawState?.workoutModalities) && rawState.workoutModalities.length
+    ? rawState.workoutModalities.map(String).filter((k: string) => (__allowed as any).includes(k))
+    : ["musculacao"];
   const levelByModality = rawState?.workoutLevelByModality ?? {};
 
   return {
@@ -127,13 +138,17 @@ export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocol => {
     modalities,
     levelByModality,
     sessions: days.map((day, idx) => {
-      const modality = modalities[idx % modalities.length];
+      const __plan = (rawState?.workoutPlanByDay && typeof rawState.workoutPlanByDay === "object") ? rawState.workoutPlanByDay : {};
+      const __dayKey = Array.isArray(rawState?.workoutDaysSelected) ? String(rawState.workoutDaysSelected[idx] ?? "") : "";
+      const __mapped = __dayKey && __plan ? String(__plan[__dayKey] ?? "") : "";
+      const __mod = ((__mapped && (modalities as any).includes(__mapped)) ? (__mapped as any) : modalities[idx % modalities.length]) as any;
+      const modality: WorkoutModality = (__allowed as any).includes(__mod) ? (__mod as WorkoutModality) : (__allowed[0] as WorkoutModality);
       const level = levelByModality[modality] ?? "iniciante";
       return {
         day,
         modality,
         modalityLevel: level,
-        goal: goalByModality[modality],
+        goal: goalByModality[modality as WorkoutModality],
         structure: structureForSession(modality, level, idx),
         plan: buildSessionPlan({ modality, modalityLevel: level, structure: structureForSession(modality, level, idx) }),
       };

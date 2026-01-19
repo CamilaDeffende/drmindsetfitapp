@@ -11,27 +11,63 @@ import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 
 import { buildWeeklyProtocol } from '@/features/fitness-suite/engine/weeklyProtocol';
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
+
+// MF_STEP5_CLEAN_V2
+const __mfAllowedModalities = ["musculacao","funcional","corrida","spinning","crossfit"] as const;
+const __mfLabelByKey: Record<string, string> = {
+  musculacao: "Musculação",
+  funcional: "Funcional",
+  corrida: "Corrida",
+  spinning: "Bike Indoor",
+  crossfit: "CrossFit",
+};
+const __mfWeekDays = [
+  { key: "seg", label: "Segunda" },
+  { key: "ter", label: "Terça" },
+  { key: "qua", label: "Quarta" },
+  { key: "qui", label: "Quinta" },
+  { key: "sex", label: "Sexta" },
+  { key: "sab", label: "Sábado" },
+  { key: "dom", label: "Domingo" },
+] as const;
+type __MfDayKey = typeof __mfWeekDays[number]["key"];
 export function Step5Treino() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
     
-const __mfLevels = ["iniciante","intermediario","avancado","atleta"] as const;
-  type __MfLevel = typeof __mfLevels[number];
 
-  const __mfGetSelectedModalities = (): string[] => {
-    const primary = (state as any)?.workoutModalities?.length
-      ? (state as any).workoutModalities
-      : ((state as any)?.workoutModality ? [(state as any).workoutModality] : []);
-    const sec = String(((state as any)?.workoutSecondaryModality ?? "none"));
-    const all = [
-      ...(Array.isArray(primary) ? primary : []),
-      ...(sec && sec !== "none" ? [sec] : []),
-    ].filter(Boolean);
-    return Array.from(new Set(all));
+  const __mfSelectedModalities = (Array.isArray((state as any)?.workoutModalities) ? (state as any).workoutModalities : []).map(String).filter((k: string) => (__mfAllowedModalities as any).includes(k));
+
+  // MF_STEP5_V2_STATE_BLOCK
+  const __mfLevelByModality = (((state as any)?.workoutLevelByModality ?? {}) as Record<string, any>);
+  const __mfDaysSelected = (Array.isArray((state as any)?.workoutDaysSelected) ? (state as any).workoutDaysSelected : []) as __MfDayKey[];
+  const __mfPlanByDay = (((state as any)?.workoutPlanByDay ?? {}) as Record<string, string>);
+
+  const __mfSetModalities = (next: string[]) => {
+    const clean = next.map(String).filter((k) => (__mfAllowedModalities as any).includes(k));
+    const uniq = Array.from(new Set(clean));
+    const nextLevels = { ...__mfLevelByModality };
+    for (const k of Object.keys(nextLevels)) if (!uniq.includes(k)) delete nextLevels[k];
+    const nextPlan = { ...__mfPlanByDay };
+    for (const dk of Object.keys(nextPlan)) if (!uniq.includes(String(nextPlan[dk]))) delete nextPlan[dk];
+    updateState({ workoutModalities: uniq, workoutLevelByModality: nextLevels, workoutPlanByDay: nextPlan } as any);
   };
 
-  const __mfLevelByModality = (((state as any)?.workoutLevelByModality ?? {}) as Record<string, __MfLevel>);
-  const __mfSetLevel = (modKey: string, lvl: __MfLevel) => {
+  const __mfSetLevel = (modKey: string, lvl: any) => {
+    if (!__mfSelectedModalities.includes(modKey)) return;
     updateState({ workoutLevelByModality: { ...__mfLevelByModality, [modKey]: lvl } } as any);
+  };
+
+  const __mfToggleDay = (dayKey: __MfDayKey) => {
+    const on = __mfDaysSelected.includes(dayKey);
+    const next = on ? __mfDaysSelected.filter((d) => d !== dayKey) : [...__mfDaysSelected, dayKey];
+    const nextPlan = { ...__mfPlanByDay };
+    if (on) delete nextPlan[dayKey];
+    updateState({ workoutDaysSelected: next, workoutPlanByDay: nextPlan } as any);
+  };
+
+  const __mfSetDayModality = (dayKey: __MfDayKey, modalityKey: string) => {
+    if (!__mfSelectedModalities.includes(modalityKey)) return;
+    updateState({ workoutPlanByDay: { ...__mfPlanByDay, [dayKey]: modalityKey } } as any);
   };
   const [treinoGerado, setTreinoGerado] = useState<PlanejamentoTreino | null>(state.treino || null)
   const [mostrandoSelector, setMostrandoSelector] = useState(!state.treino)
@@ -42,8 +78,159 @@ const __mfLevels = ["iniciante","intermediario","avancado","atleta"] as const;
     setMostrandoSelector(false)
   }
 
-  const handleContinuar = () => {
+  function Step5WorkoutSetupPanel({
+  selectedModalities,
+  setSelectedModalities,
+  levelByModality,
+  setLevelByModality,
+  daysSelected,
+  toggleDay,
+  planByDay,
+  setDayModality,
+}: {
+  selectedModalities: string[];
+  setSelectedModalities: (next: string[]) => void;
+  levelByModality: Record<string, any>;
+  setLevelByModality: (mod: string, lvl: any) => void;
+  daysSelected: __MfDayKey[];
+  toggleDay: (d: __MfDayKey) => void;
+  planByDay: Record<string, string>;
+  setDayModality: (d: __MfDayKey, mod: string) => void;
+}) {
+  return (
+    <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-4">
+      {/* Modalidades */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+        <div className="text-sm font-semibold">Modalidades da semana</div>
+        <div className="mt-1 text-xs text-muted-foreground">Selecione apenas as modalidades que você vai realizar ao longo da semana.</div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(__mfAllowedModalities as any).map((k: string) => {
+            const on = selectedModalities.includes(k);
+            return (
+              <button
+                key={k}
+                type="button"
+                onClick={() => {
+                  const next = on ? selectedModalities.filter((x) => x !== k) : [...selectedModalities, k];
+                  const nextLevels = { ...levelByModality };
+                  if (on) delete nextLevels[k];
+                  const nextPlan = { ...planByDay };
+                  if (on) for (const dk of Object.keys(nextPlan)) if (String(nextPlan[dk]) === k) delete nextPlan[dk];
+                  setSelectedModalities(next);}}
+                className={`rounded-full px-3 py-1.5 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
+              >
+                {__mfLabelByKey[k] ?? k}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Nível por modalidade */}
+      {selectedModalities.length ? (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+          <div className="text-sm font-semibold">Nível por modalidade</div>
+          <div className="mt-1 text-xs text-muted-foreground">Escolha livremente seu nível em cada modalidade (auto-declarado).</div>
+
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {selectedModalities.map((modKey: string) => {
+              const current = levelByModality?.[modKey] ?? "iniciante";
+              const label = __mfLabelByKey[modKey] ?? modKey;
+
+              return (
+                <div key={modKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold">{label}</div>
+                    <div className="text-[11px] text-muted-foreground capitalize">{String(current)}</div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {["iniciante","intermediario","avancado"].map((lvl: any) => {
+                      const on = String(current) === String(lvl);
+                      return (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => setLevelByModality(modKey, lvl)}
+                          className={`rounded-full px-3 py-1 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
+                        >
+                          {lvl}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Dias + modalidade por dia */}
+      {selectedModalities.length ? (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+          <div className="text-sm font-semibold">Dias da semana</div>
+          <div className="mt-1 text-xs text-muted-foreground">Selecione os dias e defina qual modalidade será feita em cada dia (somente entre as selecionadas).</div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(__mfWeekDays as any).map((d: any) => {
+              const on = daysSelected.includes(d.key);
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  onClick={() => toggleDay(d.key)}
+                  className={`rounded-full px-3 py-1.5 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
+                >
+                  {d.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {daysSelected.length ? (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {daysSelected.map((dayKey: any) => {
+                const dayLabel = (__mfWeekDays as any).find((x: any) => x.key === dayKey)?.label ?? dayKey;
+                const current = String(planByDay?.[dayKey] ?? "");
+                return (
+                  <div key={dayKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
+                    <div className="text-sm font-semibold">{dayLabel}</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedModalities.map((mk: string) => {
+                        const on = current === mk;
+                        return (
+                          <button
+                            key={mk}
+                            type="button"
+                            onClick={() => setDayModality(dayKey, mk)}
+                            className={`rounded-full px-3 py-1 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
+                          >
+                            {__mfLabelByKey[mk] ?? mk}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {!current ? <div className="mt-2 text-[11px] text-muted-foreground">Escolha uma modalidade para este dia.</div> : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const handleContinuar = () => {
     if (treinoGerado) {
+      // MF_STEP5_GUARD_DAY_MAP_V2
+      if (__mfDaysSelected.length) {
+        const missing = __mfDaysSelected.filter((d: __MfDayKey) => !__mfPlanByDay?.[d]);
+        if (missing.length) return;
+      }
       const __protocol = buildWeeklyProtocol(state as any);
       // PREMIUM_WEEKLY_PROTOCOL_SAVE_V1
       updateState({ treino: treinoGerado, workoutProtocolWeekly: __protocol } as any);
@@ -58,6 +245,17 @@ const __mfLevels = ["iniciante","intermediario","avancado","atleta"] as const;
   if (mostrandoSelector) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <Step5WorkoutSetupPanel
+          selectedModalities={__mfSelectedModalities}
+          setSelectedModalities={__mfSetModalities}
+          levelByModality={__mfLevelByModality}
+          setLevelByModality={__mfSetLevel}
+          daysSelected={__mfDaysSelected}
+          toggleDay={__mfToggleDay}
+          planByDay={__mfPlanByDay}
+          setDayModality={__mfSetDayModality}
+        />
+
 
       
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
@@ -71,47 +269,7 @@ const __mfLevels = ["iniciante","intermediario","avancado","atleta"] as const;
           <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">perfil</span>
         </div>
 
-        {(() => {
-          const selected = __mfGetSelectedModalities();
-          if (!selected.length) {
-            return <div className="text-sm text-muted-foreground">Selecione ao menos uma modalidade para ajustar o nível.</div>;
-          }
-          return (
-            <div className="space-y-3">
-              {selected.map((modKey) => {
-                const current = (__mfLevelByModality[modKey] ?? (state as any)?.perfil?.nivelAtividade ?? "iniciante") as any;
-                const mod = MODALITIES.find((m) => m.key === modKey);
-                const label = mod?.label ?? modKey;
-
-                return (
-                  <div key={modKey} className="rounded-xl border border-white/10 bg-black/10 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-semibold">{label}</div>
-                      <div className="text-[11px] text-muted-foreground">{String(current)}</div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(__mfLevels as any).map((lvl: any) => {
-                        const on = String(current) === String(lvl);
-                        return (
-                          <button
-                            key={lvl}
-                            type="button"
-                            onClick={() => __mfSetLevel(modKey, lvl)}
-                            className={`rounded-full px-3 py-1 text-xs border transition ${on ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
-                          >
-                            {lvl}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })()}
-      </div>
+        </div>
 
       
 
