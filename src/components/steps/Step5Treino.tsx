@@ -9,61 +9,11 @@ import { gerarTreinoPersonalizado } from '@/utils/geradorTreino'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { DivisaoTreinoConfig, PlanejamentoTreino } from '@/types'
 
+import { buildWeeklyProtocol } from '@/features/fitness-suite/engine/weeklyProtocol';
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 export function Step5Treino() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
-
-  
-  // PREMIUM_WEEKLY_PROTOCOL_BUILDER_V1
-  const buildWeeklyProtocol = (rawState: any) => {
-    try {
-      const days = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
-      const modalities = Array.isArray(rawState?.workoutModalities) && rawState.workoutModalities.length
-        ? rawState.workoutModalities.map(String)
-        : (typeof rawState?.workoutSecondaryModality === "string" && rawState.workoutSecondaryModality && rawState.workoutSecondaryModality !== "none")
-          ? [String(rawState.workoutSecondaryModality)]
-          : [];
-
-      const levelByModality = (rawState?.workoutLevelByModality && typeof rawState.workoutLevelByModality === "object")
-        ? rawState.workoutLevelByModality
-        : {};
-
-      const schedule = (rawState?.workoutScheduleByModality && typeof rawState.workoutScheduleByModality === "object")
-        ? rawState.workoutScheduleByModality
-        : null;
-
-      const sessions = [];
-      let rot = 0;
-      for (const day of days) {
-        let chosen = null;
-        if (schedule && modalities.length) {
-          // prioriza modalidade que explicitamente inclui o dia (por chave curta pt-BR, ex: seg/ter/qua/qui/sex/sab/dom)
-          const key = day.toLowerCase().slice(0,3);
-          const hit = modalities.find((m: any) => Array.isArray(schedule[m]) && schedule[m].some((d) => String(d).toLowerCase().startsWith(key)));
-          chosen = hit || null;
-        }
-        if (!chosen && modalities.length) {
-          chosen = modalities[rot % modalities.length];
-          rot++;
-        }
-        if (!chosen) continue;
-        sessions.push({
-          day,
-          modality: chosen,
-          modalityLevel: (chosen && levelByModality) ? (levelByModality[chosen] ?? null) : null,
-        });
-      }
-
-      return {
-        generatedAt: new Date().toISOString(),
-        modalities,
-        levelByModality,
-        sessions,
-      };
-    } catch {
-      return null;
-    }
-  };
+    
 const __mfLevels = ["iniciante","intermediario","avancado","atleta"] as const;
   type __MfLevel = typeof __mfLevels[number];
 
