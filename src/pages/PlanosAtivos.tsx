@@ -238,7 +238,11 @@ return (
                           (sesh as any)?.modalityKey ||
                           (sesh as any)?.modKey ||
                           null;
-                        const __lvl = (__k && __mfLevelByModality) ? __mfLevelByModality[__k] : null;
+                        
+                        const __label = (__k && typeof MODALITIES !== "undefined") ? (MODALITIES.find((m) => m.key === __k)?.label ?? __k) : __k;
+
+                        void __label; // TS6133 guard (fallback seguro)
+const __lvl = (__k && __mfLevelByModality) ? __mfLevelByModality[__k] : null;
                         return __lvl ? (
                           <span className="px-2 py-0.5 rounded-full border border-white/10 bg-white/5">
                             {String(__lvl)}
