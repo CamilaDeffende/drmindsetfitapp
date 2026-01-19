@@ -22,7 +22,6 @@ export default function Assinatura() {
     navigate("/login", { replace: true });
   };
 
-
   // TS: garante uso (sem alterar UI)
   void activateAndGoLogin;
 const plans: Plan[] = useMemo(

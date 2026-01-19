@@ -1,5 +1,5 @@
 
-/* MF_REPORT_GUT_STRESS_SLEEP_EDU_V2 */
+
 const mfEduGutStressSleep = (v: any) => {
   const intestinal = (v?.intestinalFrequencia ?? "").toString().trim();
   const fezes = (v?.fezesConsistencia ?? "").toString().trim();

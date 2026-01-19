@@ -12,7 +12,6 @@ type ReportHistoryItem = {
   label?: string;
 };
 
-
 function safeParse(raw: string | null): any[] {
   if (!raw) return [];
   try {
@@ -145,8 +144,6 @@ const timeline_9c1 = useMemo(() => {
     .filter((it) => it && within((it as any).createdAtISO))
     .slice(0, 120);
 
-
-
   // Sprint 9C.2 | Métricas (SAFE) a partir do histórico
   const toTime = (iso: unknown): number => {
     try {
@@ -220,7 +217,6 @@ const timeline_9c1 = useMemo(() => {
   return { rows, total, daysActive, rate, badge, last, prev, lastLabel, prevLabel, deltaLP, qualityHint, s7, s14, s28, trend };
 }, [reportKey, rangeDays]);
 
-
 const writePatients = (list: Patient[]) => {
   const next = (Array.isArray(list) ? list : []).slice(0, 50);
   setPatients(next);
@@ -256,7 +252,6 @@ const selectPatient = (id: string) => {
   try { localStorage.setItem(CURRENT_PATIENT_KEY, pid); } catch {}
   _setPatientId(pid);
 };
-
 
 useEffect(() => {
   try { localStorage.setItem(CURRENT_PATIENT_KEY, patientId || "default"); } catch {}
@@ -570,7 +565,6 @@ const [items, setItems] = useState<ReportHistoryItem[]>([]);
         </div>
       ) : null}
     </div>
-
 
     <div className="mt-4 grid gap-3">
       {(timeline_9c1.rows?.length ? timeline_9c1.rows : []).slice(0, 10).map((g: any) => (

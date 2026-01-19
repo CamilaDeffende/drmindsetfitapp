@@ -110,7 +110,6 @@ export function Step5Treino() {
         })()}
       </div>
 
-
       
 
       
@@ -152,7 +151,7 @@ export function Step5Treino() {
                 className={`w-full text-left rounded-xl border px-3 py-3 transition ${isOn ? "border-white/20 bg-white/10" : "border-white/10 bg-transparent hover:bg-white/5"}`}
               >
                 <div className="text-sm font-medium">{m.label}</div>
-{/* PREMIUM_LEVEL_BY_MODALITY_V1 */}
+
 <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
   <div className="flex items-start justify-between gap-3">
     <div>

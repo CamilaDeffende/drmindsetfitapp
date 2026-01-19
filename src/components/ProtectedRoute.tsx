@@ -17,7 +17,6 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
   const { isPremium, loading: subLoading } = useSubscription()
   const navigate = useNavigate()
 
-
   // PAYWALL_RUNTIME_FLAG_V1: evita "if(false)" (lint) e mantém assinatura desligada por enquanto
   const paywallEnabled = (() => {
     try {

@@ -177,7 +177,6 @@ export const EXERCISES: Record<WorkoutModality, Exercise[]> = {
   spinning: EXERCISES_BASE.corrida,
 };
 
-
 ;
 
 const levelPreset: Record<WorkoutLevel, { volume: number; intensity: string; rest: string }> = {

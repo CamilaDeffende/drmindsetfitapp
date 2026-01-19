@@ -75,7 +75,7 @@ export function PlanosAtivos() {
 
   const __mfLevelByModality = ((state as any)?.workoutLevelByModality ?? null) as any;
 
-  /* PREMIUM_MODALITY_LEVEL_HELPER */
+  
   const getModalityLevelLabel = (key: string | null) => {
     if (!key) return null;
     const label =
@@ -240,7 +240,7 @@ return (
               <div key={sesh.day} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold">{sesh.day}
-        {/* PREMIUM_DAY_HEADER */}
+        
         {(sesh as any)?.modality && (
           <span className="ml-2 text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">
             {getModalityLevelLabel((sesh as any).modality)}
@@ -249,7 +249,7 @@ return (
       </div>
                   <div className="text-[11px] text-muted-foreground flex items-center gap-2">
                     <span>{__mfWeeklyPlan.level}</span>
-                    {/* PREMIUM_LEVEL_RENDER_V1 */}
+                    
                     {(() => {
                       try {
                         const __k =
@@ -435,7 +435,7 @@ export function mfBuildWeeklyPlanFromState(state: any) {
 
     
     void mfLevelByModality;
-    // PREMIUM_LEVEL_BY_MODALITY_EXPORT_V1
+
 void mfLevelByModality;
 if (sch && typeof sch === "object") {
       for (const mk of (modalities || [])) {

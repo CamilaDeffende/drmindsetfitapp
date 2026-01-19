@@ -10,7 +10,6 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { FitnessSuiteDemo } from "./features/fitness-suite";
 import { maybeResetFromUrl } from "@/lib/resetApp";
 
-
 // Páginas Públicas
 import { Login } from '@/pages/Login'
 import { SignUp } from '@/pages/SignUp'
@@ -54,7 +53,6 @@ try {
     window.history.replaceState({}, '', '/');
   }
 } catch { /* noop */ }
-
 
 function App() {
   // reset premium via URL: /?reset=soft | /?reset=hard

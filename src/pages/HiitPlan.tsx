@@ -223,7 +223,6 @@ function protocolParamsLine(protocol: Protocol, rounds: number, workSec: number,
   return `Rounds: ${rounds} | Work/Rest: ${workSec}s/${restSec}s`;
 }
 
-
 export default function HiitPlan() {
   const [goal, setGoal] = useState<GoalKey>("FAT_LOSS");
   const [modality, setModality] = useState<ModalityKey>("RUN");

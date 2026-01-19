@@ -261,8 +261,8 @@ export function Step4Nutricao() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
-        /* MF_STEP4_PREMIUM_COPY_V1 */
-        {/* MF_STEP4_HEADER */}
+        
+        
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Nutrição e preferências</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">

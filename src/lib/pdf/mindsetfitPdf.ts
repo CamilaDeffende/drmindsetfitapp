@@ -93,7 +93,6 @@ function slug(s: string) {
     .toLowerCase();
 }
 
-
 const THEME = {
   bg: [8, 8, 10] as const,
   frame: [40, 120, 255] as const,
@@ -115,7 +114,6 @@ function sectionTitle(doc: any, x: number, y: number, label: string) {
   doc.setTextColor(230, 230, 230);
   doc.text(label.toUpperCase(), x, y);
 }
-
 
 function isPatientVariant(v: "coach" | "patient" | undefined) {
   return v === "patient";
@@ -191,7 +189,6 @@ const {
   const effectiveFileName = patientMode
     ? buildMindsetFitPdfFileName("mindsetfit-paciente", ["relatorio", "plano"])
     : fileNameUsed;
-
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();

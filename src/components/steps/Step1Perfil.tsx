@@ -52,8 +52,8 @@ export function Step1Perfil() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-        /* MF_STEP1_PREMIUM_COPY_V1 */
-        {/* MF_STEP1_HEADER */}
+        
+        
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Seu perfil</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -185,7 +185,6 @@ export function Step1Perfil() {
 
               {/* Perfil Físico e Esportivo */}
               
-
 
               {/* Objetivo */}
               <div className="space-y-4 pt-6 border-t">

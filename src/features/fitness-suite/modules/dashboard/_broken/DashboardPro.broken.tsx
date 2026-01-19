@@ -99,7 +99,6 @@ export function DashboardPro() {
     } catch {}
   }, []);
 
-
   // === Sprint 6C | Report History (LS) ===
   type ReportHistoryItem = {
     id: string;
@@ -371,7 +370,6 @@ html,body{margin:0;padding:0;background:#0b0f16;color:#e9eef8;font-family:-apple
 <title>" + title + "</title><style>" + css + "</style></head><body>
 <div class="page">
 
-
 <div class="watermark">MindsetFit</div>
 <div class="top">
 <div>
@@ -387,7 +385,6 @@ html,body{margin:0;padding:0;background:#0b0f16;color:#e9eef8;font-family:-apple
 <div><strong>ID</strong>: " + esc(reportId) + "</div>
 </div>
 </div>
-
 
       const goalsRows = (Array.isArray(goalsView?.rows) ? goalsView.rows : []);
 

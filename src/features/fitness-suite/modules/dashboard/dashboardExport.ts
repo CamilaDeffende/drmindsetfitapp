@@ -35,7 +35,6 @@ function sourceOf(store: AnyObj | null, fb: AnyObj | null) {
   return store ? "store" : (fb ? "localStorage" : "empty");
 }
 
-
 // === Sprint 5B | Normalização p/ PDF (cards reais) ===
 function oneLine(v: any, max = 220) {
   try {

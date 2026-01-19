@@ -60,7 +60,7 @@ export function Step3Metabolismo() {
   if (!resultado) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-{/* PREMIUM_TREINO_PREVIEW_V1 */}
+
 <Card className="mt-4 border-white/10 bg-white/5">
   <CardHeader className="pb-3">
     <div className="flex items-center justify-between gap-3">

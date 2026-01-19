@@ -160,8 +160,8 @@ export function Step2Avaliacao() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-        /* MF_STEP2_PREMIUM_COPY_V1 */
-        {/* MF_STEP2_HEADER */}
+        
+        
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Avaliação corporal</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">

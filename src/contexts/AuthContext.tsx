@@ -16,7 +16,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // DEV_PASS_AUTH: ?dev=1 força usuário logado para testes locais
 const __isDevPass = (() => { try { return new URLSearchParams(window.location.search).get("dev") === "1"; } catch { return false; } })();
 
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)

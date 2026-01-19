@@ -48,8 +48,8 @@ export function Step6Saude() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-        /* MF_STEP6_PREMIUM_COPY_V1 */
-        {/* MF_STEP6_HEADER */}
+        
+        
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Saúde e sinais do corpo</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -67,7 +67,7 @@ export function Step6Saude() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
-        {/* MF_HIDE_DORES_ARTICULARES_V1 */}
+        
 <Card className="border-0 bg-transparent shadow-none p-0 hidden">
           <CardHeader>
             <CardTitle>Dores Articulares</CardTitle>
