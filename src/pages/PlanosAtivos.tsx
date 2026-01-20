@@ -11,6 +11,7 @@ import type { DietaAtiva, TreinoAtivo } from '@/types'
 
 import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
+import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 
 const HIDE_ADVANCED_MODALITY_UI = true;
 
@@ -92,6 +93,8 @@ export function PlanosAtivos() {
 
 return (
       <div className="min-h-screen flex items-center justify-center bg-black">
+      {/* MF_TREINOS_ATIVOS_PROTOCOL_V4 */}
+      <WeeklyProtocolActive />
       {}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-3">
