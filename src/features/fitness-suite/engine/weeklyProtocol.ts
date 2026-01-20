@@ -151,6 +151,7 @@ export type WeeklyWorkoutProtocol = {
     structure: WorkoutStructure;
     plan?: SessionWorkoutPlan;
   }[];
+  strategiesByModality?: Record<string, { strategy: string; rationale: string }>
 };
 
 const WEEK_DAYS = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
@@ -252,9 +253,19 @@ export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocol => {
     ? rawState.workoutModalities.map(String).filter((k: string) => (__allowed as any).includes(k))
     : ["musculacao"];
   const levelByModality = rawState?.workoutLevelByModality ?? {};
+      // MF_WEEKLY_PROTOCOL_STRATEGIES_V1
+      const __mfModalitiesFinal = (Array.isArray(modalities) ? modalities.map(String) : []) as string[];
+      const __mfGoal = (typeof __mfGetGoal === "function")
+        ? __mfGetGoal(rawState)
+        : String((rawState as any)?.perfil?.objetivo ?? (rawState as any)?.goal ?? "geral");
+      const __mfStrategiesByModality = (typeof __mfBuildModalityStrategies === "function")
+        ? __mfBuildModalityStrategies(__mfModalitiesFinal, (levelByModality || {}), __mfGoal)
+        : {};
+
 
   return {
     generatedAt: new Date().toISOString(),
+      strategiesByModality: __mfStrategiesByModality,
     modalities,
     levelByModality,
     sessions: days.map((day, idx) => {
