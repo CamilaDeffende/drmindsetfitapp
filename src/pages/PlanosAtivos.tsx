@@ -93,6 +93,8 @@ export function PlanosAtivos() {
 
 return (
       <div className="min-h-screen flex items-center justify-center bg-black">
+      {/* MF_TREINOS_ATIVOS_PREMIUM_CLEAN_V1 */}
+      <WeeklyProtocolActive />
       {/* MF_TREINOS_ATIVOS_PROTOCOL_V4 */}
       <WeeklyProtocolActive />
       {}
