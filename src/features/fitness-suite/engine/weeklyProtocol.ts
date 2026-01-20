@@ -19,6 +19,126 @@ export type WorkoutStructure = {
 import { buildSessionPlan } from "./sessionPlanner";
 import type { SessionWorkoutPlan } from "./sessionPlanner";
 
+
+// MF_WEEKLY_PROTOCOL_ENGINE_V2
+const __mfDayOrder = ["seg","ter","qua","qui","sex","sab","dom"] as const;
+const __mfDayLabel: Record<(typeof __mfDayOrder)[number], string> = {
+  seg: "Segunda", ter: "Terça", qua: "Quarta", qui: "Quinta", sex: "Sexta", sab: "Sábado", dom: "Domingo",
+};
+
+const __mfLabelByModality: Record<string, string> = {
+  musculacao: "Musculação",
+  funcional: "Funcional",
+  corrida: "Corrida",
+  bike_indoor: "Bike Indoor",
+  crossfit: "CrossFit",
+};
+
+function __mfGetGoal(rawState: any): string {
+  const p = rawState?.perfil ?? {};
+  return String(p?.objetivo ?? p?.goal ?? rawState?.objetivo ?? "geral");
+}
+
+function __mfStrategyFor(modality: string, level: string, _goal: string) {
+  const lvl = String(level || "iniciante");
+
+  // Estratégias determinísticas (base conceitual: periodização, progressão, distribuição de estímulos, controle de intensidade)
+  if (modality === "musculacao") {
+    if (lvl === "iniciante") return {
+      strategy: "Full Body progressivo (base técnica)",
+      rationale: "Para iniciantes, maior frequência por grupamento e prática técnica aceleram aprendizado motor e progressão com carga segura. Distribuição semanal garante estímulo completo sem lacunas.",
+    };
+    if (lvl === "intermediario") return {
+      strategy: "Upper/Lower (frequência 2x) ou Full Body ondulado",
+      rationale: "Intermediários se beneficiam de maior especificidade e controle de volume por sessão, mantendo frequência suficiente para hipertrofia e força, com recuperação organizada na semana.",
+    };
+    return {
+      strategy: "PPL/Upper-Lower avançado (ênfase + variação de estímulos)",
+      rationale: "Avançados precisam de maior especialização e variação de estímulos (força/hipertrofia), com distribuição de volume e intensidade para maximizar performance e reduzir overuse.",
+    };
+  }
+
+  if (modality === "corrida") {
+    if (lvl === "iniciante") return {
+      strategy: "Base aeróbia + técnica (progressão conservadora)",
+      rationale: "Iniciantes priorizam consistência, economia de corrida e aumento gradual de volume. Intensidades moderadas reduzem risco e constroem capacidade aeróbia.",
+    };
+    if (lvl === "intermediario") return {
+      strategy: "Ritmo/limiar + intervalos (estrutura semanal)",
+      rationale: "Intermediários evoluem com sessões de limiar e intervalos bem distribuídas, mantendo base aeróbia e recuperações adequadas para progressão sustentável.",
+    };
+    return {
+      strategy: "Polarizado 80/20 + VO₂/limiar (controle de carga)",
+      rationale: "Avançados respondem bem à combinação de alto volume em baixa intensidade com doses estratégicas de intensidade (VO₂/limiar), otimizando performance e recuperação.",
+    };
+  }
+
+  if (modality === "bike_indoor") {
+    if (lvl === "iniciante") return {
+      strategy: "Z2/Z3 controlado + técnica (cadência e consistência)",
+      rationale: "Construção de base cardiorrespiratória com progressão de volume e familiarização com zonas de intensidade, minimizando fadiga excessiva.",
+    };
+    if (lvl === "intermediario") return {
+      strategy: "Intervalos estruturados + base (limiar)",
+      rationale: "Sessões intervaladas bem dosadas elevam capacidade de trabalho, enquanto a base mantém tolerância ao volume e melhora eficiência metabólica.",
+    };
+    return {
+      strategy: "Blocos de potência/limiar + recuperação ativa",
+      rationale: "Avançados se beneficiam de estímulos específicos (limiar/potência) com recuperação ativa planejada para sustentar intensidade sem queda de performance.",
+    };
+  }
+
+  if (modality === "funcional") {
+    if (lvl === "iniciante") return {
+      strategy: "Padrões básicos + estabilidade (progressões simples)",
+      rationale: "Prioriza padrões fundamentais, controle corporal e estabilidade. Progressões simples melhoram coordenação e reduzem risco, preparando para estímulos mais densos.",
+    };
+    if (lvl === "intermediario") return {
+      strategy: "Força-resistência + potência moderada (ciclos)",
+      rationale: "Intermediários avançam com maior densidade e progressão de complexidade, alternando estímulos para capacidade atlética e condicionamento sem sobrecarga crônica.",
+    };
+    return {
+      strategy: "Complexidade + potência + densidade (controle de fadiga)",
+      rationale: "Avançados toleram maior densidade e complexidade. O motor alterna estímulos para maximizar capacidade atlética preservando recuperação e qualidade técnica.",
+    };
+  }
+
+  if (modality === "crossfit") {
+    if (lvl === "iniciante") return {
+      strategy: "Técnica + MetCon leve (baixa complexidade)",
+      rationale: "Iniciantes precisam reduzir complexidade, priorizar técnica e cargas moderadas. MetCons controlados constroem condicionamento com segurança.",
+    };
+    if (lvl === "intermediario") return {
+      strategy: "MetCon estruturado + força base (equilíbrio)",
+      rationale: "Intermediários evoluem com MetCons estruturados, força base e recuperação planejada. Alternância energética reduz repetição burra e melhora desempenho.",
+    };
+    return {
+      strategy: "Alta intensidade periodizada + variação energética",
+      rationale: "Avançados exigem periodização de intensidade e variação energética. O motor controla densidade e descanso implícito para maximizar performance sem colapsar recuperação.",
+    };
+  }
+
+  return {
+    strategy: "Estratégia estruturada",
+    rationale: "Estratégia definida de forma determinística com base em nível, objetivo e dias disponíveis.",
+  };
+}
+
+function __mfBuildModalityStrategies(modalities: string[], levelByModality: Record<string, any>, goal: string) {
+  const out: Record<string, { strategy: string; rationale: string }> = {};
+  for (const m of modalities) {
+    const lvl = String(levelByModality?.[m] ?? "iniciante");
+    out[m] = __mfStrategyFor(m, lvl, goal);
+  }
+  return out;
+}
+
+// MF_WEEKLY_PROTOCOL_ENGINE_V2_USED
+void __mfDayLabel;
+void __mfLabelByModality;
+void __mfGetGoal;
+void __mfBuildModalityStrategies;
+
 export type WeeklyWorkoutProtocol = {
   generatedAt: string;
   modalities: WorkoutModality[];
