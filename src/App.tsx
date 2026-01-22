@@ -28,6 +28,7 @@ import { EditDiet } from '@/pages/EditDiet'
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
+import CorridaPro from "@/pages/CorridaPro";
 
 // RESET_STORAGE_QUERY_SYNC: limpa estado salvo via ?reset=1 ANTES do Provider montar (sem loop)
 try {
@@ -69,6 +70,7 @@ function App() {
           <BrowserRouter>
             <RouteGuard />
             <Routes>
+        <Route path="/corrida-pro" element={<CorridaPro />} />
               {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
               <Route path="/" element={<Navigate to="/login" replace />} />
 
