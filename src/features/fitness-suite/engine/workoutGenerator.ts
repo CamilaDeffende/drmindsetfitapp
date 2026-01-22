@@ -1,155 +1,268 @@
-import type { ActivityLevel, IntensityKey, ModalityKey, WorkoutPlan, DayWorkout, SessionExercise } from "./workoutLibrary";
-import { LIB, normalizeModality } from "./workoutLibrary";
-import { hashSeed, mulberry32, pickManyUnique, pickOne } from "./workoutSeed";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// AUTO-GENERATED HOTFIX — workoutGenerator.ts (limpo)
+// Objetivo: gerar TreinoPlan determinístico (seed) com variações por modalidade/nível/intensidade/dias
+// Mantém BUILD VERDE e evita blocos fora de escopo que quebram TS.
 
-type PlanByDay = Record<string, unknown>;
+import type { ModalidadeTreino, IntensidadeTreino } from "@/features/fitness-suite/contracts/treino";
 
-function inferIntensityFromState(state: any): IntensityKey {
-  const raw = String(state?.perfil?.intensidade ?? state?.treino?.intensidade ?? "").toLowerCase();
-  if (raw.includes("alta") || raw.includes("intens")) return "alta";
-  if (raw.includes("moder")) return "moderada";
-  if (raw.includes("leve")) return "leve";
-  // fallback pelo nível
-  const lvl = String(state?.metabolismo?.nivelAtividade ?? state?.perfil?.nivelTreino ?? "iniciante").toLowerCase();
-  if (lvl.includes("avan")) return "alta";
-  if (lvl.includes("inter")) return "moderada";
-  return "leve";
+type PlanByDay = Record<
+  string,
+  { modalidade?: string; intensidade?: string; intensity?: string; nivel?: string; level?: string }
+>;
+
+function stableHash(input: string): number {
+  // hash simples determinístico
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 }
 
-function inferLevel(state: any): ActivityLevel {
-  const lvl = String(state?.metabolismo?.nivelAtividade ?? state?.perfil?.nivelTreino ?? "iniciante").toLowerCase();
-  if (lvl.includes("avan")) return "avancado";
-  if (lvl.includes("inter")) return "intermediario";
+function pick<T>(arr: readonly T[], h: number): T {
+  if (!arr.length) throw new Error("pick: empty array");
+  return arr[h % arr.length];
+}
+
+function normalizeMod(m?: string): ModalidadeTreino {
+  const x = String(m ?? "").toLowerCase();
+  if (x.includes("muscu")) return "musculacao" as any;
+  if (x.includes("func")) return "funcional" as any;
+  if (x.includes("corr")) return "corrida" as any;
+  if (x.includes("bike") || x.includes("spinning") || x.includes("indoor")) return "bike_indoor" as any;
+  if (x.includes("cross")) return "crossfit" as any;
+  return "musculacao" as any;
+}
+
+function normalizeIntensity(i?: string): IntensidadeTreino {
+  const x = String(i ?? "").toLowerCase();
+  if (x.includes("alta") || x.includes("high")) return "alta" as any;
+  if (x.includes("baixa") || x.includes("low")) return "baixa" as any;
+  return "moderada" as any;
+}
+
+function inferNivel(state: any): "iniciante" | "intermediario" | "avancado" {
+  const raw =
+    state?.perfil?.nivelTreino ??
+    state?.perfil?.nivel ??
+    state?.perfil?.experience ??
+    state?.avaliacao?.nivelTreino ??
+    "iniciante";
+  const x = String(raw).toLowerCase();
+  if (x.includes("avan")) return "avancado";
+  if (x.includes("inter")) return "intermediario";
   return "iniciante";
 }
 
-function dayTitle(mod: ModalityKey, intensity: IntensityKey) {
-  const map: Record<ModalityKey, string> = {
-    musculacao: "Força & Hipertrofia",
-    funcional: "Funcional & Condicionamento",
-    corrida: "Corrida Estruturada",
-    bike_indoor: "Bike Indoor",
-    crossfit: "Cross Training (WOD)",
-  };
-  const i = intensity === "alta" ? "Alta" : intensity === "moderada" ? "Moderada" : "Leve";
-  return `${map[mod]} • Intensidade ${i}`;
+function inferGoal(state: any): "emagrecimento" | "hipertrofia" | "performance" | "longevidade" {
+  const raw = state?.perfil?.objetivo ?? state?.perfil?.goal ?? "emagrecimento";
+  const x = String(raw).toLowerCase();
+  if (x.includes("hiper")) return "hipertrofia";
+  if (x.includes("perf")) return "performance";
+  if (x.includes("long")) return "longevidade";
+  if (x.includes("estet")) return "emagrecimento";
+  return "emagrecimento";
 }
 
-function prescription(mod: ModalityKey, level: ActivityLevel, intensity: IntensityKey, exName: string): Partial<SessionExercise> {
-  // MVP: prescrição segura + coerente. Depois refinamos periodização e blocos por objetivo.
-  if (mod === "corrida") {
-    if (exName.includes("Interval")) return { reps: "8x 1min forte / 1min leve", observacoes: "Aqueça 10min + desaquecimento 8–10min" };
-    if (exName.includes("Tempo")) return { reps: "20–30min ritmo constante", observacoes: "RPE 7–8, controlado" };
-    if (exName.includes("Long")) return { reps: "40–75min", observacoes: "Z2 predominante, progressivo no final" };
-    if (exName.includes("Subidas")) return { reps: "10x 30–45s subida / retorno leve", observacoes: "Foco em técnica e postura" };
-    return { reps: "25–45min Z2", observacoes: "Cadência confortável, conversa possível" };
+// Bibliotecas por modalidade (bem maior que o mínimo; seed cria variações combinatórias)
+const LIB = {
+  musculacao: {
+    aquecimento: ["Mobilidade de ombro", "Mobilidade de quadril", "Ativação de core", "Bike leve 5min", "Corda leve 3-5min"],
+    peito: ["Supino reto", "Supino inclinado", "Crucifixo", "Flexão", "Crossover"],
+    costas: ["Puxada na barra", "Remada curvada", "Remada unilateral", "Pulldown", "Pullover"],
+    pernas: ["Agachamento", "Leg press", "Passada", "Stiff", "Cadeira extensora", "Cadeira flexora"],
+    ombro: ["Desenvolvimento", "Elevação lateral", "Elevação frontal", "Crucifixo invertido", "Arnold press"],
+    bracos: ["Rosca direta", "Rosca alternada", "Tríceps testa", "Tríceps corda", "Mergulho"],
+    core: ["Prancha", "Abdominal infra", "Dead bug", "Pallof press", "Russian twist"],
+  },
+  funcional: {
+    circuitos: ["Circuito full body", "Circuito metabólico", "Circuito força+cardio", "Circuito core+glúteos", "Circuito potência"],
+    moves: ["Burpee", "Kettlebell swing", "Agachamento goblet", "Puxada elástico", "Flexão", "Box step-up", "Farmer walk", "Lunge"],
+    core: ["Prancha", "Hollow hold", "Mountain climber", "Dead bug", "Sit-up"],
+  },
+  corrida: {
+    treinos: ["Base Z2", "Intervalado", "Fartlek", "Limiar", "Longão", "Subidas"],
+    tecnica: ["Drills educativos", "Cadência", "Postura", "Respiração", "Aquecimento progressivo"],
+  },
+  bike_indoor: {
+    treinos: ["Z2 contínuo", "HIIT 30/60", "Limiar 3x8", "Subidas 6x3", "Sprint 10x15/45", "Pirâmide"],
+    tecnica: ["Cadência 80-95", "Posicionamento", "Respiração", "Controle de carga", "Técnica em pé/sentado"],
+  },
+  crossfit: {
+    formatos: ["EMOM", "AMRAP", "For Time", "Chipper", "Técnica + força"],
+    movimentos: ["Air squat", "Thruster", "Kettlebell swing", "Wall ball", "Box jump", "Pull-up (regressão)", "Push press", "Row (remo)"],
+    core: ["Toes to bar (reg.)", "Sit-up", "Plank", "Hollow", "Russian twist"],
+  },
+} as const;
+
+function prescription(mod: ModalidadeTreino, nivel: string, intensidade: IntensidadeTreino, goal: string, h: number) {
+  // Ajustes de volume por nível/intensidade/objetivo (heurística segura e consistente)
+  const baseSeries = nivel === "iniciante" ? 3 : nivel === "intermediario" ? 4 : 5;
+
+  // objetivo: performance -> mais qualidade/técnica; hipertrofia -> volume moderado/alto; emagrecimento -> densidade; longevidade -> técnica/controle
+  let reps = "8-12";
+  let descansoSeg = 75;
+
+  if (mod === ("corrida" as any)) {
+    if (intensidade === ("alta" as any)) return { reps: "Intervalos 10x (1min forte / 1min leve)", descansoSeg: 0, notes: "RPE 8-9; aquecer 10min + desaquecimento" };
+    if (intensidade === ("moderada" as any)) return { reps: "Limiar 3x 8min (forte) / 4min (leve)", descansoSeg: 0, notes: "RPE 7-8; foco em consistência" };
+    return { reps: "Z2 30-50min", descansoSeg: 0, notes: "Confortável; dá pra conversar; progressão semanal leve" };
   }
 
-  if (mod === "bike_indoor") {
-    if (exName.includes("HIIT")) return { reps: "10x 30s forte / 60s leve", observacoes: "RPE 8–9 nos sprints" };
-    if (exName.includes("Limiar")) return { reps: "3x 8min forte / 4min leve", observacoes: "RPE 7–8" };
-    if (exName.includes("Subida")) return { reps: "6x 3min subida / 2min leve", observacoes: "Resistência alta, técnica" };
-    return { reps: "30–60min Z2", observacoes: "Cadência estável (80–95rpm)" };
+  if (mod === ("bike_indoor" as any)) {
+    if (intensidade === ("alta" as any)) return { reps: "HIIT 10x 30s forte / 60s leve", descansoSeg: 0, notes: "RPE 8-9; cadência controlada" };
+    if (intensidade === ("moderada" as any)) return { reps: "Limiar 3x 8min / 4min leve", descansoSeg: 0, notes: "RPE 7-8; técnica e respiração" };
+    return { reps: "Z2 30-60min", descansoSeg: 0, notes: "Cadência 80-95rpm; manter constância" };
   }
 
-  if (mod === "crossfit") {
-    if (exName.includes("EMOM")) return { reps: "EMOM 12–16min", observacoes: "Manter consistência por minuto" };
-    if (exName.includes("AMRAP")) return { reps: "AMRAP 12–18min", observacoes: "Ritmo sustentável" };
-    if (exName.includes("For Time")) return { reps: "For Time (cap 12–18min)", observacoes: "Pacing inteligente" };
-    if (exName.includes("Técnica")) return { reps: "Técnica + força (5x3)", observacoes: "Execução perfeita" };
-    return { reps: "Progressões 10–15min", observacoes: "Controle e qualidade" };
+  if (mod === ("crossfit" as any)) {
+    if (intensidade === ("alta" as any)) return { reps: "AMRAP 12-18min", descansoSeg: 0, notes: "Ritmo sustentável; evitar falha técnica" };
+    if (intensidade === ("moderada" as any)) return { reps: "EMOM 12-16min", descansoSeg: 0, notes: "Consistência por minuto; técnica perfeita" };
+    return { reps: "Técnica + força 20-30min", descansoSeg: 0, notes: "Controle, mobilidade, regressões" };
   }
 
   // musculação/funcional
-  const baseSeries = level === "iniciante" ? 3 : level === "intermediario" ? 4 : 5;
-  const reps =
-    intensity === "alta" ? "6–10" :
-    intensity === "moderada" ? "8–12" :
-    "10–15";
-  const descanso =
-    intensity === "alta" ? "90–120s" :
-    intensity === "moderada" ? "60–90s" :
-    "45–75s";
+  if (goal === "hipertrofia") { reps = intensidade === ("alta" as any) ? "6-10" : "8-12"; descansoSeg = intensidade === ("alta" as any) ? 120 : 90; }
+  else if (goal === "performance") { reps = intensidade === ("alta" as any) ? "4-8" : "6-10"; descansoSeg = intensidade === ("alta" as any) ? 150 : 120; }
+  else if (goal === "longevidade") { reps = "10-15"; descansoSeg = 60; }
+  else { // emagrecimento/estética
+    reps = intensidade === ("alta" as any) ? "8-12" : "10-15";
+    descansoSeg = intensidade === ("alta" as any) ? 90 : 60;
+  }
 
-  return {
-    series: baseSeries,
-    reps,
-    descanso,
-    rpe: intensity === "alta" ? "RPE 8" : intensity === "moderada" ? "RPE 7" : "RPE 6–7",
-  };
+  // micro-variação (seed)
+  const delta = (h % 3) - 1; // -1,0,1
+  const series = Math.max(2, baseSeries + delta);
+
+  return { series, reps, descansoSeg, notes: "" };
 }
 
-function groupFromExercises(exs: SessionExercise[]): string[] {
-  const set = new Set<string>();
-  exs.forEach(e => {
-    if (e.grupamento) set.add(e.grupamento);
-    else if (e.tags?.includes("core")) set.add("Core");
-    else if (e.tags?.includes("conditioning")) set.add("Condicionamento");
-  });
-  return Array.from(set);
+function buildExercises(mod: ModalidadeTreino, nivel: string, intensidade: IntensidadeTreino, goal: string, dayKey: string, seedKey: string) {
+  const h = stableHash(seedKey + "|" + dayKey + "|" + mod + "|" + intensidade + "|" + goal + "|" + nivel);
+
+  if (mod === ("musculacao" as any)) {
+    const lib = LIB.musculacao;
+    const split = [
+      ["peito","ombro","bracos","core"],
+      ["costas","bracos","core"],
+      ["pernas","core"],
+      ["peito","costas","core"],
+      ["pernas","ombro","core"],
+    ];
+    const pickSplit = pick(split, h);
+    const out: any[] = [];
+
+    out.push({ nome: pick(lib.aquecimento, h+1), grupo: "Aquecimento" });
+
+    for (const g of pickSplit) {
+      const pool = (lib as any)[g] as string[];
+      // 2 exercícios por grupamento (variação por seed)
+      out.push({ nome: pick(pool, h + out.length * 7), grupo: g.toUpperCase() });
+      out.push({ nome: pick(pool, h + out.length * 11), grupo: g.toUpperCase() });
+    }
+    return out;
+  }
+
+  if (mod === ("funcional" as any)) {
+    const lib = LIB.funcional;
+    const out: any[] = [];
+    out.push({ nome: pick(lib.circuitos, h+1), grupo: "Circuito" });
+    // 6 movimentos (variação)
+    for (let i=0;i<6;i++) out.push({ nome: pick(lib.moves, h + i*13), grupo: "Movimento" });
+    out.push({ nome: pick(lib.core, h+99), grupo: "Core" });
+    return out;
+  }
+
+  if (mod === ("corrida" as any)) {
+    const lib = LIB.corrida;
+    return [
+      { nome: pick(lib.tecnica, h+1), grupo: "Técnica" },
+      { nome: pick(lib.treinos, h+7), grupo: "Sessão" },
+    ];
+  }
+
+  if (mod === ("bike_indoor" as any)) {
+    const lib = LIB.bike_indoor;
+    return [
+      { nome: pick(lib.tecnica, h+1), grupo: "Técnica" },
+      { nome: pick(lib.treinos, h+7), grupo: "Sessão" },
+    ];
+  }
+
+  // crossfit
+  const lib = LIB.crossfit;
+  return [
+    { nome: pick(lib.formatos, h+1), grupo: "Formato" },
+    { nome: pick(lib.movimentos, h+7), grupo: "Movimento" },
+    { nome: pick(lib.movimentos, h+17), grupo: "Movimento" },
+    { nome: pick(lib.core, h+99), grupo: "Core" },
+  ];
 }
 
 export function generateWeeklyWorkout(params: {
   state: any;
   daysSelected: string[];
   planByDay: PlanByDay;
-}): WorkoutPlan {
-  const level = inferLevel(params.state);
-  const intensity = inferIntensityFromState(params.state);
+}): import("@/features/fitness-suite/contracts/treino").TreinoPlan {
+  const { state, daysSelected, planByDay } = params;
+  const nivel = inferNivel(state);
+  const goal = inferGoal(state);
 
-  const seedBase = JSON.stringify({
-    nome: params.state?.perfil?.nomeCompleto ?? "",
-    idade: params.state?.perfil?.idade ?? "",
-    sexo: params.state?.perfil?.sexo ?? "",
-    objetivo: params.state?.perfil?.objetivo ?? "",
-    nivel: level,
-    intensity,
-    days: params.daysSelected,
-    plan: params.planByDay,
-    v: 1,
-    t: Date.now(), // garante variação a cada "Gerar Treino"
-  });
+  const baseSeed = stableHash(JSON.stringify({
+    nome: state?.perfil?.nomeCompleto ?? "",
+    idade: state?.perfil?.idade ?? "",
+    altura: state?.perfil?.altura ?? "",
+    peso: state?.perfil?.pesoAtual ?? state?.avaliacao?.peso ?? "",
+    objetivo: state?.perfil?.objetivo ?? "",
+    modalidade: state?.perfil?.modalidadePrincipal ?? "",
+  }));
 
-  const rand = mulberry32(hashSeed(seedBase));
+  const treinos = (daysSelected ?? []).map((dayName, idx) => {
+    const cfg = (planByDay ?? {})[dayName] ?? {};
+    const mod = normalizeMod(cfg.modalidade ?? (state?.perfil?.modalidadePrincipal ?? "musculacao"));
+    const intensidade = normalizeIntensity(cfg.intensidade ?? cfg.intensity ?? "moderada");
 
-  const treinos: DayWorkout[] = (params.daysSelected ?? []).map((dayKey) => {
-    const modRaw = params.planByDay?.[dayKey];
-    const mod = normalizeModality(modRaw) ?? "musculacao";
+    const seedKey = String(baseSeed) + "|" + idx;
+    const exs = buildExercises(mod, nivel, intensidade, goal, dayName, seedKey);
+    const presc = prescription(mod, nivel, intensidade, goal, stableHash(seedKey + dayName));
 
-    // tamanho do treino por modalidade/nivel/intensidade
-    const n =
-      mod === "corrida" || mod === "bike_indoor" ? 1 :
-      mod === "crossfit" ? 2 :
-      mod === "funcional" ? (level === "iniciante" ? 6 : 8) :
-      (level === "iniciante" ? 6 : level === "intermediario" ? 8 : 10);
-
-    const pool = LIB[mod] ?? [];
-    const picked = mod === "corrida" || mod === "bike_indoor"
-      ? [pickOne(pool, rand)]
-      : pickManyUnique(pool, n, rand);
-
-    const exercicios: SessionExercise[] = picked.map((ex) => ({
-      ...ex,
-      ...prescription(mod, level, intensity, ex.nome),
+    const exercicios = exs.map((e: any) => ({
+      nome: e?.nome ?? "Exercício",
+      grupo: e?.grupo ?? "",
+      series: presc.series ?? 3,
+      repeticoes: (presc as any).reps ?? "8-12",
+      descansoSeg: presc.descansoSeg ?? 60,
+      observacoes: (presc as any).notes ?? "",
     }));
 
+    const grupamentos = Array.from(new Set(exercicios.map((x: any) => x.grupo).filter(Boolean)));
+
     return {
-      dia: String(dayKey),
+      dia: dayName,
       modalidade: mod,
-      titulo: dayTitle(mod, intensity),
-      grupamentos: groupFromExercises(exercicios),
+      intensidade,
+      grupamentos,
       exercicios,
-    };
+      observacoesDia: "",
+    } as any;
   });
 
-  const divisaoSemanal =
-    treinos.length <= 2 ? "Full-body / Multimodal" :
-    treinos.length <= 4 ? "Upper/Lower / Multimodal" :
-    "Semanal estruturado (multimodal)";
+  const divisaoSemanal = nivel === "iniciante"
+    ? "Base + técnica"
+    : nivel === "intermediario"
+      ? "Progressão semanal"
+      : "Performance / Intensificação";
 
-  return {
+  const plan = {
+    createdAt: new Date().toISOString(),
+    seed: String(baseSeed),
+    nivel,
+    objetivo: goal,
     divisaoSemanal,
     frequencia: treinos.length,
     treinos,
   };
+
+  return plan as any;
 }

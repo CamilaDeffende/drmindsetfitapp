@@ -69,7 +69,7 @@ export function Step8Relatorio() {
             </div>
             <div className="text-center p-3 bg-muted rounded">
               <p className="text-sm text-muted-foreground">IMC</p>
-              <p className="text-xl font-bold">{state.avaliacao?.imc.toFixed(1)}</p>
+              <p className="text-xl font-bold">{(state.avaliacao?.imc ?? 0).toFixed(1)}</p>
             </div>
           </div>
 
