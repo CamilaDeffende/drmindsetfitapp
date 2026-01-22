@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, Zap, TrendingUp, CheckCircle2 } from 'lucide-rea
 import { calcularMetabolismo } from '@/lib/metabolismo'
 import type { ResultadoMetabolico } from '@/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/features/fitness-suite/engine/metabolismoActivity";
 
 export function Step3Metabolismo() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
