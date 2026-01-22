@@ -176,17 +176,17 @@ export function Step5Treino() {
         <div className="flex items-center gap-3">
           <BrandIcon size={18} />
           <div>
-            <div className="text-lg font-semibold">Treino</div>
-            <div className="text-xs text-muted-foreground">Preencha o essencial. O sistema monta o treino automaticamente.</div>
+            <div className="text-lg font-semibold">Protocolo de treino</div>
+            <div className="text-xs text-muted-foreground">Selecione modalidades, nível e dias. Em seguida, o sistema gera sua semana completa.</div>
           </div>
         </div>
       </div>
 
-      {/* 1) Seleção de modalidades */}
+      {/* 1) Modalidades da sua semana */}
       <Card className="mt-4 border-white/10 bg-white/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Seleção de modalidades</CardTitle>
-          <CardDescription>Selecione apenas as modalidades que você vai realizar ao longo da semana.</CardDescription>
+          <CardDescription>Escolha só o que você realmente pratica. Isso direciona o motor de geração do protocolo.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -211,7 +211,7 @@ export function Step5Treino() {
       <Card className="mt-4 border-white/10 bg-white/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Nível por modalidade</CardTitle>
-          <CardDescription>Escolha livremente seu nível em cada modalidade (auto-declarado).</CardDescription>
+          <CardDescription>Autoavaliação rápida: isso ajusta volume, intensidade e progressão.</CardDescription>
         </CardHeader>
         <CardContent>
           {selectedModalities.length ? (
@@ -244,16 +244,16 @@ export function Step5Treino() {
               })}
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground">Selecione pelo menos uma modalidade acima.</div>
+            <div className="text-xs text-muted-foreground">Selecione pelo menos 1 modalidade para liberar esta etapa.</div>
           )}
         </CardContent>
       </Card>
 
-      {/* 3) Dias da semana + modalidade por dia */}
+      {/* 3) Agenda da semana + modalidade por dia */}
       <Card className="mt-4 border-white/10 bg-white/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Dias da semana</CardTitle>
-          <CardDescription>Selecione os dias e defina qual modalidade será feita em cada dia (somente entre as selecionadas).</CardDescription>
+          <CardDescription>Escolha os dias de treino e atribua uma modalidade para cada dia selecionado.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -295,7 +295,7 @@ export function Step5Treino() {
                         );
                       })}
                       {!selectedModalities.length ? (
-                        <span className="text-xs text-muted-foreground">Selecione modalidades acima.</span>
+                        <span className="text-xs text-muted-foreground">Selecione modalidades acima para liberar as opções.</span>
                       ) : null}
                     </div>
                   </div>
@@ -303,7 +303,7 @@ export function Step5Treino() {
               })}
             </div>
           ) : (
-            <div className="mt-3 text-xs text-muted-foreground">Selecione ao menos um dia.</div>
+            <div className="mt-3 text-xs text-muted-foreground">Selecione ao menos 1 dia para montar sua agenda.</div>
           )}
         </CardContent>
       </Card>
@@ -319,7 +319,7 @@ export function Step5Treino() {
           disabled={!canContinue}
           className="gap-2 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
         >
-          Próxima etapa <ArrowRight className="h-4 w-4" />
+          Gerar minha semana <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
     </div>
