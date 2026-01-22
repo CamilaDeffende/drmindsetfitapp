@@ -17,7 +17,11 @@ const HIDE_ADVANCED_MODALITY_UI = true;
 
 export function PlanosAtivos() {
   const { state, updateState } = useDrMindSetfit()
-  const navigate = useNavigate()
+  
+
+  // Fonte da verdade do treino ativo (gerado no Step5)
+  const treinoPlan = (state as any)?.treino ?? (state as any)?.workoutProtocolWeekly?.treinoPlan ?? null;
+const navigate = useNavigate()
 
   const exportarPDF = async () => {
     try {
@@ -424,6 +428,71 @@ const __lvl = (__k && __mfLevelByModality) ? __mfLevelByModality[__k] : null;
 
                 {temTreino && (
                   <TabsContent value="treino" className="mt-0">
+        {/* Protocolo Inteligente (Active Workouts) */}
+        <div data-testid="active-workout-protocol" className="mt-4 space-y-3">
+          {!treinoPlan ? (
+            <div className="rounded-xl border border-border/50 p-4 text-sm text-muted-foreground">
+              Nenhum treino ativo gerado ainda. Finalize o onboarding e clique em <strong>Gerar Treino</strong> no Step 5.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-border/50 p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <p className="text-base font-semibold">Treinos Ativos</p>
+                    <p className="text-xs text-muted-foreground">
+                      {treinoPlan?.divisaoSemanal} • {treinoPlan?.frequencia}x/semana
+                    </p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Fonte: <span className="font-medium">treinoPlan</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {(treinoPlan?.treinos ?? []).map((dia: any, idx: number) => (
+                  <div key={idx} className="rounded-xl border border-border/50 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold">{dia?.dia} • {dia?.modalidade}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{dia?.titulo}</p>
+                        {Array.isArray(dia?.grupamentos) && dia.grupamentos.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Grupamentos: <span className="font-medium">{dia.grupamentos.join(" + ")}</span>
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {(dia?.exercicios?.length ?? 0)} exercícios
+                      </div>
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      {(dia?.exercicios ?? []).map((ex: any, eIdx: number) => (
+                        <div key={eIdx} className="rounded-lg bg-muted/40 p-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                            <p className="text-sm font-medium">{ex?.nome}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {ex?.series ? `${ex.series}x` : ""}
+                              {ex?.reps ? ` ${ex.reps}` : ""}
+                              {ex?.descanso ? ` • Desc: ${ex.descanso}` : ""}
+                              {ex?.rpe ? ` • ${ex.rpe}` : ""}
+                            </p>
+                          </div>
+                          {ex?.observacoes && (
+                            <p className="text-xs text-muted-foreground mt-1">{ex.observacoes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
                     
           <WeeklyProtocolActive />
 <TreinoAtivoView treinoAtivo={state.treinoAtivo!} />
