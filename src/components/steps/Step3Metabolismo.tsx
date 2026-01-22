@@ -51,8 +51,19 @@ export function Step3Metabolismo() {
   useEffect(() => {
     if (state.perfil && state.avaliacao && !state.metabolismo) {
       const calc = calcularMetabolismo(state.perfil, state.avaliacao)
+
+      // GET by activity level (iniciante/intermediario/avancado)
+      const nivel = inferNivelTreinoFromState(state as any)
+      const fator = getActivityFactor(nivel)
+      const get = computeGET((calc as any).tmb, fator)
+
+      ;(calc as any).nivelAtividade = nivel
+      ;(calc as any).fatorAtividade = fator
+      ;(calc as any).get = get
+
       setResultado(calc)
-      updateState({ metabolismo: calc })
+      updateState({ metabolismo: calc } as any)
+
     } else if (state.metabolismo) {
       setResultado(state.metabolismo)
     }
