@@ -85,17 +85,17 @@ export function Step3Metabolismo() {
         
         
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Metabolismo e gasto diário</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Metabolismo e energia diária</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Aqui estimamos seu gasto energético (TMB e gasto total diário) usando seus dados e rotina.
-            Isso define a base de calorias e macros do plano, tornando as próximas recomendações mais consistentes.
+            Aqui estimamos seu gasto energético (TMB e gasto total diário) com base no seu perfil.
+            Esse número vira a referência para calorias e macros — deixando o plano mais consistente e sustentável.
           </p>
         </div>
 
         <Card>
           <CardContent className="py-12 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E6BFF] mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Calculando seu metabolismo...</p>
+            <p className="text-muted-foreground">Calculando seu gasto diário…</p>
           </CardContent>
         </Card>
       </div>
@@ -116,17 +116,17 @@ export function Step3Metabolismo() {
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
         </div>
-        <h2 className="text-3xl font-bold mb-2">Metabolismo Inteligente</h2>
-        <p className="text-muted-foreground">Decisão baseada em ciência, não em achismo</p>
+        <h2 className="text-3xl font-bold mb-2">Metabolismo calibrado</h2>
+        <p className="text-muted-foreground">Base científica para definir calorias e macros com segurança.</p>
       </div>
 
       {/* Equação Escolhida */}
-      <Alert className="mb-6 border-[#1E6BFF] bg-[#1E6BFF] dark:bg-[#1E6BFF]">
-        <CheckCircle2 className="h-5 w-5 text-[#1E6BFF]" />
-        <AlertTitle className="text-[#1E6BFF] dark:text-[#1E6BFF] font-bold">
-          Equação Selecionada: {nomeEquacoes[resultado.equacaoUtilizada]}
+      <Alert className="mb-6 border-[#1E6BFF]/40 bg-[#1E6BFF]/10">
+        <CheckCircle2 className="h-5 w-5 text-[#00B7FF]" />
+        <AlertTitle className="text-white font-bold">
+          Equação escolhida: {nomeEquacoes[resultado.equacaoUtilizada]}
         </AlertTitle>
-        <AlertDescription className="text-[#1E6BFF] dark:text-[#1E6BFF]">
+        <AlertDescription className="text-white/80">
           {resultado.justificativa}
         </AlertDescription>
       </Alert>
@@ -135,40 +135,40 @@ export function Step3Metabolismo() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Taxa Metabólica Basal</CardDescription>
+            <CardDescription>TMB (repouso)</CardDescription>
             <CardTitle className="text-3xl font-bold text-[#1E6BFF]">
               {resultado.tmb}
               <span className="text-lg font-normal text-muted-foreground ml-1">kcal</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Energia que seu corpo gasta em repouso</p>
+            <p className="text-xs text-muted-foreground">Energia mínima para manter funções vitais.</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Gasto Energético Total</CardDescription>
+            <CardDescription>GET (dia todo)</CardDescription>
             <CardTitle className="text-3xl font-bold text-[#1E6BFF]">
               {resultado.get}
               <span className="text-lg font-normal text-muted-foreground ml-1">kcal</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Gasto total incluindo atividades</p>
+            <p className="text-xs text-muted-foreground">Inclui rotina e nível de atividade.</p>
           </CardContent>
         </Card>
 
         <Card className="border-2 border-green-600">
           <CardHeader className="pb-3">
-            <CardDescription>Calorias Alvo</CardDescription>
+            <CardDescription>Meta diária</CardDescription>
             <CardTitle className="text-3xl font-bold text-green-600">
               {resultado.caloriasAlvo}
               <span className="text-lg font-normal text-muted-foreground ml-1">kcal</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Meta diária para seu objetivo</p>
+            <p className="text-xs text-muted-foreground">Direcionada ao seu objetivo atual.</p>
           </CardContent>
         </Card>
       </div>
@@ -180,7 +180,7 @@ export function Step3Metabolismo() {
             <Zap className="w-5 h-5 text-yellow-600" />
             Faixa Calórica Segura
           </CardTitle>
-          <CardDescription>Zona de operação recomendada</CardDescription>
+          <CardDescription>Uma zona de trabalho realista para consistência.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-2">
@@ -208,7 +208,7 @@ export function Step3Metabolismo() {
             <TrendingUp className="w-5 h-5 text-[#1E6BFF]" />
             Comparativo Entre Equações
           </CardTitle>
-          <CardDescription>Todas as fórmulas calculadas para seu perfil</CardDescription>
+          <CardDescription>Veja como as fórmulas variam para o seu perfil.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
