@@ -37,3 +37,27 @@ export function pickManyUnique<T>(arr: T[], n: number, rand: () => number): T[] 
   const s = shuffle(arr, rand);
   return s.slice(0, Math.min(n, s.length));
 }
+
+
+export function getOrCreateUserSeed(key: string = "mindsetfit:userSeed:v1"): number {
+  try {
+    if (typeof window === "undefined") return 0;
+    const raw = window.localStorage.getItem(key);
+    if (raw && String(parseInt(raw, 10)) === raw.trim()) return parseInt(raw, 10) >>> 0;
+
+    // gera seed 32-bit (prefer crypto)
+    let seed = 0;
+    try {
+      const a = new Uint32Array(1);
+      window.crypto.getRandomValues(a);
+      seed = (a[0] >>> 0);
+    } catch {
+      seed = (Math.floor(Math.random() * 0xFFFFFFFF) >>> 0);
+    }
+    window.localStorage.setItem(key, String(seed));
+    return seed >>> 0;
+  } catch {
+    return 0;
+  }
+}
+

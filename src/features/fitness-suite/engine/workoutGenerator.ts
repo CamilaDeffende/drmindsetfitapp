@@ -5,6 +5,8 @@
 
 import type { ModalidadeTreino, IntensidadeTreino } from "@/features/fitness-suite/contracts/treino";
 
+
+import { getOrCreateUserSeed, hashSeed } from "./workoutSeed";
 type PlanByDay = Record<
   string,
   { modalidade?: string; intensidade?: string; intensity?: string; nivel?: string; level?: string }
@@ -209,16 +211,33 @@ export function generateWeeklyWorkout(params: {
   const nivel = inferNivel(state);
   const goal = inferGoal(state);
 
-  const baseSeed = stableHash(JSON.stringify({
+  const userSeed = getOrCreateUserSeed();
+  const now = new Date();
+  const weekKey = (() => {
+    // ISO week key: YYYY-Www (UTC-safe)
+    const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    const y = d.getUTCFullYear();
+    return String(y) + "-W" + String(weekNo).padStart(2, "0");
+  })();
+
+  const profileKey = JSON.stringify({
     nome: state?.perfil?.nomeCompleto ?? "",
     idade: state?.perfil?.idade ?? "",
     altura: state?.perfil?.altura ?? "",
     peso: state?.perfil?.pesoAtual ?? state?.avaliacao?.peso ?? "",
     objetivo: state?.perfil?.objetivo ?? "",
     modalidade: state?.perfil?.modalidadePrincipal ?? "",
-  }));
+    nivel: nivel,
+    goal: goal,
+  });
 
-  const treinos = (daysSelected ?? []).map((dayName, idx) => {
+  // Seed determinístico + persistente + rotativo por semana (evita repetição global)
+  const baseSeed = hashSeed(String(userSeed) + "|" + weekKey + "|" + profileKey);
+const treinos = (daysSelected ?? []).map((dayName, idx) => {
     const cfg = (planByDay ?? {})[dayName] ?? {};
     const mod = normalizeMod(cfg.modalidade ?? (state?.perfil?.modalidadePrincipal ?? "musculacao"));
     const intensidade = normalizeIntensity(cfg.intensidade ?? cfg.intensity ?? "moderada");
