@@ -70,33 +70,82 @@ function inferGoal(state: any): "emagrecimento" | "hipertrofia" | "performance" 
 // Bibliotecas por modalidade (bem maior que o mínimo; seed cria variações combinatórias)
 const LIB = {
   musculacao: {
-    aquecimento: ["Mobilidade de ombro", "Mobilidade de quadril", "Ativação de core", "Bike leve 5min", "Corda leve 3-5min"],
-    peito: ["Supino reto", "Supino inclinado", "Crucifixo", "Flexão", "Crossover"],
-    costas: ["Puxada na barra", "Remada curvada", "Remada unilateral", "Pulldown", "Pullover"],
-    pernas: ["Agachamento", "Leg press", "Passada", "Stiff", "Cadeira extensora", "Cadeira flexora"],
-    ombro: ["Desenvolvimento", "Elevação lateral", "Elevação frontal", "Crucifixo invertido", "Arnold press"],
-    bracos: ["Rosca direta", "Rosca alternada", "Tríceps testa", "Tríceps corda", "Mergulho"],
-    core: ["Prancha", "Abdominal infra", "Dead bug", "Pallof press", "Russian twist"],
+    aquecimento: [
+      "Mobilidade de ombro", "Mobilidade de quadril", "Ativação de core", "Bike leve 5min", "Corda leve 3-5min",
+      "Caminhada inclinada 5min", "Mobilidade torácica", "Rotadores externos (elástico)", "Ativação glúteo médio", "Alongamento dinâmico"
+    ],
+    peito: [
+      "Supino reto (barra)", "Supino reto (halteres)", "Supino inclinado (barra)", "Supino inclinado (halteres)", "Crucifixo (halteres)",
+      "Crucifixo inclinado", "Crossover (polia)", "Peck deck", "Flexão (variações)", "Supino declinado", "Chest press (máquina)"
+    ],
+    costas: [
+      "Puxada na barra", "Puxada aberta (polia)", "Puxada neutra (polia)", "Remada curvada", "Remada unilateral (halter)",
+      "Remada baixa (cabo)", "Remada T-bar", "Pulldown", "Pullover (cabo)", "Serrote", "Hiperextensão lombar"
+    ],
+    pernas: [
+      "Agachamento livre", "Agachamento frontal", "Leg press", "Hack squat", "Passada (lunge)", "Afundo búlgaro",
+      "Stiff", "Levantamento terra romeno", "Cadeira extensora", "Cadeira flexora", "Mesa flexora", "Panturrilha em pé",
+      "Panturrilha sentado", "Hip thrust", "Glute bridge", "Abdução (máquina)", "Adutora (máquina)"
+    ],
+    ombro: [
+      "Desenvolvimento (barra)", "Desenvolvimento (halteres)", "Arnold press", "Elevação lateral", "Elevação lateral (cabo)",
+      "Elevação frontal", "Crucifixo invertido", "Face pull", "Remada alta (leve)", "Elevação Y (banco inclinado)"
+    ],
+    bracos: [
+      "Rosca direta", "Rosca alternada", "Rosca martelo", "Rosca Scott", "Rosca concentrada",
+      "Tríceps testa", "Tríceps corda", "Tríceps banco", "Mergulho (paralela)", "Tríceps francês"
+    ],
+    core: [
+      "Prancha", "Prancha lateral", "Abdominal infra", "Dead bug", "Pallof press",
+      "Russian twist", "Hollow hold", "Bird-dog", "Elevação de pernas", "Cable crunch"
+    ],
   },
+
   funcional: {
-    circuitos: ["Circuito full body", "Circuito metabólico", "Circuito força+cardio", "Circuito core+glúteos", "Circuito potência"],
-    moves: ["Burpee", "Kettlebell swing", "Agachamento goblet", "Puxada elástico", "Flexão", "Box step-up", "Farmer walk", "Lunge"],
-    core: ["Prancha", "Hollow hold", "Mountain climber", "Dead bug", "Sit-up"],
+    circuitos: [
+      "Circuito full body", "Circuito metabólico", "Circuito força+cardio", "Circuito core+glúteos", "Circuito potência",
+      "Circuito EMOM leve", "Circuito AMRAP moderado", "Circuito intervalado", "Circuito mobilidade+força", "Circuito resistência"
+    ],
+    moves: [
+      "Burpee", "Kettlebell swing", "Agachamento goblet", "Puxada elástico", "Flexão", "Box step-up", "Farmer walk", "Lunge",
+      "Remada TRX", "Ponte de glúteo", "Good morning (leve)", "Jumping jack", "Corrida estacionária", "Battle rope (se houver)",
+      "Thruster (leve)", "Wall sit", "Skater jumps", "Bear crawl", "Corda", "Deadlift kettlebell (leve)"
+    ],
+    core: ["Prancha", "Hollow hold", "Mountain climber", "Dead bug", "Sit-up", "Bicicleta", "Side plank", "V-up (reg.)"],
   },
+
   corrida: {
-    treinos: ["Base Z2", "Intervalado", "Fartlek", "Limiar", "Longão", "Subidas"],
-    tecnica: ["Drills educativos", "Cadência", "Postura", "Respiração", "Aquecimento progressivo"],
+    treinos: [
+      "Base Z2", "Intervalado", "Fartlek", "Limiar", "Longão", "Subidas",
+      "Progressivo", "Tiros curtos", "Tiros longos", "Tempo run", "Z2 + strides", "Regenerativo"
+    ],
+    tecnica: [
+      "Drills educativos", "Cadência", "Postura", "Respiração", "Aquecimento progressivo",
+      "Fortalecimento do pé/tornozelo", "Mobilidade de quadril", "Coordenação (skip/A/B)", "Strides", "Técnica de subida"
+    ],
   },
+
   bike_indoor: {
-    treinos: ["Z2 contínuo", "HIIT 30/60", "Limiar 3x8", "Subidas 6x3", "Sprint 10x15/45", "Pirâmide"],
-    tecnica: ["Cadência 80-95", "Posicionamento", "Respiração", "Controle de carga", "Técnica em pé/sentado"],
+    treinos: [
+      "Z2 contínuo", "HIIT 30/60", "Limiar 3x8", "Subidas 6x3", "Sprint 10x15/45", "Pirâmide",
+      "Sweet spot 2x12", "Over/Under 3x6", "Cadência alta 6x2", "Tempo 20min", "Z2 longo", "Sprint 8x20/40"
+    ],
+    tecnica: [
+      "Cadência 80-95", "Posicionamento", "Respiração", "Controle de carga", "Técnica em pé/sentado",
+      "Estabilidade de tronco", "Transições de marcha", "Pacing", "Ritmo constante", "Técnica de subida"
+    ],
   },
+
   crossfit: {
-    formatos: ["EMOM", "AMRAP", "For Time", "Chipper", "Técnica + força"],
-    movimentos: ["Air squat", "Thruster", "Kettlebell swing", "Wall ball", "Box jump", "Pull-up (regressão)", "Push press", "Row (remo)"],
-    core: ["Toes to bar (reg.)", "Sit-up", "Plank", "Hollow", "Russian twist"],
+    formatos: ["EMOM", "AMRAP", "For Time", "Chipper", "Técnica + força", "Intervalos", "Tabata", "E2MOM"],
+    movimentos: [
+      "Air squat", "Thruster", "Kettlebell swing", "Wall ball", "Box jump", "Pull-up (regressão)", "Push press", "Row (remo)",
+      "Deadlift (leve)", "Front squat (leve)", "Burpee", "Sit-up", "Power clean (leve)", "Farmer carry", "Lunge", "Push-up"
+    ],
+    core: ["Toes to bar (reg.)", "Sit-up", "Plank", "Hollow", "Russian twist", "Knee raises", "Dead bug", "Side plank"],
   },
 } as const;
+
 
 function prescription(mod: ModalidadeTreino, nivel: string, intensidade: IntensidadeTreino, goal: string, h: number) {
   // Ajustes de volume por nível/intensidade/objetivo (heurística segura e consistente)
@@ -146,19 +195,26 @@ function buildExercises(mod: ModalidadeTreino, nivel: string, intensidade: Inten
   if (mod === ("musculacao" as any)) {
     const lib = LIB.musculacao;
     const split = [
-      ["peito","ombro","bracos","core"],
-      ["costas","bracos","core"],
-      ["pernas","core"],
-      ["peito","costas","core"],
-      ["pernas","ombro","core"],
-    ];
-    const pickSplit = pick(split, h);
+  ["peito","ombro","bracos","core"],
+  ["costas","bracos","core"],
+  ["pernas","core"],
+  ["peito","costas","core"],
+  ["pernas","ombro","core"],
+  ["peito","triceps","core"],
+  ["costas","biceps","core"],
+  ["pernas","gluteos","core"],
+  ["ombro","bracos","core"],
+  ["peito","costas","ombro","core"],
+  ["pernas","panturrilha","core"],
+];
+const pickSplit = pick(split, h);
     const out: any[] = [];
 
     out.push({ nome: pick(lib.aquecimento, h+1), grupo: "Aquecimento" });
 
     for (const g of pickSplit) {
-      const pool = (lib as any)[g] as string[];
+      const key = (g === "biceps" || g === "triceps") ? "bracos" : (g === "gluteos" || g === "panturrilha") ? "pernas" : g;
+      const pool = (lib as any)[key] as string[];
       // 2 exercícios por grupamento (variação por seed)
       out.push({ nome: pick(pool, h + out.length * 7), grupo: g.toUpperCase() });
       out.push({ nome: pick(pool, h + out.length * 11), grupo: g.toUpperCase() });
