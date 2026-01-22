@@ -51,10 +51,10 @@ export function Step6Saude() {
         
         
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Saúde e sinais do corpo</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Segurança, recuperação e contexto</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Essas informações ajudam a ajustar o plano com segurança: sono, estresse, histórico e sinais do corpo influenciam recuperação e aderência.
-            Quanto mais fiel à sua rotina real, mais consistente fica a estratégia.
+            Aqui você sinaliza o que pode influenciar sua recuperação e evolução. Não é diagnóstico — é calibração.
+            Se algo doer, limitar ou exigir cuidado, o plano fica mais seguro e sustentável.
           </p>
         </div>
 
@@ -62,16 +62,16 @@ export function Step6Saude() {
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
         </div>
-        <h2 className="text-3xl font-bold mb-2">Saúde e Contexto Clínico</h2>
-        <p className="text-muted-foreground">Informações importantes para sua segurança</p>
+        <h2 className="text-3xl font-bold mb-2">Contexto de saúde</h2>
+        <p className="text-muted-foreground">Preferências, limites e histórico — para um plano inteligente e seguro.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
         
-<Card className="border-0 bg-transparent shadow-none p-0 hidden">
+<Card className="border-white/10 bg-white/5">
           <CardHeader>
-            <CardTitle>Dores Articulares</CardTitle>
-            <CardDescription>Selecione as regiões com dor ou desconforto</CardDescription>
+            <CardTitle>Sinais do corpo (opcional)</CardTitle>
+            <CardDescription>Se algo incomoda com frequência, marque aqui. Isso ajuda a ajustar estímulos e evitar piora.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -98,13 +98,13 @@ export function Step6Saude() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Limitações Físicas</CardTitle>
-            <CardDescription>Liste qualquer limitação física (opcional)</CardDescription>
+            <CardTitle>Limitações e cuidados</CardTitle>
+            <CardDescription>Se existe algo que você evita ou precisa adaptar, escreva em linhas separadas (opcional).</CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
               {...register('limitacoes')}
-              placeholder="Ex: Não consigo correr devido a problema no joelho&#10;Dificuldade para levantar peso acima da cabeça"
+              placeholder="Ex: Evito corrida por dor no joelho&#10;Limitação acima da cabeça (ombro)&#10;Dor lombar em agachamentos pesados"
               className="min-h-[100px] resize-none"
             />
           </CardContent>
@@ -112,13 +112,13 @@ export function Step6Saude() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Observações Clínicas</CardTitle>
-            <CardDescription>Informações médicas relevantes (opcional)</CardDescription>
+            <CardTitle>Contexto clínico (opcional)</CardTitle>
+            <CardDescription>Condições/medicações relevantes que impactam treino, dieta ou recuperação (opcional).</CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
               {...register('observacoes')}
-              placeholder="Ex: Hipertensão controlada, uso de medicamento X"
+              placeholder="Ex: Hipertensão controlada (medicação)&#10;Acompanhamento médico em andamento&#10;Qualquer observação relevante"
               className="min-h-[100px] resize-none"
             />
           </CardContent>
@@ -126,13 +126,13 @@ export function Step6Saude() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Histórico de Lesões</CardTitle>
-            <CardDescription>Lesões anteriores importantes (opcional)</CardDescription>
+            <CardTitle>Histórico de lesões (opcional)</CardTitle>
+            <CardDescription>Se já teve lesão/cirurgia importante, registre aqui. Uma linha por evento (opcional).</CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
               {...register('historico')}
-              placeholder="Ex: Cirurgia no ombro direito em 2020&#10;Entorse de tornozelo em 2022"
+              placeholder="Ex: Cirurgia no ombro direito (2020)&#10;Entorse de tornozelo (2022)&#10;Tendinite recorrente (local/ano)"
               className="min-h-[100px] resize-none"
             />
           </CardContent>
