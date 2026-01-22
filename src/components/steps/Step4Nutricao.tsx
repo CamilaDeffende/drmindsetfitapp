@@ -264,10 +264,10 @@ export function Step4Nutricao() {
         
         
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Nutrição e preferências</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Nutrição e aderência</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Aqui ajustamos o plano alimentar para ficar eficiente e sustentável: preferências, rotina e restrições melhoram a aderência.
-            Com isso, a dieta sai mais realista, com distribuição de macros coerente com seu objetivo e gasto diário.
+            Aqui a gente calibra seu plano alimentar para ser eficiente e sustentável. Preferências, rotina e restrições aumentam a aderência — e aderência é o que dá resultado.
+            O sistema usa seu gasto diário e objetivo para definir calorias e macros de forma coerente.
           </p>
         </div>
 
@@ -275,18 +275,18 @@ export function Step4Nutricao() {
         <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] mb-3 sm:mb-4 hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
           <UtensilsCrossed className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Planejamento Nutricional</h2>
-        <p className="text-sm sm:text-base text-muted-foreground">Personalize sua dieta</p>
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Plano alimentar</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">Ajuste para sua rotina e objetivo</p>
       </div>
 
       {/* Meta Calórica */}
       <Card className="mb-4 sm:mb-6">
         <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="text-lg sm:text-xl">Seu Alvo Calórico</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Calorias alvo</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-4 sm:py-6">
-            <p className="text-4xl sm:text-5xl font-bold text-green-600">{state.metabolismo?.caloriasAlvo || 0}</p>
+            <p className="text-4xl sm:text-5xl font-bold text-white">{state.metabolismo?.caloriasAlvo || 0}</p>
             <p className="text-sm sm:text-base text-muted-foreground mt-2">calorias por dia</p>
           </div>
         </CardContent>
@@ -295,12 +295,11 @@ export function Step4Nutricao() {
       {/* Estratégia */}
       <Card className="mb-4 sm:mb-6">
         <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">Estratégia Nutricional</CardTitle>
-          <CardDescription className="text-sm">Como ajustar suas calorias</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Estratégia</CardTitle>
+          <CardDescription className="text-sm">Como ajustar suas calorias com segurança</CardDescription>
         </CardHeader>
         <CardContent>
-          <Label className="text-sm sm:text-base">Abordagem</Label>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+          <Label className="text-sm sm:text-base">Escolha a abordagem</Label>
           <Select value={estrategia} onValueChange={(v: string) => setEstrategia(v as typeof estrategia)}>
             <SelectTrigger className="mt-2">
               <SelectValue />
@@ -319,8 +318,8 @@ export function Step4Nutricao() {
       {/* Seleção de Refeições */}
       <Card className="mb-4 sm:mb-6">
         <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">Selecione suas Refeições</CardTitle>
-          <CardDescription className="text-sm">Escolha quais refeições você fará ao longo do dia</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Refeições do seu dia</CardTitle>
+          <CardDescription className="text-sm">Selecione somente o que você consegue sustentar no dia a dia (quanto mais realista, melhor).</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -330,7 +329,7 @@ export function Step4Nutricao() {
                 onClick={() => toggleRefeicao(ref.value)}
                 className={`p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   refeicoesSelecionadas.includes(ref.value)
-                    ? 'border-[#1E6BFF] bg-[#1E6BFF] dark:bg-[#1E6BFF]'
+                    ? 'border-[#1E6BFF] bg-white/5 border border-white/10'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -340,7 +339,7 @@ export function Step4Nutricao() {
                     <p className="text-xs sm:text-sm text-muted-foreground">{ref.horarioPadrao}</p>
                   </div>
                   {refeicoesSelecionadas.includes(ref.value) && (
-                    <Check className="w-5 h-5 text-[#1E6BFF]" />
+                    <Check className="w-5 h-5 text-white" />
                   )}
                 </div>
               </div>
@@ -355,8 +354,8 @@ export function Step4Nutricao() {
       {/* Restrições */}
       <Card className="mb-4 sm:mb-6">
         <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">Restrições Alimentares</CardTitle>
-          <CardDescription className="text-sm">Selecione suas restrições (opcional)</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Restrições e preferências</CardTitle>
+          <CardDescription className="text-sm">Opcional — usamos isso para evitar sugestões que não fazem sentido para você.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -380,22 +379,22 @@ export function Step4Nutricao() {
       {/* Macros Preview */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">Macronutrientes Calculados</CardTitle>
-          <CardDescription className="text-sm">Distribuição baseada no seu perfil</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Prévia de macros</CardTitle>
+          <CardDescription className="text-sm">Estimativa inicial baseada no seu peso e na meta calórica. Você ajusta ao longo do acompanhamento.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            <div className="text-center p-3 sm:p-4 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-white/5 border border-white/10 rounded-lg">
               <p className="text-xs sm:text-sm text-muted-foreground mb-1">Proteína</p>
-              <p className="text-xl sm:text-2xl font-bold text-[#1E6BFF]">{Math.round((state.avaliacao?.peso || 70) * 2)}g</p>
+              <p className="text-xl sm:text-2xl font-bold text-white">{Math.round((state.avaliacao?.peso || 70) * 2)}g</p>
             </div>
-            <div className="text-center p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-white/5 border border-white/10 rounded-lg">
               <p className="text-xs sm:text-sm text-muted-foreground mb-1">Gorduras</p>
-              <p className="text-xl sm:text-2xl font-bold text-yellow-600">{Math.round((state.avaliacao?.peso || 70) * 1)}g</p>
+              <p className="text-xl sm:text-2xl font-bold text-white">{Math.round((state.avaliacao?.peso || 70) * 1)}g</p>
             </div>
-            <div className="text-center p-3 sm:p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+            <div className="text-center p-3 sm:p-4 bg-white/5 border border-white/10 rounded-lg">
               <p className="text-xs sm:text-sm text-muted-foreground mb-1">Carbos</p>
-              <p className="text-xl sm:text-2xl font-bold text-green-600">~{Math.round(((state.metabolismo?.caloriasAlvo || 2000) - ((state.avaliacao?.peso || 70) * 2 * 4 + (state.avaliacao?.peso || 70) * 1 * 9)) / 4)}g</p>
+              <p className="text-xl sm:text-2xl font-bold text-white">~{Math.round(((state.metabolismo?.caloriasAlvo || 2000) - ((state.avaliacao?.peso || 70) * 2 * 4 + (state.avaliacao?.peso || 70) * 1 * 9)) / 4)}g</p>
             </div>
           </div>
         </CardContent>
