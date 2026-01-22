@@ -163,10 +163,10 @@ export function Step2Avaliacao() {
         
         
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Avaliação corporal</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Composição corporal</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Essas medidas ajudam a estimar composição corporal e padrões de distribuição de gordura.
-            Com isso, os cálculos das próximas etapas ficam mais precisos e o acompanhamento consegue evoluir com segurança.
+            Essas medidas ajudam a estimar composição corporal e o padrão de distribuição de gordura.
+            Quanto mais fiel o registro, mais preciso fica o seu plano (treino, dieta e metas) nas próximas etapas.
           </p>
         </div>
 
@@ -174,8 +174,8 @@ export function Step2Avaliacao() {
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
         </div>
-        <h2 className="text-3xl font-bold mb-2">Avaliação Física Completa</h2>
-        <p className="text-muted-foreground">Dados antropométricos e composição corporal</p>
+        <h2 className="text-3xl font-bold mb-2">Calibração corporal</h2>
+        <p className="text-muted-foreground">Antropometria + composição (opcional)</p>
       </div>
 
       <Form {...form}>
@@ -184,8 +184,8 @@ export function Step2Avaliacao() {
           {/* Antropometria Básica */}
           <Card>
             <CardHeader>
-              <CardTitle>Antropometria Básica</CardTitle>
-              <CardDescription>Medidas fundamentais</CardDescription>
+              <CardTitle>Base antropométrica</CardTitle>
+              <CardDescription>Peso e altura para IMC e cálculos metabólicos.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -222,7 +222,7 @@ export function Step2Avaliacao() {
                   <div className="h-10 flex items-center px-3 bg-muted rounded-md">
                     <span className="text-lg font-bold">{calcularIMC(peso, altura)}</span>
                   </div>
-                  <FormDescription className="text-xs mt-1">Apenas informativo</FormDescription>
+                  <FormDescription className="text-xs mt-1">Indicador geral (não define composição).</FormDescription>
                 </div>
               </div>
             </CardContent>
@@ -231,8 +231,8 @@ export function Step2Avaliacao() {
           {/* Circunferências */}
           <Card>
             <CardHeader>
-              <CardTitle>Circunferências Corporais</CardTitle>
-              <CardDescription>Todos os campos são opcionais (cm)</CardDescription>
+              <CardTitle>Circunferências (opcional)</CardTitle>
+              <CardDescription>Em cm — ajuda a estimar distribuição e RCQ (quando disponível).</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -304,7 +304,7 @@ export function Step2Avaliacao() {
           <Card>
             <CardHeader>
               <CardTitle>Composição Corporal</CardTitle>
-              <CardDescription>Escolha o método disponível</CardDescription>
+              <CardDescription>Use o método que você tem hoje (se não tiver, pode seguir).</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -312,7 +312,7 @@ export function Step2Avaliacao() {
                 name="metodoComposicao"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Método</FormLabel>
+                    <FormLabel>Método disponível</FormLabel>
                     <Select onValueChange={(value) => {
                       field.onChange(value)
                       setMetodoSelecionado(value as MetodoComposicao)
