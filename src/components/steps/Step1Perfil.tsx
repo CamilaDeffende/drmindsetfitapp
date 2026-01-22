@@ -55,10 +55,10 @@ export function Step1Perfil() {
         
         
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Seu perfil</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Base do seu plano</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Esses dados calibram as estimativas iniciais (metabolismo, necessidades energéticas e distribuição de macros).
-            Quanto mais preciso aqui, mais assertivo fica o plano nas próximas etapas.
+            Esses dados calibram as estimativas iniciais (metabolismo, gasto diário e distribuição de macros).
+            Preencha o essencial com precisão — isso aumenta a qualidade do treino, da dieta e do relatório final.
           </p>
         </div>
 
@@ -66,21 +66,21 @@ export function Step1Perfil() {
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
         </div>
-        <h2 className="text-3xl font-bold mb-2">Perfil do Usuário</h2>
-        <p className="text-muted-foreground">Vamos conhecer você e seus objetivos</p>
+        <h2 className="text-3xl font-bold mb-2">Vamos calibrar seu protocolo</h2>
+        <p className="text-muted-foreground">Leva ~2 minutos. Quanto mais fiel, mais assertivo o seu plano.</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Informações Pessoais</CardTitle>
-          <CardDescription>Preencha seus dados para criar uma base de contexto personalizada</CardDescription>
+          <CardTitle>Dados para calibração</CardTitle>
+          <CardDescription>Usamos isso para estimar metabolismo, definir metas e personalizar treino + nutrição nas próximas etapas.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
               {/* Dados Pessoais Essenciais */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Dados Essenciais</h3>
+                <h3 className="font-semibold text-lg">Essenciais</h3>
 
                 <FormField
                   control={form.control}
@@ -102,7 +102,7 @@ export function Step1Perfil() {
                     name="sexo"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Sexo Biológico</FormLabel>
+                        <FormLabel>Sexo biológico (para cálculos)</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -169,7 +169,7 @@ export function Step1Perfil() {
                   name="historicoPeso"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Histórico de Peso (opcional)</FormLabel>
+                      <FormLabel>Histórico de peso (opcional)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ex: Já pesei 90kg, emagreci para 75kg em 2020..."
@@ -188,14 +188,14 @@ export function Step1Perfil() {
 
               {/* Objetivo */}
               <div className="space-y-4 pt-6 border-t">
-                <h3 className="font-semibold text-lg">Objetivo Principal</h3>
+                <h3 className="font-semibold text-lg">Direção do plano</h3>
 
                 <FormField
                   control={form.control}
                   name="objetivo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Qual é o seu objetivo?</FormLabel>
+                      <FormLabel>Qual resultado você quer priorizar agora?</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
