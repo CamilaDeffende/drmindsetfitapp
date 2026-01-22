@@ -46,6 +46,7 @@ function __mfSortDays(keys: __MfDayKey[]) {
   const order = new Map(__mfWeekDays.map((d, i) => [d.key, i] as const));
   return [...keys].sort((a,b) => (order.get(a) ?? 999) - (order.get(b) ?? 999));
 }
+import { generateWeeklyWorkout } from "@/features/fitness-suite/engine/workoutGenerator";
 
 export function Step5Treino() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
@@ -195,6 +196,13 @@ export function Step5Treino() {
       },
     } as any);
 
+    // Treino inteligente (individualizado + variações por seed)
+    const treinoPlan = generateWeeklyWorkout({ state, daysSelected, planByDay: (planByDay as any) });
+    updateState({ treino: treinoPlan } as any);
+
+    // anexar ao protocolo semanal (fallback p/ telas que leem workoutProtocolWeekly)
+    try { (__protocol as any).treinoPlan = treinoPlan; } catch (e) {}
+    
 updateState({ workoutProtocolWeekly: __protocol } as any);
     nextStep();
   };
