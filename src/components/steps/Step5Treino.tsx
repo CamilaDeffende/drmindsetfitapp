@@ -97,6 +97,9 @@ export function Step5Treino() {
   const [levelByModality, setLevelByModality] = useState<Record<__MfModality, __MfLevel>>(({ ...__mfDefaultLevels, ...initialLevelByModality }) as any);
   const [daysSelected, setDaysSelected] = useState<__MfDayKey[]>(initialDays);
   const [planByDay, setPlanByDay] = useState<Record<__MfDayKey, __MfModality>>((initialPlanByDay as any) ?? ({} as any));
+  const [__mfGenerated, set__mfGenerated] = useState(false);
+  const [__mfTreinoPreview, set__mfTreinoPreview] = useState<any>(null);
+  const [__mfProtocolPreview, set__mfProtocolPreview] = useState<any>(null);
 
   const toggleModality = (k: __MfModality) => {
     const on = selectedModalities.includes(k);
@@ -153,8 +156,8 @@ export function Step5Treino() {
     } as any);
   };
 
-  const handleContinuar = () => {
-    if (!canContinue) return;
+    const handleGerarTreino = () => {
+if (!canContinue) return;
 
     // persiste coleta essencial
     persistToState();
@@ -204,6 +207,17 @@ export function Step5Treino() {
     try { (__protocol as any).treinoPlan = treinoPlan; } catch (e) {}
     
 updateState({ workoutProtocolWeekly: __protocol } as any);
+
+    // Preview completo do protocolo (antes de avançar)
+    set__mfTreinoPreview(treinoPlan);
+    set__mfProtocolPreview(__protocol);
+    set__mfGenerated(true);
+
+  };
+
+  const handleContinuar = () => {
+    if (!__mfGenerated) return;
+    // já gerado e persistido — apenas avança no fluxo
     nextStep();
   };
 
@@ -345,6 +359,49 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
         </CardContent>
       </Card>
 
+            {/* PREVIEW TREINO GERADO */}
+      {__mfGenerated && (__mfTreinoPreview?.treinos?.length || __mfProtocolPreview) ? (
+        <Card className="mt-4 border-white/10 bg-white/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Seu protocolo semanal</CardTitle>
+            <CardDescription>
+              Treino individualizado com base nas suas modalidades, nível e dias selecionados.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(__mfTreinoPreview?.treinos ?? []).map((dia: any, idx: number) => (
+                <div key={idx} className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold">{dia?.dia ?? "Dia"}</div>
+                    <Badge variant="secondary" className="text-xs">
+                      {(dia?.exercicios?.length ?? 0)} exercícios
+                    </Badge>
+                  </div>
+                  {dia?.foco ? (
+                    <div className="mt-1 text-xs text-muted-foreground">{dia.foco}</div>
+                  ) : null}
+                  <div className="mt-3 space-y-1">
+                    {(dia?.exercicios ?? []).map((ex: any, eIdx: number) => (
+                      <div key={eIdx} className="text-xs text-muted-foreground">
+                        • <span className="text-foreground/90">{ex?.nome ?? "Exercício"}</span>
+                        {ex?.series ? <> — {ex.series}x{ex?.reps ?? ""}</> : null}
+                        {ex?.tempo ? <> — {ex.tempo}</> : null}
+                        {ex?.descanso ? <> • Desc: {ex.descanso}</> : null}
+                        {ex?.intensidade ? <> • {ex.intensidade}</> : null}
+                      </div>
+                    ))}
+                  </div>
+                  {dia?.observacoes ? (
+                    <div className="mt-3 text-xs text-muted-foreground italic">{dia.observacoes}</div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="mt-6 flex items-center justify-between gap-3">
         <Button type="button" variant="outline" onClick={prevStep} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Voltar
@@ -352,7 +409,7 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
         <Button
           type="button"
           size="lg"
-          onClick={handleContinuar}
+          onClick={__mfGenerated ? handleContinuar : handleGerarTreino}
           disabled={!canContinue}
           className="gap-2 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
         >
