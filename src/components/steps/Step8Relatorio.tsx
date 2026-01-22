@@ -10,7 +10,7 @@ export function Step8Relatorio() {
   const { state, prevStep, resetApp } = useDrMindSetfit()
 
   const gerarRelatorioPDF = () => {
-    alert('🚀 Funcionalidade de exportação PDF será implementada em breve! Por enquanto, você pode capturar este relatório visualmente.')
+    alert('📄 Exportação em PDF: em evolução. Por enquanto, use este resumo na tela como base do seu plano. Em breve, você poderá baixar o PDF com layout premium.')
   }
 
   return (
@@ -18,10 +18,10 @@ export function Step8Relatorio() {
         
         
         <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Revisão e geração do relatório</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Revisão final do seu plano</h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Agora consolidamos seus dados para gerar um resumo executivo do plano: treino, dieta e recomendações com base no seu perfil,
-            avaliação corporal, metabolismo e rotina.
+            Aqui você vê um resumo executivo do seu plano (treino, nutrição e recomendações) com base no seu perfil,
+            avaliação corporal, metabolismo e rotina. Revise com calma — esse é o seu ponto de partida para as próximas 4–6 semanas.
           </p>
         </div>
 
@@ -29,14 +29,14 @@ export function Step8Relatorio() {
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
         </div>
-        <h2 className="text-3xl font-bold mb-2">Relatório Final Premium</h2>
-        <p className="text-muted-foreground">Seu plano completo de saúde e performance</p>
+        <h2 className="text-3xl font-bold mb-2">Relatório Premium</h2>
+        <p className="text-muted-foreground">Seu plano completo — claro, objetivo e acionável</p>
       </div>
 
       {/* Perfil */}
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Perfil do Usuário</CardTitle>
+          <CardTitle>Perfil</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="grid grid-cols-2 gap-4">
@@ -55,7 +55,7 @@ export function Step8Relatorio() {
       {/* Avaliação Física */}
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Avaliação Física</CardTitle>
+          <CardTitle>Avaliação corporal</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="grid grid-cols-3 gap-4">
@@ -97,8 +97,8 @@ export function Step8Relatorio() {
       {/* Metabolismo */}
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Metabolismo Calculado</CardTitle>
-          <CardDescription>Equação: {state.metabolismo?.equacaoUtilizada}</CardDescription>
+          <CardTitle>Metabolismo</CardTitle>
+          <CardDescription>Equação aplicada: {state.metabolismo?.equacaoUtilizada}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -122,8 +122,8 @@ export function Step8Relatorio() {
       {/* Nutrição */}
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Planejamento Nutricional</CardTitle>
-          <CardDescription>Estratégia: {state.nutricao?.estrategia}</CardDescription>
+          <CardTitle>Nutrição</CardTitle>
+          <CardDescription>Estratégia: {state.nutricao?.estrategia} (ajuste sustentável)</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -184,7 +184,7 @@ export function Step8Relatorio() {
       {/* Treino */}
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle>Planejamento de Treino</CardTitle>
+          <CardTitle>Treino semanal</CardTitle>
           <CardDescription>
             {state.treino?.divisaoSemanal} • {state.treino?.frequencia}x por semana
           </CardDescription>
@@ -210,7 +210,7 @@ export function Step8Relatorio() {
       {state.saude && (state.saude.doresArticulares.length > 0 || state.saude.observacoesClinicas) && (
         <Card className="mb-4">
           <CardHeader>
-            <CardTitle>Contexto de Saúde</CardTitle>
+            <CardTitle>Saúde e contexto</CardTitle>
           </CardHeader>
           <CardContent>
             {state.saude.doresArticulares.length > 0 && (
@@ -236,29 +236,29 @@ export function Step8Relatorio() {
       {/* Recomendações Finais */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Recomendações Finais</CardTitle>
+          <CardTitle>Diretrizes de execução (4–6 semanas)</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm">
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
-              <span>Siga o plano alimentar e de treino por 4-6 semanas antes de fazer ajustes</span>
+              <span>Execute o plano por 4–6 semanas antes de ajustar (consistência primeiro)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
-              <span>Registre seu progresso semanalmente (peso, medidas, fotos)</span>
+              <span>Registre o progresso 1x/semana (peso, medidas e fotos no mesmo padrão)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
-              <span>Priorize a qualidade do sono (7-9 horas por noite)</span>
+              <span>Sono é parte do plano: priorize 7–9h/noite para recuperar e evoluir</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
-              <span>Mantenha boa hidratação (35ml/kg de peso corporal)</span>
+              <span>Hidratação: referência de 35 ml/kg/dia (ajuste conforme treino e calor)</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
-              <span>Consulte profissionais de saúde antes de mudanças significativas</span>
+              <span>Se houver condição clínica, alinhe mudanças relevantes com seu médico (segurança sempre)</span>
             </li>
           </ul>
         </CardContent>
