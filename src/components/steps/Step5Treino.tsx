@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { buildWeeklyProtocol } from "@/features/fitness-suite/engine/weeklyProtocol";
 
+import { computeFinalTargetCalories } from "@/features/fitness-suite/engine/goalEnergy";
 const __mfAllowedModalities = ["musculacao","funcional","corrida","bike_indoor","crossfit"] as const;
 type __MfModality = typeof __mfAllowedModalities[number];
 
@@ -166,7 +167,35 @@ export function Step5Treino() {
       workoutPlanByDay: planByDay,
     });
 
-    updateState({ workoutProtocolWeekly: __protocol } as any);
+        // energia alvo final (GET + ajuste por objetivo + carga semanal)
+    const getKcal = Number((state as any)?.metabolismo?.get ?? (state as any)?.metabolismo?.caloriasAlvo ?? 0);
+    const pesoKg = Number((state as any)?.avaliacao?.peso ?? (state as any)?.perfil?.pesoAtual ?? 70);
+    const nivelAtv = String((state as any)?.metabolismo?.nivelAtividade ?? (state as any)?.perfil?.nivelTreino ?? 'iniciante').toLowerCase();
+    const level = (nivelAtv.includes('avan') ? 'avancado' : nivelAtv.includes('inter') ? 'intermediario' : 'iniciante');
+    const goalRaw = (state as any)?.perfil?.objetivo;
+    const energy = computeFinalTargetCalories({
+      getKcal: getKcal || 0,
+      goalRaw,
+      level,
+      daysSelected,
+      planByDay: planByDay as any,
+      pesoKg,
+    });
+
+    // persistir no state para Nutrição/Relatório (transparência + consistência)
+    updateState({
+      metabolismo: {
+        ...(state as any).metabolismo,
+        objetivoNormalizado: energy.goal,
+        treinoKcalSemanalEstimado: energy.treinoKcalSemanal,
+        treinoKcalDiaMedioEstimado: energy.treinoKcalDiaMedio,
+        deltaObjetivoKcal: energy.deltaObjetivoKcal,
+        caloriasAlvo: energy.caloriasAlvoFinal,
+        caloriasAlvoFinal: energy.caloriasAlvoFinal,
+      },
+    } as any);
+
+updateState({ workoutProtocolWeekly: __protocol } as any);
     nextStep();
   };
 
