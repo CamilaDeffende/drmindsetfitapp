@@ -424,7 +424,9 @@ const __lvl = (__k && __mfLevelByModality) ? __mfLevelByModality[__k] : null;
 
                 {temTreino && (
                   <TabsContent value="treino" className="mt-0">
-                    <TreinoAtivoView treinoAtivo={state.treinoAtivo!} />
+                    
+          <WeeklyProtocolActive />
+<TreinoAtivoView treinoAtivo={state.treinoAtivo!} />
                   </TabsContent>
                 )}
               </Tabs>
