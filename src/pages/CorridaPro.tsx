@@ -4,7 +4,6 @@ import type { LatLngExpression } from "leaflet";
 import { useRunSession } from "@/features/run-pro/hooks/useRunSession";
 import { downloadTextFile, sessionToGpx } from "@/features/run-pro/gpx";
 import { formatDuration, formatPace } from "@/features/run-pro/utils";
-
 function km(m: number) {
   return (m / 1000).toFixed(2);
 }
