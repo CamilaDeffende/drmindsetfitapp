@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type { Session, TrackPoint, RunStatus } from "../types";
 import { buildSplits, paceSecPerKm, shouldAcceptPoint, smoothPace } from "../utils";
-
 type Action =
   | { type: "RESET" }
   | { type: "SET_STATUS"; status: RunStatus }
@@ -123,11 +122,9 @@ export function useRunSession() {
     }
     dispatch({ type: "SET_STATUS", status: "acquiring" });
 
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
+    const id = navigator.geolocation.watchPosition((pos) => {
         const p: TrackPoint = {
-          t: pos.timestamp || Date.now(),
-          lat: pos.coords.latitude,
+          t: pos.timestamp || Date.now(), lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy ?? 9999,
           altitude: pos.coords.altitude ?? null,
@@ -135,11 +132,7 @@ export function useRunSession() {
         };
 
         const prev = lastPointRef.current;
-        const check = shouldAcceptPoint(prev, p, {
-          maxAccuracyM: session.config.maxAccuracyM,
-          maxSpeedMS: session.config.maxSpeedMS,
-          minDeltaTMs: session.config.minDeltaTMs,
-        });
+        const check = shouldAcceptPoint(prev, p, { maxAccuracyM: 25, maxSpeedMS: 7, minDeltaTMs: 800 });
 
         if (session.status === "acquiring") dispatch({ type: "SET_STATUS", status: "ready" });
         if (!check.ok) return;

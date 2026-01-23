@@ -3,7 +3,6 @@ import type { GeoPoint, RunConfig, RunMetrics, RunSample, RunStatus } from "./ty
 import { DEFAULT_RUN_CONFIG } from "./types";
 import { haversineM, isAccuracyOk, isDeltaTOk, isJumpOk, isSpeedOk } from "./filters";
 import { movingAverage } from "./smoothing";
-
 function devLog(...args: any[]) {
   if (import.meta.env.DEV) console.log("[run-pro]", ...args);
 }
@@ -73,8 +72,7 @@ export function useRunSession(config?: Partial<RunConfig>) {
     setStatus("acquiring");
     startedAtRef.current = Date.now();
 
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
+    const id = navigator.geolocation.watchPosition((pos) => {
         const gp = toGeoPoint(pos);
 
         const prev = lastAcceptedRef.current;
@@ -144,9 +142,7 @@ export function useRunSession(config?: Partial<RunConfig>) {
         setStatus("error");
         setError({ code: String(err.code), message: err.message || "Falha ao obter localização." });
         devLog("watchPosition error", err);
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
-    );
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 });
 
     watchIdRef.current = id;
   }, [cfg, reset, status]);
