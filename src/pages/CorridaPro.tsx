@@ -7,6 +7,7 @@ import { formatDuration, formatPace } from "@/features/run-pro/utils";
 import { RunCharts } from "@/features/run-pro/charts/RunCharts";
 import { CoachScoreCard } from "@/features/run-pro/coach/CoachScoreCard";
 import { ExportRunCard } from "@/features/run-pro/export/ExportRunCard";
+import { RunControlsCard } from "@/features/run-pro/ui/RunControlsCard";
 function km(m: number) {
   return (m / 1000).toFixed(2);
 }
@@ -76,7 +77,8 @@ const last = session.points.length ? session.points[session.points.length - 1] :
   };
 
   return (
-      <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
+      <RunControlsCard supportsGeo={supportsGeo} flags={flags} actions={actions} pointsCount={session.points.length} />
       <div className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex items-start justify-between gap-4">
           <div>
