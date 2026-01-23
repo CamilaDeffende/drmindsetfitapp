@@ -5,6 +5,7 @@ import { useRunSession } from "@/features/run-pro/hooks/useRunSession";
 import { downloadTextFile, sessionToGpx } from "@/features/run-pro/gpx";
 import { formatDuration, formatPace } from "@/features/run-pro/utils";
 import { RunCharts } from "@/features/run-pro/charts/RunCharts";
+import { CoachScoreCard } from "@/features/run-pro/coach/CoachScoreCard";
 function km(m: number) {
   return (m / 1000).toFixed(2);
 }
@@ -190,6 +191,12 @@ export default function CorridaPro() {
           </div>
         </div>
       </div>
+      {/* COACH_SCORE_BLOCK */}
+      <div className="mt-6">
+        <CoachScoreCard samples={[]} metrics={null} />
+      </div>
+
+
     
       {/* RUN_CHARTS_BLOCK */}
       <div className="mt-6">
