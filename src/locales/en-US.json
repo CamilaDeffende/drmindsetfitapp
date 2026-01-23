@@ -1,0 +1,27 @@
+{
+  "app": {
+    "name": "MindsetFit"
+  },
+  "global": {
+    "continue": "Continue",
+    "back": "Back",
+    "save": "Save",
+    "close": "Close"
+  },
+  "globalProfile": {
+    "title": "Location and preferences",
+    "subtitle": "Customize language, units, and local time. You can change it later.",
+    "country": "Country",
+    "region": "State/Region",
+    "city": "City",
+    "preview": "Preview",
+    "locale": "Language/Locale",
+    "units": "Units",
+    "timezone": "Time zone (IANA)",
+    "localNow": "Local time now",
+    "metric": "Metric (km)",
+    "imperial": "Imperial (mi)",
+    "deviceSuggestion": "Use device location (suggestion)",
+    "privacyHint": "You confirm manually — no coordinates are stored."
+  }
+}

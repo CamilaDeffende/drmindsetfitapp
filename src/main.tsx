@@ -5,27 +5,32 @@ import { DrMindSetfitProvider } from "./contexts/DrMindSetfitContext";
 import { SplashScreen } from "./components/branding/SplashScreen";
 import "./index.css";
 
+import { initI18n } from "@/i18n";
+
 function BootSplash({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {
-    const t = setTimeout(() => setReady(true), 850);
-    return () => clearTimeout(t);
+    const t = window.setTimeout(() => setReady(true), 850);
+    return () => window.clearTimeout(t);
   }, []);
 
   if (!ready) return <SplashScreen />;
   return <>{children}</>;
 }
 
+// init i18n antes do render (fallback pt-BR garantido)
+initI18n();
+
 const el = document.getElementById("root");
 if (!el) throw new Error("Root element #root not found");
 
 createRoot(el).render(
   <React.StrictMode>
-    <BootSplash>
-      <DrMindSetfitProvider>
+    <DrMindSetfitProvider>
+      <BootSplash>
         <App />
-      </DrMindSetfitProvider>
-    </BootSplash>
+      </BootSplash>
+    </DrMindSetfitProvider>
   </React.StrictMode>
 );
