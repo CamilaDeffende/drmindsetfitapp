@@ -78,8 +78,12 @@ const last = session.points.length ? session.points[session.points.length - 1] :
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <RunControlsCard supportsGeo={supportsGeo} flags={flags} actions={actions} pointsCount={session.points.length} />
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <RunControlsCard supportsGeo={supportsGeo} flags={flags} actions={actions} pointsCount={session.points.length} />      <div className="mt-6">
+        <RunCharts samples={derivedSamples as any} />
+      </div>
+      <div className="mt-6">
+        <CoachScoreCard samples={derivedSamples as any} />
+      </div><div className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Corrida PRO</h1>
