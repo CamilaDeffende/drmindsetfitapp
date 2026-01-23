@@ -14,6 +14,16 @@ function km(m: number) {
 export default function CorridaPro() {
     const { session, supportsGeo, polyline, actions, flags } = useRunSession();
 
+
+  const derivedSamples = session.points
+    .map((pt: any) => {
+      const lat = pt.lat ?? pt.latitude ?? pt.coords?.latitude;
+      const lng = pt.lng ?? pt.lon ?? pt.longitude ?? pt.coords?.longitude;
+      const ts = pt.ts ?? pt.t ?? pt.timestamp ?? pt.time ?? Date.now();
+      const accuracy = pt.accuracy ?? pt.coords?.accuracy ?? undefined;
+      return { lat, lng, ts, accuracy };
+    })
+    .filter((x: any) => typeof x.lat === "number" && typeof x.lng === "number");
 const last = session.points.length ? session.points[session.points.length - 1] : null;
 
   const center: LatLngExpression = useMemo(() => {
@@ -66,7 +76,7 @@ const last = session.points.length ? session.points[session.points.length - 1] :
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+      <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -194,7 +204,7 @@ const last = session.points.length ? session.points[session.points.length - 1] :
       </div>
       {/* COACH_SCORE_BLOCK */}
       <div className="mt-6">
-        <CoachScoreCard samples={[]} metrics={null} />
+        <CoachScoreCard samples={derivedSamples as any} metrics={null as any} />
       </div>
 
 
@@ -203,7 +213,7 @@ const last = session.points.length ? session.points[session.points.length - 1] :
 
       {/* EXPORT_RUN_BLOCK */}
       <div className="mt-6">
-        <ExportRunCard samples={[]} metrics={null} sessionName="Corrida PRO" />
+        <ExportRunCard samples={derivedSamples as any} metrics={null as any} sessionName="Corrida PRO" />
       </div>
 
 {/* RUN_CHARTS_BLOCK */}
@@ -212,7 +222,7 @@ const last = session.points.length ? session.points[session.points.length - 1] :
           <div className="text-sm font-semibold">Análise do treino</div>
           <div className="text-xs text-muted-foreground">pace • distância • splits</div>
         </div>
-        <RunCharts samples={[] as any} />
+        <RunCharts samples={derivedSamples as any} />
       </div>
 
 </div>
