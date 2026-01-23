@@ -1,9 +1,5 @@
 import { useMemo } from "react";
-import { MapContainer, TileLayer, Polyline, CircleMarker } from "react-leaflet";
-import type { LatLngExpression } from "leaflet";
-import { useRunSession } from "@/features/run-pro/hooks/useRunSession";
-import { downloadTextFile, sessionToGpx } from "@/features/run-pro/gpx";
-import { formatDuration, formatPace } from "@/features/run-pro/utils";
+import { useRunSession } from "@/features/run-pro/engine/useRunSession";
 import { RunCharts } from "@/features/run-pro/charts/RunCharts";
 import { CoachScoreCard } from "@/features/run-pro/coach/CoachScoreCard";
 import { ExportRunCard } from "@/features/run-pro/export/ExportRunCard";
@@ -11,239 +7,178 @@ import { RunControlsCard } from "@/features/run-pro/ui/RunControlsCard";
 import { MapView } from "@/features/run-pro/map/MapView";
 import { computeRunStats } from "@/features/run-pro/stats/compute";
 import { RunStatsCard } from "@/features/run-pro/ui/RunStatsCard";
-function km(m: number) {
-  return (m / 1000).toFixed(2);
+
+type LatLng = { lat: number; lng: number };
+type NormalizedSample = LatLng & { ts: number; accuracy?: number };
+
+function isRecord(x: unknown): x is Record<string, unknown> {
+  return typeof x === "object" && x !== null;
 }
 
-import { ExportGpxCard } from "@/features/run-pro/export/ExportGpxCard";
+function toNumber(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function toNormalizedSample(p: unknown): NormalizedSample | null {
+  if (!isRecord(p)) return null;
+
+  // suporta formatos: {lat,lng,ts,accuracy} OU {latitude,longitude,timestamp,accuracy} OU {coords:{latitude,longitude,accuracy}, timestamp}
+  const lat =
+    toNumber(p.lat) ??
+    toNumber(p.latitude) ??
+    (isRecord(p.coords) ? toNumber(p.coords.latitude) : null);
+
+  const lng =
+    toNumber(p.lng) ??
+    toNumber(p.lon) ??
+    toNumber(p.longitude) ??
+    (isRecord(p.coords) ? toNumber(p.coords.longitude) : null);
+
+  if (lat === null || lng === null) return null;
+
+  const ts =
+    toNumber(p.ts) ??
+    toNumber(p.t) ??
+    toNumber(p.timestamp) ??
+    toNumber(p.time) ??
+    Date.now();
+
+  const accuracy =
+    toNumber(p.accuracy) ??
+    (isRecord(p.coords) ? toNumber(p.coords.accuracy) ?? undefined : undefined) ??
+    undefined;
+
+  return { lat, lng, ts, accuracy: accuracy ?? undefined };
+}
+
+function statusLabel(status: string) {
+  switch (status) {
+    case "idle":
+      return "Idle";
+    case "acquiring":
+      return "Captando sinal GPS…";
+    case "ready":
+      return "Pronto para iniciar";case "recording":
+      return "Gravando";
+    case "paused":
+      return "Pausado";
+    case "finished":
+      return "Finalizado";
+    case "error":
+      return "Erro";
+    default:
+      return "Pronto";
+  }
+}
+
 export default function CorridaPro() {
-    const { session, supportsGeo, polyline, actions, flags } = useRunSession();
+  const { status, error, samples, config, actions } = useRunSession();
 
+  const supportsGeo = typeof window !== "undefined" && !!navigator.geolocation;
 
-  const derivedSamples = session.points
-    .map((pt: any) => {
-      const lat = pt.lat ?? pt.latitude ?? pt.coords?.latitude;
-      const lng = pt.lng ?? pt.lon ?? pt.longitude ?? pt.coords?.longitude;
-      const ts = pt.ts ?? pt.t ?? pt.timestamp ?? pt.time ?? Date.now();
-      const accuracy = pt.accuracy ?? pt.coords?.accuracy ?? undefined;
-      return { lat, lng, ts, accuracy };
-    })
-    .filter((x: any) => typeof x.lat === "number" && typeof x.lng === "number");
-const last = session.points.length ? session.points[session.points.length - 1] : null;
+  const flags = useMemo(
+    () =>
+      ({
+        canStart: status === "idle" || status === "ready",
+        canPause: status === "recording",
+        canResume: status === "paused",
+        canFinish: status === "recording" || status === "paused",
+        canExport: status === "finished" && samples.length > 0,
+        canReset: status !== "idle",
+      }) as const,
+    [samples.length, status]
+  );
 
-  const center: LatLngExpression = useMemo(() => {
-    if (last) return [last.lat, last.lng];
-    return [-22.9068, -43.1729]; // fallback
-  }, [last]);
+  const derivedSamples = useMemo(() => samples.map(toNormalizedSample).filter((v): v is NormalizedSample => v !== null), [samples]);
 
-  const statusLabel =
-    session.status === "acquiring" ? "Captando sinal GPS…" :
-    session.status === "ready" ? "Pronto para iniciar" :
-    session.status === "recording" ? "Gravando" :
-    session.status === "paused" ? "Pausado" :
-    session.status === "finished" ? "Finalizado" :
-    session.status === "error" ? "Erro" : "Pronto";
+  const last = derivedSamples.length ? derivedSamples[derivedSamples.length - 1] : null;
 
-  const statusHint =
-    !supportsGeo ? "Seu navegador não suporta GPS (Geolocation)." :
-    session.status === "acquiring" ? `Aguardando melhor precisão… (máx ${session.config.maxAccuracyM}m)` :
-    session.status === "ready" ? "Quando estiver pronto, toque em Iniciar." :
-    session.status === "recording" ? "Mantenha boa visada do céu para melhor precisão." :
-    session.status === "paused" ? "Você pode retomar quando quiser." :
-    session.status === "finished" ? "Você pode exportar o GPX e salvar o resumo." :
-    session.status === "error" ? (session.error ?? "Erro inesperado") :
-    "";
+  const center = useMemo<LatLng>(
+    () => (last ? { lat: last.lat, lng: last.lng } : { lat: -22.9068, lng: -43.1729 }),
+    [last]
+  );
 
-  const exportGpx = () => {
-    const gpx = sessionToGpx(session);
-    const name = `corrida-pro-${new Date(session.startedAt ?? Date.now()).toISOString().slice(0,19).replace(/[:T]/g,"-")}.gpx`;
-    downloadTextFile(name, gpx, "application/gpx+xml");
-  };
+  const hint = useMemo(() => {
+    if (!supportsGeo) return "Seu navegador não suporta GPS (Geolocation).";
+    if (status === "acquiring") return `Aguardando melhor precisão… (máx ${config.maxAccuracyM}m)`;
+    if (status === "ready") return "Quando estiver pronto, toque em Iniciar.";
+    if (status === "recording") return "GPS ao vivo — mantenha boa visada do céu para melhor precisão.";
+    if (status === "paused") return "Pausado — você pode retomar quando quiser.";
+    if (status === "finished") return "Finalizado — exporte o GPX e salve o resumo.";
+    if (status === "error") return typeof error === "string" ? error : "Erro ao capturar GPS.";
+    return "";
+  }, [config.maxAccuracyM, error, status, supportsGeo]);
 
-  const exportSummary = () => {
-    const lines = [
-      "Corrida PRO — Resumo do Treino",
-      `Início: ${session.startedAt ? new Date(session.startedAt).toLocaleString("pt-BR") : "-"}`,
-      `Fim: ${session.endedAt ? new Date(session.endedAt).toLocaleString("pt-BR") : "-"}`,
-      `Distância: ${km(session.distanceM)} km`,
-      `Tempo: ${formatDuration(session.elapsedS)}`,
-      `Pace médio: ${formatPace(session.avgPaceSecPerKm)}/km`,
-      `Pace atual: ${formatPace(session.currentPaceSecPerKm)}/km`,
-      "",
-      "Splits (1km):",
-      ...session.splits.map(s => `#${s.idx} — ${formatPace(s.paceSecPerKm)}/km — ${formatDuration(s.durationS)}`),
-      "",
-      `Pontos gravados: ${session.points.length}`,
-      `Config: accuracy<=${session.config.maxAccuracyM}m, speed<=${session.config.maxSpeedMS}m/s`,
-    ].join("\n");
-    const name = `corrida-pro-resumo-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.txt`;
-    downloadTextFile(name, lines, "text/plain;charset=utf-8");
-  };
+  const stats = useMemo(() => computeRunStats(derivedSamples), [derivedSamples]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <RunControlsCard supportsGeo={supportsGeo} flags={flags} actions={actions} pointsCount={session.points.length} />      <div className="mt-6">
-      <RunStatsCard stats={computeRunStats(derivedSamples)} />
-      {/* RUNPRO_MAP_BLOCK */}
-      <div className="mt-4">
-      <MapView center={center as any} />
-      </div>
-
-        <RunCharts samples={derivedSamples as any} />
-      </div>
-      <div className="mt-6">
-        <CoachScoreCard samples={derivedSamples as any} />
-      
-      {/* RUNPRO_EXPORT_GPX */}
-      <ExportGpxCard points={derivedSamples as any} title="Export ultra" />
-</div><div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Corrida PRO</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{statusLabel} • {statusHint}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {statusLabel(status)} • {hint}
+            </p>
           </div>
+        </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm border border-border hover:bg-muted" onClick={actions.reset}>
-              Reset
-            </button>
-
-            <button
-              className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
-              onClick={actions.start}
-              disabled={!flags.canStart}
-            >
-              Iniciar
-            </button>
-
-            <button
-              className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm border border-border hover:bg-muted disabled:opacity-50"
-              onClick={actions.pause}
-              disabled={!flags.canPause}
-            >
-              Pausar
-            </button>
-
-            <button
-              className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm border border-border hover:bg-muted disabled:opacity-50"
-              onClick={actions.resume}
-              disabled={!flags.canResume}
-            >
-              Retomar
-            </button>
-
-            <button
-              className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm border border-border hover:bg-muted disabled:opacity-50"
-              onClick={actions.finish}
-              disabled={!flags.canFinish}
-            >
-              Finalizar
-            </button>
-
-            <button
-              className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm border border-border hover:bg-muted disabled:opacity-50"
-              onClick={exportGpx}
-              disabled={!flags.canExport}
-            >
-              Exportar GPX
-            </button>
-
-            <button
-              className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm border border-border hover:bg-muted disabled:opacity-50"
-              onClick={exportSummary}
-              disabled={session.status !== "finished"}
-            >
-              Resumo
-            </button>
-          </div>
+        <div className="mt-6">
+          <RunControlsCard
+            supportsGeo={supportsGeo}
+            flags={flags}
+            actions={actions}
+            pointsCount={derivedSamples.length}
+          />
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-2xl border border-border overflow-hidden shadow-sm">
-            <div className="h-[520px] w-full">
-              <MapContainer center={center} zoom={16} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
-                <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                {polyline.length > 1 && <Polyline positions={polyline} />}
-                {last && <CircleMarker center={[last.lat, last.lng]} radius={6} />}
-              </MapContainer>
+            <div className="relative">
+              <div className="absolute left-3 top-3 z-10 rounded-full border border-border bg-background/80 px-3 py-1 text-xs backdrop-blur">
+                GPS Live
+              </div>
+              <div className="h-[520px] w-full">
+                {/* MapView hoje é center-only (ok). */}
+                <MapView center={center as unknown as any} />
+              </div>
             </div>
           </div>
 
           <div className="rounded-2xl border border-border p-4 shadow-sm">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-border p-3">
-                <div className="text-xs text-muted-foreground">Tempo</div>
-                <div className="mt-1 text-lg font-semibold">{formatDuration(session.elapsedS)}</div>
-              </div>
-              <div className="rounded-xl border border-border p-3">
-                <div className="text-xs text-muted-foreground">Distância</div>
-                <div className="mt-1 text-lg font-semibold">{km(session.distanceM)} km</div>
-              </div>
-              <div className="rounded-xl border border-border p-3">
-                <div className="text-xs text-muted-foreground">Pace atual</div>
-                <div className="mt-1 text-lg font-semibold">{formatPace(session.currentPaceSecPerKm)}/km</div>
-              </div>
-              <div className="rounded-xl border border-border p-3">
-                <div className="text-xs text-muted-foreground">Pace médio</div>
-                <div className="mt-1 text-lg font-semibold">{formatPace(session.avgPaceSecPerKm)}/km</div>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="text-sm font-semibold">Splits (1 km)</div>
-              <div className="mt-2 max-h-[260px] overflow-auto rounded-xl border border-border">
-                {session.splits.length === 0 ? (
-                  <div className="p-3 text-sm text-muted-foreground">Sem splits ainda. Complete 1 km para gerar o primeiro.</div>
-                ) : (
-                  <ul className="divide-y divide-border">
-                    {session.splits.map((s) => (
-                      <li key={s.idx} className="p-3 flex items-center justify-between">
-                        <span className="text-sm">#{s.idx}</span>
-                        <span className="text-sm text-muted-foreground">{formatDuration(s.durationS)}</span>
-                        <span className="text-sm font-medium">{formatPace(s.paceSecPerKm)}/km</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-
+            <RunStatsCard stats={stats} />
             {!supportsGeo && (
               <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm">
                 GPS indisponível neste navegador. Use um dispositivo compatível e permita a geolocalização.
               </div>
             )}
-            {session.status === "error" && (
+            {status === "error" && (
               <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm">
-                {session.error ?? "Erro ao capturar GPS."}
+                {typeof error === "string" ? error : "Erro ao capturar GPS."}
               </div>
             )}
+            <div className="mt-4 rounded-xl border border-border p-3 text-sm text-muted-foreground">
+              Qualidade do sinal: <span className="text-foreground">{(typeof last?.accuracy === "number" && Number.isFinite(last.accuracy)) ? Math.max(0, Math.min(100, Math.round(100 - (last.accuracy * 0.9)))) : 0}</span>/100
+            </div>
           </div>
         </div>
-      </div>
-      {/* COACH_SCORE_BLOCK */}
-      <div className="mt-6">
-        <CoachScoreCard samples={derivedSamples as any}  />
-      </div>
 
-
-    
-      
-
-      {/* EXPORT_RUN_BLOCK */}
-      <div className="mt-6">
-        <ExportRunCard samples={derivedSamples as any} sessionName="Corrida PRO"  />
-      </div>
-
-{/* RUN_CHARTS_BLOCK */}
-      <div className="mt-6">
-        <div className="mb-3 flex items-baseline justify-between">
-          <div className="text-sm font-semibold">Análise do treino</div>
-          <div className="text-xs text-muted-foreground">pace • distância • splits</div>
+        <div className="mt-6">
+          <div className="mb-3 flex items-baseline justify-between">
+            <div className="text-sm font-semibold">Análise do treino</div>
+            <div className="text-xs text-muted-foreground">pace • distância • precisão</div>
+          </div>
+          <RunCharts samples={derivedSamples as unknown as any} />
         </div>
-        <RunCharts samples={derivedSamples as any} />
-      </div>
 
-</div>
+        <div className="mt-6">
+          <CoachScoreCard samples={derivedSamples as unknown as any} />
+        </div>
+
+        <div className="mt-6">
+          <ExportRunCard samples={derivedSamples as unknown as any} sessionName="Corrida PRO" />
+        </div>
+      </div>
+    </div>
   );
 }
