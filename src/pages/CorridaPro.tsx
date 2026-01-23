@@ -7,50 +7,9 @@ import { RunControlsCard } from "@/features/run-pro/ui/RunControlsCard";
 import { MapView } from "@/features/run-pro/map/MapView";
 import { computeRunStats } from "@/features/run-pro/stats/compute";
 import { RunStatsCard } from "@/features/run-pro/ui/RunStatsCard";
+import type { RunSample } from "@/features/run-pro/engine/types";
 
 type LatLng = { lat: number; lng: number };
-type NormalizedSample = LatLng & { ts: number; accuracy?: number };
-
-function isRecord(x: unknown): x is Record<string, unknown> {
-  return typeof x === "object" && x !== null;
-}
-
-function toNumber(v: unknown): number | null {
-  return typeof v === "number" && Number.isFinite(v) ? v : null;
-}
-
-function toNormalizedSample(p: unknown): NormalizedSample | null {
-  if (!isRecord(p)) return null;
-
-  // suporta formatos: {lat,lng,ts,accuracy} OU {latitude,longitude,timestamp,accuracy} OU {coords:{latitude,longitude,accuracy}, timestamp}
-  const lat =
-    toNumber(p.lat) ??
-    toNumber(p.latitude) ??
-    (isRecord(p.coords) ? toNumber(p.coords.latitude) : null);
-
-  const lng =
-    toNumber(p.lng) ??
-    toNumber(p.lon) ??
-    toNumber(p.longitude) ??
-    (isRecord(p.coords) ? toNumber(p.coords.longitude) : null);
-
-  if (lat === null || lng === null) return null;
-
-  const ts =
-    toNumber(p.ts) ??
-    toNumber(p.t) ??
-    toNumber(p.timestamp) ??
-    toNumber(p.time) ??
-    Date.now();
-
-  const accuracy =
-    toNumber(p.accuracy) ??
-    (isRecord(p.coords) ? toNumber(p.coords.accuracy) ?? undefined : undefined) ??
-    undefined;
-
-  return { lat, lng, ts, accuracy: accuracy ?? undefined };
-}
-
 function statusLabel(status: string) {
   switch (status) {
     case "idle":
@@ -89,7 +48,23 @@ export default function CorridaPro() {
     [samples.length, status]
   );
 
-  const derivedSamples = useMemo(() => samples.map(toNormalizedSample).filter((v): v is NormalizedSample => v !== null), [samples]);
+    const derivedSamples: RunSample[] = samples
+    .map((pt) => {
+      const anyPt = pt as any;
+      const lat = anyPt.lat ?? anyPt.latitude ?? anyPt.coords?.latitude;
+      const lng = anyPt.lng ?? anyPt.lon ?? anyPt.longitude ?? anyPt.coords?.longitude;
+      const ts = anyPt.ts ?? anyPt.t ?? anyPt.timestamp ?? anyPt.time ?? Date.now();
+      const accuracy = anyPt.accuracy ?? anyPt.coords?.accuracy;
+      return { lat, lng, ts, accuracy } as RunSample;
+    })
+    .filter(
+      (x) =>
+        typeof x.lat === "number" &&
+        typeof x.lng === "number" &&
+        Number.isFinite(x.lat) &&
+        Number.isFinite(x.lng)
+    );
+
 
   const last = derivedSamples.length ? derivedSamples[derivedSamples.length - 1] : null;
 
