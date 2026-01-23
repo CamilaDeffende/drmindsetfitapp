@@ -27,6 +27,17 @@ react(),
         ],
       },
       workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: ({ request, url }) =>
+              request.destination === "image" || url.pathname.startsWith("/brand/"),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "images-runtime",
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+        ],
         globIgnores: ["**/brand/mindsetfit-wordmark.png"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: "/index.html",
