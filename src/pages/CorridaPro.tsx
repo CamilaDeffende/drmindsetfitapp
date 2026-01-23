@@ -15,6 +15,7 @@ function km(m: number) {
   return (m / 1000).toFixed(2);
 }
 
+import { ExportGpxCard } from "@/features/run-pro/export/ExportGpxCard";
 export default function CorridaPro() {
     const { session, supportsGeo, polyline, actions, flags } = useRunSession();
 
@@ -92,7 +93,10 @@ const last = session.points.length ? session.points[session.points.length - 1] :
       </div>
       <div className="mt-6">
         <CoachScoreCard samples={derivedSamples as any} />
-      </div><div className="mx-auto max-w-6xl px-4 py-6">
+      
+      {/* RUNPRO_EXPORT_GPX */}
+      <ExportGpxCard points={derivedSamples as any} title="Export ultra" />
+</div><div className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Corrida PRO</h1>
