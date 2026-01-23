@@ -1,5 +1,8 @@
 type Props = {
-  title?: string;
+    gpsAccuracyM?: number;
+  gpsAccepts?: number;
+  gpsRejects?: number;
+title?: string;
   supportsGeo: boolean;
   flags: {
     canStart: boolean;

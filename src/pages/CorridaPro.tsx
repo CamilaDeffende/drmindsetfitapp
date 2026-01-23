@@ -72,7 +72,7 @@ function statusLabel(status: string) {
 }
 
 export default function CorridaPro() {
-  const { status, error, samples, config, actions } = useRunSession();
+  const { status, error, samples, metrics, config, actions } = useRunSession();
 
   const supportsGeo = typeof window !== "undefined" && !!navigator.geolocation;
 
@@ -126,6 +126,10 @@ export default function CorridaPro() {
         <div className="mt-6">
           <RunControlsCard
             supportsGeo={supportsGeo}
+            gpsAccuracyM={metrics?.lastAccuracyM}
+            gpsAccepts={metrics?.gpsAccepts}
+            gpsRejects={metrics?.gpsRejects}
+
             flags={flags}
             actions={actions}
             pointsCount={derivedSamples.length}
