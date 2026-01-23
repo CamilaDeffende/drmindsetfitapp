@@ -4,6 +4,7 @@ import type { LatLngExpression } from "leaflet";
 import { useRunSession } from "@/features/run-pro/hooks/useRunSession";
 import { downloadTextFile, sessionToGpx } from "@/features/run-pro/gpx";
 import { formatDuration, formatPace } from "@/features/run-pro/utils";
+import { RunCharts } from "@/features/run-pro/charts/RunCharts";
 function km(m: number) {
   return (m / 1000).toFixed(2);
 }
@@ -189,6 +190,16 @@ export default function CorridaPro() {
           </div>
         </div>
       </div>
-    </div>
+    
+      {/* RUN_CHARTS_BLOCK */}
+      <div className="mt-6">
+        <div className="mb-3 flex items-baseline justify-between">
+          <div className="text-sm font-semibold">Análise do treino</div>
+          <div className="text-xs text-muted-foreground">pace • distância • splits</div>
+        </div>
+        <RunCharts samples={[] as any} />
+      </div>
+
+</div>
   );
 }
