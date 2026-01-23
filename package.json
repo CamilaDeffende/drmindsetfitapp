@@ -18,7 +18,8 @@
     "dev:green": "npm run verify && npm run dev",
     "analyze:bundle": "ANALYZE_BUNDLE=1 npm run build",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:runpro": "node scripts/runpro_selftest.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
