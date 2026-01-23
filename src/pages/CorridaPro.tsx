@@ -12,9 +12,9 @@ function km(m: number) {
 }
 
 export default function CorridaPro() {
-  const { session, supportsGeo, polyline, actions, flags } = useRunSession();
+    const { session, supportsGeo, polyline, actions, flags } = useRunSession();
 
-  const last = session.points.length ? session.points[session.points.length - 1] : null;
+const last = session.points.length ? session.points[session.points.length - 1] : null;
 
   const center: LatLngExpression = useMemo(() => {
     if (last) return [last.lat, last.lng];
