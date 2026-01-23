@@ -6,6 +6,7 @@ import { downloadTextFile, sessionToGpx } from "@/features/run-pro/gpx";
 import { formatDuration, formatPace } from "@/features/run-pro/utils";
 import { RunCharts } from "@/features/run-pro/charts/RunCharts";
 import { CoachScoreCard } from "@/features/run-pro/coach/CoachScoreCard";
+import { ExportRunCard } from "@/features/run-pro/export/ExportRunCard";
 function km(m: number) {
   return (m / 1000).toFixed(2);
 }
@@ -198,7 +199,14 @@ export default function CorridaPro() {
 
 
     
-      {/* RUN_CHARTS_BLOCK */}
+      
+
+      {/* EXPORT_RUN_BLOCK */}
+      <div className="mt-6">
+        <ExportRunCard samples={[]} metrics={null} sessionName="Corrida PRO" />
+      </div>
+
+{/* RUN_CHARTS_BLOCK */}
       <div className="mt-6">
         <div className="mb-3 flex items-baseline justify-between">
           <div className="text-sm font-semibold">Análise do treino</div>
