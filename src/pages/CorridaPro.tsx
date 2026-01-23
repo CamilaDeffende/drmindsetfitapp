@@ -8,6 +8,7 @@ import { RunCharts } from "@/features/run-pro/charts/RunCharts";
 import { CoachScoreCard } from "@/features/run-pro/coach/CoachScoreCard";
 import { ExportRunCard } from "@/features/run-pro/export/ExportRunCard";
 import { RunControlsCard } from "@/features/run-pro/ui/RunControlsCard";
+import { MapView } from "@/features/run-pro/map/MapView";
 function km(m: number) {
   return (m / 1000).toFixed(2);
 }
@@ -79,6 +80,11 @@ const last = session.points.length ? session.points[session.points.length - 1] :
   return (
     <div className="min-h-screen bg-background text-foreground">
       <RunControlsCard supportsGeo={supportsGeo} flags={flags} actions={actions} pointsCount={session.points.length} />      <div className="mt-6">
+      {/* RUNPRO_MAP_BLOCK */}
+      <div className="mt-4">
+      <MapView center={center as any} />
+      </div>
+
         <RunCharts samples={derivedSamples as any} />
       </div>
       <div className="mt-6">
