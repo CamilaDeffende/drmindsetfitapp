@@ -1,3 +1,4 @@
+import { GlobalProfilePicker } from "@/features/global-profile/ui/GlobalProfilePicker";
 import { useForm } from 'react-hook-form'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -160,6 +161,9 @@ export function Step2Avaliacao() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <GlobalProfilePicker title="Localização, fuso e unidades" />
+      </div>
         
         
         <div className="space-y-2">
