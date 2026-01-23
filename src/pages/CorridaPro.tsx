@@ -219,7 +219,7 @@ const last = session.points.length ? session.points[session.points.length - 1] :
       </div>
       {/* COACH_SCORE_BLOCK */}
       <div className="mt-6">
-        <CoachScoreCard samples={derivedSamples as any} metrics={null as any} />
+        <CoachScoreCard samples={derivedSamples as any}  />
       </div>
 
 
@@ -228,7 +228,7 @@ const last = session.points.length ? session.points[session.points.length - 1] :
 
       {/* EXPORT_RUN_BLOCK */}
       <div className="mt-6">
-        <ExportRunCard samples={derivedSamples as any} metrics={null as any} sessionName="Corrida PRO" />
+        <ExportRunCard samples={derivedSamples as any} sessionName="Corrida PRO"  />
       </div>
 
 {/* RUN_CHARTS_BLOCK */}

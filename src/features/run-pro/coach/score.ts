@@ -1,101 +1,101 @@
-import type { RunMetrics, RunSample } from "@/features/run-pro/engine/types";
+import { computeRunStats, type RunSample } from "@/features/run-pro/stats/compute";
 
 export type CoachScore = {
-  score: number | null; // null quando insuficiente
-  label: string;
-  insights: string[];
+  score: number; // 0..100
+  label: "Elite" | "Bom" | "Instável";
+  reasons: string[]; // 2-3 insights curtos
 };
 
-function clamp(n: number, a: number, b: number) {
-  return Math.max(a, Math.min(b, n));
-}
+function clamp(n: number, a: number, b: number) { return Math.max(a, Math.min(b, n)); }
 
-function sd(values: number[]): number | null {
-  if (values.length < 6) return null;
-  const mean = values.reduce((x, y) => x + y, 0) / values.length;
-  const v = values.reduce((acc, x) => acc + (x - mean) ** 2, 0) / values.length;
-  return Math.sqrt(v);
-}
-
-
-export function computeCoachScore(samples: RunSample[], metrics?: RunMetrics | null): CoachScore {
-  if (!samples || samples.length < 8) return { score: null, label: "Dados insuficientes", insights: ["Comece a gravar para gerar insights."] };
-
-  const paces = samples
-    .map((s) => s.paceSecPerKm)
-    .filter((x): x is number => typeof x === "number" && Number.isFinite(x) && x > 0);
-
-  const paceSd = sd(paces);
-  const paceStability = paceSd == null ? null : clamp(1 - paceSd / 60, 0, 1); // SD 0..60s
-  const stabilityScore = paceStability == null ? null : Math.round(paceStability * 40); // 0-40
-
-  // splits simples (por km) via distTotalM
-  const splitPaces: number[] = [];
-  let lastKm = 0;
-  let lastTs = samples[0].ts;
-  for (let i = 1; i < samples.length; i++) {
-    const d = samples[i].distTotalM;
-    if (d >= (lastKm + 1) * 1000) {
-      const ts = samples[i].ts;
-      const dt = (ts - lastTs) / 1000;
-      splitPaces.push(dt); // tempo por km (sec)
-      lastKm += 1;
-      lastTs = ts;
-      if (splitPaces.length >= 12) break;
-    }
+function paceSecPerKmSegments(samples: RunSample[]) {
+  // retorna lista de paces (sec/km) por segmento entre pontos, ignorando dt baixo
+  const sorted = [...samples].sort((x,y)=>x.ts-y.ts);
+  const out: number[] = [];
+  for (let i=1;i<sorted.length;i++){
+    const a = sorted[i-1], b = sorted[i];
+    const dt = b.ts - a.ts;
+    if (dt < 800) continue;
+    // distância aproximada por haversine (reuso via stats)
+    // aqui usamos computeRunStats como base para não duplicar haversine; mas precisamos do pace por segmento:
+    // vamos estimar pela distância incremental via fórmula local simples (não precisa ser perfeito).
+    const toRad = (d:number)=>d*Math.PI/180;
+    const R = 6371000;
+    const dLat = toRad(b.lat-a.lat);
+    const dLng = toRad(b.lng-a.lng);
+    const sa = Math.sin(dLat/2), sb = Math.sin(dLng/2);
+    const A = sa*sa + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*sb*sb;
+    const c = 2*Math.atan2(Math.sqrt(A), Math.sqrt(1-A));
+    const d = R*c; // m
+    const speed = d / (dt/1000);
+    if (!Number.isFinite(speed) || speed <= 0) continue;
+    const pace = 1000 / speed; // sec/km
+    // corta absurdo: mais rápido que 2:30/km ou mais lento que 20:00/km
+    if (pace < 150 || pace > 1200) continue;
+    out.push(pace);
   }
-  const splitSd = sd(splitPaces);
-  const splitReg = splitSd == null ? null : clamp(1 - splitSd / 90, 0, 1); // SD 0..90s
-  const splitScore = splitReg == null ? null : Math.round(splitReg * 25); // 0-25
+  return out;
+}
 
-  // qualidade GPS: usa rejects/accepts quando tiver
-  const accepts = metrics?.gpsAccepts ?? 0;
-  const rejects = metrics?.gpsRejects ?? 0;
-  const total = accepts + rejects;
-  const rejectRate = total > 0 ? rejects / total : 0;
-  const gpsQuality = clamp(1 - rejectRate, 0, 1);
-  const gpsScore = Math.round(gpsQuality * 20); // 0-20
+function coefVar(nums: number[]) {
+  if (nums.length < 3) return null;
+  const mean = nums.reduce((a,b)=>a+b,0)/nums.length;
+  const v = nums.reduce((a,b)=>a+Math.pow(b-mean,2),0)/nums.length;
+  const sd = Math.sqrt(v);
+  return mean > 0 ? (sd/mean) : null;
+}
 
-  // pausas vs moving (se existir movingTimeMs/elapsedMs)
-  const moving = metrics?.movingTimeMs ?? 0;
-  const elapsed = metrics?.elapsedMs ?? 0;
-  const movingRatio = elapsed > 0 ? moving / elapsed : 1;
-  const pauseScore = Math.round(clamp(movingRatio, 0, 1) * 15); // 0-15
+export function computeCoachScore(samples: RunSample[]): CoachScore {
+  const stats = computeRunStats(samples);
 
-  const parts = [stabilityScore, splitScore, gpsScore, pauseScore].filter((x) => typeof x === "number") as number[];
-  const sum = parts.reduce((a, b) => a + b, 0);
-  const score = clamp(sum, 0, 100);
+  // base score buckets
+  let s = 100;
 
-  let label = "Bom";
-  if (score >= 85) label = "Elite";
-  else if (score >= 70) label = "Muito bom";
-  else if (score >= 55) label = "Bom";
-  else label = "Ajustar";
-
-  const insights: string[] = [];
-
-  if (paceSd != null) {
-    if (paceSd < 18) insights.push("Ritmo muito estável.");
-    else if (paceSd < 35) insights.push("Boa consistência de ritmo.");
-    else insights.push("Ritmo oscilando — tente manter constância.");
+  // 1) consistência (CV do pace)
+  const paces = paceSecPerKmSegments(samples);
+  const cv = coefVar(paces); // 0.. (ideal baixo)
+  if (cv === null) {
+    s -= 18; // poucos dados
   } else {
-    insights.push("Mais dados para avaliar ritmo.");
+    // cv 0.05 ótimo; 0.12 ok; 0.20 ruim
+    const penalty = clamp((cv - 0.06) * 220, 0, 35);
+    s -= penalty;
   }
 
-  if (splitSd != null) {
-    if (splitSd < 35) insights.push("Splits regulares (boa estratégia).");
-    else insights.push("Splits irregulares — ajuste saída e controle.");
+  // 2) sinal (accuracy)
+  if (stats.signalGrade === "A") s -= 0;
+  if (stats.signalGrade === "B") s -= 8;
+  if (stats.signalGrade === "C") s -= 18;
+
+  // 3) pausas
+  // penaliza pausas longas ou muitas
+  const pausedMin = stats.pausedMs / 60000;
+  s -= clamp(stats.pausesCount * 5, 0, 20);
+  s -= clamp(pausedMin * 1.2, 0, 15);
+
+  // qualidade mínima
+  s = clamp(Math.round(s), 0, 100);
+
+  const label: CoachScore["label"] =
+    s >= 85 ? "Elite" : s >= 65 ? "Bom" : "Instável";
+
+  const reasons: string[] = [];
+
+  // insights (2-3)
+  if (cv !== null) {
+    if (cv <= 0.09) reasons.push("Ritmo estável (boa consistência).");
+    else if (cv <= 0.14) reasons.push("Ritmo ok, com variação moderada.");
+    else reasons.push("Ritmo instável (muita variação).");
+  } else {
+    reasons.push("Poucos dados ainda — continue para refinar o score.");
   }
 
-  if (total > 0) {
-    if (rejectRate < 0.08) insights.push("Sinal GPS estável.");
-    else insights.push("Sinal GPS oscilou — evite áreas fechadas/sombra.");
-  }
+  if (stats.signalGrade === "A") reasons.push("Sinal GPS forte (alta precisão).");
+  else if (stats.signalGrade === "B") reasons.push("GPS bom, com pequenas oscilações.");
+  else reasons.push("GPS oscilando — tente área aberta para melhor precisão.");
 
-  if (elapsed > 0) {
-    if (movingRatio > 0.92) insights.push("Poucas pausas, ótima fluidez.");
-    else insights.push("Muitas pausas — tente blocos contínuos.");
-  }
+  if (stats.pausesCount >= 2 || pausedMin >= 2) reasons.push("Muitas pausas — isso impacta o ritmo médio.");
+  else reasons.push("Boa continuidade (poucas pausas).");
 
-  return { score, label, insights: insights.slice(0, 3) };
+  return { score: s, label, reasons: reasons.slice(0, 3) };
 }

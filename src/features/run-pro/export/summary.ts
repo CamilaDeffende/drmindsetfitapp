@@ -52,7 +52,7 @@ export function buildSummary(samples: RunSample[], metrics?: RunMetrics | null):
 
   const movingTimeSec = metrics?.movingTimeMs ? Math.round(metrics.movingTimeMs / 1000) : null;
 
-  const coach = computeCoachScore(samples, metrics);
+  const coach = computeCoachScore(samples);
 
   return {
     distKm,
