@@ -3,13 +3,37 @@ const ANALYZE_BUNDLE = process.env.ANALYZE_BUNDLE === "1";
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { visualizer } from "rollup-plugin-visualizer";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   
   plugins: [
       ANALYZE_BUNDLE ? visualizer({ filename: "dist/bundle-report.html", template: "treemap", gzipSize: true, brotliSize: true }) : undefined,
-react()
-    ],
+react(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["pwa-192.png", "pwa-512.png"],
+      manifest: {
+        name: "MindsetFit",
+        short_name: "MindsetFit",
+        description: "Plataforma premium de treino e nutrição",
+        theme_color: "#0B0F1A",
+        background_color: "#0B0F1A",
+        display: "standalone",
+        start_url: "/",
+        icons: [
+          { src: "/pwa-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/pwa-512.png", sizes: "512x512", type: "image/png" },
+        ],
+      },
+      workbox: {
+        globIgnores: ["**/brand/mindsetfit-wordmark.png"],
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        navigateFallback: "/index.html",
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+      },
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
