@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { MapContainer, TileLayer, Polyline, CircleMarker } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 import { useRunSession } from "@/features/run-pro/hooks/useRunSession";
