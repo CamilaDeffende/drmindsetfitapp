@@ -2,7 +2,6 @@
 // AUTO-GENERATED HOTFIX — workoutGenerator.ts (limpo)
 // Objetivo: gerar TreinoPlan determinístico (seed) com variações por modalidade/nível/intensidade/dias
 // Mantém BUILD VERDE e evita blocos fora de escopo que quebram TS.
-
 import type { ModalidadeTreino, IntensidadeTreino } from "@/features/fitness-suite/contracts/treino";
 import { loadWeekPlan } from "@/utils/strength/strengthWeekStorage";
 import { toWeekdayKey } from "@/utils/strength/weekdayMap";
