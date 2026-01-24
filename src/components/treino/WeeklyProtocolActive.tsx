@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { toWeekdayKey } from "@/utils/strength/weekdayMap";
+import { loadWeekPlan } from "@/utils/strength/strengthWeekStorage";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 
 type Session = {
@@ -41,6 +43,87 @@ function fmt(v: unknown) {
   return s.length ? s : "-";
 }
 
+
+
+/* MF_FOCO_DO_DIA_CHIPS_V1
+   Chips premium de "Foco do dia" (Musculação), lendo weekPlan salvo (StrengthWeekPlan).
+   - Tolerante a variações de shape do weekPlan (tentativas em cascata).
+   - Nunca quebra a UI se não houver dados.
+*/
+const MUSCLE_LABEL: Record<string, string> = {
+  peito: "Peito",
+  costas: "Costas",
+  ombro: "Ombro",
+  ombros: "Ombros",
+  bracos: "Braços",
+  biceps: "Bíceps",
+  triceps: "Tríceps",
+  pernas: "Pernas",
+  quadriceps: "Quadríceps",
+  posterior: "Posterior",
+  gluteos: "Glúteos",
+  panturrilha: "Panturrilha",
+  core: "Core",
+  abdomen: "Abdômen",
+};
+
+function normKey(v: unknown) {
+  return String(v ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s+/g, "_");
+}
+
+function prettyMuscle(v: unknown) {
+  const k = normKey(v);
+  return MUSCLE_LABEL[k] ?? (k ? (k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, " ")) : "");
+}
+
+function pickFirstArray(...cands: any[]) {
+  for (const c of cands) {
+    if (Array.isArray(c) && c.length) return c;
+  }
+  return [];
+}
+
+function getFocusGroupsFromWeekPlan(weekPlan: any, dayLabel: string): string[] {
+  try {
+    const dk = toWeekdayKey(String(dayLabel ?? "")); // seg/ter/qua/...
+    if (!dk || !weekPlan) return [];
+
+    // tentativas de caminhos possíveis (shape tolerante)
+    const a =
+      weekPlan?.days?.[dk]?.muscleGroups ??
+      weekPlan?.days?.[dk]?.groups ??
+      weekPlan?.days?.[dk]?.dayMuscleGroups ??
+      weekPlan?.byDay?.[dk]?.muscleGroups ??
+      weekPlan?.byDay?.[dk]?.groups ??
+      weekPlan?.plan?.[dk]?.muscleGroups ??
+      weekPlan?.week?.[dk]?.muscleGroups ??
+      null;
+
+    const arr = pickFirstArray(a, weekPlan?.[dk]?.muscleGroups, weekPlan?.[dk]?.groups);
+    const out = (arr || []).map(prettyMuscle).filter(Boolean);
+
+    // remove duplicatas e limita pra ficar premium/limpo
+    return Array.from(new Set(out)).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
+function focusChip(groups: string[]) {
+  if (!groups.length) return null;
+  return (
+    <div className="rounded-full border border-white/10 bg-gradient-to-r from-white/10 to-white/5 px-3 py-1 text-[11px]">
+      <span className="text-muted-foreground">Foco do dia:</span>{" "}
+      <span className="font-semibold">{groups.join(" • ")}</span>
+    </div>
+  );
+}
+
 function chip(label: string, value: string) {
   if (!value || value === "-") return null;
   return (
@@ -52,6 +135,10 @@ function chip(label: string, value: string) {
 }
 
 export function WeeklyProtocolActive() {
+  const weekPlan = useMemo(() => {
+    try { return loadWeekPlan(); } catch { return null; }
+  }, []);
+
   const { state } = useDrMindSetfit();
 
   const protocol = (state as any)?.workoutProtocolWeekly ?? null;
@@ -166,6 +253,8 @@ export function WeeklyProtocolActive() {
               <div className="mt-3 grid grid-cols-1 gap-3">
                 {items.map((s, idx) => {
                   const modKey = String(s.modality ?? "");
+                  const focusGroups = (modKey === "musculacao") ? getFocusGroupsFromWeekPlan(weekPlan, day) : [];
+
                   const modLabel = LABEL[modKey] ?? modKey;
                   const lvl = fmt(s.modalityLevel);
                   const st = s.structure ?? null;
@@ -186,6 +275,7 @@ export function WeeklyProtocolActive() {
                         </div>
 
                         <div className="flex flex-wrap gap-2">
+                          {focusChip(focusGroups)}
                           {chip("Tipo", type)}
                           {chip("Intensidade", intensidade ? intensidade : "")}
                           {chip("Descanso", descanso)}
