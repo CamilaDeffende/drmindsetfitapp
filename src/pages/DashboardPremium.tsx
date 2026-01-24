@@ -227,10 +227,10 @@ export function DashboardPremium() {
                 </div>
                 <div>
                   <div className="text-xs text-gray-400">Calorias</div>
-                  <div className="text-xl font-bold">{state.consumoCalorias[state.consumoCalorias.length - 1]?.consumido || 0}</div>
+                  <div className="text-xl font-bold">{((state.consumoCalorias && state.consumoCalorias.length) ? (state.consumoCalorias[state.consumoCalorias.length-1]?.consumido ?? 0) : 0)}</div>
                 </div>
               </div>
-              <div className="text-xs text-gray-500">Meta: {state.nutricao?.macros.calorias || 0}</div>
+              <div className="text-xs text-gray-500">Meta: {(state.nutricao?.macros?.calorias ?? 0)}</div>
             </CardContent>
           </Card>
 
