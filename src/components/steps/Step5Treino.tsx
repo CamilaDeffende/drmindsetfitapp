@@ -441,20 +441,13 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
         </CardContent>
       </Card>
 
-            {/* PREVIEW TREINO GERADO */}
+            
+      
+      {/* PREVIEW TREINO GERADO */}
       {__mfGenerated && (__mfTreinoPreview?.treinos?.length || __mfProtocolPreview) ? (
         <Card className="mt-4 border-white/10 bg-white/5">
           <CardHeader className="pb-2">
-            
-      {/* Grupamentos da semana (apenas Musculação) */}
-      <div className="mt-4">
-        <StrengthMuscleGroupsPicker />
-        {strengthGroupsError ? (
-          <div className="mt-2 text-sm text-red-400">{strengthGroupsError}</div>
-        ) : null}
-      </div>
-
-<CardTitle className="text-base">Seu protocolo semanal</CardTitle>
+            <CardTitle className="text-base">Seu protocolo semanal</CardTitle>
             <CardDescription>
               Treino individualizado com base nas suas modalidades, nível e dias selecionados.
             </CardDescription>
@@ -469,20 +462,28 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
                       {(dia?.exercicios?.length ?? 0)} exercícios
                     </Badge>
                   </div>
+
                   {dia?.foco ? (
                     <div className="mt-1 text-xs text-muted-foreground">{dia.foco}</div>
                   ) : null}
+
                   <div className="mt-3 space-y-1">
                     {(dia?.exercicios ?? []).map((ex: any, eIdx: number) => (
                       <div key={eIdx} className="text-xs text-muted-foreground">
                         • <span className="text-foreground/90">{ex?.nome ?? "Exercício"}</span>
-                        {ex?.series ? <> — {ex.series}x{ex?.reps ?? ""}</> : null}
+                        {ex?.series ? (
+                          <>
+                            {" "}
+                            — {ex.series}x{ex?.reps ?? ""}
+                          </>
+                        ) : null}
                         {ex?.tempo ? <> — {ex.tempo}</> : null}
                         {ex?.descanso ? <> • Desc: {ex.descanso}</> : null}
                         {ex?.intensidade ? <> • {ex.intensidade}</> : null}
                       </div>
                     ))}
                   </div>
+
                   {dia?.observacoes ? (
                     <div className="mt-3 text-xs text-muted-foreground italic">{dia.observacoes}</div>
                   ) : null}
@@ -492,6 +493,7 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
           </CardContent>
         </Card>
       ) : null}
+
 
       <div className="mt-6 flex items-center justify-between gap-3">
         <Button type="button" variant="outline" onClick={prevStep} className="gap-2">
