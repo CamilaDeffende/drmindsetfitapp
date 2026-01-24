@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { toWeekdayKey } from "@/utils/strength/weekdayMap";
 import { loadWeekPlan } from "@/utils/strength/strengthWeekStorage";
+import type { WeekdayKey } from "@/utils/strength/strengthWeekStorage";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 
 type Session = {
@@ -50,68 +50,8 @@ function fmt(v: unknown) {
    - Tolerante a variações de shape do weekPlan (tentativas em cascata).
    - Nunca quebra a UI se não houver dados.
 */
-const MUSCLE_LABEL: Record<string, string> = {
-  peito: "Peito",
-  costas: "Costas",
-  ombro: "Ombro",
-  ombros: "Ombros",
-  bracos: "Braços",
-  biceps: "Bíceps",
-  triceps: "Tríceps",
-  pernas: "Pernas",
-  quadriceps: "Quadríceps",
-  posterior: "Posterior",
-  gluteos: "Glúteos",
-  panturrilha: "Panturrilha",
-  core: "Core",
-  abdomen: "Abdômen",
-};
-
-function normKey(v: unknown) {
-  return String(v ?? "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/\s+/g, "_");
-}
-
-function prettyMuscle(v: unknown) {
-  const k = normKey(v);
-  return MUSCLE_LABEL[k] ?? (k ? (k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, " ")) : "");
-}
-
-function pickFirstArray(...cands: any[]) {
-  for (const c of cands) {
-    if (Array.isArray(c) && c.length) return c;
-  }
-  return [];
-}
-
-function getFocusGroupsFromWeekPlan(weekPlan: any, dayLabel: string): string[] {
-  try {
-    const dk = toWeekdayKey(String(dayLabel ?? "")); // seg/ter/qua/...
-    if (!dk || !weekPlan) return [];
-
-    // tentativas de caminhos possíveis (shape tolerante)
-    const a =
-      weekPlan?.days?.[dk]?.muscleGroups ??
-      weekPlan?.days?.[dk]?.groups ??
-      weekPlan?.days?.[dk]?.dayMuscleGroups ??
-      weekPlan?.byDay?.[dk]?.muscleGroups ??
-      weekPlan?.byDay?.[dk]?.groups ??
-      weekPlan?.plan?.[dk]?.muscleGroups ??
-      weekPlan?.week?.[dk]?.muscleGroups ??
-      null;
-
-    const arr = pickFirstArray(a, weekPlan?.[dk]?.muscleGroups, weekPlan?.[dk]?.groups);
-    const out = (arr || []).map(prettyMuscle).filter(Boolean);
-
-    // remove duplicatas e limita pra ficar premium/limpo
-    return Array.from(new Set(out)).slice(0, 4);
-  } catch {
-    return [];
-  }
+function getFocusGroupsFromWeekPlan(dayLabel: string): string[] {
+  return getStrengthFocusGroupsForDay(dayLabel);
 }
 
 function focusChip(groups: string[]) {
@@ -134,11 +74,53 @@ function chip(label: string, value: string) {
   );
 }
 
-export function WeeklyProtocolActive() {
-  const weekPlan = useMemo(() => {
-    try { return loadWeekPlan(); } catch { return null; }
-  }, []);
 
+function toWeekdayKeyFromLabel(day: string): WeekdayKey | null {
+  const raw = String(day ?? "").trim();
+  if (!raw) return null;
+
+  // normaliza para comparação
+  const lower = raw.toLowerCase();
+  const norm = lower
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // remove acentos (terça -> terca)
+
+  // aceita abreviações e labels completos
+  if (norm.startsWith("seg")) return "seg";
+  if (norm.startsWith("ter")) return "ter";
+  if (norm.startsWith("qua")) return "qua";
+  if (norm.startsWith("qui")) return "qui";
+  if (norm.startsWith("sex")) return "sex";
+  if (norm.startsWith("sab")) return "sab";
+  if (norm.startsWith("dom")) return "dom";
+
+  // fallback ultra defensivo
+  if (norm.includes("segunda")) return "seg";
+  if (norm.includes("terca")) return "ter";
+  if (norm.includes("quarta")) return "qua";
+  if (norm.includes("quinta")) return "qui";
+  if (norm.includes("sexta")) return "sex";
+  if (norm.includes("sabado")) return "sab";
+  if (norm.includes("domingo")) return "dom";
+
+  return null;
+}
+
+
+function getStrengthFocusGroupsForDay(dayLabel: string): string[] {
+  try {
+    const plan = loadWeekPlan();
+    if (!plan) return [];
+    const k = toWeekdayKeyFromLabel(dayLabel);
+    if (!k) return [];
+    const arr = (plan as any)[k];
+    return Array.isArray(arr) ? arr.map(String).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function WeeklyProtocolActive() {
   const { state } = useDrMindSetfit();
 
   const protocol = (state as any)?.workoutProtocolWeekly ?? null;
@@ -253,7 +235,7 @@ export function WeeklyProtocolActive() {
               <div className="mt-3 grid grid-cols-1 gap-3">
                 {items.map((s, idx) => {
                   const modKey = String(s.modality ?? "");
-                  const focusGroups = (modKey === "musculacao") ? getFocusGroupsFromWeekPlan(weekPlan, day) : [];
+                  const focusGroups = (modKey === "musculacao") ? getFocusGroupsFromWeekPlan(day) : [];
 
                   const modLabel = LABEL[modKey] ?? modKey;
                   const lvl = fmt(s.modalityLevel);
