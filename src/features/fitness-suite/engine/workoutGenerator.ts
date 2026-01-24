@@ -4,6 +4,8 @@
 // Mantém BUILD VERDE e evita blocos fora de escopo que quebram TS.
 
 import type { ModalidadeTreino, IntensidadeTreino } from "@/features/fitness-suite/contracts/treino";
+import { loadWeekPlan } from "@/utils/strength/strengthWeekStorage";
+import { toWeekdayKey } from "@/utils/strength/weekdayMap";
 
 
 import { getOrCreateUserSeed, hashSeed } from "./workoutSeed";
@@ -194,32 +196,59 @@ function buildExercises(mod: ModalidadeTreino, nivel: string, intensidade: Inten
 
   if (mod === ("musculacao" as any)) {
     const lib = LIB.musculacao;
-    const split = [
-  ["peito","ombro","bracos","core"],
-  ["costas","bracos","core"],
-  ["pernas","core"],
-  ["peito","costas","core"],
-  ["pernas","ombro","core"],
-  ["peito","triceps","core"],
-  ["costas","biceps","core"],
-  ["pernas","gluteos","core"],
-  ["ombro","bracos","core"],
-  ["peito","costas","ombro","core"],
-  ["pernas","panturrilha","core"],
-];
-const pickSplit = pick(split, h);
-    const out: any[] = [];
 
+    // MF: weekPlan soberano (Step5) -> guia os grupamentos do dia
+    let weekPlan: any = null;
+    try { weekPlan = loadWeekPlan(); } catch {}
+    const wk = toWeekdayKey(dayKey);
+    const dayGroups: string[] = (wk && weekPlan && Array.isArray(weekPlan[wk])) ? weekPlan[wk] : [];
+
+    // map MuscleGroup (engine strength) -> chaves do gerador atual (LIB.musculacao)
+    const mapGroup = (g: string) => {
+      const x = String(g || "").toLowerCase();
+      if (x.includes("peito")) return "peito";
+      if (x.includes("costas")) return "costas";
+      if (x.includes("ombro")) return "ombro";
+      if (x.includes("biceps") || x.includes("bíceps") || x.includes("triceps") || x.includes("tríceps")) return "bracos";
+      if (x.includes("quad") || x.includes("posterior") || x.includes("perna")) return "pernas";
+      if (x.includes("glute")) return "gluteos";
+      if (x.includes("panturr")) return "panturrilha";
+      if (x.includes("core") || x.includes("abd")) return "core";
+      return null;
+    };
+
+    const mapped = Array.from(new Set(dayGroups.map(mapGroup).filter(Boolean))) as string[];
+
+    // fallback: split padrão do gerador (mantém comportamento antigo quando não houver weekPlan)
+    const split = [
+      ["peito","ombro","bracos","core"],
+      ["costas","bracos","core"],
+      ["pernas","core"],
+      ["peito","costas","core"],
+      ["pernas","ombro","core"],
+      ["peito","triceps","core"],
+      ["costas","biceps","core"],
+      ["pernas","gluteos","core"],
+      ["ombro","bracos","core"],
+      ["peito","costas","ombro","core"],
+      ["pernas","panturrilha","core"],
+    ];
+
+    // se weekPlan trouxe grupamentos do dia, usamos eles como soberanos (sempre incluindo core)
+    const pickSplit = (mapped.length ? Array.from(new Set([...mapped, "core"])) : pick(split, h)) as string[];
+
+    const out: any[] = [];
     out.push({ nome: pick(lib.aquecimento, h+1), grupo: "Aquecimento" });
 
     for (const g of pickSplit) {
       const key = (g === "biceps" || g === "triceps") ? "bracos" : (g === "gluteos" || g === "panturrilha") ? "pernas" : g;
       const pool = (lib as any)[key] as string[];
-      // 2 exercícios por grupamento (variação por seed)
-      out.push({ nome: pick(pool, h + out.length * 7), grupo: g.toUpperCase() });
-      out.push({ nome: pick(pool, h + out.length * 11), grupo: g.toUpperCase() });
+      if (!Array.isArray(pool) || !pool.length) continue;
+      out.push({ nome: pick(pool, h + out.length * 7), grupo: String(g).toUpperCase() });
+      out.push({ nome: pick(pool, h + out.length * 11), grupo: String(g).toUpperCase() });
     }
     return out;
+
   }
 
   if (mod === ("funcional" as any)) {
