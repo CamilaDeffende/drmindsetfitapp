@@ -307,7 +307,40 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
         </CardContent>
       </Card>
 
-      {/* 2) Nível por modalidade */}
+      
+      {/* 1.5) Grupamentos musculares (Musculação) */}
+      {selectedModalities.includes("musculacao") && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Grupamentos musculares (Musculação)</CardTitle>
+            <CardDescription>
+              Selecione quais grupamentos você quer priorizar. Isso personaliza a distribuição da semana de musculação.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {strengthGroupsError ? (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                {strengthGroupsError}
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground">
+                Dica premium: escolha 2–4 grupamentos para um plano mais consistente e inteligente.
+              </div>
+            )}
+
+            {/* Picker premium (mesmo padrão dos demais) */}
+            <div onClick={() => setStrengthGroupsError(null)} className="rounded-xl border bg-background/60 p-3">
+              <StrengthMuscleGroupsPicker />
+            </div>
+
+            <div className="text-xs text-muted-foreground">
+              Obrigatório para gerar o plano de <span className="font-medium">Musculação</span>.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+{/* 2) Nível por modalidade */}
       <Card className="mt-4 border-white/10 bg-white/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Nível por modalidade</CardTitle>
