@@ -1,3 +1,8 @@
+
+// MF_DAY_GROUPS_PRECEDENCE_V1
+// Precedência soberana de grupamentos do dia:
+// 1) params.dayMuscleGroups (UI/State) -> 2) weekPlan[dayKey] (state) -> 3) default interno
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // AUTO-GENERATED HOTFIX — workoutGenerator.ts (limpo)
 // Objetivo: gerar TreinoPlan determinístico (seed) com variações por modalidade/nível/intensidade/dias
