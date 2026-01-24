@@ -1,6 +1,6 @@
 import { useMemo } from "react";
+import { toWeekdayKey } from "@/utils/strength/weekdayMap";
 import { loadWeekPlan } from "@/utils/strength/strengthWeekStorage";
-import type { WeekdayKey } from "@/utils/strength/strengthWeekStorage";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 
 type Session = {
@@ -19,7 +19,7 @@ type Session = {
 };
 
 const LABEL: Record<string, string> = {
-  musculacao: "Musculação",
+  musculacao: "musculacao",
   funcional: "Funcional",
   corrida: "Corrida",
   bike_indoor: "Bike Indoor",
@@ -73,45 +73,11 @@ function chip(label: string, value: string) {
     </div>
   );
 }
-
-
-function toWeekdayKeyFromLabel(day: string): WeekdayKey | null {
-  const raw = String(day ?? "").trim();
-  if (!raw) return null;
-
-  // normaliza para comparação
-  const lower = raw.toLowerCase();
-  const norm = lower
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, ""); // remove acentos (terça -> terca)
-
-  // aceita abreviações e labels completos
-  if (norm.startsWith("seg")) return "seg";
-  if (norm.startsWith("ter")) return "ter";
-  if (norm.startsWith("qua")) return "qua";
-  if (norm.startsWith("qui")) return "qui";
-  if (norm.startsWith("sex")) return "sex";
-  if (norm.startsWith("sab")) return "sab";
-  if (norm.startsWith("dom")) return "dom";
-
-  // fallback ultra defensivo
-  if (norm.includes("segunda")) return "seg";
-  if (norm.includes("terca")) return "ter";
-  if (norm.includes("quarta")) return "qua";
-  if (norm.includes("quinta")) return "qui";
-  if (norm.includes("sexta")) return "sex";
-  if (norm.includes("sabado")) return "sab";
-  if (norm.includes("domingo")) return "dom";
-
-  return null;
-}
-
-
 function getStrengthFocusGroupsForDay(dayLabel: string): string[] {
   try {
-    const plan = loadWeekPlan();
-    if (!plan) return [];
-    const k = toWeekdayKeyFromLabel(dayLabel);
+        const plan = loadWeekPlan();
+        if (!plan) return [];
+    const k = toWeekdayKey(dayLabel);
     if (!k) return [];
     const arr = (plan as any)[k];
     return Array.isArray(arr) ? arr.map(String).filter(Boolean) : [];
@@ -124,7 +90,6 @@ export function WeeklyProtocolActive() {
   const { state } = useDrMindSetfit();
 
   const protocol = (state as any)?.workoutProtocolWeekly ?? null;
-
   const sessions = useMemo(() => {
     const raw = protocol?.sessions;
     const arr: Session[] = Array.isArray(raw) ? raw : [];
