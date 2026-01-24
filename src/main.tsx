@@ -4,6 +4,7 @@ import App from "./App";
 import { DrMindSetfitProvider } from "./contexts/DrMindSetfitContext";
 import { SplashScreen } from "./components/branding/SplashScreen";
 import "./index.css";
+import { DevErrorOverlay } from "@/components/system/DevErrorOverlay";
 
 import { initI18n } from "@/i18n";
 
@@ -29,7 +30,9 @@ createRoot(el).render(
   <React.StrictMode>
     <DrMindSetfitProvider>
       <BootSplash>
-        <App />
+        <DevErrorOverlay>
+          <App />
+        </DevErrorOverlay>
       </BootSplash>
     </DrMindSetfitProvider>
   </React.StrictMode>

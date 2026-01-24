@@ -9,6 +9,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { FitnessSuiteDemo } from "./features/fitness-suite";
 import { maybeResetFromUrl } from "@/lib/resetApp";
+import { ErrorBoundary } from "@/components/system/ErrorBoundary";
 
 // Páginas Públicas
 import { Login } from '@/pages/Login'
@@ -95,7 +96,7 @@ function App() {
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    <DashboardPremium />
+                    <ErrorBoundary name="DashboardPremium"><DashboardPremium /></ErrorBoundary>
                   </ProtectedRoute>
                 }
               />
