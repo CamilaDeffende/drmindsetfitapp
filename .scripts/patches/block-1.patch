@@ -1,0 +1,53 @@
+diff --git a/src/features/fitness-suite/engine/weeklyProtocol.ts b/src/features/fitness-suite/engine/weeklyProtocol.ts
+--- a/src/features/fitness-suite/engine/weeklyProtocol.ts
++++ b/src/features/fitness-suite/engine/weeklyProtocol.ts
+@@ -1,38 +1,18 @@
+-export type WorkoutModality =
+-  | "musculacao"
+-  | "funcional"
+-  | "hiit"
+-  | "corrida"
+-  | "crossfit"
+-  | "spinning";
+-
+-export type ActivityLevel = "iniciante" | "intermediario" | "avancado";
+-
+-export type WorkoutStructure = {
+-  type: "força" | "hipertrofia" | "técnico" | "metabólico" | "resistência";
+-  volume: number;
+-  intensidade: "baixa" | "moderada" | "alta";
+-  descanso: string;
+-  duracaoEstimada: string;
+-};
++// ✅ CONTRATO ÚNICO (fonte da verdade)
++import type {
++  WeeklyWorkoutProtocol,
++  WorkoutModality,
++  ActivityLevel,
++  WorkoutStructure,
++} from "@/features/fitness-suite/contracts/weeklyWorkoutProtocol";
+ 
+ import { buildSessionPlan } from "./sessionPlanner";
+ import type { SessionWorkoutPlan } from "./sessionPlanner";
+@@
+-const goalByModality: Record<WorkoutModality, string> = {
++const goalByModality: Record<WorkoutModality, string> = {
+   musculacao: "Hipertrofia e força com execução técnica",
+   funcional: "Capacidade geral e coordenação",
+   hiit: "Condicionamento metabólico",
+   corrida: "Base aeróbia e eficiência",
+   crossfit: "Técnica + capacidade metabólica",
+-  spinning: "Resistência e potência em bike",
++  bike_indoor: "Resistência e potência em bike",
+ };
+@@
+-export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocol => {
++type WeeklyWorkoutProtocolEngine = WeeklyWorkoutProtocol & {
++  sessions: (WeeklyWorkoutProtocol["sessions"][number] & { plan?: SessionWorkoutPlan })[];
++  strategiesByModality?: Record<string, { strategy: string; rationale: string }>;
++};
++
++export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocolEngine => {
+@@
+-  const __allowed: WorkoutModality[] = ["musculacao","funcional","corrida","spinning","crossfit"];
++  const __allowed: WorkoutModality[] = ["musculacao","funcional","corrida","bike_indoor","crossfit"];

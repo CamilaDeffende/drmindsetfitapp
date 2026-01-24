@@ -1,0 +1,7 @@
+# BLOCO 9 — cole aqui o patch git (git apply) deste bloco.
+# Exemplo:
+# diff --git a/arquivo.ts b/arquivo.ts
+# index 123..456 100644
+# --- a/arquivo.ts
+# +++ b/arquivo.ts
+# @@ ...

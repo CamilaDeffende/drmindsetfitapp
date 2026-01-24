@@ -1,20 +1,10 @@
-export type WorkoutModality =
-  | "musculacao"
-  | "funcional"
-  | "hiit"
-  | "corrida"
-  | "crossfit"
-  | "spinning";
-
-export type ActivityLevel = "iniciante" | "intermediario" | "avancado";
-
-export type WorkoutStructure = {
-  type: "força" | "hipertrofia" | "técnico" | "metabólico" | "resistência";
-  volume: number;
-  intensidade: "baixa" | "moderada" | "alta";
-  descanso: string;
-  duracaoEstimada: string;
-};
+// ✅ CONTRATO ÚNICO (fonte da verdade)
+import type {
+  WeeklyWorkoutProtocol,
+  WorkoutModality,
+  ActivityLevel,
+  WorkoutStructure,
+} from "@/features/fitness-suite/contracts/weeklyWorkoutProtocol";
 
 import { buildSessionPlan } from "./sessionPlanner";
 import type { SessionWorkoutPlan } from "./sessionPlanner";
@@ -139,21 +129,6 @@ void __mfLabelByModality;
 void __mfGetGoal;
 void __mfBuildModalityStrategies;
 
-export type WeeklyWorkoutProtocol = {
-  generatedAt: string;
-  modalities: WorkoutModality[];
-  levelByModality: Record<WorkoutModality, ActivityLevel>;
-  sessions: {
-    day: string;
-    modality: WorkoutModality;
-    modalityLevel: ActivityLevel;
-    goal: string;
-    structure: WorkoutStructure;
-    plan?: SessionWorkoutPlan;
-  }[];
-  strategiesByModality?: Record<string, { strategy: string; rationale: string }>
-};
-
 const WEEK_DAYS = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
 
 const baseByLevel = {
@@ -168,7 +143,7 @@ const goalByModality: Record<WorkoutModality, string> = {
   hiit: "Condicionamento metabólico",
   corrida: "Base aeróbia e eficiência",
   crossfit: "Técnica + capacidade metabólica",
-  spinning: "Resistência e potência em bike",
+  bike_indoor: "Resistência e potência em bike",
 };
 
 const structureForSession = (
@@ -181,7 +156,7 @@ const structureForSession = (
 
   if (modality === "musculacao") {
     return {
-      type: alt ? "força" : "hipertrofia",
+      type: alt ? "forca" : "hipertrofia",
       volume: base.volume + (alt ? 1 : 0),
       intensidade: alt ? "alta" : base.intensidade,
       descanso: alt ? "90–120s" : base.descanso,
@@ -191,7 +166,7 @@ const structureForSession = (
 
   if (modality === "funcional") {
     return {
-      type: alt ? "técnico" : "metabólico",
+      type: alt ? "tecnico" : "metabolico",
       volume: base.volume,
       intensidade: alt ? base.intensidade : "alta",
       descanso: alt ? "45–75s" : "60–90s",
@@ -201,7 +176,7 @@ const structureForSession = (
 
   if (modality === "hiit") {
     return {
-      type: "metabólico",
+      type: "metabolico",
       volume: base.volume + 1,
       intensidade: level === "iniciante" ? "moderada" : "alta",
       descanso: alt ? "75–120s" : "45–75s",
@@ -211,7 +186,7 @@ const structureForSession = (
 
   if (modality === "crossfit") {
     return {
-      type: alt ? "técnico" : "metabólico",
+      type: alt ? "tecnico" : "metabolico",
       volume: base.volume + (alt ? 0 : 1),
       intensidade: alt ? base.intensidade : "alta",
       descanso: alt ? "60–120s" : "45–90s",
@@ -221,7 +196,7 @@ const structureForSession = (
 
   if (modality === "corrida") {
     return {
-      type: "resistência",
+      type: "resistencia",
       volume: base.volume,
       intensidade: alt ? base.intensidade : "alta",
       descanso: "—",
@@ -230,7 +205,7 @@ const structureForSession = (
   }
 
   return {
-    type: "resistência",
+    type: "resistencia",
     volume: base.volume,
     intensidade: base.intensidade,
     descanso: "—",
@@ -238,7 +213,12 @@ const structureForSession = (
   };
 };
 
-export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocol => {
+type WeeklyWorkoutProtocolEngine = WeeklyWorkoutProtocol & {
+  sessions: (WeeklyWorkoutProtocol["sessions"][number] & { plan?: SessionWorkoutPlan })[];
+  strategiesByModality?: Record<string, { strategy: string; rationale: string }>;
+};
+
+export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocolEngine => {
   // MF_ENGINE_DAY_MAP_V1
   const __dayKeys: string[] = Array.isArray(rawState?.workoutDaysSelected) ? rawState.workoutDaysSelected : [];
   const days: string[] = __dayKeys.length
@@ -247,7 +227,7 @@ export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocol => {
         return map[String(k)] || String(k);
       })
     : (rawState?.diasTreino ?? WEEK_DAYS.slice(0, 5));
-  const __allowed: WorkoutModality[] = ["musculacao","funcional","corrida","spinning","crossfit"];
+  const __allowed: WorkoutModality[] = ["musculacao","funcional","corrida","bike_indoor","crossfit"];
 // MF_ENGINE_ALLOWED_MODALITIES_V2
   const modalities: WorkoutModality[] = Array.isArray(rawState?.workoutModalities) && rawState.workoutModalities.length
     ? rawState.workoutModalities.map(String).filter((k: string) => (__allowed as any).includes(k))
@@ -286,3 +266,5 @@ export const buildWeeklyProtocol = (rawState: any): WeeklyWorkoutProtocol => {
     }),
   };
 };
+
+export type { WeeklyWorkoutProtocol, WorkoutModality, ActivityLevel, WorkoutStructure } from "@/features/fitness-suite/contracts/weeklyWorkoutProtocol";

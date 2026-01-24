@@ -1,4 +1,4 @@
-import type { ActivityLevel, WorkoutModality, WorkoutStructure } from "./weeklyProtocol";
+import type { ActivityLevel, WorkoutModality, WorkoutStructure } from "@/features/fitness-suite/contracts/weeklyWorkoutProtocol";
 import * as WorkoutLibrary from "../workouts/library";
 
 // Tipo leve e compatível (não força UI agora)
@@ -91,7 +91,7 @@ const prescriptionByStructure = (
   // default seguro
   const rest = structure.descanso || "60-90s";
 
-  if (structure.type === "força") {
+  if (structure.type === "forca") {
     return {
       sets: level === "avancado" ? 5 : 4,
       reps: level === "iniciante" ? "5-6" : "3-6",
@@ -109,7 +109,7 @@ const prescriptionByStructure = (
     };
   }
 
-  if (structure.type === "técnico") {
+  if (structure.type === "tecnico") {
     return {
       sets: 3,
       reps: level === "iniciante" ? "6-8" : "8-10",
@@ -118,7 +118,7 @@ const prescriptionByStructure = (
     };
   }
 
-  if (structure.type === "metabólico") {
+  if (structure.type === "metabolico") {
     return {
       sets: 4,
       reps: level === "iniciante" ? "20-30s" : "30-45s",
