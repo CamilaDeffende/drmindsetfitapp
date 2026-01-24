@@ -23,13 +23,20 @@ export function DashboardPremium() {
   
 const { state } = useDrMindSetfit()
 
+
+// SAFE_STATE_DASHBOARD_V1 (anti-crash + typed locally)
+type __PassosDia = { data: string; passos: number };
+type __ConsumoDia = { data: string; consumido: number };
+type __CargaDia = { data: string; cargaTotal: number; exercicioId?: string; exercicioNome?: string };
+type __TreinoDia = { dia: string; foco?: string; grupamentos?: string[]; exercicios: any[]; observacoes?: string };
+
+const passosDiarios: __PassosDia[] = Array.isArray((state as any)?.passosDiarios) ? ((state as any).passosDiarios as __PassosDia[]) : [];
+const consumoCalorias: __ConsumoDia[] = Array.isArray((state as any)?.consumoCalorias) ? ((state as any).consumoCalorias as __ConsumoDia[]) : [];
+const treinosSemana: __TreinoDia[] = Array.isArray((state as any)?.treino?.treinos) ? (((state as any).treino.treinos) as __TreinoDia[]) : [];
+const historicoCargas: __CargaDia[] = Array.isArray((state as any)?.treino?.historicoCargas) ? (((state as any).treino.historicoCargas) as __CargaDia[]) : [];
 // ===============================
 // SAFE STATE (anti-crash)
 // ===============================
-const passosDiarios: any[] = Array.isArray((state as any)?.passosDiarios) ? (state as any).passosDiarios : []
-const consumoCalorias: any[] = Array.isArray((state as any)?.consumoCalorias) ? (state as any).consumoCalorias : []
-const treino = state?.treino ?? null
-const historicoCargas = Array.isArray(treino?.historicoCargas) ? treino.historicoCargas : []
 const navigate = useNavigate()
   const [passosHoje, setPassosHoje] = useState(0)
   const [cargaHoje, setCargaHoje] = useState(0)
@@ -71,33 +78,31 @@ const navigate = useNavigate()
 
   // Calcular carga total de hoje e da semana
   useEffect(() => {
-    if (state.treino?.historicoCargas) {
+    if (historicoCargas.length) {
       const hoje = new Date()
-      const dataHoje = format(hoje, 'yyyy-MM-dd')
+      const dataHoje = format(hoje, "yyyy-MM-dd")
       const inicioSemana = new Date(hoje)
       inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1)
 
       const cargaDia = historicoCargas
-        .filter((c: any) => c.data === dataHoje)
-        .reduce((acc: any, c: any) => acc + c.cargaTotal, 0)
+        .filter((c) => c.data === dataHoje)
+        .reduce((acc, c) => acc + (Number(c.cargaTotal) || 0), 0)
 
       const cargaTotal = historicoCargas
-        .filter((c: any) => new Date(c.data) >= inicioSemana)
-        .reduce((acc: any, c: any) => acc + c.cargaTotal, 0)
+        .filter((c) => new Date(c.data) >= inicioSemana)
+        .reduce((acc, c) => acc + (Number(c.cargaTotal) || 0), 0)
 
       setCargaHoje(cargaDia)
       setCargaSemana(cargaTotal)
     }
-  }, [state.treino])
-
-  // Dados para gráfico de evolução (últimos 30 dias)
+  }, [historicoCargas])// Dados para gráfico de evolução (últimos 30 dias)
   const dadosEvolucao = Array.from({ length: 30 }, (_, i) => {
     const data = new Date()
     data.setDate(data.getDate() - (29 - i))
     const dataStr = format(data, 'yyyy-MM-dd')
 
     const passos = passosDiarios.find((p: any) => p.data === dataStr)?.passos || 0
-    const carga = state.treino?.historicoCargas
+    const carga = historicoCargas
       .filter((c: any) => c.data === dataStr)
       .reduce((acc: any, c: any) => acc + c.cargaTotal, 0) || 0
     const calorias = consumoCalorias.find((c: any) => c.data === dataStr)?.consumido || 0
@@ -115,8 +120,6 @@ const navigate = useNavigate()
   const caloriasQueimadas = Math.floor(passosHoje * 0.04)
 
   const exportarPDF = async () => {
-
-  void exportarPDF;
     try {
       const { exportarPDFCompleto } = await import('@/lib/exportar-pdf')
       await exportarPDFCompleto(state, passosHoje, cargaHoje, cargaSemana)
@@ -124,6 +127,9 @@ const navigate = useNavigate()
       console.error('Erro ao exportar PDF:', error)
       alert('Erro ao gerar PDF. Tente novamente.')
     }
+
+  // TS6133 guard (mantém função disponível sem quebrar lint/type-check)
+  void exportarPDF;
   }
 
   if (!state.concluido) {
@@ -258,6 +264,73 @@ const navigate = useNavigate()
             </CardContent>
           </Card>
         </div>
+
+
+        {/* DASH_ACTIVE_WORKOUTS_V1 */}
+        <Card className="glass-effect neon-border overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-100">Treinos Ativos</h3>
+                <p className="text-xs text-gray-400">
+                  Mesmo plano gerado no Step 5 (Protocolo semanal)
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/treino")}
+                className="border-white/10 bg-white/5 hover:bg-white/10"
+              >
+                Abrir Treino
+              </Button>
+            </div>
+
+            {treinosSemana.length ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {treinosSemana.slice(0, 4).map((dia, idx) => (
+                  <div key={idx} className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold">{dia?.dia || "Dia"}</div>
+                      <div className="text-xs text-gray-400">
+                        {(dia?.exercicios?.length ?? 0)} exercícios
+                      </div>
+                    </div>
+
+                    {dia?.foco ? (
+                      <div className="mt-1 text-xs text-gray-400">{dia.foco}</div>
+                    ) : null}
+
+                    <div className="mt-3 space-y-1">
+                      {(dia?.exercicios ?? []).slice(0, 4).map((ex: any, eIdx: number) => (
+                        <div key={eIdx} className="text-xs text-muted-foreground">
+                          • <span className="text-foreground/90">{ex?.nome ?? ex?.exercicio?.nome ?? "Exercício"}</span>
+                          {ex?.series ? <> — {ex.series}x{ex?.reps ?? ""}</> : null}
+                          {ex?.repeticoes ? <> — {String(ex.repeticoes)}</> : null}
+                          {ex?.descanso ? <> • Desc: {ex.descanso}</> : null}
+                        </div>
+                      ))}
+                      {(dia?.exercicios?.length ?? 0) > 4 ? (
+                        <div className="text-xs text-gray-500">+ {(dia.exercicios.length - 4)} exercícios</div>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-black/10 p-5">
+                <div className="text-sm font-semibold text-gray-100">Nenhum treino ativo ainda</div>
+                <div className="mt-1 text-xs text-gray-400">
+                  Vá no onboarding (Step 5) e clique em <span className="font-medium">Gerar minha semana</span>.
+                </div>
+                <div className="mt-4">
+                  <Button onClick={() => navigate("/onboarding")} className="glow-blue">
+                    Ir para Onboarding
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Gráfico de Evolução - 30 Dias */}
         <Card className="glass-effect neon-border">
