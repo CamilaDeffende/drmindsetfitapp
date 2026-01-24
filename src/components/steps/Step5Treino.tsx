@@ -7,6 +7,11 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { buildWeeklyProtocol } from "@/features/fitness-suite/engine/weeklyProtocol";
 
+import { buildStrengthWeekPlan } from "@/features/fitness-suite/engine/strength/strengthWeekPlanner";
+import { toWeekdayKey } from "@/utils/strength/weekdayMap";
+import { loadSelectedGroups, saveWeekPlan } from "@/utils/strength/strengthWeekStorage";
+import { StrengthMuscleGroupsPicker } from "@/components/strength/StrengthMuscleGroupsPicker";
+import type { WeekdayKey } from "@/utils/strength/strengthWeekStorage";
 import { computeFinalTargetCalories } from "@/features/fitness-suite/engine/goalEnergy";
 const __mfAllowedModalities = ["musculacao","funcional","corrida","bike_indoor","crossfit"] as const;
 type __MfModality = typeof __mfAllowedModalities[number];
@@ -49,6 +54,7 @@ function __mfSortDays(keys: __MfDayKey[]) {
 import { generateWeeklyWorkout } from "@/features/fitness-suite/engine/workoutGenerator";
 
 export function Step5Treino() {
+  const [strengthGroupsError, setStrengthGroupsError] = useState<string | null>(null);
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
 
   // ===== Fonte da verdade (state) =====
@@ -156,7 +162,50 @@ export function Step5Treino() {
     } as any);
   };
 
+
+  function ensureStrengthWeekPlan(): boolean {
+    try {
+      setStrengthGroupsError(null);
+
+      const byDay = (planByDay ?? {}) as Record<string, unknown>;
+      const strengthDays: WeekdayKey[] = [];
+
+      const pushDay = (raw: unknown) => {
+        const k = toWeekdayKey(String(raw ?? ""));
+        if (k && !strengthDays.includes(k)) strengthDays.push(k);
+      };
+
+      for (const [day, modRaw] of Object.entries(byDay)) {
+        const mod = String(modRaw ?? "").toLowerCase();
+        if (mod === "musculacao" || mod === "musculação") pushDay(day);
+      }
+
+      if (strengthDays.length === 0) return true;
+
+      const selectedGroups = loadSelectedGroups();
+      if (!Array.isArray(selectedGroups) || selectedGroups.length === 0) {
+        setStrengthGroupsError("Selecione pelo menos 1 grupamento para Musculação antes de gerar sua semana.");
+        return false;
+      }
+
+      const userLevel = (levelByModality?.["musculacao"] ?? "iniciante") as any;
+      const goal = ("hipertrofia" as any);
+
+      const plan = buildStrengthWeekPlan({ strengthDays, selectedGroups, userLevel, goal });
+      saveWeekPlan(plan);
+      return true;
+    } catch (e) {
+      console.warn("[strength] weekPlan ensure failed:", e);
+      return true;
+    }
+  }
+
     const handleGerarTreino = () => {
+    if (!ensureStrengthWeekPlan()) {
+      alert("Selecione pelo menos 1 grupamento para Musculação antes de gerar sua semana.");
+      return;
+    }
+
 if (!canContinue) return;
 
     // persiste coleta essencial
@@ -363,7 +412,16 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
       {__mfGenerated && (__mfTreinoPreview?.treinos?.length || __mfProtocolPreview) ? (
         <Card className="mt-4 border-white/10 bg-white/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Seu protocolo semanal</CardTitle>
+            
+      {/* Grupamentos da semana (apenas Musculação) */}
+      <div className="mt-4">
+        <StrengthMuscleGroupsPicker />
+        {strengthGroupsError ? (
+          <div className="mt-2 text-sm text-red-400">{strengthGroupsError}</div>
+        ) : null}
+      </div>
+
+<CardTitle className="text-base">Seu protocolo semanal</CardTitle>
             <CardDescription>
               Treino individualizado com base nas suas modalidades, nível e dias selecionados.
             </CardDescription>
