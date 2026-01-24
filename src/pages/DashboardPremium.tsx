@@ -20,8 +20,17 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function DashboardPremium() {
-  const { state } = useDrMindSetfit()
-  const navigate = useNavigate()
+  
+const { state } = useDrMindSetfit()
+
+// ===============================
+// SAFE STATE (anti-crash)
+// ===============================
+const passosDiarios: any[] = Array.isArray((state as any)?.passosDiarios) ? (state as any).passosDiarios : []
+const consumoCalorias: any[] = Array.isArray((state as any)?.consumoCalorias) ? (state as any).consumoCalorias : []
+const treino = state?.treino ?? null
+const historicoCargas = Array.isArray(treino?.historicoCargas) ? treino.historicoCargas : []
+const navigate = useNavigate()
   const [passosHoje, setPassosHoje] = useState(0)
   const [cargaHoje, setCargaHoje] = useState(0)
   const [cargaSemana, setCargaSemana] = useState(0)
@@ -54,11 +63,11 @@ export function DashboardPremium() {
   // Calcular passos do dia
   useEffect(() => {
     const dataHoje = format(new Date(), 'yyyy-MM-dd')
-    const passosDia = state.passosDiarios.find(p => p.data === dataHoje)
+    const passosDia = passosDiarios.find((p: any) => p.data === dataHoje)
     if (passosDia) {
       setPassosHoje(prev => Math.max(prev, passosDia.passos))
     }
-  }, [state.passosDiarios])
+  }, [passosDiarios])
 
   // Calcular carga total de hoje e da semana
   useEffect(() => {
@@ -68,13 +77,13 @@ export function DashboardPremium() {
       const inicioSemana = new Date(hoje)
       inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1)
 
-      const cargaDia = state.treino.historicoCargas
-        .filter(c => c.data === dataHoje)
-        .reduce((acc, c) => acc + c.cargaTotal, 0)
+      const cargaDia = historicoCargas
+        .filter((c: any) => c.data === dataHoje)
+        .reduce((acc: any, c: any) => acc + c.cargaTotal, 0)
 
-      const cargaTotal = state.treino.historicoCargas
-        .filter(c => new Date(c.data) >= inicioSemana)
-        .reduce((acc, c) => acc + c.cargaTotal, 0)
+      const cargaTotal = historicoCargas
+        .filter((c: any) => new Date(c.data) >= inicioSemana)
+        .reduce((acc: any, c: any) => acc + c.cargaTotal, 0)
 
       setCargaHoje(cargaDia)
       setCargaSemana(cargaTotal)
@@ -87,11 +96,11 @@ export function DashboardPremium() {
     data.setDate(data.getDate() - (29 - i))
     const dataStr = format(data, 'yyyy-MM-dd')
 
-    const passos = state.passosDiarios.find(p => p.data === dataStr)?.passos || 0
+    const passos = passosDiarios.find((p: any) => p.data === dataStr)?.passos || 0
     const carga = state.treino?.historicoCargas
-      .filter(c => c.data === dataStr)
-      .reduce((acc, c) => acc + c.cargaTotal, 0) || 0
-    const calorias = state.consumoCalorias.find(c => c.data === dataStr)?.consumido || 0
+      .filter((c: any) => c.data === dataStr)
+      .reduce((acc: any, c: any) => acc + c.cargaTotal, 0) || 0
+    const calorias = consumoCalorias.find((c: any) => c.data === dataStr)?.consumido || 0
 
     return {
       data: format(data, 'dd/MM'),
@@ -227,7 +236,7 @@ export function DashboardPremium() {
                 </div>
                 <div>
                   <div className="text-xs text-gray-400">Calorias</div>
-                  <div className="text-xl font-bold">{((state.consumoCalorias && state.consumoCalorias.length) ? (state.consumoCalorias[state.consumoCalorias.length-1]?.consumido ?? 0) : 0)}</div>
+                  <div className="text-xl font-bold">{((consumoCalorias && consumoCalorias.length) ? (consumoCalorias[consumoCalorias.length-1]?.consumido ?? 0) : 0)}</div>
                 </div>
               </div>
               <div className="text-xs text-gray-500">Meta: {(state.nutricao?.macros?.calorias ?? 0)}</div>
