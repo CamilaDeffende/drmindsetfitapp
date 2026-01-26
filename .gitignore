@@ -33,3 +33,4 @@ playwright-report/
 .playwright/
 
 .backups/
+.share/

@@ -67,12 +67,16 @@ export interface ComposicaoCorporal {
   percentualMassaMagra?: number
 }
 
+export type Biotipo = 'ectomorfo' | 'mesomorfo' | 'endomorfo'
+
 export interface AvaliacaoFisica {
   peso: number
   altura: number
   imc: number
   circunferencias: Circunferencias
   composicao: ComposicaoCorporal
+  // Biotipo (Step 2)
+  biotipo?: Biotipo
 }
 
 // Etapa 3 - Metabolismo
@@ -94,6 +98,9 @@ export interface ResultadoMetabolico {
     mifflin?: number
     tinsley?: number
   }
+  // Ajustes opcionais (biotipo)
+  biotipo?: Biotipo
+  ajusteBiotipoKcal?: number
 }
 
 // Etapa 4 - Planejamento Nutricional
@@ -320,3 +327,4 @@ export interface DrMindSetfitState {
   dietaAtiva?: DietaAtiva
   treinoAtivo?: TreinoAtivo
 }
+export type FrequenciaAtividadeSemanal = 'sedentario' | 'moderadamente_ativo' | 'ativo' | 'muito_ativo';

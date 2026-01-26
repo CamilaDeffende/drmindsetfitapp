@@ -11,13 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import type { AvaliacaoFisica, MetodoComposicao } from '@/types'
+import type { AvaliacaoFisica, MetodoComposicao } from '@/types';
 import { useState } from 'react'
 
 const avaliacaoSchema = z.object({
   peso: z.coerce.number().min(30).max(300),
   altura: z.coerce.number().min(100).max(250),
   metodoComposicao: z.enum(['bioimpedancia', 'pollock7', 'nenhum']),
+
+  frequenciaAtividadeSemanal: z.enum(['sedentario','moderadamente_ativo','ativo','muito_ativo']),
+  biotipo: z.enum(['ectomorfo','mesomorfo','endomorfo']),
 
   // Circunferências (opcionais)
   cintura: z.coerce.number().optional().or(z.literal('')),
@@ -185,7 +188,91 @@ export function Step2Avaliacao() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
 
-          {/* Antropometria Básica */}
+          
+          {/* Atividade semanal + Biotipo */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Atividade física semanal</CardTitle>
+                <CardDescription>Esse dado melhora a precisão do GET (gasto energético total diário).</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="frequenciaAtividadeSemanal"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Qual a sua frequência de atividade física semanal?</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="sedentario">Sedentário</SelectItem>
+                          <SelectItem value="moderadamente_ativo">Moderadamente ativo (1 a 3x/semana)</SelectItem>
+                          <SelectItem value="ativo">Ativo (3 a 5x/semana)</SelectItem>
+                          <SelectItem value="muito_ativo">Muito ativo (+5x/semana)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Autoavaliação de biotipo</CardTitle>
+                <CardDescription>Referência prática para individualizar calorias.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="biotipo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Qual biotipo mais se parece com você?</FormLabel>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {[
+                          { key: "ectomorfo", title: "Ectomorfo", desc: "Tende a perder peso com facilidade." },
+                          { key: "mesomorfo", title: "Mesomorfo", desc: "Atlético • ganha massa com mais facilidade." },
+                          { key: "endomorfo", title: "Endomorfo", desc: "Tende a ganhar/reter peso com facilidade." },
+                        ].map((x) => {
+                          const active = field.value === x.key;
+                          return (
+                            <button
+                              type="button"
+                              key={x.key}
+                              onClick={() => field.onChange(x.key)}
+                              className={[
+                                "text-left rounded-2xl border p-3 transition-all",
+                                "bg-white/5 hover:bg-white/10 border-white/10",
+                                active ? "ring-2 ring-[#00B7FF] border-[#00B7FF]/40" : "",
+                              ].join(" ")}
+                            >
+                              <div className="font-semibold">{x.title}</div>
+                              <div className="text-xs text-muted-foreground leading-relaxed">{x.desc}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <FormDescription className="text-xs">
+                        Ectomorfo recebe ajuste automático de calorias para manter sustentabilidade do plano.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+{/* Antropometria Básica */}
           <Card>
             <CardHeader>
               <CardTitle>Base antropométrica</CardTitle>
@@ -338,6 +425,9 @@ export function Step2Avaliacao() {
               />
 
               {metodoSelecionado === 'pollock7' && (
+
+          
+
                 <Tabs defaultValue="dobras" className="w-full">
                   <TabsList className="grid w-full grid-cols-1">
                     <TabsTrigger value="dobras">7 Dobras Cutâneas (mm)</TabsTrigger>
