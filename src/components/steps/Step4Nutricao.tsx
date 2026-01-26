@@ -9,6 +9,11 @@ import { ArrowLeft, ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
 import type { PlanejamentoNutricional, Restricao, TipoRefeicao, AlimentoRefeicao } from '@/types'
 import { ALIMENTOS_DATABASE, calcularMacros } from '@/types/alimentos'
 
+// MF_BLOCO4_GUARDRAILS_V2: helpers locais (escopo seguro no Step4)
+const mfClamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+const mfKcalFromMacros = (p: number, c: number, g: number) => (p * 4) + (c * 4) + (g * 9);
+
+
 export function Step4Nutricao() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
 
@@ -68,9 +73,19 @@ export function Step4Nutricao() {
     const proteina = Math.round(peso * 2) // 2g/kg
     const gorduras = Math.round(peso * 1) // 1g/kg
     const caloriasRestantes = caloriasFinais - (proteina * 4 + gorduras * 9)
-    const carboidratos = Math.round(caloriasRestantes / 4)
+    let carboidratos = Math.round(caloriasRestantes / 4);
 
-    // Filtrar alimentos baseado nas restrições
+    // MF_BLOCO4_GUARDRAILS_V2: consistência kcal ↔ macros (ajusta carboidratos mantendo proteína/gordura)
+    const kcalFixas = (proteina * 4) + (gorduras * 9);
+    const kcalTarget = Math.round(caloriasFinais);
+    const kcalRest = Math.max(0, kcalTarget - kcalFixas);
+    const carboFix = Math.max(0, Math.round(kcalRest / 4));
+    // clamp de carbo para evitar valores absurdos em cenários extremos
+    carboidratos = mfClamp(carboFix, 0, 900);
+    // recalcula kcal final para exibição coerente (diferenças por arredondamento)
+    const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
+    caloriasFinais = mfClamp(Math.round(kcalFinal), 800, 6500);
+// Filtrar alimentos baseado nas restrições
     const isVegano = restricoes.includes('vegano')
     const isVegetariano = restricoes.includes('vegetariano')
 
@@ -321,7 +336,7 @@ export function Step4Nutricao() {
       <Card className="mb-4 sm:mb-6">
         <CardHeader>
           <CardTitle className="text-lg sm:text-xl">Estratégia</CardTitle>
-          <CardDescription className="text-sm">Como ajustar suas calorias com segurança</CardDescription>
+          <CardDescription className="text-sm">Como ajustar suas calorias com segurança <span className="text-xs text-muted-foreground">• Guardrails premium: macros consistentes e faixa segura.</span></CardDescription>
         </CardHeader>
         <CardContent>
           <Label className="text-sm sm:text-base">Escolha a abordagem</Label>
