@@ -10,7 +10,8 @@ function calcAjusteBiotipoKcal(params: {
   bfPct?: number | null;
 }) {
   const biotipo = params.biotipo;
-  if (biotipo !== "ectomorfo") return { kcal: 0, motivo: "Sem ajuste de biotipo." };
+  if (biotipo !== "ectomorfo") return {
+kcal: 0, motivo: "Sem ajuste de biotipo." };
 
   const obj = params.objetivo ?? "manutencao";
   const imc = Number.isFinite(params.imc as any) ? (params.imc as number) : undefined;
@@ -40,20 +41,22 @@ function calcAjusteBiotipoKcal(params: {
 }
 
 
-function mapFreqSemanalToFafMultiplier(freq?: string) {
-  // Ajuste PREMIUM (leve) para refletir atividade semanal (NEAT/volume geral) SEM duplicar o nível de treino.
-  // sedentario: 1.00 | 1-3x: 1.05 | 3-5x: 1.10 | +5x: 1.15
-  switch (freq) {
-    case "moderadamente_ativo": return 1.05;
-    case "ativo": return 1.10;
-    case "muito_ativo": return 1.15;
-    case "sedentario":
-    default: return 1.00;
-  }
-}
+
 
 // Motor de Decisão Metabólica - DrMindSetfit
 import type { PerfilUsuario, AvaliacaoFisica, EquacaoMetabolica, ResultadoMetabolico } from '@/types'
+
+
+// BLOCO 1 (Premium): multiplicador por frequência semanal (atividade real)
+const getWeeklyActivityMultiplier = (freq?: string): number => {
+  switch (String(freq || "").toLowerCase()) {
+    case "sedentario": return 1.20;
+    case "moderadamente_ativo": return 1.375;
+    case "ativo": return 1.55;
+    case "muito_ativo": return 1.725;
+    default: return 1.375;
+  }
+};
 
 // Fator de Atividade Física (FAF)
 const getFAF = (nivelTreino: string): number => {
@@ -192,10 +195,10 @@ export const calcularMetabolismo = (
 
   // GET = TMB × FAF
   const fafBase = getFAF(nivelTreino)
-  const freqSemanal = (perfil as any)?.avaliacao?.frequenciaAtividadeSemanal as (string | undefined)
-  const fafMult = mapFreqSemanalToFafMultiplier(freqSemanal)
-  const faf = Math.min(2.4, Math.max(1.0, fafBase * fafMult));
-  const fafFinal = faf;
+  const freqSemanal = (avaliacao as any)?.frequenciaAtividadeSemanal as (string | undefined);
+  const fafMult = getWeeklyActivityMultiplier(freqSemanal);
+  const fafFinal = Math.min(2.4, Math.max(1.0, fafBase * fafMult));
+  const faf = fafFinal;
   const get = tmb * fafFinal
   // Calorias alvo (baseado no objetivo)
   let caloriasAlvo = get

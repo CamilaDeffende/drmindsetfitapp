@@ -110,6 +110,7 @@ export function Step2Avaliacao() {
     const imc = Number(calcularIMC(data.peso, data.altura))
 
     const avaliacao: AvaliacaoFisica = {
+      frequenciaAtividadeSemanal: data.frequenciaAtividadeSemanal,
       peso: data.peso,
       altura: data.altura,
       imc,
