@@ -9,6 +9,7 @@ import { calcularMetabolismo } from '@/lib/metabolismo'
 import type { ResultadoMetabolico } from '@/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/features/fitness-suite/engine/metabolismoActivity";
+import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 
 export function Step3Metabolismo() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
@@ -147,6 +148,29 @@ export function Step3Metabolismo() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>TMB (repouso)</CardDescription>
+
+          /* MF_BLOCO3_WEEKLY_PROTOCOL_PREVIEW */
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-gray-400">Seu protocolo semanal</div>
+                <div className="text-base sm:text-lg font-semibold text-white">Semana completa • por modalidade • sem mistura</div>
+              </div>
+              <div className="text-[11px] text-gray-400 text-right">
+                Visual premium • leitura rápida
+              </div>
+            </div>
+
+            <div className="mt-3">
+              {/* Reusa o componente já existente no app (PlanosAtivos) */}
+              <WeeklyProtocolActive />
+            </div>
+
+            <div className="mt-3 text-xs text-gray-400">
+              Dica: cada dia respeita a modalidade escolhida. Musculação mostra grupamentos; corrida/bike/crossfit/funcional mostram sessão completa.
+            </div>
+          </div>
+  
             <CardTitle className="text-3xl font-bold text-[#1E6BFF]">
               {resultado.tmb}
               <span className="text-lg font-normal text-muted-foreground ml-1">kcal</span>
