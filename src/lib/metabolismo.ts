@@ -153,8 +153,9 @@ export const calcularMetabolismo = (
   const fafBase = getFAF(nivelTreino)
   const freqSemanal = (perfil as any)?.avaliacao?.frequenciaAtividadeSemanal as (string | undefined)
   const fafMult = mapFreqSemanalToFafMultiplier(freqSemanal)
-  const faf = Math.min(2.4, Math.max(1.0, fafBase * fafMult))
-  const get = tmb * faf
+  const faf = Math.min(2.4, Math.max(1.0, fafBase * fafMult));
+  const fafFinal = faf;
+  const get = tmb * fafFinal
   // Calorias alvo (baseado no objetivo)
   let caloriasAlvo = get
   if (perfil.objetivo === 'emagrecimento') {
@@ -191,6 +192,9 @@ export const calcularMetabolismo = (
     equacaoUtilizada: equacaoEscolhida,
     justificativa: gerarJustificativa(equacaoEscolhida, perfil),
     tmb: Math.round(tmb),
+    fafBase: Number(fafBase.toFixed(2)),
+    fafMult: Number(fafMult.toFixed(2)),
+    fafFinal: Number(fafFinal.toFixed(2)),
     get: Math.round(get),
     caloriasAlvo: Math.round(caloriasAlvo),
     faixaSegura,

@@ -77,6 +77,9 @@ export interface AvaliacaoFisica {
   composicao: ComposicaoCorporal
   // Biotipo (Step 2)
   biotipo?: Biotipo
+
+  // Atividade semanal (premium)
+  frequenciaAtividadeSemanal?: 'sedentario' | 'moderadamente_ativo' | 'ativo' | 'muito_ativo';
 }
 
 // Etapa 3 - Metabolismo
@@ -101,6 +104,11 @@ export interface ResultadoMetabolico {
   // Ajustes opcionais (biotipo)
   biotipo?: Biotipo
   ajusteBiotipoKcal?: number
+
+  // Auditoria premium do FAF (atividade semanal)
+  fafBase?: number;
+  fafMult?: number;
+  fafFinal?: number;
 }
 
 // Etapa 4 - Planejamento Nutricional
@@ -328,3 +336,4 @@ export interface DrMindSetfitState {
   treinoAtivo?: TreinoAtivo
 }
 export type FrequenciaAtividadeSemanal = 'sedentario' | 'moderadamente_ativo' | 'ativo' | 'muito_ativo';
+

@@ -206,7 +206,52 @@ export function Step3Metabolismo() {
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Máximo</p>
               <Badge variant="outline" className="text-base">{resultado.faixaSegura.maximo} kcal</Badge>
+            
+            
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-white">Detalhes do cálculo (premium)</div>
+                <div className="text-[11px] text-gray-400">FAF • Frequência semanal • Biotipo</div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+                  <div className="text-[11px] text-gray-400">FAF base (nível)</div>
+                  <div className="text-white font-semibold">{(resultado as any)?.fafBase ?? "-"}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+                  <div className="text-[11px] text-gray-400">Multiplicador (freq. semanal)</div>
+                  <div className="text-white font-semibold">{(resultado as any)?.fafMult ?? "-"}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+                  <div className="text-[11px] text-gray-400">FAF final (aplicado)</div>
+                  <div className="text-white font-semibold">{(resultado as any)?.fafFinal ?? "-"}</div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-gray-200">
+                  Frequência: <b className="text-white">{String(state?.avaliacao?.frequenciaAtividadeSemanal ?? "-")}</b>
+                </span>
+                <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-gray-200">
+                  Biotipo: <b className="text-white">{String(state?.avaliacao?.biotipo ?? "-")}</b>
+                </span>
+                {(resultado as any)?.ajusteBiotipoKcal ? (
+                  <span className="px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-300">
+                    Ajuste biotipo: <b className="text-green-200">+{String((resultado as any).ajusteBiotipoKcal)}</b> kcal
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-gray-400">
+                    Ajuste biotipo: <b className="text-white">0</b> kcal
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-2 text-[11px] text-gray-500 leading-relaxed">
+                FAF = fator de atividade. Aplicamos multiplicador premium com base na frequência semanal e limitamos o FAF final entre 1.0 e 2.4 para segurança.
+              </div>
             </div>
+</div>
           </div>
           <div className="w-full h-3 bg-gradient-to-r from-yellow-400 via-green-500 to-yellow-400 rounded-full mt-4 hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0"></div>
         </CardContent>
