@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(demoUser)
       setSession(demoSession)
       setLoading(false)
-      console.log('🎭 Modo DEMO ativado - Login automático')
+      if (import.meta.env.DEV) console.log('🎭 Modo DEMO ativado - Login automático')
       return
     }
 
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, fullName: string) => {
     // Modo DEMO: simular cadastro bem-sucedido
     if (!isSupabaseConfigured) {
-      console.log('🎭 Modo DEMO: Cadastro simulado para', email)
+      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Cadastro simulado para', email)
       return { error: null }
     }
 
@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     // Modo DEMO: simular login bem-sucedido
     if (!isSupabaseConfigured) {
-      console.log('🎭 Modo DEMO: Login simulado para', email)
+      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Login simulado para', email)
       return { error: null }
     }
 
@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) {
       setUser(null)
       setSession(null)
-      console.log('🎭 Modo DEMO: Logout simulado')
+      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Logout simulado')
       return
     }
 
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string) => {
     // Modo DEMO: simular reset de senha
     if (!isSupabaseConfigured) {
-      console.log('🎭 Modo DEMO: Reset de senha simulado para', email)
+      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Reset de senha simulado para', email)
       return { error: null }
     }
 

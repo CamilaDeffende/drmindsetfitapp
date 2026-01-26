@@ -31,32 +31,6 @@ import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
 import CorridaPro from "@/pages/CorridaPro";
-
-// RESET_STORAGE_QUERY_SYNC: limpa estado salvo via ?reset=1 ANTES do Provider montar (sem loop)
-try {
-  const qs = new URLSearchParams(window.location.search);
-  if (qs.get('reset') === '1') {
-    // evita loop/reexecução constante
-    // Reset CONTROLADO (somente quando você pedir):
-// Abra: http://localhost:8080/#/?reset=1
-try {
-  const href = String(window.location.href || "");
-  const wantsReset = href.includes("reset=1");
-  if (wantsReset) {
-    localStorage.removeItem("drmindsetfit_state");
-    // também limpa flags conhecidas (se existirem)
-    localStorage.removeItem("mindsetfit:isSubscribed");
-    localStorage.removeItem("mindsetfit:onboardingCompleted");
-    // remove o reset=1 da URL (mantém o hash)
-    const cleaned = href.replace(/([?&])reset=1(&?)/, (_m, a, b) => (a === "?" && b ? "?" : a === "?" ? "" : b ? "&" : ""));
-    window.history.replaceState({}, "", cleaned);
-  }
-} catch {}
-// remove query e garante entrada limpa no onboarding
-    window.history.replaceState({}, '', '/');
-  }
-} catch { /* noop */ }
-
 function App() {
   // reset premium via URL: /?reset=soft | /?reset=hard
   React.useEffect(() => { maybeResetFromUrl(); }, []);
@@ -72,7 +46,8 @@ function App() {
           <BrowserRouter>
             <RouteGuard />
             <Routes>
-        <Route path="/corrida-pro" element={<CorridaPro />} />
+        
+<Route path="/corrida-pro" element={<ProtectedRoute requiresPremium><CorridaPro /></ProtectedRoute>} />
               {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
               <Route path="/" element={<Navigate to="/login" replace />} />
 

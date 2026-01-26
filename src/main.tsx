@@ -1,8 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
-import { DrMindSetfitProvider } from "./contexts/DrMindSetfitContext";
-import { SplashScreen } from "./components/branding/SplashScreen";
+import App from "./App";import { SplashScreen } from "./components/branding/SplashScreen";
 import "./index.css";
 import { DevErrorOverlay } from "@/components/system/DevErrorOverlay";
 
@@ -30,12 +28,10 @@ if (!el) throw new Error("Root element #root not found");
 
 createRoot(el).render(
   <React.StrictMode>
-    <DrMindSetfitProvider>
-      <BootSplash>
+    <BootSplash>
         <DevErrorOverlay>
           <App />
         </DevErrorOverlay>
       </BootSplash>
-    </DrMindSetfitProvider>
   </React.StrictMode>
 );

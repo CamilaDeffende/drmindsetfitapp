@@ -59,7 +59,7 @@ export function useSubscription() {
       setIsActive(true)
       setIsPremium(true)
       setLoading(false)
-      console.log('🎭 Modo DEMO: Assinatura Premium ativada')
+      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Assinatura Premium ativada')
       return
     }
 
@@ -72,7 +72,7 @@ export function useSubscription() {
         .single()
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Erro ao carregar assinatura:', error)
+        if (import.meta.env.DEV) console.error('Erro ao carregar assinatura:', error)
         setLoading(false)
         return
       }
@@ -93,7 +93,7 @@ export function useSubscription() {
 
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao verificar assinatura:', error)
+      if (import.meta.env.DEV) console.error('Erro ao verificar assinatura:', error)
       setLoading(false)
     }
   }

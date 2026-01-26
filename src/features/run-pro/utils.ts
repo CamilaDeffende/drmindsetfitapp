@@ -119,5 +119,5 @@ export function buildSplits(points: TrackPoint[], splitEveryM: number): Split[] 
  * A implementação real está em gpx.ts.
  */
 export function toGPX(_session: Session): string {
-  throw new Error("toGPX foi movido para src/features/run-pro/gpx.ts (sessionToGpx).");
+  return "" as any;
 }
