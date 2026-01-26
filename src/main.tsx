@@ -6,6 +6,8 @@ import { SplashScreen } from "./components/branding/SplashScreen";
 import "./index.css";
 import { DevErrorOverlay } from "@/components/system/DevErrorOverlay";
 
+import "leaflet/dist/leaflet.css";
+
 import { initI18n } from "@/i18n";
 
 function BootSplash({ children }: { children: React.ReactNode }) {
