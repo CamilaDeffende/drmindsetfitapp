@@ -105,6 +105,7 @@ export interface ResultadoMetabolico {
   biotipo?: Biotipo
   ajusteBiotipoKcal?: number
 
+  ajusteBiotipoMotivo?: string;
   // Auditoria premium do FAF (atividade semanal)
   fafBase?: number;
   fafMult?: number;

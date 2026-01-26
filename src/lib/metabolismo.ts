@@ -1,4 +1,45 @@
 
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function calcAjusteBiotipoKcal(params: {
+  biotipo?: string;
+  objetivo?: string;
+  imc?: number;
+  bfPct?: number | null;
+}) {
+  const biotipo = params.biotipo;
+  if (biotipo !== "ectomorfo") return { kcal: 0, motivo: "Sem ajuste de biotipo." };
+
+  const obj = params.objetivo ?? "manutencao";
+  const imc = Number.isFinite(params.imc as any) ? (params.imc as number) : undefined;
+  const bf = Number.isFinite(params.bfPct as any) ? (params.bfPct as number) : undefined;
+
+  // indicador simples de "magração"
+  const baixoIMC = imc !== undefined ? imc < 21.0 : false;
+  const muitoBaixoIMC = imc !== undefined ? imc < 19.5 : false;
+  const bfBaixo = bf !== undefined ? bf < 12 : false; // neutro (não depende de sexo aqui)
+  const scoreMagro = (baixoIMC ? 1 : 0) + (muitoBaixoIMC ? 1 : 0) + (bfBaixo ? 1 : 0);
+
+  let base = 0;
+  if (obj === "hipertrofia") base = 300 + scoreMagro * 150;   // 300–750
+  else if (obj === "manutencao") base = 150 + scoreMagro * 100; // 150–450
+  else if (obj === "emagrecimento") base = 0 + scoreMagro * 50; // 0–150
+
+  const kcal = clamp(Math.round(base), 0, 650);
+
+  const motivo =
+    obj === "hipertrofia"
+      ? "Ectomorfo + objetivo de hipertrofia: ajuste fino para melhorar aderência e reduzir risco de déficit involuntário."
+      : obj === "manutencao"
+      ? "Ectomorfo: ajuste leve para estabilidade calórica e sustentabilidade do plano."
+      : "Ectomorfo + emagrecimento: ajuste mínimo para preservar o déficit planejado.";
+
+  return { kcal, motivo };
+}
+
+
 function mapFreqSemanalToFafMultiplier(freq?: string) {
   // Ajuste PREMIUM (leve) para refletir atividade semanal (NEAT/volume geral) SEM duplicar o nível de treino.
   // sedentario: 1.00 | 1-3x: 1.05 | 3-5x: 1.10 | +5x: 1.15
@@ -163,21 +204,34 @@ export const calcularMetabolismo = (
   } else if (perfil.objetivo === 'hipertrofia') {
     caloriasAlvo = get * 1.1 // superávit de 10%
   }
-
   // Faixa segura
-  const faixaSegura = {
+  let faixaSegura = {
     minimo: Math.round(caloriasAlvo * 0.90),
     ideal: Math.round(caloriasAlvo),
     maximo: Math.round(caloriasAlvo * 1.10)
   }
 
-  // Ajuste por biotipo (heurística premium)
-  // - Ectomorfo: tende a perder peso com mais facilidade -> adiciona base de +600 kcal (faixa 500–700)
-  // - Mesomorfo/Endomorfo: mantém calorias do metabolismo (0)
-  // Obs: biotipo é autoavaliação e serve como ajuste fino, não substitui composição corporal.
+  // Ajuste por biotipo (premium, seguro e explicável)
   const biotipo = (perfil as any)?.avaliacao?.biotipo as ("ectomorfo"|"mesomorfo"|"endomorfo"|undefined);
-  const ajusteBiotipoKcal = biotipo === "ectomorfo" ? 600 : 0;
+  const imc = Number(peso) / Math.pow(Number(altura)/100, 2);
+  // tentar BF% quando houver (bioimpedância), senão null
+  const bfPct = (perfil as any)?.avaliacao?.bioPercentualGordura != null && String((perfil as any)?.avaliacao?.bioPercentualGordura) !== ''
+    ? Number((perfil as any)?.avaliacao?.bioPercentualGordura)
+    : null;
+  const ajusteBio = calcAjusteBiotipoKcal({ biotipo, objetivo: (perfil as any)?.objetivo, imc, bfPct });
+  const ajusteBiotipoKcal = ajusteBio.kcal;
+  const ajusteBiotipoMotivo = ajusteBio.motivo;
 
+
+  
+
+  // aplica ajuste no alvo final + recalcula faixa segura
+  caloriasAlvo = caloriasAlvo + (ajusteBiotipoKcal || 0);
+  faixaSegura = {
+    minimo: Math.round(caloriasAlvo * 0.90),
+    ideal: Math.round(caloriasAlvo),
+    maximo: Math.round(caloriasAlvo * 1.10)
+  };
 
   // Comparativo com todas as fórmulas
   const comparativo = {
@@ -200,5 +254,6 @@ export const calcularMetabolismo = (
     faixaSegura,
     comparativo,
     ajusteBiotipoKcal,
+    ajusteBiotipoMotivo,
   }
 }
