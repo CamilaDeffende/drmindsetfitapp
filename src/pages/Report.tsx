@@ -51,30 +51,87 @@ export function Report() {
   };
   const __mfReport = __mfResolveReportData();
   void __mfReport;
-  return (<div className="min-h-screen flex items-center justify-center bg-black">
+  
+  // MF_BLOCO7_HEALTHCHECK_V1
+  function __mfHealthcheckReport(state: any){
+    const perfil = state?.perfil ?? state?.userProfile ?? null;
+    const avaliacao = perfil?.avaliacao ?? state?.avaliacao ?? null;
+    const metabolismo = (state?.metabolismo ?? perfil?.metabolismo ?? perfil?.calculoMetabolico ?? state?.calculoMetabolico ?? null) as any;
+    const dieta = (state?.dietaAtiva ?? state?.dieta ?? perfil?.dieta ?? null) as any;
+
+    const issues: { level: "ok"|"warn"; key: string; msg: string }[] = [];
+    const ok = (key: string, msg: string) => issues.push({ level: "ok", key, msg });
+    const warn = (key: string, msg: string) => issues.push({ level: "warn", key, msg });
+
+    if (!perfil) warn("perfil", "Perfil não encontrado (estado incompleto)");
+    else ok("perfil", "Perfil carregado");
+
+    if (!avaliacao) warn("avaliacao", "Avaliação física ausente. Alguns cálculos podem ficar genéricos");
+    else ok("avaliacao", "Avaliação carregada");
+
+    // FAF
+    const freq = avaliacao?.frequenciaAtividadeSemanal ?? null;
+    if (!freq) warn("faf_freq", "Frequência semanal não informada (FAF padrão aplicado)");
+    else ok("faf_freq", "Frequência semanal: " + String(freq));
+
+    // Metabolismo / GET
+    if (!metabolismo) warn("metabolismo", "Metabolismo não encontrado no estado. Relatório pode ficar incompleto");
+    else {
+      ok("metabolismo", "Metabolismo disponível");
+      const tmb = Number(metabolismo?.tmb ?? NaN);
+      const get = Number(metabolismo?.get ?? metabolismo?.caloriasManutencao ?? NaN);
+      const fafFinal = Number(metabolismo?.fafFinal ?? metabolismo?.faf ?? NaN);
+      if (Number.isFinite(tmb) && Number.isFinite(get) && Number.isFinite(fafFinal)) {
+        const expected = Math.round(tmb * fafFinal);
+        const delta = Math.abs(expected - get);
+        if (delta > 25) warn("get_consistencia", "GET parece inconsistente (Δ≈" + String(delta) + " kcal)");
+        else ok("get_consistencia", "GET consistente com TMB×FAF");
+      } else {
+        warn("get_consistencia", "Não foi possível auditar GET/TMB/FAF (valores ausentes)");
+      }
+    }
+
+    // Dieta / macros (se existir)
+    const kcal = Number(dieta?.calorias ?? dieta?.kcal ?? NaN);
+    const pG = Number(dieta?.proteinas ?? dieta?.proteina ?? NaN);
+    const cG = Number(dieta?.carboidratos ?? dieta?.carboidrato ?? NaN);
+    const gG = Number(dieta?.gorduras ?? dieta?.gordura ?? NaN);
+
+    if (Number.isFinite(kcal) && Number.isFinite(pG) && Number.isFinite(cG) && Number.isFinite(gG)) {
+      const kcalFromMacros = Math.round(pG*4 + cG*4 + gG*9);
+      const delta = Math.abs(kcalFromMacros - kcal);
+      if (delta > 50) warn("kcal_macros", "Kcal vs macros com diferença (Δ≈" + String(delta) + " kcal)");
+      else ok("kcal_macros", "Kcal coerente com macros");
+    } else {
+      warn("kcal_macros", "Não foi possível auditar macros/kcal (dieta parcial)");
+    }
+
+    return { perfil, avaliacao, metabolismo, dieta, issues };
+  }
+
+      const __mfHC = __mfHealthcheckReport(state);
+  if ((__mfHC as any)?.issues?.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <Card className="w-full max-w-md mx-4 glass-effect neon-border">
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
             <p className="text-gray-400 mb-6">Finalize o questionário para ver seu relatório completo</p>
-            <Button onClick={() => navigate('/')} className="w-full glow-blue">
+            <Button onClick={() => navigate("/")} className="w-full glow-blue">
               Iniciar Agora
             </Button>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
-
-  const dietaAtiva = state.dietaAtiva
-  const treinoAtivo = state.treinoAtivo
-
+  const dietaAtiva = state.dietaAtiva;
+  const treinoAtivo = state.treinoAtivo;
   // Calcular dias do plano
   const diasDieta = dietaAtiva ? differenceInDays(new Date(dietaAtiva.dataFim), new Date(dietaAtiva.dataInicio)) : 0
   const diasTreino = treinoAtivo ? differenceInDays(new Date(treinoAtivo.dataFim), new Date(treinoAtivo.dataInicio)) : 0
 
   const exportarPDF = async () => {
-
-  void exportarPDF;
     try {
       const { exportarPDFCompleto } = await import('@/lib/exportar-pdf')
       await exportarPDFCompleto(state, 0, 0, 0)
@@ -97,7 +154,10 @@ export function Report() {
               <h1 className="text-xl font-bold text-neon">Relatório Completo</h1>
               <p className="text-xs text-gray-400">Seu planejamento detalhado</p>
             </div>
-            </div>
+            <Button onClick={exportarPDF} className="glow-blue px-4 py-2 text-sm">
+              Exportar PDF
+            </Button>
+        </div>
         </div>
       </header>
 
@@ -164,6 +224,24 @@ export function Report() {
           </CardContent>
         </Card>
 
+        {/* MF_BLOCO7_HEALTHCHECK_UI */}
+      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold">HealthCheck Premium</div>
+            <div className="text-xs text-muted-foreground">Auditoria rápida de consistência (sem travar sua experiência).</div>
+          </div>
+          <div className="text-xs text-muted-foreground">{(__mfHC.issues?.filter((x:any)=>x.level==="warn")?.length ?? 0)} alertas</div>
+        </div>
+        <div className="mt-3 space-y-1">
+          {(__mfHC.issues ?? []).slice(0, 8).map((it:any) => (
+            <div key={it.key} className="flex items-start justify-between gap-3 text-xs">
+              <span className={it.level === "warn" ? "text-amber-300" : "text-emerald-300"}>{it.level === "warn" ? "• Atenção" : "• OK"}</span>
+              <span className="flex-1 text-muted-foreground">{it.msg}</span>
+            </div>
+          ))}
+        </div>
+      </div>
         {/* Plano Nutricional Detalhado */}
         {dietaAtiva && (
           <Card className="glass-effect border-green-500/30">
@@ -377,4 +455,6 @@ export function Report() {
       </main>
     </div>
   )
+}
+
 }
