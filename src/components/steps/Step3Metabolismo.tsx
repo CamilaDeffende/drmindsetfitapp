@@ -12,7 +12,6 @@ import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/feat
 
 export function Step3Metabolismo() {
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
-
   // Preview objetivo do treino (pós-metabolismo)
   const __mfTreinoAtivo: any = (state as any)?.treinoAtivo;
   const __mfSessions: any[] = Array.isArray(__mfTreinoAtivo?.sessions) ? __mfTreinoAtivo.sessions : [];
