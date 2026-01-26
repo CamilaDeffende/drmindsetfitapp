@@ -1,3 +1,4 @@
+// BLOCO 2 guard: focus groups only for musculacao
 
 // MF_DAY_GROUPS_PRECEDENCE_V1
 // Precedência soberana de grupamentos do dia:
