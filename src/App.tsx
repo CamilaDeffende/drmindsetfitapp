@@ -1,3 +1,4 @@
+import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import * as React from "react";
 import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
@@ -186,7 +187,8 @@ function App() {
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
-          </BrowserRouter>
+            <LiveLocationPill />
+</BrowserRouter>
           <Toaster />
         </DrMindSetfitProvider>
       </AuthProvider>

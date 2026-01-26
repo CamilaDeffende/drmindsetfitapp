@@ -1,298 +1,130 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Calendar, TrendingUp, Clock, Dumbbell, Save } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import type { TreinoAtivo, CargaSerie } from '@/types'
-import { calcularSemanaAtual, formatarPeriodo, getMensagemStatus } from '@/lib/planos-ativos-utils'
-import {
-  salvarCargaSerie,
-  obterCargasExercicio,
-  obterUltimaCarga
-} from '@/lib/cargas-storage'
+import { useMemo } from "react";
 
-interface TreinoAtivoViewProps {
-  treinoAtivo: TreinoAtivo
+type AnyObj = Record<string, any>;
+
+export type TreinoAtivoViewProps = {
+  treinoAtivo: AnyObj;
+};
+
+function fmtDate(v: any, locale = "pt-BR") {
+  if (!v) return "—";
+  try {
+    const d = typeof v === "string" || typeof v === "number" ? new Date(v) : v;
+    if (d instanceof Date && !Number.isNaN(d.getTime())) {
+      return d.toLocaleDateString(locale);
+    }
+  } catch {}
+  return String(v);
+}
+
+function safeArray(v: any): any[] {
+  return Array.isArray(v) ? v : [];
 }
 
 export function TreinoAtivoView({ treinoAtivo }: TreinoAtivoViewProps) {
-  const { treino, dataInicio, dataFim, duracaoSemanas, estrategia } = treinoAtivo
-  const { toast } = useToast()
+  const view = useMemo(() => {
+    const t = (treinoAtivo || {}) as AnyObj;
 
-  const [cargasTemporarias, setCargasTemporarias] = useState<Record<string, Record<number, string>>>({})
-  const [cargasSalvas, setCargasSalvas] = useState<Record<string, Record<number, number>>>({})
+    const treino = (t.treino || t.plan || t.programa || {}) as AnyObj;
+    const estrategia = (t.estrategia || treino.estrategia || "Treino individualizado") as string;
 
-  const { semanaAtual, totalSemanas, status, diasRestantes, progressoPorcentagem } =
-    calcularSemanaAtual(dataInicio, dataFim, duracaoSemanas)
+    const dataInicio = t.dataInicio ?? t.inicio ?? treino.dataInicio;
+    const dataFim = t.dataFim ?? t.fim ?? treino.dataFim;
+    const duracaoSemanas = Number.isFinite(t.duracaoSemanas) ? t.duracaoSemanas : (Number.isFinite(t.semanas) ? t.semanas : 4);
 
-  const periodoFormatado = formatarPeriodo(dataInicio, dataFim)
-  const mensagemStatus = getMensagemStatus(status)
+    // tentativas comuns de estrutura:
+    // treino.treinos[] => [{ dia: "A", exercicios: [...] }]
+    // treino.dias[]    => [{ nome: "Seg", exercicios: [...] }]
+    // weekPlan[]       => [{ dayLabel, exercises: [...] }]
+    const dias =
+      safeArray(treino.treinos).length ? safeArray(treino.treinos) :
+      safeArray(treino.dias).length ? safeArray(treino.dias) :
+      safeArray(treino.weekPlan).length ? safeArray(treino.weekPlan) :
+      [];
 
-  // Carregar cargas salvas ao montar o componente
-  useEffect(() => {
-    const cargasCarregadas: Record<string, Record<number, number>> = {}
+    const diasFmt = dias.map((d: AnyObj, idx: number) => {
+      const label =
+        d?.dia ?? d?.nome ?? d?.dayLabel ?? d?.day ?? `Dia ${idx + 1}`;
 
-    treino.treinos.forEach(treinoDia => {
-      treinoDia.exercicios.forEach(exercicioTreino => {
-        const chaveExercicio = `${treinoDia.dia}-${exercicioTreino.exercicio.id}`
-        const cargas = obterCargasExercicio(exercicioTreino.exercicio.id, treinoDia.dia)
-        if (Object.keys(cargas).length > 0) {
-          cargasCarregadas[chaveExercicio] = cargas
-        }
-      })
-    })
+      const exercicios =
+        safeArray(d?.exercicios).length ? safeArray(d.exercicios) :
+        safeArray(d?.exercises).length ? safeArray(d.exercises) :
+        [];
 
-    setCargasSalvas(cargasCarregadas)
-  }, [treino])
+      const exFmt = exercicios.map((ex: AnyObj, j: number) => {
+        const nome = ex?.nome ?? ex?.name ?? ex?.titulo ?? `Exercício ${j + 1}`;
+        const series = ex?.series ?? ex?.sets;
+        const reps = ex?.reps ?? ex?.repeticoes;
+        const obs = ex?.observacao ?? ex?.nota ?? ex?.note ?? "";
+        return { nome: String(nome), series, reps, obs: String(obs || "") };
+      });
 
-  const handleCargaChange = (
-    treinoDia: string,
-    exercicioId: string,
-    serie: number,
-    valor: string
-  ) => {
-    const chaveExercicio = `${treinoDia}-${exercicioId}`
+      return { label: String(label), exercicios: exFmt };
+    });
 
-    setCargasTemporarias(prev => ({
-      ...prev,
-      [chaveExercicio]: {
-        ...(prev[chaveExercicio] || {}),
-        [serie]: valor
-      }
-    }))
-  }
-
-  const salvarCargas = (treinoDia: string, exercicioId: string, totalSeries: number) => {
-    const chaveExercicio = `${treinoDia}-${exercicioId}`
-    const cargasExercicio = cargasTemporarias[chaveExercicio] || {}
-
-    let algumaSalva = false
-
-    for (let serie = 1; serie <= totalSeries; serie++) {
-      const valorStr = cargasExercicio[serie]
-      if (valorStr !== undefined && valorStr.trim() !== '') {
-        const carga = parseFloat(valorStr)
-
-        if (!isNaN(carga) && carga >= 0) {
-          const cargaSerie: CargaSerie = {
-            exercicioId,
-            dia: treinoDia,
-            serie,
-            carga,
-            data: new Date().toISOString().split('T')[0]
-          }
-
-          salvarCargaSerie(cargaSerie)
-          algumaSalva = true
-
-          // Atualizar cargas salvas localmente
-          setCargasSalvas(prev => ({
-            ...prev,
-            [chaveExercicio]: {
-              ...(prev[chaveExercicio] || {}),
-              [serie]: carga
-            }
-          }))
-        }
-      }
-    }
-
-    if (algumaSalva) {
-      // Limpar cargas temporárias
-      setCargasTemporarias(prev => {
-        const nova = { ...prev }
-        delete nova[chaveExercicio]
-        return nova
-      })
-
-      toast({
-        title: 'Cargas salvas!',
-        description: 'As cargas foram registradas com sucesso.'
-      })
-    } else {
-      toast({
-        title: 'Nenhuma carga para salvar',
-        description: 'Preencha ao menos uma carga antes de salvar.',
-        variant: 'destructive'
-      })
-    }
-  }
+    return {
+      estrategia,
+      dataInicio,
+      dataFim,
+      duracaoSemanas,
+      dias: diasFmt,
+    };
+  }, [treinoAtivo]);
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho com Período e Progresso */}
-      <Card className="glass-effect border-green-500/30 bg-gradient-to-br from-green-500/10 to-transparent">
-        <CardHeader>
-          <div className="flex items-center justify-between mb-2">
-            <CardTitle className="text-xl text-green-400 flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              {estrategia}
-            </CardTitle>
-            <Badge variant="outline" className="border-green-500/50 text-green-400">
-              Semana {semanaAtual} de {totalSemanas}
-            </Badge>
-          </div>
-          <CardDescription className="text-gray-400 flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Período: {periodoFormatado}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Progresso do plano</span>
-              <span className="text-green-400 font-semibold">{progressoPorcentagem.toFixed(0)}%</span>
+    <div className="w-full">
+      <div className="rounded-2xl border border-white/10 bg-black/40 p-4 shadow-xl">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-white/90">Treino Ativo</div>
+            <div className="mt-1 text-xs text-white/60">
+              Estratégia: <span className="text-white/80">{view.estrategia}</span>
             </div>
-            <Progress value={progressoPorcentagem} className="h-2 bg-black/40" />
-            <div className="flex items-center justify-between text-xs">
-              <span className={mensagemStatus.cor}>{mensagemStatus.texto}</span>
-              <span className="text-gray-500">{diasRestantes} dias restantes</span>
+            <div className="mt-1 text-xs text-white/60">
+              Período: <span className="text-white/80">{fmtDate(view.dataInicio)} → {fmtDate(view.dataFim)}</span>
+              {" • "}
+              Semanas: <span className="text-white/80">{view.duracaoSemanas}</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Informações do Treino */}
-      <Card className="glass-effect border-green-500/20">
-        <CardHeader>
-          <CardTitle className="text-lg text-gray-100 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-400" />
-            Resumo do Treino
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-xl border border-green-500/30">
-              <p className="text-xs text-gray-400 mb-1">Divisão</p>
-              <p className="text-xl font-bold text-green-400">{treino.divisao?.tipo ?? "—"}</p>
-            </div>
-            <div className="text-center p-4 bg-gradient-to-br from-[#1E6BFF]/20 to-[#00B7FF]/10 rounded-xl border border-[#1E6BFF]/30">
-              <p className="text-xs text-gray-400 mb-1">Frequência</p>
-              <p className="text-xl font-bold text-[#1E6BFF]">{treino.frequencia}x/semana</p>
-            </div>
-            <div className="text-center p-4 bg-gradient-to-br from-[#1E6BFF]/20 to-[#00B7FF]/10 rounded-xl border border-[#1E6BFF]/30">
-              <p className="text-xs text-gray-400 mb-1">Intensidade</p>
-              <p className="text-xl font-bold text-[#1E6BFF] capitalize">{treino.divisao.intensidade}</p>
-            </div>
+          <div className="shrink-0 rounded-xl bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/80">
+            {view.dias.length ? `${view.dias.length} dias` : "estrutura básica"}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Treinos da Semana */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-100">Seus Treinos</h3>
-        {treino.treinos.map((treinoDia, indexDia) => (
-          <Card key={indexDia} className="glass-effect border-white/10">
-            <CardHeader className="pb-3 bg-gradient-to-r from-green-500/10 to-transparent hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
-              <CardTitle className="text-lg text-gray-100 flex items-center gap-2">
-                <Dumbbell className="w-5 h-5 text-green-400" />
-                {treinoDia.dia}
-              </CardTitle>
-              <CardDescription className="text-sm text-gray-400">
-                {treinoDia.grupamentos.join(' • ')} • {treinoDia.exercicios.length} exercícios
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {treinoDia.exercicios.map((exercicioTreino, indexEx) => {
-                  const chaveExercicio = `${treinoDia.dia}-${exercicioTreino.exercicio.id}`
-                  const cargasExercicio = cargasTemporarias[chaveExercicio] || {}
-                  const cargasSalvasExercicio = cargasSalvas[chaveExercicio] || {}
-                  const ultimaCarga = obterUltimaCarga(exercicioTreino.exercicio.id)
+        <div className="mt-4 space-y-3">
+          {view.dias.length ? (
+            view.dias.map((d, idx) => (
+              <div key={`${d.label}-${idx}`} className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                <div className="text-xs font-semibold text-white/85">{d.label}</div>
 
-                  return (
-                    <div
-                      key={indexEx}
-                      className="p-4 border border-white/10 rounded-xl bg-black/20 space-y-4"
-                    >
-                      {/* Cabeçalho do Exercício */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-100">{exercicioTreino.exercicio.nome}</h4>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {exercicioTreino.series} séries • {exercicioTreino.repeticoes} reps • {exercicioTreino.descanso}s descanso
-                          </p>
-                          {ultimaCarga && (
-                            <p className="text-xs text-green-400 mt-1">
-                              Última carga: {ultimaCarga} kg
-                            </p>
-                          )}
-                        </div>
-                        <Badge variant="outline" className="border-green-500/50 text-green-400">
-                          {exercicioTreino.exercicio.grupoMuscular}
-                        </Badge>
-                      </div>
-
-                      {/* Campos de Carga por Série */}
-                      <div className="space-y-3">
-                        <Label className="text-sm text-gray-400">Carga por série (kg)</Label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {Array.from({ length: exercicioTreino.series }, (_, i) => {
-                            const serie = i + 1
-                            const cargaSalva = cargasSalvasExercicio[serie]
-                            const cargaTemporaria = cargasExercicio[serie]
-
-                            return (
-                              <div key={serie} className="space-y-1">
-                                <Label htmlFor={`carga-${chaveExercicio}-${serie}`} className="text-xs text-gray-500">
-                                  Série {serie}
-                                </Label>
-                                <Input
-                                  id={`carga-${chaveExercicio}-${serie}`}
-                                  type="number"
-                                  step="0.5"
-                                  min="0"
-                                  placeholder={cargaSalva ? `${cargaSalva}` : '0'}
-                                  value={cargaTemporaria || ''}
-                                  onChange={(e) =>
-                                    handleCargaChange(
-                                      treinoDia.dia,
-                                      exercicioTreino.exercicio.id,
-                                      serie,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-9 text-center bg-black/40 border-green-500/30 focus:border-green-500"
-                                />
-                                {cargaSalva && !cargaTemporaria && (
-                                  <p className="text-xs text-green-400 text-center">{cargaSalva} kg</p>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Botão Salvar Cargas */}
-                      <Button
-                        onClick={() =>
-                          salvarCargas(treinoDia.dia, exercicioTreino.exercicio.id, exercicioTreino.series)
-                        }
-                        className="w-full sm:w-auto bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/50"
-                        size="sm"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Salvar Cargas
-                      </Button>
-
-                      {/* Observações (se houver) */}
-                      {exercicioTreino.observacoes && (
-                        <p className="text-xs text-gray-500 italic border-l-2 border-green-500/30 pl-3">
-                          {exercicioTreino.observacoes}
-                        </p>
-                      )}
-                    </div>
-                  )
-                })}
+                {d.exercicios.length ? (
+                  <ul className="mt-2 space-y-1">
+                    {d.exercicios.map((ex, j) => (
+                      <li key={`${ex.nome}-${j}`} className="text-[12px] text-white/70">
+                        <span className="text-white/85">{ex.nome}</span>
+                        {ex.series != null || ex.reps != null ? (
+                          <span className="text-white/55">
+                            {" "}
+                            • {ex.series ?? "—"}x{ex.reps ?? "—"}
+                          </span>
+                        ) : null}
+                        {ex.obs ? <span className="text-white/45"> • {ex.obs}</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="mt-2 text-[12px] text-white/45">Exercícios não informados nessa estrutura.</div>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            ))
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3 text-[12px] text-white/55">
+              Não encontrei uma lista de dias/exercícios no objeto atual. (Tudo certo: isso não quebra o app.)
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  )
+  );
 }
