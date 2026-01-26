@@ -288,6 +288,31 @@ export function Step4Nutricao() {
           <div className="text-center py-4 sm:py-6">
             <p className="text-4xl sm:text-5xl font-bold text-white">{state.metabolismo?.caloriasAlvo || 0}</p>
             <p className="text-sm sm:text-base text-muted-foreground mt-2">calorias por dia</p>
+
+            {/* MF_BLOCO4_UX: aderência + guardrails (premium) */}
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="text-[11px] uppercase tracking-wider text-gray-400">Ajuste inteligente</div>
+              <div className="mt-1 text-sm text-white/90">
+                Nós fechamos suas calorias com macros consistentes e aplicamos limites de segurança para evitar extremos
+                (proteína e gordura mínimas/máximas). Isso melhora aderência, energia e sustentabilidade.
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <div className="text-[11px] text-gray-400">Se sentir fome</div>
+                  <div className="text-sm text-white/90">aumente volume alimentar (saladas, legumes, sopas), água e fibra.</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <div className="text-[11px] text-gray-400">Se cair energia</div>
+                  <div className="text-sm text-white/90">priorize carbo em torno do treino e sono. Ajustes são ilimitados no app.</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                  <div className="text-[11px] text-gray-400">Se travar 10–14 dias</div>
+                  <div className="text-sm text-white/90">revise passos, NEAT e consistência. Depois ajuste o déficit/superávit.</div>
+                </div>
+              </div>
+            </div>
+      
           </div>
         </CardContent>
       </Card>
