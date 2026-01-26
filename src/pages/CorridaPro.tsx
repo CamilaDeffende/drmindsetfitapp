@@ -9,6 +9,8 @@ import { computeRunStats } from "@/features/run-pro/stats/compute";
 import { RunStatsCard } from "@/features/run-pro/ui/RunStatsCard";
 import type { RunSample } from "@/features/run-pro/engine/types";
 
+import { RunProElitePanel } from "@/features/run-pro/components/RunProElitePanel";
+
 type LatLng = { lat: number; lng: number };
 function statusLabel(status: string) {
   switch (status) {
@@ -186,6 +188,8 @@ export default function CorridaPro() {
           <ExportRunCard samples={derivedSamples as unknown as any} sessionName="Corrida PRO" />
         </div>
       </div>
-    </div>
+    
+  <div className="mt-4"><RunProElitePanel /></div>
+</div>
   );
 }
