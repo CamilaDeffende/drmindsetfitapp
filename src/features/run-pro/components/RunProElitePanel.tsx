@@ -1,6 +1,7 @@
 import { useRunProEliteSession } from "@/features/run-pro/session/useRunProEliteSession";
 import { formatTsInActiveTz } from "@/features/run-pro/utils/timeLabel";
 
+import { RunProEliteCharts } from "@/features/run-pro/components/RunProEliteCharts";
 function fmtPace(secPerKm?: number) {
   if (!secPerKm || !Number.isFinite(secPerKm)) return "—";
   const m = Math.floor(secPerKm / 60);
@@ -81,6 +82,8 @@ export function RunProElitePanel() {
           )}
         </div>
       </div>
-    </div>
+    
+      <div className="mt-4"><RunProEliteCharts /></div>
+</div>
   );
 }
