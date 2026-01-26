@@ -21,7 +21,37 @@ export function Report() {
   const navigate = useNavigate()
 
   if (!state.concluido) {
-    return (<div className="min-h-screen flex items-center justify-center bg-black">
+    
+  // MF_BLOCO6_REPORT_RESOLVER: resolver determinístico (state/perfil) para auditoria premium
+  const __mfResolveReportData = () => {
+    // tenta pegar "state" de onde o Report já usa (não cria novo store)
+    const st: any = (typeof state !== "undefined") ? (state as any) : null;
+    const pf: any = st?.perfil ?? st?.profile ?? null;
+
+    const metabolismo: any =
+      pf?.metabolismo ??
+      pf?.calculoMetabolico ??
+      pf?.metabolic ??
+      st?.metabolismo ??
+      st?.calculoMetabolico ??
+      st?.metabolic ??
+      null;
+
+    const dieta: any =
+      st?.dietaAtiva ??
+      pf?.dietaAtiva ??
+      pf?.diet ??
+      st?.dietPlan ??
+      null;
+
+    const macros: any =
+      (st?.macros ?? pf?.macros ?? pf?.macroSplit ?? null);
+
+    return { st, pf, metabolismo, dieta, macros };
+  };
+  const __mfReport = __mfResolveReportData();
+  void __mfReport;
+  return (<div className="min-h-screen flex items-center justify-center bg-black">
         <Card className="w-full max-w-md mx-4 glass-effect neon-border">
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
