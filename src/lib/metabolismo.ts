@@ -150,10 +150,18 @@ export const calcularMetabolismo = (
 
   // Faixa segura
   const faixaSegura = {
-    minimo: Math.round(get * 0.75),
+    minimo: Math.round(caloriasAlvo * 0.90),
     ideal: Math.round(caloriasAlvo),
-    maximo: Math.round(get * 1.15)
+    maximo: Math.round(caloriasAlvo * 1.10)
   }
+
+  // Ajuste por biotipo (heurística premium)
+  // - Ectomorfo: tende a perder peso com mais facilidade -> adiciona base de +600 kcal (faixa 500–700)
+  // - Mesomorfo/Endomorfo: mantém calorias do metabolismo (0)
+  // Obs: biotipo é autoavaliação e serve como ajuste fino, não substitui composição corporal.
+  const biotipo = (perfil as any)?.avaliacao?.biotipo as ("ectomorfo"|"mesomorfo"|"endomorfo"|undefined);
+  const ajusteBiotipoKcal = biotipo === "ectomorfo" ? 600 : 0;
+
 
   // Comparativo com todas as fórmulas
   const comparativo = {
@@ -171,6 +179,7 @@ export const calcularMetabolismo = (
     get: Math.round(get),
     caloriasAlvo: Math.round(caloriasAlvo),
     faixaSegura,
-    comparativo
+    comparativo,
+    ajusteBiotipoKcal,
   }
 }

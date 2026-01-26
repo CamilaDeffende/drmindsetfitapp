@@ -318,6 +318,24 @@ export function Report() {
                 <p className="text-sm text-gray-400 mb-2">Equação Utilizada</p>
                 <p className="font-semibold capitalize">{state.metabolismo.equacaoUtilizada}</p>
                 <p className="text-xs text-gray-500 mt-2">{state.metabolismo.justificativa}</p>
+                {state.metabolismo.faixaSegura && (
+                  <div className="mt-3 text-xs text-gray-300">
+                    <div className="text-gray-400 mb-1">Faixa calórica (ingestão)</div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-2 py-1 rounded bg-white/5 border border-white/10">Mínimo: <b className="text-white">{state.metabolismo.faixaSegura.minimo}</b> kcal</span>
+                      <span className="px-2 py-1 rounded bg-white/5 border border-white/10">Ideal: <b className="text-white">{state.metabolismo.faixaSegura.ideal}</b> kcal</span>
+                      <span className="px-2 py-1 rounded bg-white/5 border border-white/10">Máximo: <b className="text-white">{state.metabolismo.faixaSegura.maximo}</b> kcal</span>
+                    </div>
+                    {state?.avaliacao?.biotipo && (
+                      <div className="mt-2 text-gray-400">
+                        Biotipo: <span className="text-white">{String(state.avaliacao.biotipo)}</span>
+                        {state?.metabolismo?.ajusteBiotipoKcal ? (
+                          <span className="text-green-400"> • ajuste +{state.metabolismo.ajusteBiotipoKcal} kcal</span>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
