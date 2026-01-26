@@ -1,3 +1,16 @@
+
+function mapFreqSemanalToFafMultiplier(freq?: string) {
+  // Ajuste PREMIUM (leve) para refletir atividade semanal (NEAT/volume geral) SEM duplicar o nível de treino.
+  // sedentario: 1.00 | 1-3x: 1.05 | 3-5x: 1.10 | +5x: 1.15
+  switch (freq) {
+    case "moderadamente_ativo": return 1.05;
+    case "ativo": return 1.10;
+    case "muito_ativo": return 1.15;
+    case "sedentario":
+    default: return 1.00;
+  }
+}
+
 // Motor de Decisão Metabólica - DrMindSetfit
 import type { PerfilUsuario, AvaliacaoFisica, EquacaoMetabolica, ResultadoMetabolico } from '@/types'
 
@@ -137,9 +150,11 @@ export const calcularMetabolismo = (
   }
 
   // GET = TMB × FAF
-  const faf = getFAF(nivelTreino)
+  const fafBase = getFAF(nivelTreino)
+  const freqSemanal = (perfil as any)?.avaliacao?.frequenciaAtividadeSemanal as (string | undefined)
+  const fafMult = mapFreqSemanalToFafMultiplier(freqSemanal)
+  const faf = Math.min(2.4, Math.max(1.0, fafBase * fafMult))
   const get = tmb * faf
-
   // Calorias alvo (baseado no objetivo)
   let caloriasAlvo = get
   if (perfil.objetivo === 'emagrecimento') {
