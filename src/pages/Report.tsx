@@ -21,8 +21,7 @@ export function Report() {
   const navigate = useNavigate()
 
   if (!state.concluido) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
+    return (<div className="min-h-screen flex items-center justify-center bg-black">
         <Card className="w-full max-w-md mx-4 glass-effect neon-border">
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
