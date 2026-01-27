@@ -24,6 +24,15 @@ type Draft = {
 };
 
 const LS_KEY = "mf:onboarding:draft:v1";
+const DONE_KEY = "mf:onboarding:done:v1";
+
+function isOnboardingDone() {
+  try { return localStorage.getItem(DONE_KEY) === "1"; } catch { return false; }
+}
+
+function clearOnboardingDraft() {
+  try { clearOnboardingDraft(); } catch {}
+}
 
 function loadDraft(): Draft {
   try {
@@ -61,6 +70,10 @@ export function OnboardingFlow() {
 
   // Gate depois dos hooks
   if (!appReady) return null;
+  if (isOnboardingDone()) {
+    nav("/dashboard");
+    return null;
+  }
 
   const steps = [
       {
@@ -127,8 +140,8 @@ export function OnboardingFlow() {
             summary={draft}
             onBack={goBack}
             onConfirm={() => {
-              try { localStorage.setItem("mf:onboarding:done:v1", "1"); } catch {}
-              try { localStorage.removeItem(LS_KEY); } catch {}
+              try { localStorage.setItem(DONE_KEY, "1"); } catch {}
+              try { clearOnboardingDraft(); } catch {}
               nav("/dashboard");
             }}
           />
@@ -160,6 +173,23 @@ export function OnboardingFlow() {
 
       <div className="mt-6">
         {current?.render()}
+      </div>
+
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => nav("/dashboard")}
+          className="px-4 py-2 rounded-xl border border-white/10 text-sm opacity-90 hover:opacity-100"
+        >
+          Salvar e sair
+        </button>
+        <button
+          type="button"
+          onClick={() => { clearOnboardingDraft(); try { localStorage.removeItem(DONE_KEY); } catch {} ; nav(0 as any); }}
+          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
+        >
+          Reiniciar onboarding
+        </button>
       </div>
 
       {/* Navegação mínima para Steps 1–4 (legado) se eles não tiverem botões próprios */}
