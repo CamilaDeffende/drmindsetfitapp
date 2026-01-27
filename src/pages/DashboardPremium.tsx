@@ -15,12 +15,29 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts'
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { loadActivePlan } from "@/services/plan.service";
 
 export function DashboardPremium() {
   
+  // BLOCO G2: Dashboard apenas LÊ ActivePlan (source of truth) e mostra resumo premium.
+  const [activePlan, setActivePlan] = useState<any>(null);
+  const [planLoaded, setPlanLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      setActivePlan(loadActivePlan());
+    } finally {
+      setPlanLoaded(true);
+    }
+  }, []);
+
+  const kcal = activePlan?.nutrition?.kcalTarget ?? activePlan?.nutrition?.kcal ?? null;
+  const macros = activePlan?.nutrition?.macros ?? null;
+  const nextMeal = (activePlan?.nutrition?.meals && activePlan.nutrition.meals[0]) ? activePlan.nutrition.meals[0] : null;
+  const week = activePlan?.workout?.week ?? activePlan?.workout?.days ?? [];
 const { state } = useDrMindSetfit()
 
 
@@ -135,6 +152,54 @@ const navigate = useNavigate()
   if (!state.concluido) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="mb-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm text-white/60">Resumo do seu plano</div>
+                <div className="text-lg font-semibold">Hoje você só precisa executar o próximo passo</div>
+              </div>
+              <div className="text-xs text-white/50">Plano carregado: {planLoaded ? "sim" : "não"}</div>
+            </div>
+
+            {activePlan ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl bg-white/5 p-3">
+                  <div className="text-xs text-white/60">Calorias alvo</div>
+                  <div className="mt-1 text-xl font-semibold">{kcal ? `${kcal} kcal/dia` : "—"}</div>
+                </div>
+                <div className="rounded-xl bg-white/5 p-3">
+                  <div className="text-xs text-white/60">Macros</div>
+                  <div className="mt-1 text-sm text-white/80">
+                    {macros ? `${macros.protein ?? "—"}g P • ${macros.carbs ?? "—"}g C • ${macros.fat ?? "—"}g G` : "—"}
+                  </div>
+                </div>
+                <div className="rounded-xl bg-white/5 p-3">
+                  <div className="text-xs text-white/60">Próxima refeição (preview)</div>
+                  <div className="mt-1 text-sm text-white/80">{nextMeal?.name ?? nextMeal?.title ?? "—"}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-xl bg-white/5 p-3 text-sm text-white/70">
+                Nenhum plano ativo ainda. Finalize o onboarding e confirme para salvar seu plano.
+              </div>
+            )}
+
+            {activePlan && Array.isArray(week) && week.length ? (
+              <div className="mt-4">
+                <div className="text-xs text-white/60">Semana (preview)</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {week.slice(0, 7).map((d: any, i: number) => (
+                    <div key={i} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80">
+                      {d?.day ?? d?.label ?? `Dia ${i+1}`} • {d?.modality ?? d?.type ?? "—"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
         <Card className="w-full max-w-md mx-4 glass-effect neon-border">
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
