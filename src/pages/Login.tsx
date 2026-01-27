@@ -48,7 +48,7 @@ export function Login() {
           <img
             src="/brand/mindsetfit-wordmark.png"
             alt="MindsetFit"
-            className="mx-auto sm: md: w-auto bg-transparent select-none h-20 sm:h-24 md:h-28 lg:h-32 w-auto bg-transparent drop-shadow-[0_10px_30px_rgba(0,153,255,0.18)]"
+            className="mx-auto sm: md: w-auto bg-transparent select-none sm: md: lg: w-auto bg-transparent drop-shadow-[0_10px_30px_rgba(0,153,255,0.18)] h-20 sm:h-24 md:h-28 lg:h-32 w-auto bg-transparent drop-shadow-[0_10px_30px_rgba(0,153,255,0.18)]"
             draggable={false}
           />
           <p className="mt-4 text-sm text-gray-400">
