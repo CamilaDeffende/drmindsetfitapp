@@ -58,18 +58,10 @@ export function Login() {
 
         <Card className="glass-effect neon-border">
           <CardHeader className="space-y-3">
-            <div className="mx-auto flex items-center justify-center">
-              <img
-                src="/brand/mindsetfit-logo.svg"
-                alt="MindsetFit"
-                className="h-12 w-auto opacity-95 select-none"
-                draggable={false}
-              />
-            </div>
             <CardTitle className="text-2xl text-center text-neon font-extrabold">
               Bem-vindo de volta
             </CardTitle>
-            <CardDescription className="text-center">
+            <CardDescription className="text-center text-gray-300/80">
               Entre para acessar seus planos e relatórios premium.
             </CardDescription>
           </CardHeader>
