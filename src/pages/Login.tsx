@@ -15,6 +15,14 @@ export function Login() {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
+  const [mfLoginHeroGapPx, setMfLoginHeroGapPx] = useState<number>(() => {
+    try {
+      const v = localStorage.getItem("mf_login_hero_gap_px");
+      const n = v ? Number(v) : NaN;
+      return Number.isFinite(n) ? n : 14;
+    } catch { return 14; }
+  })
+
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "" });
 
@@ -59,7 +67,7 @@ export function Login() {
     <div className="bg-[radial-gradient(ellipse_at_top,_rgba(30,107,255,0.18),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(0,183,255,0.10),_transparent_60%)] min-h-screen bg-gradient-to-b from-black via-gray-950 to-black flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md space-y-7">
         {/* HERO (premium): wordmark + tagline */}
-        <div className="text-center mb-8 pt-2" data-ui="mindsetfit-login-hero">
+        <div className="text-center mb-8 pt-2" data-ui="mindsetfit-login-hero" style={{ marginBottom: `${mfLoginHeroGapPx}px` }}>
           <img
           src="/brand/mindsetfit-wordmark.png"
           alt="MindsetFit"
@@ -81,7 +89,23 @@ export function Login() {
                 onChange={(e) => setMfLogoPx(Number(e.target.value))}
                 className="w-52 accent-[#1E6BFF]"
               />
-              <span className="tabular-nums">{mfLogoPx}px</span>
+              
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-gray-400">Espaço (Hero)</label>
+              <span className="text-xs text-gray-400 tabular-nums">{mfLoginHeroGapPx}px</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={28}
+              step={1}
+              value={mfLoginHeroGapPx}
+              onChange={(e) => setMfLoginHeroGapPx(Number(e.target.value))}
+              className="w-full accent-[#1E6BFF]"
+            />
+          </div>
+<span className="tabular-nums">{mfLogoPx}px</span>
             </div>
           </div>
         )}
