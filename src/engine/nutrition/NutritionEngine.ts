@@ -92,6 +92,66 @@ export function scaleMacrosPer100g(macrosPor100g: MacrosPer100g, gramas: number)
   };
 }
 
+
+
+/** Phase 3C — soma macros do DIA (todas as refeições) */
+export function sumMacrosFromRefeicoes(refeicoes: Array<{ alimentos?: any[] }>): MacroTotals {
+  const out: MacroTotals = { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 };
+  for (const r of refeicoes ?? []) {
+    const t = sumAlimentosTotals((r?.alimentos ?? []) as any[]);
+    out.calorias += Number(t.calorias) || 0;
+    out.proteinas += Number(t.proteinas) || 0;
+    out.carboidratos += Number(t.carboidratos) || 0;
+    out.gorduras += Number(t.gorduras) || 0;
+  }
+  out.calorias = Math.round(out.calorias);
+  out.proteinas = Number(out.proteinas.toFixed(1));
+  out.carboidratos = Number(out.carboidratos.toFixed(1));
+  out.gorduras = Number(out.gorduras.toFixed(1));
+  return out;
+}
+
+/** Phase 3C — tenta inferir peso (kg) a partir de um state-like (robusto) */
+export function guessPesoKgFromStateLike(stateLike: any): number | undefined {
+  const candidates = [
+    stateLike?.avaliacao?.pesoKg,
+    stateLike?.avaliacao?.peso,
+    stateLike?.perfil?.pesoKg,
+    stateLike?.perfil?.peso,
+    stateLike?.user?.pesoKg,
+    stateLike?.user?.peso,
+    stateLike?.pesoKg,
+    stateLike?.peso,
+  ];
+  for (const c of candidates) {
+    const n = typeof c === "string" ? Number(String(c).replace(",", ".")) : Number(c);
+    if (Number.isFinite(n) && n > 20 && n < 400) return n;
+  }
+  return undefined;
+}
+
+/** Phase 3C — check científico simples (coerência kcal do plano vs soma das refeições) */
+export function validateDietScience(params: {
+  kcalTarget?: number;
+  refeicoes: Array<{ alimentos?: any[] }>;
+  tolerancePct?: number; // default 10%
+}): { ok: boolean; deltaKcal: number; pct: number; message: string } {
+  const tol = Number.isFinite(params.tolerancePct) ? Number(params.tolerancePct) : 10;
+  const totals = sumMacrosFromRefeicoes(params.refeicoes ?? []);
+  const target = Number(params.kcalTarget);
+  if (!Number.isFinite(target) || target <= 0) {
+    return { ok: true, deltaKcal: 0, pct: 0, message: "Sem alvo calórico definido — check informativo." };
+  }
+  const delta = totals.calorias - target;
+  const pct = Math.abs(delta) / target * 100;
+  const ok = pct <= tol;
+  const signal = ok ? "OK" : "ATENÇÃO";
+  const msg = ok
+    ? `${signal}: soma do dia ≈ alvo (${totals.calorias} vs ${Math.round(target)} kcal, Δ ${Math.round(delta)} kcal)`
+    : `${signal}: soma do dia difere do alvo (${totals.calorias} vs ${Math.round(target)} kcal, Δ ${Math.round(delta)} kcal | ${pct.toFixed(1)}%)`;
+  return { ok, deltaKcal: Math.round(delta), pct: Number(pct.toFixed(1)), message: msg };
+}
+
 export function sumAlimentosTotals(
   alimentos: Array<{ calorias: number; proteinas: number; carboidratos: number; gorduras: number; }>
 ): MacroTotals {

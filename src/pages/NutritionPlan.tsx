@@ -6,16 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { Home, RefreshCw, Edit } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { buscarSubstituicoes } from '@/types/alimentos'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-
+import { sumMacrosFromRefeicoes, guessPesoKgFromStateLike, validateDietScience } from "@/engine/nutrition/NutritionEngine";
 import { sumAlimentosTotals } from "@/engine/nutrition/NutritionEngine";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 export function NutritionPlan() {
   const { state } = useDrMindSetfit()
 
@@ -24,6 +17,13 @@ export function NutritionPlan() {
     macros: { calorias: 0, proteina: 0, carboidratos: 0, gorduras: 0 },
     restricoes: [],
   };
+
+
+  // ===== Phase 3C — Resumo do dia + Check científico =====
+  const dayTotals = sumMacrosFromRefeicoes(nutricaoSafe.refeicoes ?? []);
+  const pesoKg = guessPesoKgFromStateLike(state);
+  const kcalTarget = nutricaoSafe?.macros?.calorias;
+  const science = validateDietScience({ kcalTarget, refeicoes: nutricaoSafe.refeicoes ?? [], tolerancePct: 10 });
   const navigate = useNavigate()
 
   if (!state.nutricao) {
@@ -112,6 +112,59 @@ export function NutritionPlan() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        
+        {/* Resumo do dia (Phase 3C) */}
+        <Card className="glass-effect border-white/10">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <CardTitle className="text-lg text-gray-100">Resumo do dia</CardTitle>
+                <CardDescription className="text-sm text-gray-400">
+                  Totais consolidados das refeições + consistência do plano
+                </CardDescription>
+              </div>
+              <Badge
+                variant="outline"
+                className={science.ok
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
+                  : "bg-red-500/15 border-red-500/30 text-red-300"}
+              >
+                {science.ok ? "Coerente" : "Atenção"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-gray-400 text-xs">Calorias</p>
+                <p className="text-gray-100 font-semibold">{dayTotals.calorias} kcal</p>
+              </div>
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-gray-400 text-xs">Proteínas</p>
+                <p className="text-gray-100 font-semibold">{dayTotals.proteinas.toFixed(1)} g</p>
+              </div>
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-gray-400 text-xs">Carboidratos</p>
+                <p className="text-gray-100 font-semibold">{dayTotals.carboidratos.toFixed(1)} g</p>
+              </div>
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-gray-400 text-xs">Gorduras</p>
+                <p className="text-gray-100 font-semibold">{dayTotals.gorduras.toFixed(1)} g</p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10">
+              <p className="text-xs text-gray-400">Check científico</p>
+              <p className="text-sm text-gray-200 font-medium">{science.message}</p>
+              {pesoKg ? (
+                <p className="text-xs text-gray-400 mt-2">Peso inferido: {pesoKg.toFixed(1)} kg (para contexto metabólico)</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-2">Peso não disponível para contexto metabólico.</p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
