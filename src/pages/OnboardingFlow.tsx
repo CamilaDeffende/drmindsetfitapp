@@ -8,27 +8,27 @@ import { Step7Acompanhamento } from "@/components/steps/Step7Acompanhamento";
 import { Step8Relatorio } from "@/components/steps/Step8Relatorio";
 import { OnboardingCarouselShell } from "@/components/onboarding/OnboardingCarouselShell";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
+import { useApp } from "@/contexts/AppContext";
 
 // ONBOARDING_FLOW_STABLE_V1
 export function OnboardingFlow() {
+  const _app = useApp();
+  void _app;
+  const LS_KEY = "drmindsetfit.onboarding.v1";
+  const saveDraft = (data: any) => { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch {} };
+  const loadDraft = () => { try { const r = localStorage.getItem(LS_KEY);
+  // Draft wiring (Phase 2.1): mantém helpers vivos sem hooks. Persistência real entra no BLOCO B.
+  const __draft = loadDraft();
+  void __draft;
+  void saveDraft;
+
+ return r ? JSON.parse(r) : null; } catch { return null; } };
+
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
   const navigate = useNavigate();
 
   // reset rápido: ?reset=1
-  useEffect(() => {
-    try {
-      const q = new URLSearchParams(window.location.search);
-      if (q.get("reset") === "1") {
-        localStorage.removeItem("drmindsetfit_state");
-        q.delete("reset");
-        const next = window.location.pathname + (q.toString() ? `?${q.toString()}` : "") + window.location.hash;
-        window.history.replaceState({}, "", next);
-        window.location.reload();
-      }
-    } catch {}
-  }, []);
-
   const steps = useMemo(() => (
     [
       { key: "perfil", title: "Perfil", allowSkip: false, content: <Step1Perfil /> },
