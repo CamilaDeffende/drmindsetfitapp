@@ -5,14 +5,15 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 
 /**
- * ESLint v9+ (Flat Config) — configuração mínima e estável
- * Objetivo: não quebrar o build e manter regras essenciais.
+ * ESLint v9+ (Flat Config) — configuração estável (BUILD VERDE)
+ * Objetivo: não quebrar build e manter regras essenciais.
  */
 export default [
   {
     ignores: [
       "dist/**",
       ".scan/**",
+      ".backups/**",
       "Drmindsetfitpro/**",
       "scripts/_archive/**",
       "node_modules/**",
@@ -20,12 +21,12 @@ export default [
       "**/*.min.js",
       "**/*.bundle.js",
       "**/_broken/**",
-      "**/_broken/**/*",
       "src/**/_broken/**",
-      "src/**/_broken/**/*"
+      ".bak.*/**"
     ],
   },
-js.configs.recommended,
+
+  js.configs.recommended,
 
   // TypeScript (sem type-aware pesado)
   ...tseslint.configs.recommended,
@@ -51,15 +52,16 @@ js.configs.recommended,
       // Fast refresh (aviso apenas)
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
 
-      // Alívio controlado (seu código já tinha vários casos)
+      // Alívio controlado
       "no-empty": ["warn", { allowEmptyCatch: true }],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },
 
+  // scripts
   {
-    files: ["scripts/**/*.mjs", "scripts/**/*.js"],
+    files: ["scripts/**/*.{mjs,js,ts,tsx}"],
     languageOptions: {
       globals: {
         process: "readonly",
@@ -72,5 +74,4 @@ js.configs.recommended,
       },
     },
   },
-
 ];
