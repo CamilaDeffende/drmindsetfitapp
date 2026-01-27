@@ -3,9 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import {
-import { format, differenceInDays } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-
   FileText,
   Calendar,
   Target,
@@ -16,6 +13,8 @@ import { ptBR } from 'date-fns/locale'
   Clock,
   TrendingUp
 } from 'lucide-react'
+import { format, differenceInDays } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export function Report() {
   const { state } = useDrMindSetfit()
