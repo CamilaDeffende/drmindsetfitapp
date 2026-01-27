@@ -4,7 +4,7 @@ import App from "./App";import { SplashScreen } from "./components/branding/Spla
 import "./index.css";
 import { DevErrorOverlay } from "@/components/system/DevErrorOverlay";
 import { ProfileProvider } from "@/contexts/ProfileContext";
-import { useAuth } from "@/contexts/AuthContext";
+import {useAuth, AuthProvider} from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 
 import "leaflet/dist/leaflet.css";
@@ -39,10 +39,12 @@ function RootProviders({ children }: { children: React.ReactNode }) {
   return <ProfileProvider userId={userId} gate><AppProvider>{children}</AppProvider></ProfileProvider>;
 }
 
-createRoot(el).render(<RootProviders><React.StrictMode>
+createRoot(el).render(<AuthProvider>
+<RootProviders><React.StrictMode>
     <BootSplash>
         <DevErrorOverlay>
           <App />
         </DevErrorOverlay>
       </BootSplash>
-  </React.StrictMode></RootProviders>);
+  </React.StrictMode></RootProviders>
+</AuthProvider>);

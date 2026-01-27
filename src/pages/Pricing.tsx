@@ -21,7 +21,7 @@ import {
 import { loadStripe } from '@stripe/stripe-js'
 import { useToast } from '@/hooks/use-toast'
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '')
+const stripePromise = (import.meta.env.VITE_STRIPE_PUBLIC_KEY ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY) : null)
 
 export function Pricing() {
   const navigate = useNavigate()
