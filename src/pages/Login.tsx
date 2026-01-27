@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,21 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "" });
+
+  // DEV-ONLY: ajuste fino do tamanho da logo no Login (persistente)
+  const MF_LOGO_KEY = "mf_login_logo_px";
+  const [mfLogoPx, setMfLogoPx] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem(MF_LOGO_KEY);
+      const n = raw ? Number(raw) : NaN;
+      if (Number.isFinite(n) && n >= 80 && n <= 260) return n;
+    } catch {}
+    return 180; // default premium
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(MF_LOGO_KEY, String(mfLogoPx)); } catch {}
+  }, [mfLogoPx]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,11 +61,30 @@ export function Login() {
         {/* HERO (premium): wordmark + tagline */}
         <div className="text-center mb-8 pt-2" data-ui="mindsetfit-login-hero">
           <img
-            src="/brand/mindsetfit-wordmark.png"
-            alt="MindsetFit"
-            className="mx-auto sm: md: w-auto bg-transparent select-none sm: md: lg: w-auto bg-transparent drop-shadow-[0_10px_30px_rgba(0,153,255,0.18)] sm: md: lg: w-auto bg-transparent drop-shadow-[0_10px_30px_rgba(0,153,255,0.18)] h-28 sm:h-32 md:h-40 lg:h-48 w-auto bg-transparent max-h-[40vh] drop-shadow-[0_16px_45px_rgba(0,153,255,0.22)]"
-            draggable={false}
-          />
+          src="/brand/mindsetfit-wordmark.png"
+          alt="MindsetFit"
+          className="mx-auto w-auto bg-transparent select-none drop-shadow-[0_16px_45px_rgba(0,153,255,0.22)]"
+          style={{ height: mfLogoPx }}
+          draggable={false}
+        />
+
+        {import.meta.env.DEV && (
+          <div className="mt-3 w-full max-w-sm px-4" data-ui="mfLoginLogoSlider">
+            <div className="flex items-center justify-center gap-3 text-xs text-gray-400">
+              <span className="opacity-80">Logo</span>
+              <input
+                type="range"
+                min={80}
+                max={260}
+                step={2}
+                value={mfLogoPx}
+                onChange={(e) => setMfLogoPx(Number(e.target.value))}
+                className="w-52 accent-[#1E6BFF]"
+              />
+              <span className="tabular-nums">{mfLogoPx}px</span>
+            </div>
+          </div>
+        )}
           <p className="mt-4 text-sm text-gray-400">
             Acesse sua conta e continue seu progresso com precisão.
           </p>
