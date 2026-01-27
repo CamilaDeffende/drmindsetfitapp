@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { loadActivePlan } from "@/services/plan.service";
 import {
   FileText,
   Calendar,
@@ -112,6 +113,59 @@ export function Report() {
   if ((__mfHC as any)?.issues?.length) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
+      {/* ActivePlan (source of truth) */}
+      {(() => {
+  const plan = loadActivePlan() as any;
+        if (!plan) return null;
+        return (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold">Plano ativo (resumo)</div>
+                <div className="text-xs text-white/60">Gerado no onboarding e salvo localmente</div>
+              </div>
+              <div className="text-xs text-white/60">
+                {plan?.meta?.createdAt ? new Date(plan.meta.createdAt).toLocaleString() : ""}
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-xl bg-white/5 p-3 border border-white/10">
+                <div className="text-[11px] text-white/60">Metabolismo</div>
+                <div className="mt-1 text-sm font-semibold">
+                  {plan?.metabolic?.tdee ? `${Math.round(plan.metabolic.tdee)} kcal/dia` : "—"}
+                </div>
+                <div className="text-[11px] text-white/60">
+                  {plan?.metabolic?.bmr ? `BMR ${Math.round(plan.metabolic.bmr)} kcal` : ""}
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-white/5 p-3 border border-white/10">
+                <div className="text-[11px] text-white/60">Dieta</div>
+                <div className="mt-1 text-sm font-semibold">
+                  {plan?.nutrition?.targetKcal ? `${Math.round(plan.nutrition.targetKcal)} kcal` : "—"}
+                </div>
+                <div className="text-[11px] text-white/60">
+                  {plan?.nutrition?.macros
+                    ? `P ${Math.round(plan.nutrition.macros.proteinG)}g • C ${Math.round(plan.nutrition.macros.carbG)}g • G ${Math.round(plan.nutrition.macros.fatG)}g`
+                    : ""}
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-white/5 p-3 border border-white/10">
+                <div className="text-[11px] text-white/60">Treino</div>
+                <div className="mt-1 text-sm font-semibold">
+                  {plan?.workout?.label || "—"}
+                </div>
+                <div className="text-[11px] text-white/60">
+                  {plan?.workout?.frequencyPerWeek ? `${plan.workout.frequencyPerWeek}x/semana` : ""}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
         <Card className="w-full max-w-md mx-4 glass-effect neon-border">
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
