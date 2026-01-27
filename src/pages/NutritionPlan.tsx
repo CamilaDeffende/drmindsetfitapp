@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Home, RefreshCw, Edit } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { buscarSubstituicoes } from '@/types/alimentos'
-import { sumMacrosFromRefeicoes, guessPesoKgFromStateLike, validateDietScience } from "@/engine/nutrition/NutritionEngine";
+import { sumMacrosFromRefeicoes, guessPesoKgFromStateLike, validateDietScience, buildDietExportTextPhase3E, copyTextFallbackPhase3E } from "@/engine/nutrition/NutritionEngine";
 import { sumAlimentosTotals } from "@/engine/nutrition/NutritionEngine";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
@@ -92,6 +92,17 @@ export function NutritionPlan() {
               className="h-10 px-4 text-sm font-semibold glow-blue"
             >
               Exportar Nutrição (PDF)
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const text = buildDietExportTextPhase3E({ stateLike: state, nutricao: nutricaoSafe, tolerancePct: 10 });
+                const ok = await copyTextFallbackPhase3E(text);
+                if (!ok) alert("Não foi possível copiar. Tente novamente.");
+              }}
+              className="h-10 border-white/15 text-white hover:bg-white/10"
+            >
+              Copiar plano (texto)
             </Button>
           </div>
           <div className="flex items-center gap-2">

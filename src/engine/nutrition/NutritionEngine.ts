@@ -270,3 +270,72 @@ export function buildDietExportPayload(params: {
   return { title, summaryLines, mealsLines, notesLines };
 }
 
+
+
+/** Phase 3E — texto editável premium do plano (para copiar/colar) */
+export function buildDietExportTextPhase3E(params: { stateLike: any; nutricao: any; tolerancePct?: number }): string {
+  try {
+    const anySelf: any = (exports as any);
+    if (typeof (anySelf as any).buildDietExportPayload === "function") {
+      return (anySelf as any).buildDietExportPayload({
+        stateLike: params.stateLike,
+        nutricao: params.nutricao,
+        tolerancePct: params.tolerancePct ?? 10
+      });
+    }
+  } catch {}
+
+  const nutricao = params?.nutricao ?? {};
+  const refeicoes = Array.isArray(nutricao?.refeicoes) ? nutricao.refeicoes : [];
+  const lines: string[] = [];
+
+  lines.push("MINDSETFIT — PLANO NUTRICIONAL (EDITÁVEL)");
+  lines.push("");
+  lines.push(`Meta (kcal): ${nutricao?.macros?.calorias ?? "—"}`);
+  lines.push(`P: ${nutricao?.macros?.proteina ?? "—"} g | C: ${nutricao?.macros?.carboidratos ?? "—"} g | G: ${nutricao?.macros?.gorduras ?? "—"} g`);
+  lines.push("");
+  lines.push("REFEIÇÕES");
+  lines.push("--------");
+
+  refeicoes.forEach((r: any, i: number) => {
+    lines.push(`${i+1}) ${r?.horario ?? "—"} — ${r?.nome ?? "Refeição"}`);
+    const alimentos = Array.isArray(r?.alimentos) ? r.alimentos : [];
+    alimentos.forEach((a: any) => {
+      const nome = a?.nome ?? a?.alimento ?? "Alimento";
+      const qtd  = a?.quantidade ?? a?.qtd ?? a?.porcao ?? "";
+      const uni  = a?.unidade ?? a?.unit ?? "";
+      lines.push(`   - ${nome} ${qtd}${uni}`.trim());
+    });
+    lines.push("");
+  });
+
+  return lines.join("\n");
+}
+
+/** Phase 3E — copiar texto com fallback (clipboard/textarea) */
+export async function copyTextFallbackPhase3E(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== "undefined" && (navigator as any).clipboard?.writeText) {
+      await (navigator as any).clipboard.writeText(text);
+      return true;
+    }
+  } catch {}
+
+  try {
+    if (typeof document !== "undefined") {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "true");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok === true;
+    }
+  } catch {}
+
+  return false;
+}
