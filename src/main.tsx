@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";import { SplashScreen } from "./components/branding/SplashScreen";
 import "./index.css";
 import { DevErrorOverlay } from "@/components/system/DevErrorOverlay";
+import { ProfileProvider } from "@/contexts/ProfileContext";
 
 import "leaflet/dist/leaflet.css";
 
@@ -26,12 +27,17 @@ initI18n();
 const el = document.getElementById("root");
 if (!el) throw new Error("Root element #root not found");
 
-createRoot(el).render(
-  <React.StrictMode>
+
+function RootProviders({ children }: { children: React.ReactNode }) {
+  // TODO (Phase 1.1): substituir por user.id real do AuthContext
+  const userId = "local-user";
+  return <ProfileProvider userId={userId} gate>{children}</ProfileProvider>;
+}
+
+createRoot(el).render(<RootProviders><React.StrictMode>
     <BootSplash>
         <DevErrorOverlay>
           <App />
         </DevErrorOverlay>
       </BootSplash>
-  </React.StrictMode>
-);
+  </React.StrictMode></RootProviders>);
