@@ -4,6 +4,7 @@ import App from "./App";import { SplashScreen } from "./components/branding/Spla
 import "./index.css";
 import { DevErrorOverlay } from "@/components/system/DevErrorOverlay";
 import { ProfileProvider } from "@/contexts/ProfileContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 import "leaflet/dist/leaflet.css";
 
@@ -29,8 +30,11 @@ if (!el) throw new Error("Root element #root not found");
 
 
 function RootProviders({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  const userId = (auth as any)?.user?.id ?? (auth as any)?.session?.user?.id ?? null;
+
   // TODO (Phase 1.1): substituir por user.id real do AuthContext
-  const userId = "local-user";
+  if (!userId) return null;
   return <ProfileProvider userId={userId} gate>{children}</ProfileProvider>;
 }
 
