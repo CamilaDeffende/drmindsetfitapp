@@ -1,78 +1,79 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Lock, Mail, Zap } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 export function Login() {
-  const navigate = useNavigate()
-  const { signIn } = useAuth()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  })
+  const navigate = useNavigate();
+  const { signIn } = useAuth();
+  const { toast } = useToast();
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    const { error: signInError } = await signIn(formData.email, formData.password)
+    const { error: signInError } = await signIn(formData.email, formData.password);
 
     if (signInError) {
-      setError('Email ou senha incorretos. Tente novamente.')
-      setLoading(false)
-      return
+      setError("Email ou senha incorretos. Tente novamente.");
+      setLoading(false);
+      return;
     }
 
     toast({
-      title: 'Login realizado!',
-      description: 'Bem-vindo de volta ao DrMindSetfit',
-    })
+      title: "Login realizado!",
+      description: "Bem-vindo de volta ao DrMindSetfit",
+    });
 
-    navigate("/onboarding")
-    setLoading(false)
-  }
+    navigate("/onboarding");
+    setLoading(false);
+  };
 
   return (
-<div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center p-4">
-      {/* HERO: logo MindsetFit ocupando o topo (fundo transparente) */}
-      <div className="flex flex-col items-center justify-center pt-10 pb-8" data-ui="mindsetfit-login-hero">
-        <img
-          src="/brand/mindsetfit-wordmark.png"
-          alt="MindsetFit"
-          className="mx-auto w-auto bg-transparent h-20 sm:h-24 md:h-28 lg:h-32"
-          draggable={false}
-        />
-      </div>
-
-<div className="w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#1E6BFF] to-[#00B7FF] mb-4">
-            <Zap className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-neon mb-2"></h1>
-          <p className="text-gray-400">Entre na sua conta</p>
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* HERO (premium): wordmark + tagline */}
+        <div className="text-center mb-8 pt-2" data-ui="mindsetfit-login-hero">
+          <img
+            src="/brand/mindsetfit-wordmark.png"
+            alt="MindsetFit"
+            className="mx-auto h-16 sm:h-20 md:h-24 w-auto bg-transparent select-none"
+            draggable={false}
+          />
+          <p className="mt-4 text-sm text-gray-400">
+            Acesse sua conta e continue seu progresso com precisão.
+          </p>
         </div>
 
         <Card className="glass-effect neon-border">
-          <CardHeader>
-            <div className="mx-auto mb-6 flex items-center justify-center">
-  <img src="/brand/mindsetfit-logo.svg" alt="MindsetFit" className="h-14 w-auto opacity-95" />
-</div>
-<CardTitle className="text-2xl text-center text-neon">Bem-vindo de volta</CardTitle>
+          <CardHeader className="space-y-3">
+            <div className="mx-auto flex items-center justify-center">
+              <img
+                src="/brand/mindsetfit-logo.svg"
+                alt="MindsetFit"
+                className="h-12 w-auto opacity-95 select-none"
+                draggable={false}
+              />
+            </div>
+            <CardTitle className="text-2xl text-center text-neon font-extrabold">
+              Bem-vindo de volta
+            </CardTitle>
             <CardDescription className="text-center">
-              Acesse sua conta para continuar seu progresso
+              Entre para acessar seus planos e relatórios premium.
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
@@ -116,10 +117,7 @@ export function Login() {
               </div>
 
               <div className="flex items-center justify-end">
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-[#1E6BFF] hover:text-[#1E6BFF] transition-colors"
-                >
+                <Link to="/forgot-password" className="text-sm text-[#1E6BFF] hover:opacity-90 transition-opacity">
                   Esqueceu a senha?
                 </Link>
               </div>
@@ -131,13 +129,13 @@ export function Login() {
                     Entrando...
                   </>
                 ) : (
-                  'Entrar'
+                  "Entrar"
                 )}
               </Button>
 
               <div className="text-center text-sm text-gray-400">
-                Não tem uma conta?{' '}
-                <Link to="/signup" className="text-[#1E6BFF] hover:text-[#1E6BFF] font-semibold">
+                Não tem uma conta?{" "}
+                <Link to="/signup" className="text-[#1E6BFF] hover:opacity-90 font-semibold transition-opacity">
                   Criar conta grátis
                 </Link>
               </div>
@@ -145,10 +143,10 @@ export function Login() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-gray-500 mt-6">
-          Ao entrar, você concorda com nossos Termos de Uso e Política de Privacidade
+        <p className="mt-6 text-center text-xs text-gray-500">
+          MindsetFit • Performance • Nutrição • Consistência
         </p>
       </div>
     </div>
-  )
+  );
 }

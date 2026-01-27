@@ -8,7 +8,6 @@ import { DietaAtivaView } from '@/components/planos/DietaAtivaView'
 import { TreinoAtivoView } from '@/components/planos/TreinoAtivoView'
 import { useEffect } from 'react'
 import type { DietaAtiva, TreinoAtivo } from '@/types'
-
 import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
@@ -531,7 +530,6 @@ if (sch && typeof sch === "object") {
   const days = (state?.workoutDays ?? state?.diasTreino ?? ["Seg", "Qua", "Sex"]) as any[];
   return buildWeeklyPlan({ modalities, level, days });
 }
-
 
 function buildDeterministicWeeklyPlan(state: any) {
   const raw = (state || {}) as any;
