@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -6,15 +7,34 @@ import { Home, Calendar, Download } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { DietaAtivaView } from '@/components/planos/DietaAtivaView'
 import { TreinoAtivoView } from '@/components/planos/TreinoAtivoView'
-import { useEffect } from 'react'
 import type { DietaAtiva, TreinoAtivo } from '@/types'
 import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 
+import { loadActivePlan } from "@/services/plan.service";
+
 const HIDE_ADVANCED_MODALITY_UI = true;
 
 export function PlanosAtivos() {
+  // BLOCO G1 (fonte única): PlanosAtivos apenas LÊ ActivePlan e renderiza (não calcula aqui).
+  const [activePlan, setActivePlan] = useState<any>(null);
+  const [planLoaded, setPlanLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const p = loadActivePlan();
+      setActivePlan(p);
+    } finally {
+      setPlanLoaded(true);
+    }
+  }, []);
+
+  const kcal = activePlan?.nutrition?.kcalTarget ?? activePlan?.nutrition?.kcal ?? null;
+  const macros = activePlan?.nutrition?.macros ?? null;
+  const meals = activePlan?.nutrition?.meals ?? [];
+  const week = activePlan?.workout?.week ?? activePlan?.workout?.days ?? [];
+
   const { state, updateState } = useDrMindSetfit()
   
 
@@ -96,6 +116,54 @@ const navigate = useNavigate()
 
 return (
       <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="mb-4">
+          <div data-testid="active-plan-panel" className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm text-white/60">Plano Ativo</div>
+                <div className="text-lg font-semibold">Nutrição + Treino (fonte única)</div>
+              </div>
+              <div className="text-xs text-white/50">Carregado: {planLoaded ? "sim" : "não"}</div>
+            </div>
+
+            {activePlan ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl bg-white/5 p-3">
+                  <div className="text-xs text-white/60">Calorias alvo</div>
+                  <div className="mt-1 text-xl font-semibold">{kcal ? `${kcal} kcal/dia` : "—"}</div>
+                </div>
+                <div className="rounded-xl bg-white/5 p-3">
+                  <div className="text-xs text-white/60">Macros</div>
+                  <div className="mt-1 text-sm text-white/80">
+                    {macros ? `${macros.protein ?? "—"}g P • ${macros.carbs ?? "—"}g C • ${macros.fat ?? "—"}g G` : "—"}
+                  </div>
+                </div>
+                <div className="rounded-xl bg-white/5 p-3">
+                  <div className="text-xs text-white/60">Refeições</div>
+                  <div className="mt-1 text-sm text-white/80">{Array.isArray(meals) ? meals.length : 0} / dia</div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-xl bg-white/5 p-3 text-sm text-white/70">
+                Nenhum plano ativo encontrado ainda. Finalize o onboarding e confirme para salvar o plano.
+              </div>
+            )}
+
+            {activePlan && Array.isArray(week) && week.length ? (
+              <div className="mt-4">
+                <div className="text-xs text-white/60">Semana (preview)</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {week.slice(0, 7).map((d: any, i: number) => (
+                    <div key={i} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80">
+                      {d?.day ?? d?.label ?? `Dia ${i+1}`} • {d?.modality ?? d?.type ?? "—"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
       {/* MF_TREINOS_ATIVOS_PREMIUM_CLEAN_V1 */}
       <WeeklyProtocolActive />
       {/* MF_TREINOS_ATIVOS_PROTOCOL_V4 */}
