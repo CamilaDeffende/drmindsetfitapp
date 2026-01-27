@@ -2,6 +2,38 @@ import { computeMetabolic } from "@/engine/metabolic/MetabolicEngine";
 import { computeMacros, buildMealPlan } from "@/engine/nutrition/NutritionEngine";
 import { buildWorkoutWeek, Modality } from "@/engine/workout/WorkoutEngine";
 
+export type ActivePlanV1 = {
+  version: "v1";
+  /** ISO string (preferido). Mantemos createdAtISO opcional para compatibilidade. */
+  createdAt: string;
+  createdAtISO?: string;
+
+  /** Metabolismo calculado (tipagem flexível para não quebrar enquanto evolui o engine). */
+  metabolic?: {
+    bmrKcal?: number;
+    tdeeKcal?: number;
+    targetKcal?: number;
+    [k: string]: any;
+  };
+
+  macros?: {
+    proteinG?: number;
+    carbG?: number;
+    fatG?: number;
+    targetKcal?: number;
+    [k: string]: any;
+  };
+
+  /** Plano alimentar gerado (shape depende do NutritionEngine). */
+  meals?: any;
+
+  /** Semana de treino gerada (shape depende do WorkoutEngine). */
+  workout?: any;
+
+  /** Snapshot do questionário (draft) usado para gerar o plano. */
+  draft?: PlanDraft;
+};
+
 export type PlanDraft = {
   step1?: any;
   step2?: any;
@@ -10,16 +42,6 @@ export type PlanDraft = {
   step5?: any;
   step6?: any;
   step7?: any;
-};
-
-export type ActivePlanV1 = {
-  version: "v1";
-  createdAt: string;
-  metabolic: ReturnType<typeof computeMetabolic>;
-  macros: ReturnType<typeof computeMacros>;
-  meals: ReturnType<typeof buildMealPlan>;
-  workout: ReturnType<typeof buildWorkoutWeek>;
-  draft: PlanDraft;
 };
 
 const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
