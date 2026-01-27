@@ -5,6 +5,7 @@ import "./index.css";
 import { DevErrorOverlay } from "@/components/system/DevErrorOverlay";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { AppProvider } from "@/contexts/AppContext";
 
 import "leaflet/dist/leaflet.css";
 
@@ -35,7 +36,7 @@ function RootProviders({ children }: { children: React.ReactNode }) {
 
   // TODO (Phase 1.1): substituir por user.id real do AuthContext
   if (!userId) return null;
-  return <ProfileProvider userId={userId} gate>{children}</ProfileProvider>;
+  return <ProfileProvider userId={userId} gate><AppProvider>{children}</AppProvider></ProfileProvider>;
 }
 
 createRoot(el).render(<RootProviders><React.StrictMode>
