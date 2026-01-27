@@ -5,7 +5,6 @@ import { Step2Avaliacao } from '@/components/steps/Step2Avaliacao'
 import { Step3Metabolismo } from '@/components/steps/Step3Metabolismo'
 import { Step4Nutricao } from '@/components/steps/Step4Nutricao'
 import { Step5Treino } from '@/components/steps/Step5Treino'
-import { Step6Saude } from '@/components/steps/Step6Saude'
 import { Step7Acompanhamento } from '@/components/steps/Step7Acompanhamento'
 import { Step8Relatorio } from '@/components/steps/Step8Relatorio'
 import { Button } from '@/components/ui/button'
@@ -30,7 +29,6 @@ function AppContent() {
       case 5:
         return <Step5Treino />
       case 6:
-        return <Step6Saude />
       case 7:
         return <Step7Acompanhamento />
       case 8:

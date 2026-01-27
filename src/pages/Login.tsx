@@ -65,7 +65,10 @@ export function Login() {
 
         <Card className="glass-effect neon-border">
           <CardHeader>
-            <CardTitle className="text-2xl text-center text-neon">Bem-vindo de volta</CardTitle>
+            <div className="mx-auto mb-6 flex items-center justify-center">
+  <img src="/brand/mindsetfit-logo.svg" alt="MindsetFit" className="h-14 w-auto opacity-95" />
+</div>
+<CardTitle className="text-2xl text-center text-neon">Bem-vindo de volta</CardTitle>
             <CardDescription className="text-center">
               Acesse sua conta para continuar seu progresso
             </CardDescription>

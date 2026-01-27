@@ -4,7 +4,6 @@ import { Step2Avaliacao } from "@/components/steps/Step2Avaliacao";
 import { Step3Metabolismo } from "@/components/steps/Step3Metabolismo";
 import { Step4Nutricao } from "@/components/steps/Step4Nutricao";
 import { Step5Treino } from "@/components/steps/Step5Treino";
-import { Step6Saude } from "@/components/steps/Step6Saude";
 import { Step7Acompanhamento } from "@/components/steps/Step7Acompanhamento";
 import { Step8Relatorio } from "@/components/steps/Step8Relatorio";
 import { OnboardingCarouselShell } from "@/components/onboarding/OnboardingCarouselShell";
@@ -37,8 +36,7 @@ export function OnboardingFlow() {
       { key: "metabolismo", title: "Metabolismo", allowSkip: true, content: <Step3Metabolismo /> },
       { key: "treino", title: "Treino", allowSkip: true, content: <Step5Treino /> },
       { key: "nutricao", title: "Nutrição", allowSkip: true, content: <Step4Nutricao /> },
-      { key: "saude", title: "Saúde", allowSkip: true, content: <Step6Saude /> },
-      { key: "acomp", title: "Acompanhamento", allowSkip: true, content: <Step7Acompanhamento /> },
+{ key: "acomp", title: "Acompanhamento", allowSkip: true, content: <Step7Acompanhamento /> },
       { key: "revisao", title: "Revisão", allowSkip: false, content: <Step8Relatorio /> }
 ]
   ), []);
