@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import {
-  ArrowLeft,
+ArrowLeft,
   UtensilsCrossed,
   RefreshCw,
   Info,
   Search
 } from 'lucide-react'
+import { sumKcalFromRefeicoes } from "@/engine/nutrition/NutritionEngine";
+
 import {
   Dialog,
   DialogContent,
@@ -264,9 +266,7 @@ return (
     }
   }
 
-  const totalCalorias = refeicoes.reduce((acc, ref) =>
-    acc + ref.alimentos.reduce((a, alim) => a + alim.calorias, 0), 0
-  )
+  const totalCalorias = sumKcalFromRefeicoes(refeicoes)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">

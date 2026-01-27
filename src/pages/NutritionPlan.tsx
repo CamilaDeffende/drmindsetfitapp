@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
+import { sumAlimentosTotals } from "@/engine/nutrition/NutritionEngine";
 export function NutritionPlan() {
   const { state } = useDrMindSetfit()
 
@@ -117,10 +118,6 @@ export function NutritionPlan() {
         {/* Refeições */}
         <div className="space-y-4">
           {nutricaoSafe.refeicoes.map((refeicao: any, index: number) => {
-            const totalCalorias = refeicao.alimentos.reduce((acc: number, a: any) => acc + a.calorias, 0)
-            const totalProteinas = refeicao.alimentos.reduce((acc: number, a: any) => acc + a.proteinas, 0)
-            const totalCarbs = refeicao.alimentos.reduce((acc: number, a: any) => acc + a.carboidratos, 0)
-            const totalGorduras = refeicao.alimentos.reduce((acc: number, a: any) => acc + a.gorduras, 0)
 
             return (
               <Card key={index} className="glass-effect border-white/10">
@@ -129,18 +126,18 @@ export function NutritionPlan() {
                     <div>
                       <CardTitle className="text-xl text-gray-100">{refeicao.nome}</CardTitle>
                       <CardDescription className="text-sm text-gray-400">
-                        {refeicao.horario} • {totalCalorias} kcal
+                        {refeicao.horario} • {sumAlimentosTotals(refeicao.alimentos).calorias} kcal
                       </CardDescription>
                     </div>
                     <div className="flex gap-2 text-xs">
                       <Badge variant="outline" className="bg-[#1E6BFF]/20 border-[#1E6BFF]/30 text-[#1E6BFF]">
-                        P: {totalProteinas.toFixed(1)}g
+                        P: {sumAlimentosTotals(refeicao.alimentos).proteinas.toFixed(1)}g
                       </Badge>
                       <Badge variant="outline" className="bg-green-500/20 border-green-500/30 text-green-400">
-                        C: {totalCarbs.toFixed(1)}g
+                        C: {sumAlimentosTotals(refeicao.alimentos).carboidratos.toFixed(1)}g
                       </Badge>
                       <Badge variant="outline" className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400">
-                        G: {totalGorduras.toFixed(1)}g
+                        G: {sumAlimentosTotals(refeicao.alimentos).gorduras.toFixed(1)}g
                       </Badge>
                     </div>
                   </div>

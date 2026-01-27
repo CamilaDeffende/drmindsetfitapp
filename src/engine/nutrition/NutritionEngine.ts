@@ -61,3 +61,57 @@ export function buildMealPlan(targetKcal: number, macros: Macros): Meal[] {
     };
   });
 }
+
+
+/* MF_ENGINE_HELPERS_V1 */
+export type MacrosPer100g = {
+  calorias: number;
+  proteinas: number;
+  carboidratos: number;
+  gorduras: number;
+};
+
+export type MacroTotals = {
+  calorias: number;
+  proteinas: number;
+  carboidratos: number;
+  gorduras: number;
+};
+
+function mfRound1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+export function scaleMacrosPer100g(macrosPor100g: MacrosPer100g, gramas: number): MacroTotals {
+  const fator = gramas / 100;
+  return {
+    calorias: Math.round(macrosPor100g.calorias * fator),
+    proteinas: mfRound1(macrosPor100g.proteinas * fator),
+    carboidratos: mfRound1(macrosPor100g.carboidratos * fator),
+    gorduras: mfRound1(macrosPor100g.gorduras * fator),
+  };
+}
+
+export function sumAlimentosTotals(
+  alimentos: Array<{ calorias: number; proteinas: number; carboidratos: number; gorduras: number; }>
+): MacroTotals {
+  return alimentos.reduce(
+    (acc, a) => {
+      acc.calorias += Number(a.calorias || 0);
+      acc.proteinas += Number(a.proteinas || 0);
+      acc.carboidratos += Number(a.carboidratos || 0);
+      acc.gorduras += Number(a.gorduras || 0);
+      return acc;
+    },
+    { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 }
+  );
+}
+
+export function sumKcalFromRefeicoes(
+  refeicoes: Array<{ alimentos: Array<{ calorias: number }> }>
+): number {
+  return refeicoes.reduce((acc, r) => {
+    const kcal = r.alimentos.reduce((a, x) => a + Number(x.calorias || 0), 0);
+    return acc + kcal;
+  }, 0);
+}
