@@ -9,6 +9,35 @@ import { buscarSubstituicoes } from '@/types/alimentos'
 import { sumMacrosFromRefeicoes, guessPesoKgFromStateLike, validateDietScience } from "@/engine/nutrition/NutritionEngine";
 import { sumAlimentosTotals } from "@/engine/nutrition/NutritionEngine";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+import { mindsetfitSignatureLines } from "@/assets/branding/signature";
+import { buildDietExportPayload } from "@/engine/nutrition/NutritionEngine";
+async function downloadPdfPremiumDietPhase3D(state: any) {
+  const payload = buildDietExportPayload({
+    stateLike: state,
+    nutricao: state?.nutricao ?? {},
+    tolerancePct: 10
+  });
+
+  const content = [
+    payload.title,
+    "",
+    ...payload.summaryLines,
+    "",
+    "Refeições:",
+    ...payload.mealsLines,
+    "",
+    ...payload.notesLines,
+  ].join("\n");
+
+  await generateMindsetFitPremiumPdf({
+    title: payload.title,
+    content: content,
+    signatureLines: mindsetfitSignatureLines,
+  } as any);
+}
+
+
 export function NutritionPlan() {
   const { state } = useDrMindSetfit()
 
@@ -56,6 +85,14 @@ export function NutritionPlan() {
             <p className="text-xs text-gray-400">
               {nutricaoSafe.refeicoes.length} refeições • {nutricaoSafe.macros.calorias} kcal/dia
             </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => downloadPdfPremiumDietPhase3D(state)}
+              className="h-10 px-4 text-sm font-semibold glow-blue"
+            >
+              Exportar Nutrição (PDF)
+            </Button>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/edit-diet')} className="">

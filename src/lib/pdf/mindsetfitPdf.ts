@@ -1,4 +1,3 @@
-const DEFAULT_LOGO_URL = "/brand/mindsetfit-logo.svg";
 /** === Sprint 5E | assinatura clínica (coach vs patient) === */
 function getClinicalFooterHtml(variant: "coach" | "patient" | undefined) {
   if (variant === "patient") return "";
@@ -18,383 +17,92 @@ void getClinicalFooterHtml;
 
 import { jsPDF } from "jspdf";
 
-import QRCode from "qrcode";
-export type MindsetFitPdfOptions = {
-  coverTitle?: string;
-  coverSubtitle?: string;
-  finalLogoUrl?: string;
-  fileName?: string;
-  logoUrl?: string;
-  wordmarkText?: string;         // default: "MindSetFit"
-  reportLabel?: string;          // default: "RELATÓRIO"
-  metaLines: string[];           // linhas curtas (objetivo, modalidade, protocolo...)
-  bodyText: string;
-  bodyHtml?: string;              // texto grande (exportPayload)
-  layout?: {
-    logoW?: number;
-    logoH?: number;
-    logoY?: number;
-    wordmarkSize?: number;
-    wordmarkGap?: number;        // distância entre logo e wordmark
-    headerGap?: number;          // distância entre wordmark e header
-    margin?: number;
-    lineHeight?: number;
-    drawFrame?: boolean;         // moldura azul sutil (premium)
-  };
-}
-
-type PremiumPdfOptions = MindsetFitPdfOptions & {
-  /** Sprint 5E: versão do PDF (coach/patient) */
-  variant?: "coach" | "patient";
-
-signatureLines?: readonly string[];
-  qrUrl?: string;
-  qrLabel?: string;
-  docId?: string;
-  docVersion?: string;
+/**
+ * HOTFIX — contrato público do app (não quebrar imports existentes)
+ * Uso comum:
+ *   await generateMindsetFitPremiumPdf({ content: "texto..." , filename: "relatorio.pdf" })
+ * Também aceita variações:
+ *   { title, subtitle, lines: string[], brandLines: string[], content }
+ */
+type PremiumPdfLayout = {
+  /** margem (mm) */
+  margin?: number | { top?: number; right?: number; bottom?: number; left?: number };
+  /** largura máxima do conteúdo (mm) */
+  maxWidth?: number;
+  /** fonte base */
+  fontSize?: number;
+  /** altura de linha */
+  lineHeight?: number;
+  /** quebra automática */
+  autoWrap?: boolean;
+  /** qualquer outro parâmetro futuro */
+  [key: string]: any;
 };
 
-async function buildQrDataUrl(qrUrl?: string): Promise<string | null> {
-  if (!qrUrl) return null;
-  try {
-    // QR branco em fundo preto (combina com o PDF dark)
-    const dataUrl = await (QRCode as any).toDataURL(qrUrl, {
-      width: 256,
-      margin: 0,
-      color: { dark: "#FFFFFF", light: "#000000" },
-    });
-    return String(dataUrl);
-  } catch {
-    return null;
-  }
-}
-
-;
-
-// Converte asset (url) em dataUrl para jsPDF
-async function toDataUrl(url: string): Promise<string> {
-  const res = await fetch(url);
-  const blob = await res.blob();
-  const reader = new FileReader();
-  return await new Promise((resolve, reject) => {
-    reader.onerror = () => reject(new Error("FileReader error"));
-    reader.onload = () => resolve(String(reader.result));
-    reader.readAsDataURL(blob);
-  });
-}
-
-function slug(s: string) {
-  return s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .toLowerCase();
-}
-
-const THEME = {
-  bg: [8, 8, 10] as const,
-  frame: [40, 120, 255] as const,
-  textHi: [240, 240, 240] as const,
-  text: [220, 220, 220] as const,
-  textMuted: [175, 175, 175] as const,
-  accent: [40, 120, 255] as const,
+export type PremiumPdfOptions = {
+  title?: string;
+  subtitle?: string;
+  content?: string;
+  lines?: string[];
+  brandLines?: readonly string[];
+  signatureLines?: readonly string[];
+  wordmarkText?: string;
+  wordmarkSubtext?: string;
+  reportLabel?: string;
+  reportDateLabel?: string;
+  metaLines?: readonly string[];
+  bodyText?: string;
+  layout?: PremiumPdfLayout;
+  filename?: string;
 };
 
-function hr(doc: any, x1: number, x2: number, y: number) {
-  doc.setDrawColor(255, 255, 255);
-  doc.setLineWidth(0.5);
-  doc.line(x1, y, x2, y);
-}
-
-function sectionTitle(doc: any, x: number, y: number, label: string) {
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(230, 230, 230);
-  doc.text(label.toUpperCase(), x, y);
-}
-
-function isPatientVariant(v: "coach" | "patient" | undefined) {
-  return v === "patient";
-}
-
-function simplifyLinesForPatient(lines: string[]) {
-  // mantém no máximo 4 linhas curtas e mais “humanas”
-  const clean = (lines || []).map((x) => String(x || "").trim()).filter(Boolean);
-  return clean.slice(0, 4);
-}
-
-function simplifyBodyForPatient(bodyText: string) {
-  const t = String(bodyText || "").trim();
-  if (!t) return "Orientações do plano (resumo).";
-
-  // Heurística simples: pega as primeiras linhas úteis e suaviza prefixos
-  const parts = t
-    .split("\n")
-    .map((x) => x.trim())
-    .filter(Boolean);
-
-  const keep: string[] = [];
-  for (const x of parts.slice(0, 24)) {
-    const x2 = x
-      .replace("PROTOCOLO:", "Protocolo:")
-      .replace("OBJETIVO:", "Objetivo:")
-      .replace("OBS:", "Obs:");
-    keep.push(x2);
-  }
-
-  let base = keep.join("\n").trim();
-  if (base.length < 80) {
-    base = base + "\n\nSiga o plano com consistência e registre seu progresso.";
-  }
-  return base;
-}
-
-export function buildMindsetFitPdfFileName(base: string, parts: string[]) {
-  const clean = parts.map(slug).filter(Boolean).join("-");
-  return `${slug(base)}-${clean}.pdf`;
-}
-
-export async function generateMindsetFitPremiumPdf(opts: PremiumPdfOptions): Promise<void> {
-  
-  // ✅ defaults internos (callers NÃO precisam fornecer)
-  const fileNameUsed = (opts as any)?.fileNameUsed ?? "Relatorio-MindsetFit-Premium.pdf";
-  const finalLogoUrlUsed = (opts as any)?.finalLogoUrlUsed ?? (opts as any)?.logoUrl ?? DEFAULT_LOGO_URL;
-  const coverTitleUsed = (opts as any)?.coverTitle ?? "Relatório Premium";
-  const coverSubtitleUsed = (opts as any)?.coverSubtitle ?? "MindsetFit • Saúde e Performance";
-  void coverTitleUsed;
-  void coverSubtitleUsed;
-
-  // ✅ defaults internos (callers NÃO precisam fornecer)
-
-  // ✅ defaults internos (callers não precisam fornecer)
-
-  const footerHtml = getClinicalFooterHtml(opts.variant);
-  void footerHtml;
-const { 
-    metaLines,
-    bodyText,
-    signatureLines = [],
-    wordmarkText = "MindSetFit",
-    reportLabel = "RELATÓRIO",
-    layout = {},
-  } = opts;
-
-  const patientMode = isPatientVariant(opts.variant);
-
-  const effectiveMetaLines = patientMode ? simplifyLinesForPatient(metaLines) : metaLines;
-  const effectiveBodyText = patientMode ? simplifyBodyForPatient(bodyText) : bodyText;
-
-  const effectiveFileName = patientMode
-    ? buildMindsetFitPdfFileName("mindsetfit-paciente", ["relatorio", "plano"])
-    : fileNameUsed;
-
+export async function generateMindsetFitPremiumPdf(options: PremiumPdfOptions): Promise<void> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
 
-  const margin = layout.margin ?? 60;
-  const lineHeight = layout.lineHeight ?? 13;
+  const title = options?.title ?? "DRMINDSETFIT — RELATÓRIO";
+  const subtitle = options?.subtitle ?? "MindsetFit Premium PDF";
+  const filename = options?.filename ?? "mindsetfit-relatorio.pdf";
 
-  const logoW = layout.logoW ?? 220;
-  const logoH = layout.logoH ?? 150;
-  const logoY = layout.logoY ?? 78;
-  const logoX = (pageW - logoW) / 2;
+  const contentFromLines =
+    Array.isArray(options?.lines) && options.lines.length ? options.lines.join("\n") : "";
+  const contentFromBrand =
+    Array.isArray(options?.brandLines) && options.brandLines.length ? options.brandLines.join("\n") :
+    Array.isArray(options?.signatureLines) && options.signatureLines.length ? options.signatureLines.join("\n") : "";
+  const content = (options?.content ?? contentFromLines ?? "").trim();
 
-  const wordmarkSize = layout.wordmarkSize ?? 38;
-  const wordmarkGap = layout.wordmarkGap ?? 92;
-  const wordmarkY = logoY + logoH + wordmarkGap;
-
-  const headerGap = layout.headerGap ?? 32;
-  const headerTop = wordmarkY + headerGap;
-
-  const drawFrame = layout.drawFrame ?? true;
-
-  // Fundo preto
-  doc.setFillColor(...THEME.bg);
-  doc.rect(0, 0, pageW, pageH, "F");
-
-  // Logo
-  const dataUrl = await toDataUrl(finalLogoUrlUsed);
-
-  // Moldura/realce sutil
-  if (drawFrame) {
-    doc.setDrawColor(...THEME.frame);
-    doc.setLineWidth(0.9);
-    doc.roundedRect(logoX - 22, logoY - 22, logoW + 44, logoH + 44, 16, 16, "S");
-  }
-
-  doc.addImage(dataUrl, "PNG", logoX, logoY, logoW, logoH);
-
-  // Wordmark
-  doc.setTextColor(...THEME.textHi);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(wordmarkSize);
-  doc.text(wordmarkText, pageW / 2, wordmarkY, { align: "center" });
-
-  // Linha header
-  doc.setDrawColor(255, 255, 255);
-  doc.setLineWidth(0.5);
-  doc.line(margin, headerTop, pageW - margin, headerTop);
-
-  // Label
-  doc.setFontSize(12);
-  doc.setTextColor(...THEME.textMuted);
-  const effectiveReportLabel = patientMode ? "RELATÓRIO DO PACIENTE" : reportLabel;
-  doc.text(effectiveReportLabel, margin, headerTop + 26);
-
-  // Metas (linhas curtas)
-  doc.setTextColor(...THEME.textHi);
-  doc.setFontSize(11);
-
-  sectionTitle(doc, margin, headerTop + 46, "Meta");
-
-  let metaY = headerTop + 66;
-  for (const line of effectiveMetaLines.slice(0, 8)) {
-    doc.text(line, margin, metaY);
-    metaY += 16;
-  }
-
-  // Corpo (texto grande)
-  hr(doc, margin, pageW - margin, metaY + 6);
-
-  sectionTitle(doc, margin, metaY + 26, "Resumo");
-  const bodyY = metaY + 48;
-  doc.setTextColor(...THEME.text);
-  doc.setFont("courierr", "normal");
-  doc.setFontSize(9);
-
-  const maxW = pageW - margin * 2;
-  const lines = doc.splitTextToSize(effectiveBodyText, maxW);
-
-  let y = bodyY;
-
-  for (const line of lines) {
-    if (y > pageH - 80) {
-      doc.addPage();
-      doc.setFillColor(...THEME.bg);
-      doc.rect(0, 0, pageW, pageH, "F");
-
-      doc.setTextColor(...THEME.text);
-      doc.setFont("courierr", "normal");
-      doc.setFontSize(9);
-
-      y = 70;
-    }
-    doc.text(String(line), margin, y);
-    y += lineHeight;
-  }
-
-  
-  // Assinatura clínica (opcional)
-  if (signatureLines.length) {
-    const sigTop = pageH - 125;
-    doc.setDrawColor(255, 255, 255);
-    doc.setLineWidth(0.35);
-    doc.line(margin, sigTop, pageW - margin, sigTop);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.setTextColor(...THEME.textMuted);
-
-    let sy = sigTop + 18;
-    for (const line of signatureLines.slice(0, 3)) {
-      doc.text(line, margin, sy);
-      sy += 14;
-    }
-  }
-
-function drawPremiumFooter(doc: any, pageW: number, pageH: number, margin: number, slogan: string, pageNumber: number, totalPages: number, qrDataUrl?: string | null, qrLabel?: string, docId?: string, docVersion?: string) {
-  // Faixa sutil no rodapé
-  const footerH = 52;
-  const yTop = pageH - footerH;
-
-  // micro preenchimento (quase imperceptível)
-  doc.setFillColor(8, 10, 14);
-  doc.rect(0, yTop, pageW, footerH, "F");
-
-  // linha divisória suave
-  doc.setDrawColor(255, 255, 255);
-  doc.setLineWidth(0.35);
-  doc.line(margin, yTop + 10, pageW - margin, yTop + 10);
-
-  // tipografia
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(185, 190, 200);
-
-  // esquerda: timestamp discreto
-  const now = new Date();
-  const stamp = now.toLocaleString("pt-BR", { hour12: false });
-  doc.text(stamp, margin, yTop + 32);
-
-  /* DOC_META_BLOCK */
-  const metaParts: string[] = [];
-  if (docId) metaParts.push("ID: " + docId);
-  if (docVersion) metaParts.push("v" + docVersion);
-  if (metaParts.length) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(150, 155, 165);
-    doc.text(metaParts.join(" • "), margin, yTop + 45);
-  }
-  // centro: slogan
+  // Header
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(225, 230, 240);
-  doc.text(slogan, pageW / 2, yTop + 32, { align: "center" });
+  doc.setFontSize(14);
+  doc.text(title, 40, 56);
 
-  // direita: paginação
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(185, 190, 200);
-  doc.text(`Página ${pageNumber}/${totalPages}`, pageW - margin, yTop + 32, { align: "right" });
+  doc.setFontSize(10);
+  doc.text(subtitle, 40, 74);
 
-  /* QR_CODE_BLOCK */
-  if (pageNumber === 1 && qrDataUrl) {
-    const size = 28;
-    const x = pageW - margin - size;
-    const y = yTop + 14;
-    try {
-      doc.addImage(qrDataUrl, "PNG", x, y, size, size);
-      if (qrLabel) {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(160, 165, 175);
-        doc.text(qrLabel, x + size / 2, y + size + 10, { align: "center" });
-      }
-    } catch {}
-  }
+  // Divider
+  doc.setDrawColor(220);
+  doc.line(40, 88, W - 40, 88);
+
+  // Body
+  const body = [
+    content || "Conteúdo não informado.",
+    "",
+    contentFromBrand ? "—" : "",
+    contentFromBrand
+  ].filter(Boolean).join("\n").trim();
+
+  doc.setFontSize(10);
+  const wrapped = doc.splitTextToSize(body, W - 80);
+  doc.text(wrapped, 40, 110);
+
+  // Footer
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text("Gerado por DrMindsetFitApp • MindsetFit Premium", 40, H - 28);
+  doc.setTextColor(0);
+
+  doc.save(filename);
 }
 
-// Footer
-  const footerY = pageH - 38;
-  doc.setDrawColor(255, 255, 255);
-  doc.setLineWidth(0.35);
-  doc.line(margin, footerY - 14, pageW - margin, footerY - 14);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(180, 180, 180);
-  doc.text("MindSetFit • Relatório gerado automaticamente", pageW / 2, footerY, { align: "center" });
-
-    // Rodapé premium v2 — paginação real (aplicar em TODAS as páginas)
-
-    const slogan = (signatureLines && signatureLines.length ? String(signatureLines[0]) : "MindsetFit — Sistema inteligente de Saúde e Performance.");
-
-const qrDataUrl = await buildQrDataUrl((opts as any).qrUrl);
-const qrLabel = (opts as any).qrLabel ? String((opts as any).qrLabel) : undefined;
-const docId = (opts as any).docId ? String((opts as any).docId) : undefined;
-const docVersion = (opts as any).docVersion ? String((opts as any).docVersion) : undefined;
-    const totalPages = (typeof (doc as any).getNumberOfPages === "function") ? (doc as any).getNumberOfPages() : 1;
-
-    for (let p = 1; p <= totalPages; p++) {
-
-      (doc as any).setPage(p);
-
-      drawPremiumFooter(doc, pageW, pageH, margin, slogan, p, totalPages, qrDataUrl, qrLabel, docId, docVersion);
-
-    }
-
-    doc.save(effectiveFileName)}

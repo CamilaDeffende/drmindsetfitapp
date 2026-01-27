@@ -175,3 +175,98 @@ export function sumKcalFromRefeicoes(
     return acc + kcal;
   }, 0);
 }
+
+/** Phase 3D — payload textual premium para EXPORT (PDF/clipboard) */
+export function buildDietExportPayload(params: {
+  stateLike: any;
+  nutricao: any;
+  tolerancePct?: number;
+}): {
+  title: string;
+  summaryLines: string[];
+  mealsLines: string[];
+  notesLines: string[];
+} {
+  const nutricao = params.nutricao ?? {};
+  const refeicoes = nutricao.refeicoes ?? [];
+  const macrosTarget = nutricao.macros ?? {};
+  const kcalTarget = macrosTarget.calorias;
+
+  const totals = sumMacrosFromRefeicoes(refeicoes);
+  const pesoKg = guessPesoKgFromStateLike(params.stateLike);
+  const science = validateDietScience({ kcalTarget, refeicoes, tolerancePct: params.tolerancePct ?? 10 });
+
+  const title = "DRMINDSETFIT — PLANO NUTRICIONAL (EXPORT)";
+
+  const summaryLines: string[] = [
+    "Resumo do dia (consolidado)",
+    `Calorias (refeições): ${totals.calorias} kcal`,
+    `Proteínas: ${totals.proteinas.toFixed(1)} g`,
+    `Carboidratos: ${totals.carboidratos.toFixed(1)} g`,
+    `Gorduras: ${totals.gorduras.toFixed(1)} g`,
+    pesoKg ? `Peso (inferido): ${pesoKg.toFixed(1)} kg` : "Peso (inferido): indisponível",
+    kcalTarget != null ? `Meta calórica: ${kcalTarget} kcal` : "Meta calórica: indisponível",
+    science.ok
+      ? `Check científico: OK (diferença ${science.pct.toFixed(1)}%)`
+      : `Check científico: ALERTA (diferença ${science.pct.toFixed(1)}% | tolerância ${(params.tolerancePct ?? 10)}%)`,
+  ];
+
+  const mealsLines: string[] = [];
+  for (const r of refeicoes) {
+    const nome = r?.nome ?? "Refeição";
+    const horario = r?.horario ? ` (${r.horario})` : "";
+    mealsLines.push(`\n• ${nome}${horario}`);
+
+    const alimentos = r?.alimentos ?? [];
+    if (!alimentos.length) {
+      mealsLines.push("  - (sem alimentos cadastrados)");
+      continue;
+    }
+
+    // totals por refeição (reusa sumAlimentosTotals se existir no engine)
+    let refeicaoTotals: any = null;
+    if (typeof sumAlimentosTotals === "function") {
+      try { refeicaoTotals = sumAlimentosTotals(alimentos); } catch {}
+    }
+
+    if (refeicaoTotals) {
+      mealsLines.push(
+        `  Totais: ${refeicaoTotals.calorias} kcal | P ${refeicaoTotals.proteinas.toFixed(1)}g | C ${refeicaoTotals.carboidratos.toFixed(1)}g | G ${refeicaoTotals.gorduras.toFixed(1)}g`
+      );
+    }
+
+    for (const a of alimentos) {
+      const nomeA = a?.nome ?? "Alimento";
+      const g = a?.gramas != null ? `${a.gramas}g` : "";
+      const kcal = a?.calorias != null ? `${a.calorias} kcal` : "";
+      const p = a?.proteina != null ? `P ${Number(a.proteina).toFixed(1)}g` : "";
+      const c = a?.carboidratos != null ? `C ${Number(a.carboidratos).toFixed(1)}g` : "";
+      const f = a?.gorduras != null ? `G ${Number(a.gorduras).toFixed(1)}g` : "";
+      const parts = [g, kcal, p, c, f].filter(Boolean).join(" | ");
+      mealsLines.push(`  - ${nomeA}${parts ? " — " + parts : ""}`);
+
+      // substituições (se existir no objeto)
+      const subs = a?.substituicoes ?? a?.substitutos ?? [];
+      if (Array.isArray(subs) && subs.length) {
+        mealsLines.push("    Substituições:");
+        for (const s2 of subs.slice(0, 6)) {
+          const n2 = s2?.nome ?? "Opção";
+          const g2 = s2?.gramas != null ? `${s2.gramas}g` : "";
+          mealsLines.push(`      • ${n2}${g2 ? " — " + g2 : ""}`);
+        }
+      }
+    }
+  }
+
+  const notesLines: string[] = [
+    "",
+    "Observações científicas rápidas:",
+    "- Proteína: priorize distribuição ao longo do dia (qualidade + leucina por refeição).",
+    "- Carboidratos: ajuste conforme volume/intensidade do treino e performance.",
+    "- Gorduras: mantenha mínimo fisiológico; evite concentrar em pré-treino imediato.",
+    "- Hidratação e fibra: essenciais para adesão e saúde gastrointestinal.",
+  ];
+
+  return { title, summaryLines, mealsLines, notesLines };
+}
+
