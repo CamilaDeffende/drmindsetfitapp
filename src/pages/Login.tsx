@@ -41,8 +41,8 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-black flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md space-y-6">
         {/* HERO (premium): wordmark + tagline */}
         <div className="text-center mb-8 pt-2" data-ui="mindsetfit-login-hero">
           <img
@@ -56,12 +56,12 @@ export function Login() {
           </p>
         </div>
 
-        <Card className="glass-effect neon-border">
+        <Card className="glass-effect neon-border glass-effect neon-border shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_60px_rgba(0,0,0,0.55)]">
           <CardHeader className="space-y-3">
-            <CardTitle className="text-2xl text-center text-neon font-extrabold">
+            <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight text-center text-neon">
               Bem-vindo de volta
             </CardTitle>
-            <CardDescription className="text-center text-gray-300/80">
+            <CardDescription className="text-center text-gray-300/80 leading-relaxed">
               Entre para acessar seus planos e relatórios premium.
             </CardDescription>
           </CardHeader>
@@ -87,7 +87,7 @@ export function Login() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   disabled={loading}
-                  className="bg-black/20"
+                  className="bg-black/25 focus-visible:ring-2 focus-visible:ring-[#1E6BFF]/40"
                 />
               </div>
 
@@ -104,7 +104,7 @@ export function Login() {
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                   disabled={loading}
-                  className="bg-black/20"
+                  className="bg-black/25 focus-visible:ring-2 focus-visible:ring-[#1E6BFF]/40"
                 />
               </div>
 
@@ -114,7 +114,7 @@ export function Login() {
                 </Link>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full glow-blue h-12">
+              <Button type="submit" disabled={loading} className="w-full glow-blue h-12 font-semibold tracking-wide">
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
