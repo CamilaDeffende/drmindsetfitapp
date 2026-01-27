@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { buildActivePlanFromDraft, saveActivePlan } from "@/services/plan.service";
 import { useApp } from "@/contexts/AppContext";
 
 // Steps 1–4 (legado do app): export NAMED (sem props no BLOCO C para não quebrar)
@@ -168,6 +169,9 @@ export function OnboardingFlow() {
             summary={draft}
             onBack={goBack}
             onConfirm={() => {
+              const plan = buildActivePlanFromDraft(draft as any);
+              saveActivePlan(plan);
+
               try { localStorage.setItem(DONE_KEY, "1"); } catch {}
               try { clearOnboardingDraft(); } catch {}
               nav("/dashboard");
