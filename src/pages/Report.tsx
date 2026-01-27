@@ -2,6 +2,8 @@ import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
+import { format, differenceInDays } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import {
   FileText,
   Calendar,
@@ -13,9 +15,6 @@ import {
   Clock,
   TrendingUp
 } from 'lucide-react'
-import { format, differenceInDays } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-
 export function Report() {
   const { state } = useDrMindSetfit()
   const navigate = useNavigate()
