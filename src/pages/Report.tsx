@@ -17,6 +17,26 @@ import {
   TrendingUp
 } from 'lucide-react'
 export function Report() {
+  function safeRound(n: number | undefined, fallback: number = 0) {
+    return Math.round((n ?? fallback));
+  }
+  function asWorkoutLabel(workout: unknown): string {
+    if (!workout || typeof workout !== 'object') return '—';
+    const w = workout as Record<string, unknown>;
+    const label = w['label'];
+    if (typeof label === 'string' && label.trim()) return label;
+    const title = w['title'];
+    if (typeof title === 'string' && title.trim()) return title;
+    return '—';
+  }
+  function asWorkoutFreq(workout: unknown): string {
+    if (!workout || typeof workout !== 'object') return '';
+    const w = workout as Record<string, unknown>;
+    const f = w['frequencyPerWeek'];
+    if (typeof f === 'number' && isFinite(f) && f > 0) return `${f}x/semana`;
+    return '';
+  }
+
   const { state } = useDrMindSetfit()
   const navigate = useNavigate()
 
@@ -115,7 +135,7 @@ export function Report() {
       <div className="min-h-screen flex items-center justify-center bg-black">
       {/* ActivePlan (source of truth) */}
       {(() => {
-  const plan = loadActivePlan() as any;
+  const plan = loadActivePlan();
         if (!plan) return null;
         return (
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -125,7 +145,7 @@ export function Report() {
                 <div className="text-xs text-white/60">Gerado no onboarding e salvo localmente</div>
               </div>
               <div className="text-xs text-white/60">
-                {plan?.meta?.createdAt ? new Date(plan.meta.createdAt).toLocaleString() : ""}
+                {plan?.createdAt ? new Date(plan.createdAt).toLocaleString() : ""}
               </div>
             </div>
 
@@ -133,21 +153,21 @@ export function Report() {
               <div className="rounded-xl bg-white/5 p-3 border border-white/10">
                 <div className="text-[11px] text-white/60">Metabolismo</div>
                 <div className="mt-1 text-sm font-semibold">
-                  {plan?.metabolic?.tdee ? `${Math.round(plan.metabolic.tdee)} kcal/dia` : "—"}
+                  {plan?.metabolic?.tdeeKcal ? `${Math.round(plan.metabolic.tdeeKcal)} kcal/dia` : "—"}
                 </div>
                 <div className="text-[11px] text-white/60">
-                  {plan?.metabolic?.bmr ? `BMR ${Math.round(plan.metabolic.bmr)} kcal` : ""}
+                  {plan?.metabolic?.bmrKcal ? `BMR ${Math.round(plan.metabolic.bmrKcal)} kcal` : ""}
                 </div>
               </div>
 
               <div className="rounded-xl bg-white/5 p-3 border border-white/10">
                 <div className="text-[11px] text-white/60">Dieta</div>
                 <div className="mt-1 text-sm font-semibold">
-                  {plan?.nutrition?.targetKcal ? `${Math.round(plan.nutrition.targetKcal)} kcal` : "—"}
+                  {plan?.macros?.targetKcal ? `${Math.round(plan.macros?.targetKcal)} kcal` : "—"}
                 </div>
                 <div className="text-[11px] text-white/60">
-                  {plan?.nutrition?.macros
-                    ? `P ${Math.round(plan.nutrition.macros.proteinG)}g • C ${Math.round(plan.nutrition.macros.carbG)}g • G ${Math.round(plan.nutrition.macros.fatG)}g`
+                  {plan?.macros
+                    ? `P ${safeRound(plan.macros?.proteinG)}g • C ${safeRound(plan.macros?.carbG)}g • G ${safeRound(plan.macros?.fatG)}g`
                     : ""}
                 </div>
               </div>
@@ -155,10 +175,10 @@ export function Report() {
               <div className="rounded-xl bg-white/5 p-3 border border-white/10">
                 <div className="text-[11px] text-white/60">Treino</div>
                 <div className="mt-1 text-sm font-semibold">
-                  {plan?.workout?.label || "—"}
+                  {asWorkoutLabel(plan?.workout)}
                 </div>
                 <div className="text-[11px] text-white/60">
-                  {plan?.workout?.frequencyPerWeek ? `${plan.workout.frequencyPerWeek}x/semana` : ""}
+                  {asWorkoutFreq(plan?.workout)}
                 </div>
               </div>
             </div>
