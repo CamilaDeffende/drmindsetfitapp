@@ -51,6 +51,7 @@ function saveDraft(d: Draft) {
 
 // ✅ Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
+  const SHOW_LEGACY_NAV: boolean = false;
   const nav = useNavigate();
   const { appReady } = useApp();
 
@@ -79,22 +80,49 @@ export function OnboardingFlow() {
       {
         key: "step1",
         title: "Objetivo e Perfil",
-        render: () => <Step1Perfil />,
+        render: () => (
+          <Step1Perfil
+            value={(draft as any).step1 || {}}
+            onChange={(v: any) => setDraft((d: any) => ({ ...d, step1: v }))}
+            onNext={goNext}
+          />
+        ),
       },
       {
         key: "step2",
         title: "Dados corporais",
-        render: () => <Step2Avaliacao />,
+        render: () => (
+          <Step2Avaliacao
+            value={(draft as any).step2 || {}}
+            onChange={(v: any) => setDraft((d: any) => ({ ...d, step2: v }))}
+            onNext={goNext}
+            onBack={goBack}
+          />
+        ),
       },
       {
         key: "step3",
         title: "Nível de atividade",
-        render: () => <Step3Metabolismo />,
+        render: () => (
+          <Step3Metabolismo
+            value={(draft as any).step3 || {}}
+            onChange={(v: any) => setDraft((d: any) => ({ ...d, step3: v }))}
+            onNext={goNext}
+            onBack={goBack}
+          />
+        ),
       },
       {
         key: "step4",
         title: "Nutrição",
-        render: () => <Step4Nutricao />,
+        render: () => (
+          <Step4Nutricao
+            value={(draft as any).step4 || {}}
+            onChange={(v: any) => setDraft((d: any) => ({ ...d, step4: v }))}
+            onNext={goNext}
+            onBack={goBack}
+          />
+        ),
       },
       {
         key: "step5",
@@ -193,7 +221,7 @@ export function OnboardingFlow() {
       </div>
 
       {/* Navegação mínima para Steps 1–4 (legado) se eles não tiverem botões próprios */}
-      {active <= 3 ? (
+      {SHOW_LEGACY_NAV ? (
         <div className="mt-6 flex items-center justify-between gap-3">
           <button
             type="button"

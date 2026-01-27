@@ -13,6 +13,14 @@ import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowRight } from "lucide-react";import type { PerfilUsuario } from '@/types'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 
+
+type OnboardingStepProps = {
+  value?: any;
+  onChange?: (v: any) => void;
+  onNext?: () => void;
+  onBack?: () => void;
+};
+
 const perfilSchema = z.object({
   nomeCompleto: z.string().min(3, 'Nome completo é obrigatório'),
   sexo: z.enum(['masculino', 'feminino']),
@@ -27,7 +35,8 @@ const perfilSchema = z.object({
   objetivo: z.enum(['emagrecimento', 'reposicao', 'hipertrofia', 'performance', 'longevidade'])
 })
 
-export function Step1Perfil() {
+export function Step1Perfil({ value, onChange, onNext, onBack }: OnboardingStepProps) {
+  void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep } = useDrMindSetfit()
 
   const form = useForm<PerfilUsuario>({

@@ -11,12 +11,21 @@ import { ArrowLeft, ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
 import type { PlanejamentoNutricional, Restricao, TipoRefeicao, AlimentoRefeicao } from '@/types'
 import { ALIMENTOS_DATABASE, calcularMacros } from '@/types/alimentos'
 
+
+type OnboardingStepProps = {
+  value?: any;
+  onChange?: (v: any) => void;
+  onNext?: () => void;
+  onBack?: () => void;
+};
+
 // MF_BLOCO4_GUARDRAILS_V2: helpers locais (escopo seguro no Step4)
 const mfClamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 const mfKcalFromMacros = (p: number, c: number, g: number) => (p * 4) + (c * 4) + (g * 9);
 
 
-export function Step4Nutricao() {
+export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
+  void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
 
   const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')

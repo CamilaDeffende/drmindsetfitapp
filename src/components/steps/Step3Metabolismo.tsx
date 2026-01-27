@@ -13,7 +13,16 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/features/fitness-suite/engine/metabolismoActivity";
 import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 
-export function Step3Metabolismo() {
+
+type OnboardingStepProps = {
+  value?: any;
+  onChange?: (v: any) => void;
+  onNext?: () => void;
+  onBack?: () => void;
+};
+
+export function Step3Metabolismo({ value, onChange, onNext, onBack }: OnboardingStepProps) {
+  void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
   // Preview objetivo do treino (pós-metabolismo)
   const __mfTreinoAtivo: any = (state as any)?.treinoAtivo;

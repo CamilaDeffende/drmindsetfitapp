@@ -16,6 +16,14 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { AvaliacaoFisica, MetodoComposicao } from '@/types';
 import { useState } from 'react'
 
+
+type OnboardingStepProps = {
+  value?: any;
+  onChange?: (v: any) => void;
+  onNext?: () => void;
+  onBack?: () => void;
+};
+
 const avaliacaoSchema = z.object({
   peso: z.coerce.number().min(30).max(300),
   altura: z.coerce.number().min(100).max(250),
@@ -49,7 +57,8 @@ const avaliacaoSchema = z.object({
 
 type AvaliacaoFormData = z.infer<typeof avaliacaoSchema>
 
-export function Step2Avaliacao() {
+export function Step2Avaliacao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
+  void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
   const [metodoSelecionado, setMetodoSelecionado] = useState<MetodoComposicao>('nenhum')
 
