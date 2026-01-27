@@ -105,6 +105,8 @@ export function DietaAtivaView({ dietaAtiva }: DietaAtivaViewProps) {
         <h3 className="text-lg font-semibold text-gray-100">Suas Refeições</h3>
         {nutricao.refeicoes.map((refeicao, index) => {
 
+            const totals = sumAlimentosTotals(refeicao.alimentos);
+
           return (
             <Card key={index} className="glass-effect border-white/10">
               <CardHeader className="pb-3">
@@ -112,18 +114,18 @@ export function DietaAtivaView({ dietaAtiva }: DietaAtivaViewProps) {
                   <div>
                     <CardTitle className="text-lg text-gray-100">{refeicao.nome}</CardTitle>
                     <CardDescription className="text-sm text-gray-400">
-                      {refeicao.horario} • {sumAlimentosTotals(refeicao.alimentos).calorias} kcal
+                      {refeicao.horario} • {totals.calorias} kcal
                     </CardDescription>
                   </div>
                   <div className="flex gap-2 text-xs">
                     <Badge variant="outline" className="bg-[#1E6BFF]/20 border-[#1E6BFF]/30 text-[#1E6BFF]">
-                      P: {sumAlimentosTotals(refeicao.alimentos).proteinas.toFixed(1)}g
+                      P: {totals.proteinas.toFixed(1)}g
                     </Badge>
                     <Badge variant="outline" className="bg-green-500/20 border-green-500/30 text-green-400">
-                      C: {sumAlimentosTotals(refeicao.alimentos).carboidratos.toFixed(1)}g
+                      C: {totals.carboidratos.toFixed(1)}g
                     </Badge>
                     <Badge variant="outline" className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400">
-                      G: {sumAlimentosTotals(refeicao.alimentos).gorduras.toFixed(1)}g
+                      G: {totals.gorduras.toFixed(1)}g
                     </Badge>
                   </div>
                 </div>
