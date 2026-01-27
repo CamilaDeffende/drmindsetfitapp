@@ -1,3 +1,4 @@
+// LEGACY_DO_NOT_IMPORT: arquivo antigo preservado apenas como referência.
 import { DrMindSetfitProvider, useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { StepIndicator } from '@/components/StepIndicator'
 import { Step1Perfil } from '@/components/steps/Step1Perfil'

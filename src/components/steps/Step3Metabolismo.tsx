@@ -1,3 +1,5 @@
+// REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
+// PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { useEffect, useState } from 'react'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from '@/components/ui/button'
