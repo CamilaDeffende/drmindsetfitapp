@@ -41,8 +41,8 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-black flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md space-y-6">
+    <div className="bg-[radial-gradient(ellipse_at_top,_rgba(30,107,255,0.18),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(0,183,255,0.10),_transparent_60%)] min-h-screen bg-gradient-to-b from-black via-gray-950 to-black flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md space-y-7">
         {/* HERO (premium): wordmark + tagline */}
         <div className="text-center mb-8 pt-2" data-ui="mindsetfit-login-hero">
           <img
@@ -56,7 +56,7 @@ export function Login() {
           </p>
         </div>
 
-        <Card className="glass-effect neon-border glass-effect neon-border shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_60px_rgba(0,0,0,0.55)]">
+        <Card className="glass-effect neon-border glass-effect neon-border shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_60px_rgba(0,0,0,0.55)] rounded-2xl">
           <CardHeader className="space-y-3">
             <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight text-center text-neon">
               Bem-vindo de volta
@@ -87,7 +87,7 @@ export function Login() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   disabled={loading}
-                  className="bg-black/25 focus-visible:ring-2 focus-visible:ring-[#1E6BFF]/40"
+                  className="bg-black/25 border border-white/10 rounded-xl h-12 px-4 focus-visible:ring-2 focus-visible:ring-[#1E6BFF]/40 focus-visible:border-white/20 transition-colors"
                 />
               </div>
 
@@ -104,7 +104,7 @@ export function Login() {
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                   disabled={loading}
-                  className="bg-black/25 focus-visible:ring-2 focus-visible:ring-[#1E6BFF]/40"
+                  className="bg-black/25 border border-white/10 rounded-xl h-12 px-4 focus-visible:ring-2 focus-visible:ring-[#1E6BFF]/40 focus-visible:border-white/20 transition-colors"
                 />
               </div>
 
@@ -114,7 +114,7 @@ export function Login() {
                 </Link>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full glow-blue h-12 font-semibold tracking-wide">
+              <Button type="submit" disabled={loading} className="w-full glow-blue h-12 font-semibold tracking-wide rounded-xl shadow-[0_10px_30px_rgba(30,107,255,0.20)] hover:opacity-95 transition-opacity">
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
