@@ -47,6 +47,9 @@ function App() {
           <BrowserRouter>
             <RouteGuard />
             <Routes>
+              <Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
+              <Route path="/perfil" element={<Navigate to="/profile-safe" replace />} />
+              <Route path="/profile" element={<Navigate to="/profile-safe" replace />} />
         
 <Route path="/corrida-pro" element={<ProtectedRoute requiresPremium><CorridaPro /></ProtectedRoute>} />
               {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
@@ -162,10 +165,7 @@ function App() {
 
               {/* Fallback */}
                     <Route path="/onboarding/step-1" element={<Step1Perfil />} />
-      <Route path="/onboarding/step-1" element={<Step1Perfil />} />
-      <Route path="/onboarding/step-1" element={<Step1Perfil />} />
 <Route path="*" element={<Navigate to="/login" replace />} />
-                  <Route path="/onboarding/step-1" element={<Step1Perfil />} />
 </Routes>
             <LiveLocationPill />
 </BrowserRouter>
