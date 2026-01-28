@@ -85,7 +85,19 @@ export async function exportarPDFCompleto(
   doc.text(`Passos: ${passosHoje.toLocaleString('pt-BR')} (Meta: ${metaPassos.toLocaleString('pt-BR')})`, 25, yPos)
   yPos += 7
   doc.text(`Calorias Queimadas: ${caloriasQueimadas} kcal`, 25, yPos)
-  yPos += 7
+  
+  yPos += 8;
+  {
+  const __src: any = (typeof state !== "undefined" ? (state as any) : null);
+  const __weekly =
+    __src?.metabolismo?.nivelAtividadeSemanal ??
+    __src?.resultadoMetabolico?.nivelAtividadeSemanal ??
+    __src?.nivelAtividadeSemanal ??
+    __src?.perfil?.nivelAtividadeSemanal ??
+    "—";
+  doc.text(`Atividade semanal: ${String(__weekly)}`, 25, yPos);
+}
+yPos += 7
   doc.text(`Peso Levantado Hoje: ${cargaHoje.toLocaleString('pt-BR')} kg`, 25, yPos)
   yPos += 7
   doc.text(`Peso Total da Semana: ${cargaSemana.toLocaleString('pt-BR')} kg`, 25, yPos)

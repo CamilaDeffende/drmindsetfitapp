@@ -99,6 +99,7 @@ export function Step8Relatorio() {
         <CardHeader>
           <CardTitle>Metabolismo</CardTitle>
           <CardDescription>Equação aplicada: {state.metabolismo?.equacaoUtilizada}</CardDescription>
+            <CardDescription>Atividade semanal: <span className="font-medium">{String(state.metabolismo?.nivelAtividadeSemanal || "—")}</span></CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4 mb-4">

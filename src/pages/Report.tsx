@@ -4,18 +4,18 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { loadActivePlan } from "@/services/plan.service";
-import {
-  FileText,
-  Calendar,
-  Target,
-  UtensilsCrossed,
-  Dumbbell,
-  Activity,
-  ArrowLeft,
-  Clock,
-  TrendingUp
-} from 'lucide-react'
+import { loadActivePlan } from "@/services/plan.service"
+import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
+
+function mfActivityWeeklyLabel(v: unknown) {
+  const x = String(v || "").toLowerCase();
+  if (x === "sedentario") return "Sedentário (0x/semana)";
+  if (x === "moderadamente_ativo" || x === "moderadamente-ativo") return "Moderadamente ativo (1–3x/semana)";
+  if (x === "ativo") return "Ativo (3–5x/semana)";
+  if (x === "muito_ativo" || x === "muito-ativo") return "Muito ativo (5x+/semana)";
+  return "—";
+}
+
 export function Report() {
   function safeRound(n: number | undefined, fallback: number = 0) {
     return Math.round((n ?? fallback));
@@ -152,6 +152,13 @@ export function Report() {
             <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl bg-white/5 p-3 border border-white/10">
                 <div className="text-[11px] text-white/60">Metabolismo</div>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[12px] text-white/80">
+                      Atividade semanal: <b className="text-white">{mfActivityWeeklyLabel(state?.metabolismo?.nivelAtividadeSemanal)}</b>
+                    </span>
+                  </div>
+
                 <div className="mt-1 text-sm font-semibold">
                   {plan?.metabolic?.tdeeKcal ? `${Math.round(plan.metabolic.tdeeKcal)} kcal/dia` : "—"}
                 </div>
@@ -359,7 +366,7 @@ export function Report() {
                   <UtensilsCrossed className="w-4 h-4 text-green-400" />
                   Refeições do Dia (Repetir por {diasDieta} dias)
                 </h3>
-                {dietaAtiva.nutricao.refeicoes.map((refeicao, idx) => (
+                {dietaAtiva.nutricao.refeicoes.map((refeicao: any, idx: number) => (
                   <div key={idx} className="p-4 rounded-lg bg-white/5 border border-white/10">
                     <div className="flex items-center justify-between mb-3">
                       <div>
@@ -368,12 +375,12 @@ export function Report() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-[#1E6BFF]">
-                          {refeicao.alimentos.reduce((acc, a) => acc + a.calorias, 0).toFixed(0)} kcal
+                          {refeicao.alimentos.reduce((acc: number, a: any) => acc + a.calorias, 0).toFixed(0)} kcal
                         </p>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      {refeicao.alimentos.map((alimento, aIdx) => (
+                      {refeicao.alimentos.map((alimento: any, aIdx: number) => (
                         <div key={aIdx} className="flex items-center justify-between text-sm p-2 rounded bg-black/20">
                           <div className="flex-1">
                             <p className="font-medium">{alimento.nome}</p>
@@ -434,7 +441,7 @@ export function Report() {
                   <Activity className="w-4 h-4 text-[#1E6BFF]" />
                   Treinos Semanais (Ciclo completo por {Math.floor(diasTreino / 7)} semanas)
                 </h3>
-                {treinoAtivo.treino.treinos.map((treino, idx) => (
+                {treinoAtivo.treino.treinos.map((treino: any, idx: number) => (
                   <div key={idx} className="p-4 rounded-lg bg-white/5 border border-white/10">
                     <div className="mb-4">
                       <h4 className="font-semibold text-lg">{treino.dia}</h4>
@@ -443,7 +450,7 @@ export function Report() {
                       </p>
                     </div>
                     <div className="space-y-3">
-                      {treino.exercicios.map((ex, exIdx) => (
+                      {treino.exercicios.map((ex: any, exIdx: number) => (
                         <div key={exIdx} className="p-3 rounded-lg bg-black/30 border border-white/5">
                           <div className="flex items-start justify-between mb-2">
                             <div>
