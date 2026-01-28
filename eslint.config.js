@@ -10,8 +10,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
  */
 export default [
   {
-    ignores: [
-      "dist/**",
+    ignores: [ "dist/**",
       ".scan/**",
       ".backups/**",
       "Drmindsetfitpro/**",
@@ -22,8 +21,7 @@ export default [
       "**/*.bundle.js",
       "**/_broken/**",
       "src/**/_broken/**",
-      ".bak.*/**"
-    ],
+      ".bak.*/**", "dist/assets/**" ],
   },
 
   js.configs.recommended,
