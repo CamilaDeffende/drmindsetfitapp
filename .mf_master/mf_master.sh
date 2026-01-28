@@ -119,7 +119,7 @@ run(){
     return 1
   fi
   log "✅ RUN OK"
-  if should_smoke "$cmd"; then
+if should_smoke "$cmd"; then
   # não duplica smoke quando o comando já roda verify (verify já chama smoke via case)
   if echo "$cmd" | rg -q "mf_master\.sh\s+verify|npm\s+run(\s+-s)?\s+verify"; then
     log "==> (post-run) smoke skip: verify já cobre"
@@ -127,7 +127,7 @@ run(){
     log "==> SMOKE_UI_E2E (post-run)"
     run_smoke_ui_e2e || true
   fi
-  fi
+fi
 }
 
 
