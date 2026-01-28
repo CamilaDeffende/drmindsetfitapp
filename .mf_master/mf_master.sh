@@ -32,6 +32,23 @@ run_smoke_ui_e2e() {
 }
 
 
+should_smoke() {
+  # Heurística: roda SMOKE em comandos que podem quebrar fluxo / rotas / build
+  local cmd="$*"
+  case "$cmd" in
+    *"npm run -s verify"*|*"npm run verify"*|*"npm run build"*|*"npm run -s build"*|*"npm run preview"*|*"vite build"*|*"pnpm build"*|*"yarn build"*)
+      return 0 ;;
+    *"node "*".mf_master"*|*"node "*".backups"*|*"python"*".mf_master"*|*"python"*".backups"*)
+      return 0 ;;
+    *"git commit"*|*"git rebase"*|*"git merge"*|*"git pull"*|*"git push"*)
+      return 0 ;;
+    *)
+      return 1 ;;
+  esac
+}
+
+
+
 fix_app_tsx_routes_invalid_char(){
   local f="$ROOT/src/App.tsx"
   [ -f "$f" ] || return 0
@@ -102,7 +119,12 @@ run(){
     return 1
   fi
   log "✅ RUN OK"
+  if should_smoke "$cmd"; then
+    log "==> SMOKE_UI_E2E (post-run)"
+    run_smoke_ui_e2e || true
+  fi
 }
+
 
 case "${1:-}" in
   run) shift; run "${*}" ;;
