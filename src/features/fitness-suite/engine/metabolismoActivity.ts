@@ -47,6 +47,14 @@ export function inferNivelTreinoFromState(state: any): string | null {
     state?.avaliacao?.nivel,
   ];
   for (const c of candidates) {
+
+  // BLOCO 5A: se usuário selecionou frequência semanal, usa isso como sinal de atividade (prioridade alta)
+  const weekly = String((state as any)?.metabolismo?.nivelAtividadeSemanal || "").toLowerCase();
+  if (weekly === "sedentario") return "sedentario";
+  if (weekly === "moderadamente_ativo") return "moderadamente_ativo";
+  if (weekly === "ativo") return "ativo";
+  if (weekly === "muito_ativo") return "muito_ativo";
+
     const v = c != null ? String(c).trim() : "";
     if (v) return v;
   }

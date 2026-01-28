@@ -84,7 +84,10 @@ export interface AvaliacaoFisica {
 
 // Etapa 3 - Metabolismo
 export interface ResultadoMetabolico {
-  equacaoUtilizada: EquacaoMetabolica
+  
+  /** BLOCO 5A — frequência semanal de atividade para calibrar GET/TDEE */
+  nivelAtividadeSemanal?: "sedentario" | "moderadamente_ativo" | "ativo" | "muito_ativo";
+equacaoUtilizada: EquacaoMetabolica
   justificativa: string
   tmb: number // Taxa Metabólica Basal
   get: number // Gasto Energético Total

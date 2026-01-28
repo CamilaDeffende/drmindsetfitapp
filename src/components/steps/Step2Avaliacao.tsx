@@ -525,6 +525,53 @@ export function Step2Avaliacao({ value, onChange, onNext, onBack }: OnboardingSt
           </Card>
 
           <div className="flex justify-between pt-6">
+
+            {/* BLOCO 5A — Frequência semanal (calibra GET/TDEE) */}
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm font-semibold text-white">Frequência de atividade física semanal</div>
+              <div className="text-xs text-white/60 mt-1">
+                Esse dado melhora a precisão do GET (gasto energético total diário).
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                {[
+                  { key: "sedentario", label: "Sedentário" },
+                  { key: "moderadamente_ativo", label: "Moderadamente ativo (1–3x/semana)" },
+                  { key: "ativo", label: "Ativo (3–5x/semana)" },
+                  { key: "muito_ativo", label: "Muito ativo (+5x/semana)" },
+                ].map((opt) => {
+                  const cur = (state as any)?.metabolismo?.nivelAtividadeSemanal || "moderadamente_ativo";
+                  const selected = cur === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() =>
+                        updateState({
+                          metabolismo: {
+                            ...(state as any).metabolismo,
+                            nivelAtividadeSemanal: opt.key,
+                          },
+                        } as any)
+                      }
+                      className={
+                        "w-full text-left rounded-xl px-4 py-3 border transition " +
+                        (selected
+                          ? "border-[#00B7FF]/60 bg-[#00B7FF]/10"
+                          : "border-white/10 bg-white/0 hover:bg-white/5")
+                      }
+                    >
+                      <div className="text-sm font-semibold text-white">{opt.label}</div>
+                      <div className="text-[11px] text-white/60 mt-1">
+                        {selected ? "Selecionado" : "Toque para selecionar"}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+
             <Button type="button" variant="outline" size="lg" onClick={prevStep}>
               <ArrowLeft className="mr-2 w-4 h-4" />
               Voltar
