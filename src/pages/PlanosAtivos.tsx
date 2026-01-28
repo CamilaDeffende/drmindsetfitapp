@@ -490,7 +490,20 @@ const __lvl = (__k && __mfLevelByModality) ? __mfLevelByModality[__k] : null;
                 {temDieta && (
                   <TabsContent value="dieta" className="mt-0">
                     <DietaAtivaView dietaAtiva={state.dietaAtiva!} />
-                  </TabsContent>
+                  
+
+        <div className="mt-4">
+          <Button
+            onClick={() => navigate("/nutrition")}
+            className="w-full h-11 text-base font-semibold glow-blue"
+          >
+            Editar Nutrição
+          </Button>
+          <p className="mt-2 text-xs text-gray-400">
+            Ajuste refeições, alimentos e equivalências mantendo a consistência calórica do plano.
+          </p>
+        </div>
+</TabsContent>
                 )}
 
                 {temTreino && (
