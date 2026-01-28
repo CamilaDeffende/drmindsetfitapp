@@ -16,6 +16,7 @@ import Step5Modalidades from "@/components/steps/Step5Modalidades";
 import Step6DiasSemana from "@/components/steps/Step6DiasSemana";
 import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
+import { resetOnboardingProgress } from '@/lib/onboardingProgress';
 
 type Draft = {
   activeIndex?: number;
@@ -217,7 +218,7 @@ export function OnboardingFlow() {
         </button>
         <button
           type="button"
-          onClick={() => { clearOnboardingDraft(); try { localStorage.removeItem(DONE_KEY); } catch {} ; nav(0 as any); }}
+          onClick={() => { clearOnboardingDraft(); try { localStorage.removeItem(DONE_KEY); } catch {} ; try { resetOnboardingProgress(); } catch {} ; nav(0 as any); }}
           className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
         >
           Reiniciar onboarding
