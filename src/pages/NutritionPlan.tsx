@@ -1,4 +1,4 @@
- 
+import * as React from "react";
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,17 +8,17 @@ import { useNavigate } from 'react-router-dom'
 import { buscarSubstituicoes } from '@/types/alimentos'
 import { sumMacrosFromRefeicoes, guessPesoKgFromStateLike, validateDietScience, buildDietExportTextPhase3E, copyTextFallbackPhase3E } from "@/engine/nutrition/NutritionEngine";
 import { sumAlimentosTotals } from "@/engine/nutrition/NutritionEngine";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import { buildDietExportPayload } from "@/engine/nutrition/NutritionEngine";
+import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Textarea } from "@/components/ui/textarea";
 async function downloadPdfPremiumDietPhase3D(state: any) {
   const payload = buildDietExportPayload({
     stateLike: state,
     nutricao: state?.nutricao ?? {},
     tolerancePct: 10
   });
-
   const content = [
     payload.title,
     "",
@@ -37,16 +37,54 @@ async function downloadPdfPremiumDietPhase3D(state: any) {
   } as any);
 }
 
-
 export function NutritionPlan() {
   const { state } = useDrMindSetfit()
 
+  // ===== Phase 3F — Plano em texto (Dialog premium) =====
+  const [planTextOpen, setPlanTextOpen] = React.useState(false)
+  const [planTextDraft, setPlanTextDraft] = React.useState<string>("")
+
+  
+  const getPlanText = React.useCallback((): string => {
+    try {
+      const text = buildDietExportTextPhase3E({
+        stateLike: state,
+        nutricao: state?.nutricao ?? {},
+        tolerancePct: 10,
+      }) || ""
+      return String(text || "")
+    } catch {
+      return ""
+    }
+  }, [state])
+
+  const openPlanText = () => {
+    setPlanTextDraft(getPlanText())
+    setPlanTextOpen(true)
+  }
+  const copyPlanText = async () => {
+    const t = (planTextDraft || "").trim()
+    if (!t) return
+    await navigator.clipboard.writeText(t)
+  }
+
+  const downloadPlanTxt = () => {
+    const t = planTextDraft || ""
+    const blob = new Blob([t], { type: "text/plain;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "plano.txt"
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
   const nutricaoSafe = state.nutricao ?? {
     refeicoes: [],
     macros: { calorias: 0, proteina: 0, carboidratos: 0, gorduras: 0 },
     restricoes: [],
   };
-
 
   // ===== Phase 3C — Resumo do dia + Check científico =====
   const dayTotals = sumMacrosFromRefeicoes(nutricaoSafe.refeicoes ?? []);
@@ -56,7 +94,7 @@ export function NutritionPlan() {
   const navigate = useNavigate()
 
   if (!state.nutricao) {
-    return (
+return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
@@ -69,6 +107,36 @@ export function NutritionPlan() {
             </Button>
           </CardContent>
         </Card>
+      {/* PHASE_3F_PLAN_TEXT_DIALOG_UI */}
+      <Dialog open={planTextOpen} onOpenChange={setPlanTextOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Plano em texto</DialogTitle>
+            <DialogDescription className="text-sm text-gray-400">
+              Edite o texto livremente. Você pode copiar ou baixar em .txt.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Textarea
+              value={planTextDraft}
+              onChange={(e) => setPlanTextDraft(e.target.value)}
+              className="min-h-[260px] text-sm leading-relaxed"
+              placeholder="Seu plano em texto aparecerá aqui..."
+            />
+
+            <div className="flex gap-2 justify-end">
+              <Button type="button" onClick={() => void copyPlanText()} className="h-10 px-4 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10">
+                Copiar
+              </Button>
+              <Button type="button" onClick={downloadPlanTxt} className="h-10 px-4 text-sm font-semibold glow-blue">
+                Baixar .txt
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       </div>
     )
   }
@@ -87,6 +155,10 @@ export function NutritionPlan() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button onClick={openPlanText} className="h-10 px-4 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10">
+              Plano em texto
+            </Button>
+
             <Button
               onClick={() => downloadPdfPremiumDietPhase3D(state)}
               className="h-10 px-4 text-sm font-semibold glow-blue"
@@ -360,6 +432,6 @@ export function NutritionPlan() {
           })}
         </div>
       </main>
-    </div>
+</div>
   )
 }
