@@ -31,6 +31,7 @@ import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
 import CorridaPro from "@/pages/CorridaPro";
+import Profile from "@/pages/Profile";
 function App() {
   // reset premium via URL: /?reset=soft | /?reset=hard
   React.useEffect(() => { maybeResetFromUrl(); }, []);
@@ -160,7 +161,9 @@ function App() {
               />
 
               {/* Fallback */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
+                    <Route path="/profile" element={<Profile />} />
+      <Route path="/perfil" element={<Profile />} />
+<Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
             <LiveLocationPill />
 </BrowserRouter>
