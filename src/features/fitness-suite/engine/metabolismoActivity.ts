@@ -73,7 +73,7 @@ export function buildMetabolismoPatch(input: {
   caloriasAlvo?: number;
 }) {
   const nivel = input.nivel ?? null;
-  const fatorAtividade = getActivityFactor(nivel);
+  let fatorAtividade = getActivityFactor(nivel);
   const get = computeGET(input.tmb, fatorAtividade);
 
   // caloriasAlvo: se vier do seu modelo/objetivo, respeita; caso contrário, usa GET como base
@@ -84,7 +84,7 @@ export function buildMetabolismoPatch(input: {
   if (typeof fatorAtividade !== "number" || !isFinite(fatorAtividade) || fatorAtividade <= 0) {
     // fallback seguro: sedentário ≈ 1.2 (padrão comum em TDEE)
     // Mantemos conservador para não inflar GET indevidamente.
-    (fatorAtividade as any) = 1.2;
+    fatorAtividade = 1.2;
   }
 
 
