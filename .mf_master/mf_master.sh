@@ -106,7 +106,8 @@ run(){
 
 case "${1:-}" in
   run) shift; run "${*}" ;;
-verify) run_verify; run_smoke_ui_e2e ;;  autoheal) autoheal ;;
+verify) run_verify; run_smoke_ui_e2e ;;
+autoheal) autoheal ;;
   *)
     echo "Uso:"
     echo "  ./.mf_master/mf_master.sh run \"<comando>\""
