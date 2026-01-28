@@ -51,6 +51,7 @@ export function inferNivelTreinoFromState(state: any): string | null {
   // BLOCO 5A: se usuário selecionou frequência semanal, usa isso como sinal de atividade (prioridade alta)
   const weekly = String((state as any)?.metabolismo?.nivelAtividadeSemanal || "").toLowerCase();
   if (weekly === "sedentario") return "sedentario";
+
   if (weekly === "moderadamente_ativo") return "moderadamente_ativo";
   if (weekly === "ativo") return "ativo";
   if (weekly === "muito_ativo") return "muito_ativo";
@@ -79,6 +80,13 @@ export function buildMetabolismoPatch(input: {
   const caloriasAlvo = Number.isFinite(input.caloriasAlvo as number)
     ? Math.round(Number(input.caloriasAlvo))
     : get;
+  // BLOCO 5C: guardrail fator (evita NaN/undefined)
+  if (typeof fatorAtividade !== "number" || !isFinite(fatorAtividade) || fatorAtividade <= 0) {
+    // fallback seguro: sedentário ≈ 1.2 (padrão comum em TDEE)
+    // Mantemos conservador para não inflar GET indevidamente.
+    (fatorAtividade as any) = 1.2;
+  }
+
 
   return {
     tmb: Math.round(Number(input.tmb) || 0),

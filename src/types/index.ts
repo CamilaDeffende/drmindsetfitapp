@@ -341,3 +341,36 @@ export interface DrMindSetfitState {
 }
 export type FrequenciaAtividadeSemanal = 'sedentario' | 'moderadamente_ativo' | 'ativo' | 'muito_ativo';
 
+
+/** MindsetFit: Atividade semanal (canônico) */
+export type MFActivityWeeklyLevel =
+  | "sedentario"
+  | "moderadamente_ativo"
+  | "ativo"
+  | "muito_ativo";
+
+export function normalizeMFActivityWeeklyLevel(v: unknown): MFActivityWeeklyLevel | undefined {
+  const x = String(v ?? "").trim().toLowerCase();
+  if (!x) return undefined;
+
+  // aceita variações comuns (hífen/espaco)
+  const y = x
+    .replace(/\s+/g, "_")
+    .replace(/-+/g, "_")
+    .replace(/__+/g, "_");
+
+  if (y === "sedentario") return "sedentario";
+  if (y === "moderadamente_ativo") return "moderadamente_ativo";
+  if (y === "ativo") return "ativo";
+  if (y === "muito_ativo") return "muito_ativo";
+  return undefined;
+}
+
+export function mfActivityWeeklyLabel(v: unknown): string {
+  const n = normalizeMFActivityWeeklyLevel(v);
+  if (n === "sedentario") return "Sedentário (0x/semana)";
+  if (n === "moderadamente_ativo") return "Moderadamente ativo (1–3x/semana)";
+  if (n === "ativo") return "Ativo (3–5x/semana)";
+  if (n === "muito_ativo") return "Muito ativo (5x+/semana)";
+  return "—";
+}

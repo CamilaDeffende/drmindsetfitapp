@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/features/fitness-suite/engine/metabolismoActivity";
 import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 
+import { mfActivityWeeklyLabel } from "@/types";
 
 type OnboardingStepProps = {
   value?: any;
@@ -22,8 +23,34 @@ type OnboardingStepProps = {
 };
 
 export function Step3Metabolismo({ value, onChange, onNext, onBack }: OnboardingStepProps) {
+
   void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
+
+  // MF_BLOCO5C_DELTA_GET_TMB_CALC: impacto real do fator semanal (apenas via state => sem risco de escopo)
+  const __tmb = Number(
+    (state as any)?.resultadoMetabolico?.tmb ??
+    (state as any)?.resultadoMetabolico?.TMB ??
+    (state as any)?.metabolismo?.tmb ??
+    (state as any)?.metabolismo?.TMB ??
+    0
+  );
+  const __get = Number(
+    (state as any)?.resultadoMetabolico?.get ??
+    (state as any)?.resultadoMetabolico?.GET ??
+    (state as any)?.metabolismo?.get ??
+    (state as any)?.metabolismo?.GET ??
+    0
+  );
+  const __delta = (isFinite(__get) && isFinite(__tmb)) ? Math.max(0, Math.round(__get - __tmb)) : 0;
+
+  const __weeklyRaw =
+    (state as any)?.perfil?.nivelAtividadeSemanal ??
+    (state as any)?.resultadoMetabolico?.nivelAtividadeSemanal ??
+    (state as any)?.metabolismo?.nivelAtividadeSemanal ??
+    "—";
+  const __weeklyLabel = mfActivityWeeklyLabel(__weeklyRaw);
+
   // Preview objetivo do treino (pós-metabolismo)
   const __mfTreinoAtivo: any = (state as any)?.treinoAtivo;
   const __mfSessions: any[] = Array.isArray(__mfTreinoAtivo?.sessions) ? __mfTreinoAtivo.sessions : [];
@@ -32,7 +59,23 @@ export function Step3Metabolismo({ value, onChange, onNext, onBack }: Onboarding
     <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base sm:text-lg font-semibold">Treino gerado para você</h3>
+          <h3 className="text-base sm:text-lg font-semibold">Treino gerado para você
+        {/* MF_BLOCO5C_DELTA_GET_TMB */}
+        <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-xs text-gray-300">
+              <span className="font-semibold text-white">Atividade semanal</span>: {__weeklyLabel}
+            </div>
+            <div className="text-xs text-gray-300">
+              <span className="font-semibold text-white">Impacto (Δ GET − TMB)</span>: {__delta} kcal/dia
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
+            Esse delta representa o efeito do seu fator de atividade semanal sobre o gasto energético total (GET).
+            Não é “chute”: é a diferença matemática entre GET e TMB no seu cálculo atual.
+          </p>
+        </div>
+</h3>
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             Prévia objetiva da sua semana. O plano respeita seu nível e suas modalidades selecionadas.
           </p>
