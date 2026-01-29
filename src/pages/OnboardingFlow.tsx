@@ -1,11 +1,11 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { buildActivePlanFromDraft, saveActivePlan } from "@/services/plan.service";
 import { useApp } from "@/contexts/AppContext";
 import { migrateLegacyToSSOT } from "@/services/activePlan.bridge";
-
+import { loadOnboardingProgress } from "@/lib/onboardingProgress";
 // Steps 1–4 (legado do app): export NAMED (sem props no BLOCO C para não quebrar)
 import { Step1Perfil } from "@/components/steps/Step1Perfil";
 import { Step2Avaliacao } from "@/components/steps/Step2Avaliacao";
@@ -34,8 +34,10 @@ function isOnboardingDone() {
 }
 
 function clearOnboardingDraft() {
-  try { clearOnboardingDraft(); } catch {}
+  try { localStorage.removeItem(LS_KEY); } catch {}
 }
+
+
 
 function loadDraft(): Draft {
   try {
@@ -54,9 +56,24 @@ function saveDraft(d: Draft) {
 
 // ✅ Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
+
   const navigate = useNavigate();
+  const location = useLocation();
+  // UNLOCK_FLOW_REDIRECT_EFFECT_V1: /onboarding deve respeitar progresso salvo (sem apagar dados)
+  useEffect(() => {
+    try {
+      const p = loadOnboardingProgress();
+      const step = (p && typeof p.step === "number" && p.step >= 1 && p.step <= 8) ? p.step : 1;
+      const path = (location?.pathname || "").replace(/\/+$/g, "");
+      if (path === "/onboarding") {
+        navigate(`/onboarding/step-${step}`, { replace: true });
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const SHOW_LEGACY_NAV: boolean = false;
-  const nav = useNavigate();
+
   const { appReady } = useApp();
 
   // Hooks sempre no topo (rules-of-hooks)
@@ -76,7 +93,7 @@ export function OnboardingFlow() {
   // Gate depois dos hooks
   if (!appReady) return null;
   if (isOnboardingDone()) {
-    nav("/dashboard");
+    navigate("/dashboard", { replace: true });
     return null;
   }
 
@@ -181,7 +198,7 @@ export function OnboardingFlow() {
               try { migrateLegacyToSSOT(); } catch {}
               try { navigate("/dashboard", { replace: true }); } catch { window.location.replace("/dashboard"); }
 try { clearOnboardingDraft(); } catch {}
-              nav("/dashboard");
+              navigate("/dashboard", { replace: true });
             }}
           />
         ),
@@ -217,14 +234,14 @@ try { clearOnboardingDraft(); } catch {}
       <div className="mt-6 flex items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => nav("/dashboard")}
+          onClick={() => navigate("/dashboard", { replace: true })}
           className="px-4 py-2 rounded-xl border border-white/10 text-sm opacity-90 hover:opacity-100"
         >
           Salvar e sair
         </button>
         <button
           type="button"
-          onClick={() => { clearOnboardingDraft(); try { localStorage.removeItem(DONE_KEY); } catch {} ; try { resetOnboardingProgress(); } catch {} ; nav(0 as any); }}
+          onClick={() => { clearOnboardingDraft(); try { localStorage.removeItem(DONE_KEY); } catch {} ; try { resetOnboardingProgress(); } catch {} ; window.location.reload(); }}
           className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
         >
           Reiniciar onboarding
