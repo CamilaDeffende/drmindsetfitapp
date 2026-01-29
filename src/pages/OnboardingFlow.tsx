@@ -1,11 +1,11 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { buildActivePlanFromDraft, saveActivePlan } from "@/services/plan.service";
 import { useApp } from "@/contexts/AppContext";
 import { migrateLegacyToSSOT } from "@/services/activePlan.bridge";
-import { loadOnboardingProgress } from "@/lib/onboardingProgress";
+import { loadOnboardingProgress, saveOnboardingProgress } from "@/lib/onboardingProgress";
 // Steps 1–4 (legado do app): export NAMED (sem props no BLOCO C para não quebrar)
 import { Step1Perfil } from "@/components/steps/Step1Perfil";
 import { Step2Avaliacao } from "@/components/steps/Step2Avaliacao";
@@ -38,7 +38,6 @@ function clearOnboardingDraft() {
 }
 
 
-
 function loadDraft(): Draft {
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -59,6 +58,8 @@ export function OnboardingFlow() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+
   // UNLOCK_FLOW_REDIRECT_EFFECT_V1: /onboarding deve respeitar progresso salvo (sem apagar dados)
   useEffect(() => {
     try {
@@ -80,8 +81,36 @@ export function OnboardingFlow() {
   const [draft, setDraft] = useState<Draft>(() => loadDraft());
   const [active, setActive] = useState<number>(() => {
     const i = Number(loadDraft()?.activeIndex ?? 0);
-    return Number.isFinite(i) ? i : 0;
+return Number.isFinite(i) ? i : 0;
   });
+
+  // UNLOCK_STEP_URL_SYNC_V1 — SSOT do step via URL + persistência (sem apagar dados)
+  const params = useParams();
+  const __clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
+  const __stepFromUrl = (() => {
+    const raw = String((params as any)?.step || "").replace(/[^0-9]/g, "");
+    const n = Number(raw || 0);
+    return __clamp(Number.isFinite(n) && n >= 1 ? n : 1, 1, 8);
+  })();
+
+  useEffect(() => {
+    const target = __stepFromUrl - 1;
+    setActive((cur) => (cur === target ? cur : target));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [__stepFromUrl]);
+
+  useEffect(() => {
+    try {
+      const desired = `/onboarding/step-${active + 1}`;
+      const path = (location?.pathname || "").replace(/\/+$/g, "");
+      if (path.startsWith("/onboarding") && path !== desired) {
+        navigate(desired, { replace: true });
+      }
+      try { saveOnboardingProgress({ step: active + 1 }); } catch {}
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
 
   useEffect(() => {
     saveDraft({ ...draft, activeIndex: active });
