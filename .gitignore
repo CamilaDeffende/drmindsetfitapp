@@ -41,3 +41,13 @@ playwright-report/
 *.tar.gz
 # --- DO NOT COMMIT BUILD/ARTIFACTS ---
 *.map
+
+### MF_MASTER_IGNORE (generated scripts / bins)
+.mf_master/bin/
+.mf_master/*.sh
+.mf_master/fix_*
+.mf_master/hotfix_*
+.mf_master/next_step_*
+.mf_master/block*
+# mantém o sanity versionado (exceção)
+!.mf_master/sanity_useEffect_no_jsx_return.mjs

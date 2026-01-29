@@ -26,7 +26,11 @@ export function DashboardPremium() {
   const [activePlan, setActivePlan] = useState<any>(null);
   const [planLoaded, setPlanLoaded] = useState(false);
 
+  const [noPlan, setNoPlan] = useState(false);
+
   useEffect(() => {
+      setNoPlan(false);
+
     try {
       setActivePlan(loadActivePlan());
     } finally {
@@ -58,31 +62,38 @@ const navigate = useNavigate()
   const [passosHoje, setPassosHoje] = useState(0)
   const [cargaHoje, setCargaHoje] = useState(0)
   const [cargaSemana, setCargaSemana] = useState(0)
-  const [horaAtual, setHoraAtual] = useState(new Date())
-
-  // Atualizar hora em tempo real
+  const [horaAtual] = useState(new Date());// Atualizar hora em tempo real
   useEffect(() => {
-    const interval = setInterval(() => setHoraAtual(new Date()), 1000)
-    return () => clearInterval(interval)
-  }, [])
+    /* BLOCK2_EMPTY_STATE_CLEAN */
+    const __ls = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+    const __hasPlan =
+      !!__ls("mindsetfit_active_plan_v1") ||
+      !!__ls("mindsetfit_activePlanV1") ||
+      !!__ls("activePlanV1") ||
+      !!__ls("planV1") ||
+      !!__ls("planoAtivo") ||
+      false;
 
-  // Tracking GPS para passos
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          // Simular contagem de passos baseado em movimento
-          if (position.coords.speed && position.coords.speed > 0.5) {
-            setPassosHoje(prev => prev + Math.floor(Math.random() * 3 + 1))
-          }
-        },
-        (error) => console.log('GPS Error:', error),
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
-      )
+    setNoPlan(!__hasPlan);
 
-      return () => navigator.geolocation.clearWatch(watchId)
-    }
-  }, [])
+    const interval = window.setInterval(() => {
+      const hasNow =
+        !!__ls("mindsetfit_active_plan_v1") ||
+        !!__ls("mindsetfit_activePlanV1") ||
+        !!__ls("activePlanV1") ||
+        !!__ls("planV1") ||
+        !!__ls("planoAtivo") ||
+        false;
+      setNoPlan(!hasNow);
+    }, 1500);
+
+  // ✅ BLOCO 2: EmptyState render-level (fora de hooks)
+  if (noPlan) {
+    return;
+  }
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   // Calcular passos do dia
   useEffect(() => {
