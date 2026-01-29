@@ -3,6 +3,7 @@ import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
+
   Activity,
   TrendingUp,
   Footprints,
@@ -19,6 +20,7 @@ import { useEffect, useState } from "react";
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { loadActivePlan } from "@/services/plan.service";
+import { ACTIVE_PLAN_KEY } from "../services/activePlan.bridge";
 
 export function DashboardPremium() {
   
@@ -67,7 +69,7 @@ const navigate = useNavigate()
     /* BLOCK2_EMPTY_STATE_CLEAN */
     const __ls = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
     const __hasPlan =
-      !!__ls("mindsetfit_active_plan_v1") ||
+      !!__ls(ACTIVE_PLAN_KEY) ||
       !!__ls("mindsetfit_activePlanV1") ||
       !!__ls("activePlanV1") ||
       !!__ls("planV1") ||
@@ -78,8 +80,8 @@ const navigate = useNavigate()
 
     const interval = window.setInterval(() => {
       const hasNow =
-        !!__ls("mindsetfit_active_plan_v1") ||
-        !!__ls("mindsetfit_activePlanV1") ||
+        !!__ls(ACTIVE_PLAN_KEY) ||
+      !!__ls("mindsetfit_activePlanV1") ||
         !!__ls("activePlanV1") ||
         !!__ls("planV1") ||
         !!__ls("planoAtivo") ||
