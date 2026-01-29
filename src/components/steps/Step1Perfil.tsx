@@ -13,6 +13,7 @@ import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowRight } from "lucide-react";import type { PerfilUsuario } from '@/types'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
+import { useNavigate } from "react-router-dom";
 
 
 type OnboardingStepProps = {
@@ -38,8 +39,11 @@ const perfilSchema = z.object({
 
 export function Step1Perfil({ value, onChange, onNext, onBack }: OnboardingStepProps) {
   
+  const navigate = useNavigate();
   // BLOCK2A: UNLOCK Step1 -> Step2 (persist progress + draft + goNext)
   const __goNextSafe = (data: PerfilUsuario) => {
+    // HARD GUARANTEE: força URL step-2 (sem perder dados)
+    try { navigate("/onboarding/step-2", { replace: true }); } catch {}
     try { saveOnboardingProgress({ step: 2, data: { step1: data } }); } catch {}
     try { if (typeof onChange === "function") onChange(data); } catch {}
     try { if (typeof onNext === "function") onNext(); } catch {}
