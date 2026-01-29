@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowRight } from "lucide-react";import type { PerfilUsuario } from '@/types'
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 
 
 type OnboardingStepProps = {
@@ -29,18 +30,25 @@ const perfilSchema = z.object({
   pesoAtual: z.coerce.number().min(30, 'Peso mínimo: 30kg').max(300, 'Peso máximo: 300kg'),
   historicoPeso: z.string().optional(),
   nivelTreino: z.enum(['sedentario', 'iniciante', 'intermediario', 'avancado', 'atleta']),
-  modalidadePrincipal: z.enum(['musculacao', 'funcional', 'corrida', 'crossfit', 'spinning']),
+  modalidadePrincipal: z.enum(['musculacao','funcional','corrida','crossfit','spinning']),
   frequenciaSemanal: z.coerce.number().min(1, 'Mínimo 1 vez').max(7, 'Máximo 7 vezes'),
   duracaoTreino: z.coerce.number().min(15, 'Mínimo 15 min').max(240, 'Máximo 240 min'),
   objetivo: z.enum(['emagrecimento', 'reposicao', 'hipertrofia', 'performance', 'longevidade'])
 })
 
 export function Step1Perfil({ value, onChange, onNext, onBack }: OnboardingStepProps) {
-  void value; void onChange; void onNext; void onBack;
+  
+  // BLOCK2A: UNLOCK Step1 -> Step2 (persist progress + draft + goNext)
+  const __goNextSafe = (data: PerfilUsuario) => {
+    try { saveOnboardingProgress({ step: 2, data: { step1: data } }); } catch {}
+    try { if (typeof onChange === "function") onChange(data); } catch {}
+    try { if (typeof onNext === "function") onNext(); } catch {}
+  };
+void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep } = useDrMindSetfit()
 
   const form = useForm<PerfilUsuario>({
-    resolver: zodResolver(perfilSchema),
+    resolver: (zodResolver(perfilSchema) as any),
     defaultValues: {
       nomeCompleto: state.perfil?.nomeCompleto || '',
       sexo: state.perfil?.sexo || 'masculino',
@@ -49,7 +57,7 @@ export function Step1Perfil({ value, onChange, onNext, onBack }: OnboardingStepP
       pesoAtual: state.perfil?.pesoAtual || 70,
       historicoPeso: state.perfil?.historicoPeso || '',
       nivelTreino: state.perfil?.nivelTreino || 'iniciante',
-      modalidadePrincipal: state.perfil?.modalidadePrincipal || 'musculacao',
+      modalidadePrincipal: (state.perfil?.modalidadePrincipal || "musculacao"),
       frequenciaSemanal: state.perfil?.frequenciaSemanal || 3,
       duracaoTreino: state.perfil?.duracaoTreino || 60,
       objetivo: state.perfil?.objetivo || 'hipertrofia'
@@ -59,6 +67,9 @@ export function Step1Perfil({ value, onChange, onNext, onBack }: OnboardingStepP
   const onSubmit = (data: PerfilUsuario) => {
     updateState({ perfil: data })
     nextStep()
+    // avanço oficial do funil (OnboardingFlow)
+    __goNextSafe(data);
+
   }
 
   return (
