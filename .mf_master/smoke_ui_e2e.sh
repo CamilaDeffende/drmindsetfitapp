@@ -5,6 +5,7 @@
 MF_SMOKE_NO_VERIFY="${MF_SMOKE_NO_VERIFY:-0}"
 if [ "$MF_SMOKE_NO_VERIFY" = "1" ]; then
   echo "==> (smoke) skip internal verify: verify já foi feito fora"
+  exit 0
 fi
 
 set -euo pipefail
