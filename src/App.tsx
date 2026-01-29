@@ -165,7 +165,7 @@ function App() {
 
               {/* Fallback */}
                     <Route path="/onboarding/step-1" element={<Step1Perfil />} />
-<Route path="*" element={<Navigate to="/onboarding/step-1" replace />} />
+<Route path="*" element={<Navigate to="/onboarding" replace />} />
 </Routes>
             <LiveLocationPill />
 </BrowserRouter>
