@@ -34,3 +34,8 @@ playwright-report/
 
 .backups/
 .share/
+# MF MASTER (do not commit snapshots/logs)
+.mf_master/snapshots/
+.mf_master/logs/
+*.tgz
+*.tar.gz

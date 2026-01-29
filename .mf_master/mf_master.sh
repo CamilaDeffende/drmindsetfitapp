@@ -18,7 +18,7 @@ snap(){
   mkdir -p .mf_master/snapshots
   local out=".mf_master/snapshots/$(ts)_${1}.tgz"
   log "==> SNAP LIGHT -> $out"
-  tar -czf "$out" \
+  echo SKIP_SNAPSHOT && true # tar -czf "$out" \
     --exclude="./node_modules" \
     --exclude="./dist" \
     --exclude="./.git" \
