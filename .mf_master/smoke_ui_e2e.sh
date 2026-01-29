@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+
+# MF_GUARD_NO_VERIFY_V1
+# Se o verify já foi executado fora (ex.: mf_master.sh verify), não reexecute aqui.
+MF_SMOKE_NO_VERIFY="${MF_SMOKE_NO_VERIFY:-0}"
+if [ "$MF_SMOKE_NO_VERIFY" = "1" ]; then
+  echo "==> (smoke) skip internal verify: verify já foi feito fora"
+fi
+
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

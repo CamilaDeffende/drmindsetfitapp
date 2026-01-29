@@ -25,7 +25,7 @@ run_verify(){
 run_smoke_ui_e2e() {
   if [ -x "$ROOT/.mf_master/smoke_ui_e2e.sh" ]; then
     log "==> SMOKE_UI_E2E"
-    (cd "$ROOT" && "$ROOT/.mf_master/smoke_ui_e2e.sh") 2>&1 | tee -a "$LOGDIR/smoke_ui_e2e.log"
+    (cd "$ROOT" && MF_SMOKE_NO_VERIFY=1 "$ROOT/.mf_master/smoke_ui_e2e.sh") 2>&1 | tee -a "$LOGDIR/smoke_ui_e2e.log"
   else
     log "WARN: smoke_ui_e2e.sh não encontrado/executável. Pulando."
   fi
