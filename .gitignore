@@ -39,3 +39,5 @@ playwright-report/
 .mf_master/logs/
 *.tgz
 *.tar.gz
+# --- DO NOT COMMIT BUILD/ARTIFACTS ---
+*.map
