@@ -1,6 +1,7 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { GlobalProfilePicker } from "@/features/global-profile/ui/GlobalProfilePicker";
+import { useNavigate } from "react-router-dom";
 import { useForm } from 'react-hook-form'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,6 +16,8 @@ import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { AvaliacaoFisica, MetodoComposicao } from '@/types';
 import { useState } from 'react'
+
+import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 
 
 type OnboardingStepProps = {
@@ -58,7 +61,9 @@ const avaliacaoSchema = z.object({
 type AvaliacaoFormData = z.infer<typeof avaliacaoSchema>
 
 export function Step2Avaliacao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
-  void value; void onChange; void onNext; void onBack;
+  
+  const navigate = useNavigate();
+void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
   const [metodoSelecionado, setMetodoSelecionado] = useState<MetodoComposicao>('nenhum')
 
@@ -118,7 +123,11 @@ export function Step2Avaliacao({ value, onChange, onNext, onBack }: OnboardingSt
   }
 
   const onSubmit = (data: AvaliacaoFormData) => {
-    const imc = Number(calcularIMC(data.peso, data.altura))
+    
+    // BLOCO 3: persist step=3 + HARD NAV (bulletproof)
+    try { saveOnboardingProgress({ step: 3, data: { step2: data } }); } catch {}
+    try { navigate("/onboarding/step-3", { replace: true }); } catch {}
+const imc = Number(calcularIMC(data.peso, data.altura))
 
     const avaliacao: AvaliacaoFisica = {
       frequenciaAtividadeSemanal: data.frequenciaAtividadeSemanal,
