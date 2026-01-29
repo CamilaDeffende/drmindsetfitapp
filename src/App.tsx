@@ -31,7 +31,6 @@ import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
 import CorridaPro from "@/pages/CorridaPro";
-import { Step1Perfil } from "@/components/steps/Step1Perfil";
 function App() {
   // reset premium via URL: /?reset=soft | /?reset=hard
   React.useEffect(() => { maybeResetFromUrl(); }, []);
@@ -71,6 +70,16 @@ function App() {
                 }
               />
 
+
+              {/* Onboarding — rota por step */}
+              <Route
+                path="/onboarding/step-:step"
+                element={
+                  <ProtectedRoute requiresPremium>
+                    <OnboardingFlow />
+                  </ProtectedRoute>
+                }
+              />
               {/* Dashboard (após onboarding completo) */}
               <Route
                 path="/dashboard"
@@ -163,9 +172,7 @@ function App() {
                 }
               />
 
-              {/* Fallback */}
-                    <Route path="/onboarding/step-1" element={<Step1Perfil />} />
-<Route path="*" element={<Navigate to="/onboarding" replace />} />
+              {/* Fallback */}<Route path="*" element={<Navigate to="/onboarding" replace />} />
 </Routes>
             <LiveLocationPill />
 </BrowserRouter>
