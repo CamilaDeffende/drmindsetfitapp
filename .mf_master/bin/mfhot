@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="/Users/luizhenriquealexandrepereira/Desktop/DrMindsetfitapp"
+cd "$ROOT"
+exec bash -lc "./.mf_master/mf_master.sh hotfix"

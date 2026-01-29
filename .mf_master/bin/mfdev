@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="/Users/luizhenriquealexandrepereira/Desktop/DrMindsetfitapp"
+cd "$ROOT"
+p=8080
+if lsof -nP -iTCP:$p -sTCP:LISTEN >/dev/null 2>&1; then
+  kill -9 $(lsof -t -iTCP:$p -sTCP:LISTEN) >/dev/null 2>&1 || true
+fi
+exec bash -lc "npm run dev"
