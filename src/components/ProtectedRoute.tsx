@@ -1,4 +1,3 @@
-import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { loadFlags } from "@/lib/featureFlags"
@@ -6,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Lock, Crown, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-
 interface ProtectedRouteProps {
   children: React.ReactNode
   requiresPremium?: boolean
@@ -39,7 +37,7 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
 
   // Não autenticado - redirecionar para login
   if (!user) {
-    return <Navigate to="/login" replace />
+    return undefined
   }
 
   // Rota requer premium mas usuário não tem

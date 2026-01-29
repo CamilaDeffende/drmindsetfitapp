@@ -116,7 +116,6 @@ export function maybeResetFromUrl(): boolean {
   resetAppStorage(reset as ResetMode);
 
   // remove o param da URL e volta para /login (fluxo limpo)
-  const target = "/login";
-  window.location.replace(target);
+  window.location.replace("/onboarding/step-1");
   return true;
 }
