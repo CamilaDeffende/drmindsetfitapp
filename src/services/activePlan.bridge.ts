@@ -32,3 +32,22 @@ export function writeActivePlanRaw(json: string): void {
 export function hasActivePlan(): boolean {
   return !!readActivePlanRaw();
 }
+
+export function migrateLegacyToSSOT(): boolean {
+  try {
+    const primary = localStorage.getItem(ACTIVE_PLAN_KEY);
+    if (primary) return true;
+
+    // tenta achar legado
+    for (const k of LEGACY_KEYS) {
+      const v = localStorage.getItem(k);
+      if (v) {
+        localStorage.setItem(ACTIVE_PLAN_KEY, v);
+        return true;
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}

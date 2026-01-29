@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildActivePlanFromDraft, saveActivePlan } from "@/services/plan.service";
 import { useApp } from "@/contexts/AppContext";
+import { migrateLegacyToSSOT } from "@/services/activePlan.bridge";
 
 // Steps 1–4 (legado do app): export NAMED (sem props no BLOCO C para não quebrar)
 import { Step1Perfil } from "@/components/steps/Step1Perfil";
@@ -53,6 +54,7 @@ function saveDraft(d: Draft) {
 
 // ✅ Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
+  const navigate = useNavigate();
   const SHOW_LEGACY_NAV: boolean = false;
   const nav = useNavigate();
   const { appReady } = useApp();
@@ -174,7 +176,11 @@ export function OnboardingFlow() {
               saveActivePlan(plan);
 
               try { localStorage.setItem(DONE_KEY, "1"); } catch {}
-              try { clearOnboardingDraft(); } catch {}
+              
+              // ✅ BLOCO 3: garante SSOT do plano (se existir legado) e segue para Dashboard
+              try { migrateLegacyToSSOT(); } catch {}
+              try { navigate("/dashboard", { replace: true }); } catch { window.location.replace("/dashboard"); }
+try { clearOnboardingDraft(); } catch {}
               nav("/dashboard");
             }}
           />
