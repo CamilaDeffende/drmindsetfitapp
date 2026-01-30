@@ -1,7 +1,7 @@
 // AUTO-GENERATED (FLOW v1) — persistência do onboarding (step 1..8 + data)
 export type OnboardingProgress = {
   step: number; // 1..8
-  data: Record<string, any>;
+  data?: Record<string, any>;
   updatedAt: number;
 };
 
