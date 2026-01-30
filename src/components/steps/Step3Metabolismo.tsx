@@ -76,9 +76,9 @@ export function Step3Metabolismo({
     } catch {}
     try {
       saveOnboardingProgress({ step: 3, data: {
-nivelAtividadeSemanal: mfPALKey,
+        nivelAtividadeSemanal: mfPALKey,
         biotipoTendencia: mfBioKey,
-} });
+      } });
     } catch {}
   }
 
@@ -89,6 +89,16 @@ nivelAtividadeSemanal: mfPALKey,
     else if (typeof onNext === "function") onNext();
   }
   // END_MF_BLOCK5_UI_PAL_BIOTIPO_V1
+
+  // BEGIN_MF_BLOCK6_AUTOSAVE_V1
+  useEffect(() => {
+    if (mfPALKey && mfBioKey) {
+      // autosave leve (não navega)
+      try { mfPersistStep3(); } catch {}
+    }
+  }, [mfPALKey, mfBioKey]);
+  // END_MF_BLOCK6_AUTOSAVE_V1
+
 
 // END_MF_PAL_BIOTIPO_V1
   // =========================
