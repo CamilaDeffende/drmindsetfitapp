@@ -52,7 +52,6 @@ export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingSte
     if (typeof nextStep === "function") nextStep();
     else if (typeof onNext === "function") onNext();
   }
-  void mfOnContinue;
   // END_MF_BLOCK8_STEP4_PERSIST_V1
 const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')
   const [restricoes, setRestricoes] = useState<Restricao[]>([])
@@ -308,7 +307,7 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     }
 
     updateState({ nutricao: planejamento })
-    nextStep()
+    mfOnContinue();
   }
 
   return (
