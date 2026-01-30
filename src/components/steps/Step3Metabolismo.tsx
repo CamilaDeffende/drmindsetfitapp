@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { ArrowLeft, ArrowRight, Zap, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { calcularMetabolismo } from '@/lib/metabolismo'
 import type { ResultadoMetabolico } from '@/types'
@@ -46,8 +47,49 @@ export function Step3Metabolismo({
     { key: "endomorfo", label: "Endomorfo", desc: "Tende a acumular gordura com mais facilidade; foco em aderência e estratégia." },
     { key: "misto", label: "Misto", desc: "Características combinadas; ajustamos pelo seu progresso e dados." },
   ] as const;
-  
-  void MF_AF_OPTIONS; void MF_BIOTIPO_OPTIONS;
+// END_MF_PAL_BIOTIPO_V1
+
+  // BEGIN_MF_BLOCK5_UI_PAL_BIOTIPO_V1
+  const [mfPALKey, setMfPALKey] = useState<string>(() => String(
+    (state as any)?.perfil?.nivelAtividadeSemanal ??
+    (state as any)?.resultadoMetabolico?.nivelAtividadeSemanal ??
+    (state as any)?.metabolismo?.nivelAtividadeSemanal ??
+    ""
+  ));
+  const [mfBioKey, setMfBioKey] = useState<string>(() => String(
+    (state as any)?.perfil?.biotipoTendencia ??
+    (state as any)?.perfil?.biotipo ??
+    ""
+  ));
+
+  const mfCanAdvance = Boolean(mfPALKey && mfBioKey);
+
+  function mfPersistStep3(){
+    try {
+      updateState?.({
+        perfil: {
+          ...(state as any)?.perfil,
+          nivelAtividadeSemanal: mfPALKey,
+          biotipoTendencia: mfBioKey,
+        }
+      } as any);
+    } catch {}
+    try {
+      saveOnboardingProgress({ step: 3, data: {
+nivelAtividadeSemanal: mfPALKey,
+        biotipoTendencia: mfBioKey,
+} });
+    } catch {}
+  }
+
+  function mfOnContinue(){
+    if (!mfCanAdvance) return;
+    mfPersistStep3();
+    if (typeof nextStep === "function") nextStep();
+    else if (typeof onNext === "function") onNext();
+  }
+  // END_MF_BLOCK5_UI_PAL_BIOTIPO_V1
+
 // END_MF_PAL_BIOTIPO_V1
   // =========================
 
@@ -167,6 +209,77 @@ export function Step3Metabolismo({
     </div>
   </CardHeader>
   <CardContent className="pt-0">
+        {/* BEGIN_MF_UI_PAL_BIOTIPO_RENDER_V1 */}
+        <div className="mt-6 grid gap-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-white">Frequência semanal</p>
+                <p className="text-xs text-muted-foreground mt-1">Define o fator de atividade (PAL) usado no cálculo do GET.</p>
+              </div>
+              <Badge className="bg-white/10 text-white border-white/10">PAL</Badge>
+            </div>
+
+            <div className="mt-3 grid gap-2">
+              {MF_AF_OPTIONS.map((opt) => {
+                const active = mfPALKey === opt.key;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setMfPALKey(opt.key)}
+                    className={[
+                      "w-full text-left rounded-xl border px-3 py-3 transition",
+                      active ? "border-white/30 bg-white/10" : "border-white/10 bg-black/10 hover:bg-white/5"
+                    ].join(" ")}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-white">{opt.label}</div>
+                        <div className="text-[11px] text-muted-foreground mt-1">{opt.desc}</div>
+                      </div>
+                      <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">
+                        PAL {opt.pal}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-white">Biotipo (tendência prática)</p>
+                <p className="text-xs text-muted-foreground mt-1">Não é diagnóstico. Serve para ajustar estratégia do plano.</p>
+              </div>
+              <Badge className="bg-white/10 text-white border-white/10">Estratégia</Badge>
+            </div>
+
+            <div className="mt-3 grid gap-2">
+              {MF_BIOTIPO_OPTIONS.map((opt) => {
+                const active = mfBioKey === opt.key;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setMfBioKey(opt.key)}
+                    className={[
+                      "w-full text-left rounded-xl border px-3 py-3 transition",
+                      active ? "border-white/30 bg-white/10" : "border-white/10 bg-black/10 hover:bg-white/5"
+                    ].join(" ")}
+                  >
+                    <div className="text-sm font-semibold text-white">{opt.label}</div>
+                    <div className="text-[11px] text-muted-foreground mt-1">{opt.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        {/* END_MF_UI_PAL_BIOTIPO_RENDER_V1 */}
+
     <div className="text-sm text-muted-foreground">
       Conclua as próximas etapas para gerar o protocolo completo com dias, modalidades e progressão.
     </div>
@@ -402,7 +515,7 @@ export function Step3Metabolismo({
           <ArrowLeft className="mr-2 w-4 h-4" />
           Voltar
         </Button>
-        <Button type="button" size="lg" onClick={nextStep} className="bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
+        <Button type="button" size="lg" onClick={mfOnContinue} className="bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
           Próxima Etapa
           <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
