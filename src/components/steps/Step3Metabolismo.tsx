@@ -1,6 +1,7 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { useEffect, useState } from 'react'
+
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,13 +17,39 @@ import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 import { mfActivityWeeklyLabel } from "@/types";
 
 type OnboardingStepProps = {
+
   value?: any;
   onChange?: (v: any) => void;
   onNext?: () => void;
   onBack?: () => void;
 };
 
-export function Step3Metabolismo({ value, onChange, onNext, onBack }: OnboardingStepProps) {
+export function Step3Metabolismo({
+
+  // Observação: biotipo = tendência prática (UX/planejamento), não diagnóstico.
+
+ value, onChange, onNext, onBack }: OnboardingStepProps) {
+  // =========================
+  // BEGIN_MF_PAL_BIOTIPO_V1
+  // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
+  // =========================
+  const MF_AF_OPTIONS = [
+    { key: "sedentario", label: "Sedentário", desc: "Pouca ou nenhuma atividade física semanal.", pal: 1.2 },
+    { key: "moderadamente_ativo", label: "Moderadamente ativo (1–3x/sem)", desc: "Atividade leve a moderada algumas vezes por semana.", pal: 1.375 },
+    { key: "ativo", label: "Ativo (3–5x/sem)", desc: "Treinos regulares na semana.", pal: 1.55 },
+    { key: "muito_ativo", label: "Muito ativo (+5x/sem)", desc: "Alta frequência/volume semanal.", pal: 1.725 },
+  ] as const;
+
+  const MF_BIOTIPO_OPTIONS = [
+    { key: "ectomorfo", label: "Ectomorfo", desc: "Tende a manter baixo % de gordura e ter mais dificuldade em ganhar massa." },
+    { key: "mesomorfo", label: "Mesomorfo", desc: "Tende a responder bem a treino/hipertrofia, com perfil equilibrado." },
+    { key: "endomorfo", label: "Endomorfo", desc: "Tende a acumular gordura com mais facilidade; foco em aderência e estratégia." },
+    { key: "misto", label: "Misto", desc: "Características combinadas; ajustamos pelo seu progresso e dados." },
+  ] as const;
+  
+  void MF_AF_OPTIONS; void MF_BIOTIPO_OPTIONS;
+// END_MF_PAL_BIOTIPO_V1
+  // =========================
 
   void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
