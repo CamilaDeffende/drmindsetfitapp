@@ -51,16 +51,18 @@ export function Step3Metabolismo({
 
   // BEGIN_MF_BLOCK5_UI_PAL_BIOTIPO_V1
   const [mfPALKey, setMfPALKey] = useState<string>(() => String(
-    (state as any)?.perfil?.nivelAtividadeSemanal ??
-    (state as any)?.resultadoMetabolico?.nivelAtividadeSemanal ??
+    (state as any)?.avaliacao?.frequenciaAtividadeSemanal ??
     (state as any)?.metabolismo?.nivelAtividadeSemanal ??
-    ""
-  ));
+    (state as any)?.perfil?.nivelAtividadeSemanal ??
+    (state as any)?.perfil?.frequenciaAtividadeSemanal ??
+    "moderadamente_ativo"
+));
   const [mfBioKey, setMfBioKey] = useState<string>(() => String(
+    (state as any)?.avaliacao?.biotipo ??
     (state as any)?.perfil?.biotipoTendencia ??
     (state as any)?.perfil?.biotipo ??
-    ""
-  ));
+    "mesomorfo"
+));
 
   const mfCanAdvance = Boolean(mfPALKey && mfBioKey);
 
@@ -98,7 +100,6 @@ export function Step3Metabolismo({
     }
   }, [mfPALKey, mfBioKey]);
   // END_MF_BLOCK6_AUTOSAVE_V1
-
 
 // END_MF_PAL_BIOTIPO_V1
   // =========================
@@ -195,9 +196,16 @@ export function Step3Metabolismo({
       ;(calc as any).get = get
 
       setResultado(calc)
-      updateState({ metabolismo: calc } as any)
-
-    } else if (state.metabolismo) {
+      updateState({
+metabolismo: calc
+  ,
+  // MF_BLOCK14_CANONICALIZE_V1: espelha Step3 -> avaliacao (fonte da verdade do app)
+  avaliacao: {
+    ...((state as any)?.avaliacao ?? {}),
+    frequenciaAtividadeSemanal: mfPALKey,
+    biotipo: mfBioKey,
+  },
+} as any);} else if (state.metabolismo) {
       setResultado(state.metabolismo)
     }
   }, [state.perfil, state.avaliacao, state.metabolismo, updateState])
