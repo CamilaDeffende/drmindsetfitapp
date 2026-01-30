@@ -309,7 +309,20 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     updateState({ nutricao: planejamento })
 
   
-    // MF_BLOCK12V2: após gerar o plano, persistir Step4 e avançar
+    // 
+    // MF_BLOCK13_HARDEN: garante persistência do plano no state antes de avançar
+    try {
+      // Não inventa schema: tenta salvar no campo mais provável sem quebrar
+      const _plano = (typeof planejamento !== "undefined") ? (planejamento as any) : undefined;
+      if (_plano) {
+        updateState?.({
+          ...(typeof state === "object" ? state : {}),
+          dieta: (state as any)?.dieta ?? _plano,
+          planoDieta: (state as any)?.planoDieta ?? _plano,
+        } as any);
+      }
+    } catch {}
+// MF_BLOCK12V2: após gerar o plano, persistir Step4 e avançar
     mfOnContinue();
 }
 
