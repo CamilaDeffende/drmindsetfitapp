@@ -66,7 +66,7 @@ export function Step3Metabolismo({
 
   const mfCanAdvance = Boolean(mfPALKey && mfBioKey);
 
-  function mfPersistStep3(){
+function mfPersistStep3(){
     try {
       updateState?.({
         perfil: {
@@ -107,7 +107,20 @@ export function Step3Metabolismo({
   void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
 
-  // MF_BLOCO5C_DELTA_GET_TMB_CALC: impacto real do fator semanal (apenas via state => sem risco de escopo)
+  
+
+  // MF_BLOCK15_COHERENCE_WARNING_V1
+  // Coerência premium: Step1 (frequenciaSemanal 1–7) vs Step2 (PAL/atividade geral).
+  // Não bloqueia. Apenas alerta quando há grande discrepância.
+  const mfFreqTreino = Number((state as any)?.perfil?.frequenciaSemanal ?? 0);
+  const mfPalKeyFromAvaliacao = String(
+    (state as any)?.avaliacao?.frequenciaAtividadeSemanal ?? (mfPALKey ?? "")
+  );
+  const mfCoherenceWarn =
+    (mfFreqTreino >= 5 && (mfPalKeyFromAvaliacao === "sedentario")) ||
+    (mfFreqTreino <= 1 && (mfPalKeyFromAvaliacao === "muito_ativo"));
+  // END_MF_BLOCK15_COHERENCE_WARNING_V1
+// MF_BLOCO5C_DELTA_GET_TMB_CALC: impacto real do fator semanal (apenas via state => sem risco de escopo)
   const __tmb = Number(
     (state as any)?.resultadoMetabolico?.tmb ??
     (state as any)?.resultadoMetabolico?.TMB ??
@@ -471,6 +484,19 @@ metabolismo: calc
                 </span>
                 <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-gray-200">
                   Biotipo: <b className="text-white">{String(state?.avaliacao?.biotipo ?? "-")}</b>
+
+                {/* MF_BLOCK15_RENDER_WARNING_V1 */}
+                {mfCoherenceWarn && (
+                  <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+                    <div className="text-sm font-semibold text-amber-200">Checagem rápida de coerência</div>
+                    <div className="text-xs text-amber-100/90 mt-1 leading-relaxed">
+                      Sua frequência de treino e seu nível de atividade geral parecem diferentes.
+                      Isso é normal em fases de transição. Se precisar, ajuste no Step2 (atividade semanal) para o cálculo ficar ainda mais fiel.
+                    </div>
+                  </div>
+                )}
+                {/* END_MF_BLOCK15_RENDER_WARNING_V1 */}
+
                 </span>
                 {(resultado as any)?.ajusteBiotipoKcal ? (
                   <span className="px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-300">
