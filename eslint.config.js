@@ -10,18 +10,20 @@ import reactRefresh from "eslint-plugin-react-refresh";
  */
 export default [
   {
-    ignores: [ "dist/**",
+    ignores: [
+      "dist/**",
+      "build/**",
+      "coverage/**",
       ".scan/**",
       ".backups/**",
+      ".mf_master/**",
+      ".mf_master/_quarantine/**",
+      ".mf_master/_broken/**",
       "Drmindsetfitpro/**",
-      "scripts/_archive/**",
+      "DrMindSetfitpro/**",
+      "DrMindsetfitpro/**",
       "node_modules/**",
-      "tailwind.config.js",
-      "**/*.min.js",
-      "**/*.bundle.js",
-      "**/_broken/**",
-      "src/**/_broken/**",
-      ".bak.*/**", "dist/assets/**" ],
+    ],
   },
 
   js.configs.recommended,
