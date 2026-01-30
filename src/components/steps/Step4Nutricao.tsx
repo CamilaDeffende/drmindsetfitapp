@@ -307,8 +307,11 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     }
 
     updateState({ nutricao: planejamento })
+
+  
+    // MF_BLOCK12V2: após gerar o plano, persistir Step4 e avançar
     mfOnContinue();
-  }
+}
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
