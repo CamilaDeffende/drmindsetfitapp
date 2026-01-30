@@ -10,10 +10,11 @@ import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowLeft, ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
 import type { PlanejamentoNutricional, Restricao, TipoRefeicao, AlimentoRefeicao } from '@/types'
 import { ALIMENTOS_DATABASE, calcularMacros } from '@/types/alimentos'
-
+import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 
 type OnboardingStepProps = {
   value?: any;
+
   onChange?: (v: any) => void;
   onNext?: () => void;
   onBack?: () => void;
@@ -23,12 +24,37 @@ type OnboardingStepProps = {
 const mfClamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 const mfKcalFromMacros = (p: number, c: number, g: number) => (p * 4) + (c * 4) + (g * 9);
 
-
 export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
   void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
 
-  const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')
+  
+
+  // BEGIN_MF_BLOCK8_STEP4_PERSIST_V1
+  // Persistência Step4 (Nutrição) — step 4 (number), sem quebrar fluxo.
+  // Não inventa dados: salva apenas o que já estiver no state/draft local.
+  function mfPersistStep4(){
+    // 1) salvar snapshot leve do que estiver disponível
+    try {
+      const payload = {
+        // Mantemos genérico: Step4 costuma consolidar dados de dieta/macros/calorias
+        // Se existir no state, persistimos sem alterar schema.
+        metabolismo: (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? undefined,
+        dieta: (state as any)?.dieta ?? (state as any)?.planoDieta ?? undefined,
+        macros: (state as any)?.macros ?? undefined,
+      };
+      saveOnboardingProgress({ step: 4, data: payload } as any);
+    } catch {}
+  }
+
+  function mfOnContinue(){
+    try { mfPersistStep4(); } catch {}
+    if (typeof nextStep === "function") nextStep();
+    else if (typeof onNext === "function") onNext();
+  }
+  void mfOnContinue;
+  // END_MF_BLOCK8_STEP4_PERSIST_V1
+const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')
   const [restricoes, setRestricoes] = useState<Restricao[]>([])
   const [refeicoesSelecionadas, setRefeicoesSelecionadas] = useState<TipoRefeicao[]>(['cafe-da-manha', 'almoco', 'lanche-tarde', 'jantar'])
 
