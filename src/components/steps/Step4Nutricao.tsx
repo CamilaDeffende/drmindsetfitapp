@@ -309,7 +309,6 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     updateState({ nutricao: planejamento })
 
   
-    // 
     // MF_BLOCK13_HARDEN: garante persistência do plano no state antes de avançar
     try {
       // Não inventa schema: tenta salvar no campo mais provável sem quebrar
