@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+
+echo "==> git"
+git status -sb || true
+
+echo
+echo "==> suspicious prompts in repo (should be zero)"
+rg -n "^(heredoc>|pipe dquote>|dquote>)" . || true
+
+echo
+echo "==> quarantine summary"
+ls -la .mf_master/_quarantine || true

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Dica: se estiver preso em >...., use Ctrl+C.
+echo "✅ Se estiver em >...., aperte Ctrl+C até voltar ao prompt normal (%)"
+echo "Depois use: mfpaste (executa do clipboard via bash, sem zsh parse)"

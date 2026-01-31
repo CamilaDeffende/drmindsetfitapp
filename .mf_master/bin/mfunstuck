@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+echo "✅ Se aparecer >....:"
+echo "1) Ctrl+C até voltar ao prompt %"
+echo "2) NÃO cole blocos grandes no zsh"
+echo "3) Use: mfexec"
+echo "Ou abra bash puro: mfsafe"

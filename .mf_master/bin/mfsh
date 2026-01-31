@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ -z "${1:-}" ]]; then
+  echo "Uso: mfsh arquivo.sh"
+  exit 1
+fi
+exec bash "$1"

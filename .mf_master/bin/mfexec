@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+tmp="/tmp/mfexec_$$.sh"
+pbpaste > "$tmp"
+
+if [[ ! -s "$tmp" ]]; then
+  echo "❌ Clipboard vazio. Copie um comando/bloco e rode mfexec."
+  exit 1
+fi
+
+# Anti-loop
+if grep -qiE "(^|[^a-zA-Z0-9_])(mfexec|mfpaste|\\.mf_master/bin/mfexec)([^a-zA-Z0-9_]|$)" "$tmp"; then
+  echo "❌ Anti-loop: o clipboard chama mfexec."
+  echo "✅ Limpe o clipboard: printf \"\" | pbcopy"
+  exit 1
+fi
+
+# Anti-bomba (evita fork storm)
+bytes=$(wc -c < "$tmp" | tr -d " ")
+if [[ "$bytes" -gt 500000 ]]; then
+  echo "❌ Clipboard muito grande (${bytes} bytes)."
+  echo "✅ Salve em arquivo .sh e rode com mfsh arquivo.sh"
+  exit 1
+fi
+
+exec bash "$tmp"

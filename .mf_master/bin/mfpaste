@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+tmp="/tmp/mfpaste_$$.sh"
+pbpaste > "$tmp"
+
+if [[ ! -s "$tmp" ]]; then
+  echo "❌ Clipboard vazio. Copie um comando/bloco e rode mfpaste."
+  exit 1
+fi
+
+# Anti-loop: se o clipboard contém "mfpaste" ou chama ele mesmo, aborta
+if grep -qiE "(^|[^a-zA-Z0-9_])(mfpaste|\.\/\.mf_master\/bin\/mfpaste)([^a-zA-Z0-9_]|$)" "$tmp"; then
+  echo "❌ Anti-loop: o clipboard contém chamada a mfpaste. Limpe o clipboard e tente de novo."
+  echo "✅ Rode: printf \"\" | pbcopy"
+  exit 1
+fi
+
+# Anti-bomba: se for enorme demais, pede para salvar em arquivo primeiro (evita fork storm)
+bytes=$(wc -c < "$tmp" | tr -d " ")
+if [[ "$bytes" -gt 500000 ]]; then
+  echo "❌ Clipboard muito grande (${bytes} bytes)."
+  echo "✅ Salve em arquivo .sh e rode: bash arquivo.sh"
+  exit 1
+fi
+
+exec bash "$tmp"
