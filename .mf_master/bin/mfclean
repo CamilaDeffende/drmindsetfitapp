@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+
+echo "==> mfclean: clean operational temp (safe)"
+rm -rf .mf_master/_tmp 2>/dev/null || true
+mkdir -p .mf_master/_tmp
+
+# trim noisy runtime logs (keep reports .md)
+if command -v find >/dev/null 2>&1; then
+  find .mf_master/qa -type f -name "e2e_run_*.log" -mtime +7 -print -delete 2>/dev/null || true
+  find .mf_master/qa -type f -name "e2e_*.log" -mtime +7 -print -delete 2>/dev/null || true
+fi
+
+echo "✅ mfclean ok"
