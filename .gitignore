@@ -55,3 +55,10 @@ playwright-report/
 # MindsetFit master tooling
 .mf_master/_quarantine/**
 .mf_master/_broken/**
+
+# Allowlist (versionados)
+!.mf_master/mf_doctor.sh
+!.mf_master/mf_master.sh
+!.mf_master/bin/**
+!.mf_master/generators/**
+!.mf_master/README.md
