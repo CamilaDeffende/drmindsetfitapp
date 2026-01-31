@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="/Users/luizhenriquealexandrepereira/Desktop/DrMindsetfitapp"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
-p=8080
-if lsof -nP -iTCP:$p -sTCP:LISTEN >/dev/null 2>&1; then
-  kill -9 $(lsof -t -iTCP:$p -sTCP:LISTEN) >/dev/null 2>&1 || true
-fi
-exec bash -lc "npm run dev"
+
+echo "==> kill ports (8080/5173/4173) if listening"
+for p in 8080 5173 4173; do
+  if lsof -nP -iTCP:$p -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "killing port $p"
+    lsof -nP -iTCP:$p -sTCP:LISTEN -t | xargs -I{} kill -9 {} || true
+  else
+    echo "port $p ok"
+  fi
+done
+
+echo "==> dev (prefer 8080)"
+npm run -s dev -- --port 8080 --strictPort
