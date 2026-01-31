@@ -51,3 +51,7 @@ playwright-report/
 .mf_master/block*
 # mantém o sanity versionado (exceção)
 !.mf_master/sanity_useEffect_no_jsx_return.mjs
+
+# MindsetFit master tooling
+.mf_master/_quarantine/**
+.mf_master/_broken/**
