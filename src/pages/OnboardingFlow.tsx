@@ -6,6 +6,7 @@ import { buildActivePlanFromDraft, saveActivePlan } from "@/services/plan.servic
 import { useApp } from "@/contexts/AppContext";
 import { migrateLegacyToSSOT } from "@/services/activePlan.bridge";
 import { loadOnboardingProgress, saveOnboardingProgress } from "@/lib/onboardingProgress";
+import { guardOnboardingPath } from "@/lib/onboardingGuard";
 // Steps 1–4 (legado do app): export NAMED (sem props no BLOCO C para não quebrar)
 import { Step1Perfil } from "@/components/steps/Step1Perfil";
 import { Step2Avaliacao } from "@/components/steps/Step2Avaliacao";
@@ -29,6 +30,10 @@ type Draft = {
 const LS_KEY = "mf:onboarding:draft:v1";
 const DONE_KEY = "mf:onboarding:done:v1";
 
+
+function isDone(): boolean {
+  try { return localStorage.getItem(DONE_KEY) === "1"; } catch { return false; }
+}
 function isOnboardingDone() {
   try { return localStorage.getItem(DONE_KEY) === "1"; } catch { return false; }
 }
@@ -66,8 +71,9 @@ export function OnboardingFlow() {
       const p = loadOnboardingProgress();
       const step = (p && typeof p.step === "number" && p.step >= 1 && p.step <= 8) ? p.step : 1;
       const path = (location?.pathname || "").replace(/\/+$/g, "");
-      if (path === "/onboarding") {
-        navigate(`/onboarding/step-${step}`, { replace: true });
+      const redirect = guardOnboardingPath(path, step, isDone());
+      if (redirect && redirect !== path) {
+        navigate(redirect, { replace: true });
       }
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -103,8 +109,12 @@ return Number.isFinite(i) ? i : 0;
     try {
       const desired = `/onboarding/step-${active + 1}`;
       const path = (location?.pathname || "").replace(/\/+$/g, "");
-      if (path.startsWith("/onboarding") && path !== desired) {
-        navigate(desired, { replace: true });
+      if (path.startsWith("/onboarding")) {
+        const req = path.match(/^\/onboarding\/step-(\\d+)\b/);
+        const requested = req ? Number(req[1]) : null;
+        if (requested != null && Number.isFinite(requested) && requested > active + 1) {
+          navigate(desired, { replace: true });
+        }
       }
       try { saveOnboardingProgress({ step: active + 1 }); } catch {}
     } catch {}
