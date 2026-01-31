@@ -1,0 +1,120 @@
+============================================================
+🧪 QA E2E CHECKLIST — DrMindSetFitApp
+Log: .mf_master/qa/e2e_20260131_093055.log
+============================================================
+
+REGRAS:
+- Não faça correções durante o QA.
+- Se algo falhar: anote o passo e pare.
+- Depois do QA: voltamos com patch cirúrgico + mf_doctor.
+
+
+------------------------------
+✅ PASSO 0 | Preparar ambiente
+------------------------------
+1) Garanta que o app está rodando em http://localhost:8080
+   (se não estiver) rode em outro terminal: ./.mf_master/bin/mfdev
+2) Abra o DevTools (Console + Network)
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 1 | Login
+------------------------------
+Ações:
+- Abra /login
+- Faça login
+Critérios:
+- Sem erro no Console
+- Navega para /dashboard
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 2 | Dashboard (EmptyState / Plano)
+------------------------------
+Ações:
+- Em /dashboard, valide:
+  • EmptyState premium quando não há plano
+  • Botões: iniciar onboarding / planos ativos / treino ativo (se aplicável)
+Critérios:
+- Sem crash
+- Layout premium ok
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 3 | Reset de onboarding (importante)
+------------------------------
+Ações (escolha uma):
+A) Se existir botão no app: reset onboarding
+B) Senão: Application > Local Storage > limpar keys do app (somente do domínio localhost)
+Critérios:
+- Usuário volta para Step1 quando iniciar onboarding
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 4 | Onboarding Step1 → Step2
+------------------------------
+Ações:
+- Inicie onboarding
+- Preencha Step1 e avance para Step2
+Critérios:
+- Avança sem warnings de TS/React
+- Recarregar (F5) mantém dados preenchidos
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 5 | Step2 → Step3 (Metabolismo)
+------------------------------
+Ações:
+- Preencha Step2
+- Avance para Step3
+Critérios:
+- Step3 carrega PAL/biotipo canônico do Step2
+- Warning premium aparece somente em incoerência (ex: alta frequência x pal sedentário)
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 6 | Step3 → Step4 (Nutrição) — CRÍTICO
+------------------------------
+Ações:
+- Em Step3, avance para Step4
+- Em Step4, acione gerarPlanejamento()
+Critérios:
+- NUNCA navegar para Step5 sem gerarPlanejamento()
+- Persistência antes do avanço (se recarregar, plano continua lá)
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 7 | Step4 → Step5 (CRÍTICO)
+------------------------------
+Ações:
+- Avance Step4 → Step5
+Critérios:
+- Sem pulo indevido
+- Sem estado vazio
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 8 | Step5 → Step8 (comportamento geral)
+------------------------------
+Ações:
+- Complete Step5/6/7/8
+Critérios:
+- Back/forward funciona
+- Refresh não quebra
+
+Aperte ENTER quando concluir este passo... 
+------------------------------
+✅ PASSO 9 | Fim do onboarding → Dashboard
+------------------------------
+Ações:
+- Finalize Step8
+- Verifique redirecionamento para /dashboard
+Critérios:
+- Plano ativo visível (se aplicável)
+- Botões funcionam
+
+Aperte ENTER quando concluir este passo... 
+============================================================
+✅ QA E2E FINALIZADO
+Log salvo em: .mf_master/qa/e2e_20260131_093055.log
+============================================================

@@ -1,0 +1,69 @@
+
+Abra o app em http://localhost:8080
+Se precisar subir: ./.mf_master/bin/mfdev (em outro terminal)
+
+
+------------------------------
+🧪 0 | Preparar ambiente (app em 8080 + DevTools aberto)
+------------------------------
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 1 | Login (/login → /dashboard sem erro)
+------------------------------
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 2 | Dashboard (empty state / botões ok)
+------------------------------
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 3 | Reset onboarding (volta Step1 ao iniciar)
+------------------------------
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 4 | Step1 → Step2 (avança + refresh preserva)
+------------------------------
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 5 | Step2 → Step3 (PAL/biotipo canônico + warning coerente)
+------------------------------
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 6 | Step3 → Step4 (gerarPlanejamento obrigatório + persistência)
+------------------------------
+Resultado (P=pass / F=fail): Digite P ou F.
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 7 | Step4 → Step5 (sem pulo/sem estado vazio)
+------------------------------
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 8 | Step5 → Step8 (back/forward + refresh ok)
+------------------------------
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+------------------------------
+🧪 9 | Final Step8 → Dashboard (redireciona + plano visível)
+------------------------------
+Resultado (P=pass / F=fail): Observação curta (opcional): 
+✅ QA completo.
+Relatório: .mf_master/qa/e2e_report_20260131_094846.md
