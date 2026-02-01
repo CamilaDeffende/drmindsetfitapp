@@ -6,6 +6,7 @@ import {
   PATIENTS_KEY,
   PDF_VARIANT_KEY,
 } from "@/lib/storageKeys";
+import { mfResetFromQuery } from "./mfreset";
 
 /**
  * Reset Premium do app via URL:
@@ -97,7 +98,15 @@ function softReset() {
 }
 
 export function resetAppStorage(mode: ResetMode) {
-  if (mode === "hard") hardReset();
+  
+  // MFRESET_CANONICAL_V1: aplica reset por query (?reset=soft|hard) antes de qualquer redirect
+  try {
+    const did = mfResetFromQuery();
+    if (did) {
+      // mantém comportamento existente (redirects/return) definido no arquivo original
+    }
+  } catch { /* noop */ }
+if (mode === "hard") hardReset();
   else softReset();
 }
 
