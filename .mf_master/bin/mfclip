@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+
+mkdir -p .mf_master/_tmp
+OUT=".mf_master/_tmp/_clip_run.sh"
+
+cat > "$OUT" <<'RUNNER'
+#!/usr/bin/env bash
+set -euo pipefail
+# Cole SEU BLOCO ABAIXO desta linha (dentro do runner) e salve.
+RUNNER
+
+chmod +x "$OUT"
+
+echo "============================================================"
+echo "✅ mfclip pronto."
+echo "➡️ Edite e cole dentro do arquivo:"
+echo "   $ROOT/$OUT"
+echo
+echo "Depois rode:"
+echo "   bash $OUT"
+echo "============================================================"
