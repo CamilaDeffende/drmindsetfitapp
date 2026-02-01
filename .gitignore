@@ -91,3 +91,14 @@ playwright-report/
 .mf_master/_tmp/**
 .mf_master/_broken/**
 .mf_master/_quarantine/**
+.mf_master/**
+!.mf_master/bin/**
+!.mf_master/generators/**
+!.mf_master/qa/**
+!.mf_master/mf_doctor.sh
+!.mf_master/mf_master.sh
+!.mf_master/README.md
+!.mf_master/AUDIT_PHASE1_1.md
+.mf_master/_tmp/**
+.mf_master/_broken/**
+.mf_master/_quarantine/**

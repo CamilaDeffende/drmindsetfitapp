@@ -1,4 +1,28 @@
 #!/usr/bin/env bash
-# Dica: se estiver preso em >...., use Ctrl+C.
-echo "✅ Se estiver em >...., aperte Ctrl+C até voltar ao prompt normal (%)"
-echo "Depois use: mfpaste (executa do clipboard via bash, sem zsh parse)"
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+
+MODE="${1:-soft}"
+if [[ "$MODE" != "soft" && "$MODE" != "hard" ]]; then
+  echo "Uso: ./ .mf_master/bin/mfreset [soft|hard]"
+  exit 2
+fi
+
+URL="http://localhost:8080/?reset=${MODE}"
+
+echo "============================================================"
+echo "🧼 mfreset | mode=$MODE"
+echo "➡️ Abrindo: $URL"
+echo "============================================================"
+echo "Obs: o reset roda no app via src/lib/resetApp.ts + src/lib/mfreset.ts"
+echo
+
+# macOS
+if command -v open >/dev/null 2>&1; then
+  open "$URL" || true
+else
+  echo "Abra manualmente no browser: $URL"
+fi
+
+echo "✅ Disparado. Se quiser validar: faça refresh e veja se onboarding voltou para step-1."
