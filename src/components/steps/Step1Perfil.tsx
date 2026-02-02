@@ -37,8 +37,7 @@ const perfilSchema = z.object({
   objetivo: z.enum(['emagrecimento', 'reposicao', 'hipertrofia', 'performance', 'longevidade'])
 })
 
-export function Step1Perfil({ value, onChange, onNext, onBack }: OnboardingStepProps) {
-  
+export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
   const navigate = useNavigate();
   // BLOCK2A: UNLOCK Step1 -> Step2 (persist progress + draft + goNext)
   const __goNextSafe = (data: PerfilUsuario) => {
@@ -48,27 +47,31 @@ export function Step1Perfil({ value, onChange, onNext, onBack }: OnboardingStepP
     try { if (typeof onChange === "function") onChange(data); } catch {}
     try { if (typeof onNext === "function") onNext(); } catch {}
   };
-void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep } = useDrMindSetfit()
 
+
+  /* MF_STEP1_DRAFT_SEED
+     Fonte de verdade do Step-1: draft vindo do OnboardingFlow (value/onChange).
+     Isso impede o "preenche e some" em remount/re-render.
+  */
+  const draftSeed = (value && typeof value === "object" ? value : {}) as Partial<PerfilUsuario>;
   const form = useForm<PerfilUsuario>({
     resolver: (zodResolver(perfilSchema) as any),
     defaultValues: {
-      nomeCompleto: state.perfil?.nomeCompleto || '',
-      sexo: state.perfil?.sexo || 'masculino',
-      idade: state.perfil?.idade || 30,
-      altura: state.perfil?.altura || 170,
-      pesoAtual: state.perfil?.pesoAtual || 70,
-      historicoPeso: state.perfil?.historicoPeso || '',
-      nivelTreino: state.perfil?.nivelTreino || 'iniciante',
-      modalidadePrincipal: (state.perfil?.modalidadePrincipal || "musculacao"),
-      frequenciaSemanal: state.perfil?.frequenciaSemanal || 3,
-      duracaoTreino: state.perfil?.duracaoTreino || 60,
-      objetivo: state.perfil?.objetivo || 'hipertrofia'
+      nomeCompleto: (draftSeed.nomeCompleto ?? state.perfil?.nomeCompleto ?? "") as any,
+      sexo: (draftSeed.sexo ?? state.perfil?.sexo ?? "masculino") as any,
+      idade: (draftSeed.idade ?? state.perfil?.idade ?? 30) as any,
+      altura: (draftSeed.altura ?? state.perfil?.altura ?? 170) as any,
+      pesoAtual: (draftSeed.pesoAtual ?? state.perfil?.pesoAtual ?? 70) as any,
+      historicoPeso: (draftSeed.historicoPeso ?? state.perfil?.historicoPeso ?? "") as any,
+      nivelTreino: (draftSeed.nivelTreino ?? state.perfil?.nivelTreino ?? "iniciante") as any,
+      modalidadePrincipal: (draftSeed.modalidadePrincipal ?? state.perfil?.modalidadePrincipal ?? "musculacao") as any,
+      frequenciaSemanal: (draftSeed.frequenciaSemanal ?? state.perfil?.frequenciaSemanal ?? 3) as any,
+      duracaoTreino: (draftSeed.duracaoTreino ?? state.perfil?.duracaoTreino ?? 60) as any,
+      objetivo: (draftSeed.objetivo ?? state.perfil?.objetivo ?? "hipertrofia") as any
     }
   })
-
-  const onSubmit = (data: PerfilUsuario) => {
+const onSubmit = (data: PerfilUsuario) => {
     updateState({ perfil: data })
     nextStep()
     // avanço oficial do funil (OnboardingFlow)
@@ -115,7 +118,18 @@ void value; void onChange; void onNext; void onBack;
                     <FormItem>
                       <FormLabel>Nome Completo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Digite seu nome completo" {...field} />
+                        <Input placeholder="Digite seu nome completo" {...field}
+                          /* MF_STEP1_BIND_NOME */
+                          onChange={(e) => {
+                            field.onChange(e);
+                            try {
+                              if (typeof onChange === "function") {
+                                const next = { ...form.getValues(), nomeCompleto: (e.target as any).value };
+                                onChange(next);
+                              }
+                            } catch {}
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
