@@ -132,3 +132,6 @@ playwright-report/
 .mf_master/qa/*.md
 .mf_master/qa/*.txt
 .mf_master/qa/*.json
+
+# local run artifacts
+.run/

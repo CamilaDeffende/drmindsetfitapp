@@ -1,7 +1,14 @@
+import { useLocation } from "react-router-dom";
 import { useLiveLocation } from "@/features/global/useLiveLocation";
 
 export function LiveLocationPill() {
-  const { status, coords, tzIana, nowInTz, start } = useLiveLocation();
+    // __MF_LIVEPILL_ROUTE_GUARD__ (sem quebrar rules-of-hooks)
+    const { pathname } = useLocation();
+  const __mfLiveEnabled = /^\/(running|corrida)/.test(pathname);
+
+const { status, coords, tzIana, nowInTz, start } = useLiveLocation({ enabled: __mfLiveEnabled });
+
+  if (!__mfLiveEnabled) return null;
 
   // Minimalista e premium (não polui UI)
   const label =

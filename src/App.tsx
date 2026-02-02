@@ -1,9 +1,10 @@
-import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import * as React from "react";
+import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { DrMindSetfitProvider } from '@/contexts/DrMindSetfitContext'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
+;
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
@@ -32,7 +33,9 @@ import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
 import CorridaPro from "@/pages/CorridaPro";
 function App() {
-  // reset premium via URL: /?reset=soft | /?reset=hard
+    // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
+
+// reset premium via URL: /?reset=soft | /?reset=hard
   React.useEffect(() => { maybeResetFromUrl(); }, []);
 
   const __suite = new URLSearchParams(window.location.search).get("suite") === "1";
@@ -69,7 +72,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
 
               {/* Onboarding — rota por step */}
               <Route
@@ -175,7 +177,7 @@ function App() {
               {/* Fallback */}<Route path="*" element={<Navigate to="/onboarding" replace />} />
 </Routes>
             <LiveLocationPill />
-</BrowserRouter>
+          </BrowserRouter>
           <Toaster />
         </DrMindSetfitProvider>
       </AuthProvider>
