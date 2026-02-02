@@ -144,7 +144,7 @@ const enableHighAccuracy = options?.enableHighAccuracy ?? true;
       if (clockTimerRef.current) window.clearInterval(clockTimerRef.current);
       clockTimerRef.current = null;
     };
-  }, [tickNow]);
+  }, [tickNow, enabled]);
 
   // Auto-start: não atrapalha onboarding/fluxo — se negar, seguimos
   useEffect(() => {
