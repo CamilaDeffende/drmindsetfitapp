@@ -2,6 +2,37 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
+// __MF_DEMO_ONBOARDING_GUARD__
+// Regra: em /onboarding, DEMO não pode rodar efeitos que redirecionam/ativam premium/logam repetidamente.
+const __mfIsOnboardingRoute = (): boolean => {
+  try {
+    if (typeof window === "undefined") return false;
+    const p = window.location?.pathname || "";
+    return p.startsWith("/onboarding");
+  } catch {
+    return false;
+  }
+};
+
+
+// MF_DEMO_ONCE_GUARD (StrictMode-safe)
+// Evita loops de DEMO que disparam setState/store em re-render/hidratação.
+const __mfOncePerSession = (key: string) => {
+  try {
+    const k = "mf_once__" + key;
+    if (typeof sessionStorage !== "undefined") {
+      if (sessionStorage.getItem(k) === "1") return false;
+      sessionStorage.setItem(k, "1");
+      return true;
+    }
+  } catch {}
+  (globalThis as any).__mf_once = (globalThis as any).__mf_once || {};
+  if ((globalThis as any).__mf_once[key]) return false;
+  (globalThis as any).__mf_once[key] = true;
+  return true;
+};
+
+
 interface AuthContextType {
   user: User | null
   session: Session | null
@@ -22,6 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(__isDevPass ? false : true)
 
   useEffect(() => {
+    if ((globalThis as any).__mf_demo_guard__auth) return;
+    (globalThis as any).__mf_demo_guard__auth = true;
+
+    if (__mfIsOnboardingRoute()) { return; }
+
+    if (!__mfOncePerSession("demo_autologin")) return;
+
     // Modo DEMO: criar usuário fake automaticamente
     if (!isSupabaseConfigured) {
       const demoUser: User = {
