@@ -2,6 +2,18 @@ import { useEffect, useMemo, useRef } from "react";
 import tzLookup from "tz-lookup";
 import { useGlobalLocationStore } from "@/stores/globalLocationStore";
 
+// __MF_GEO_ROUTE_GUARD__
+// Regra: GEO só em /running e /corrida. Fora disso, NUNCA requisitar geolocation.
+const __mfGeoEnabledByRoute = (): boolean => {
+  try {
+    if (typeof window === "undefined") return false;
+    const p = window.location?.pathname || "";
+    return /^\/(running|corrida)/.test(p);
+  } catch {
+    return false;
+  }
+};
+
 /**
  * useLiveLocation()
  * - Localização ao vivo via watchPosition()
@@ -10,12 +22,15 @@ import { useGlobalLocationStore } from "@/stores/globalLocationStore";
  * - Nunca trava o app: se negar permissão, mantém status e segue.
  */
 export function useLiveLocation(options?: {
-  enableHighAccuracy?: boolean;
+  
+  enabled?: boolean;
+enableHighAccuracy?: boolean;
   timeoutMs?: number;
   maximumAgeMs?: number;
   minUpdateMs?: number; // rate-limit interno
 }) {
-  const enableHighAccuracy = options?.enableHighAccuracy ?? true;
+  const enabled = (options as any)?.enabled !== false;
+const enableHighAccuracy = options?.enableHighAccuracy ?? true;
   const timeout = options?.timeoutMs ?? 12_000;
   const maximumAge = options?.maximumAgeMs ?? 5_000;
   const minUpdateMs = options?.minUpdateMs ?? 800;
@@ -40,6 +55,10 @@ export function useLiveLocation(options?: {
   const isSupported = typeof navigator !== "undefined" && "geolocation" in navigator;
 
   const start = () => {
+    // __MF_GEO_ENABLED_GUARD_START_V7__
+    if (!enabled) return;
+    if (!__mfGeoEnabledByRoute()) return;
+
     if (!isSupported) {
       setStatus("unavailable");
       setError("Geolocation API indisponível neste dispositivo/navegador.");
@@ -115,6 +134,10 @@ export function useLiveLocation(options?: {
 
   // Clock ao vivo (para qualquer parte do app consumir agoraTick)
   useEffect(() => {
+    if (!enabled) return;
+
+    if (!__mfGeoEnabledByRoute()) { return; }
+
     if (clockTimerRef.current) window.clearInterval(clockTimerRef.current);
     clockTimerRef.current = window.setInterval(() => tickNow(), 1000);
     return () => {
@@ -126,7 +149,11 @@ export function useLiveLocation(options?: {
   // Auto-start: não atrapalha onboarding/fluxo — se negar, seguimos
   useEffect(() => {
     // inicia uma vez
-    if (status === "idle") start();
+    // __MF_GEO_START_EFFECT_GUARD__
+    if (!enabled) return;
+    if (!__mfGeoEnabledByRoute()) return;
+    if (status !== "idle") return;
+    start();
     // não parar automaticamente; parar só se quiser
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
