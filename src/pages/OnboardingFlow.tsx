@@ -130,8 +130,19 @@ return Number.isFinite(i) ? i : 0;
   const goBack = () => setActive((x) => Math.max(x - 1, 0));
 
   // Gate depois dos hooks
-  if (!appReady) return null;
-  if (isOnboardingDone()) {
+  // __MF_APPREADY_NO_BLANK_V1__
+  if (!appReady) {
+    return (
+      <div data-testid="app-loading" className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="text-sm text-muted-foreground">Carregando ambiente…</div>
+          <div className="text-lg font-semibold">Preparando seu onboarding</div>
+        </div>
+      </div>
+    );
+  }
+
+if (isOnboardingDone()) {
     navigate("/dashboard", { replace: true });
     return null;
   }
