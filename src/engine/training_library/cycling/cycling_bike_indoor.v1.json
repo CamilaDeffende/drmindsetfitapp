@@ -1,0 +1,557 @@
+{
+  "modality": "cycling_bike_indoor",
+  "version": "1.0.0",
+  "workouts": [
+    {
+      "id": "CYC-INIC-01",
+      "level": "iniciante",
+      "name": "Endurance Contínuo Base",
+      "goal": "Desenvolver resistência cardiovascular básica e adaptação à pedalada indoor",
+      "duration_minutes": 30,
+      "intensity": { "perceived_exertion": "4-5", "cadence_rpm": "70-85" },
+      "execution": [
+        "Ajuste banco e guidão para posição estável",
+        "Inicie em cadência confortável e contínua",
+        "Mantenha respiração controlada e ritmo constante",
+        "Sustente o esforço sem picos até o final"
+      ],
+      "focus": "Consistência aeróbia e controle de ritmo",
+      "cues": ["Pedalada redonda", "Tronco estável", "Respiração fluida"],
+      "common_errors": ["Oscilar cadência", "Aumentar carga cedo demais", "Relaxar postura ao longo do tempo"],
+      "variations": ["Bike ergométrica vertical", "Bike ergométrica horizontal", "Outdoor plano em ritmo constante"]
+    },
+    {
+      "id": "CYC-INIC-02",
+      "level": "iniciante",
+      "name": "Intervalado Leve Adaptativo",
+      "goal": "Introduzir variação de intensidade com controle e recuperação fácil",
+      "duration_minutes": 35,
+      "intensity": { "perceived_exertion": "5-6", "cadence_rpm": "75-90" },
+      "execution": [
+        "Pedale 3 minutos em ritmo confortável",
+        "Aumente levemente a cadência por 1 minuto",
+        "Retorne ao ritmo confortável por 2 minutos",
+        "Repita o ciclo ao longo do treino"
+      ],
+      "focus": "Adaptação ao estímulo intervalado",
+      "cues": ["Acelere com controle", "Recupere pedalando", "Cadência estável"],
+      "common_errors": ["Exagerar nos blocos fortes", "Perder cadência nos blocos leves", "Respiração desorganizada"],
+      "variations": ["Intervalos por música (BPM)", "Intervalos por cronômetro", "Outdoor com variação leve de ritmo"]
+    },
+    {
+      "id": "CYC-INIC-03",
+      "level": "iniciante",
+      "name": "Cadência Técnica Estável",
+      "goal": "Melhorar coordenação e suavidade de pedalada em cadência controlada",
+      "duration_minutes": 28,
+      "intensity": { "perceived_exertion": "4-5", "cadence_rpm": "80-95" },
+      "execution": [
+        "Inicie com carga leve e cadência moderada",
+        "Suba até a cadência alvo em 3 minutos",
+        "Sustente a cadência alvo mantendo controle do tronco",
+        "Finalize reduzindo gradualmente a cadência"
+      ],
+      "focus": "Economia de movimento e suavidade",
+      "cues": ["Movimento contínuo", "Ombros soltos", "Core firme"],
+      "common_errors": ["Saltar no banco", "Tensionar ombros", "Oscilar ritmo sem perceber"],
+      "variations": ["Metrônomo", "Música BPM", "Bike ergométrica com cadência guiada"]
+    },
+    {
+      "id": "CYC-INIC-04",
+      "level": "iniciante",
+      "name": "Progressivo Leve de Ritmo",
+      "goal": "Construir base com progressão suave de intensidade",
+      "duration_minutes": 32,
+      "intensity": { "perceived_exertion": "4-6", "cadence_rpm": "75-90" },
+      "execution": [
+        "Comece em PSE 4 por 8 minutos",
+        "Aumente para PSE 5 por 12 minutos mantendo cadência",
+        "Finalize em PSE 6 por 8 minutos com controle",
+        "Desacelere por 4 minutos"
+      ],
+      "focus": "Controle de progressão",
+      "cues": ["Suba um degrau por vez", "Cadência consistente", "Respiração estável"],
+      "common_errors": ["Acelerar demais no começo", "Variar carga a todo momento", "Perder postura no final"],
+      "variations": ["Progressivo por música", "Progressivo por tempo", "Outdoor plano com aumento gradual"]
+    },
+    {
+      "id": "CYC-INIC-05",
+      "level": "iniciante",
+      "name": "Regenerativo Ativo Premium",
+      "goal": "Facilitar recuperação mantendo fluxo de movimento e controle",
+      "duration_minutes": 25,
+      "intensity": { "perceived_exertion": "3-4", "cadence_rpm": "80-95" },
+      "execution": [
+        "Use carga leve e cadência confortável",
+        "Mantenha pedalada contínua sem picos",
+        "Priorize respiração e relaxamento técnico",
+        "Finalize reduzindo gradualmente o ritmo"
+      ],
+      "focus": "Recuperação ativa e técnica limpa",
+      "cues": ["Leve e solto", "Pedalada suave", "Tronco estável"],
+      "common_errors": ["Transformar em treino forte", "Cadência muito baixa", "Ficar travado no selim"],
+      "variations": ["Bike ergométrica leve", "Outdoor muito leve", "Cadência guiada por música lenta"]
+    },
+
+    {
+      "id": "CYC-INIC-06",
+      "level": "iniciante",
+      "name": "Subida Simulada Leve",
+      "goal": "Introduzir torque moderado com controle técnico",
+      "duration_minutes": 30,
+      "intensity": { "perceived_exertion": "5-6", "cadence_rpm": "60-75" },
+      "execution": [
+        "Aumente a carga levemente e reduza a cadência",
+        "Sustente blocos de 3 minutos em ritmo firme",
+        "Recupere 2 minutos com carga leve e cadência mais alta",
+        "Repita o ciclo até completar o treino"
+      ],
+      "focus": "Controle de carga e estabilidade do tronco",
+      "cues": ["Empurre com controle", "Core firme", "Sem trancos"],
+      "common_errors": ["Carga alta demais", "Travamento da pedalada", "Perder estabilidade do tronco"],
+      "variations": ["Subida simulada por inclinação", "Outdoor em leve aclive", "Torque leve com cadência controlada"]
+    },
+
+    {
+      "id": "CYC-INIC-07",
+      "level": "iniciante",
+      "name": "Ritmo Sustentado Confortável",
+      "goal": "Sustentar um ritmo moderado contínuo com boa técnica",
+      "duration_minutes": 34,
+      "intensity": { "perceived_exertion": "5", "cadence_rpm": "75-90" },
+      "execution": [
+        "Encontre um ritmo firme, porém confortável",
+        "Mantenha a cadência estável por blocos longos",
+        "Evite mudanças frequentes de carga",
+        "Finalize desacelerando progressivamente"
+      ],
+      "focus": "Constância do ritmo",
+      "cues": ["Firme e estável", "Respiração controlada", "Pedalada redonda"],
+      "common_errors": ["Oscilar ritmo sem motivo", "Subir carga por impulso", "Postura relaxada demais"],
+      "variations": ["Bike ergométrica", "Outdoor plano", "Ritmo guiado por música"]
+    },
+
+    {
+      "id": "CYC-INIC-08",
+      "level": "iniciante",
+      "name": "Piramidal Leve de Cadência",
+      "goal": "Variar cadência mantendo esforço controlado",
+      "duration_minutes": 30,
+      "intensity": { "perceived_exertion": "4-6", "cadence_rpm": "70-100" },
+      "execution": [
+        "Suba a cadência em pequenos degraus a cada 2 minutos",
+        "Mantenha carga leve a moderada",
+        "Atinja o pico e retorne reduzindo a cadência",
+        "Finalize em ritmo confortável"
+      ],
+      "focus": "Controle neuromuscular de cadência",
+      "cues": ["Suba suave", "Sem perder controle", "Tronco firme"],
+      "common_errors": ["Acelerar com carga alta", "Saltar no banco", "Perder ritmo no retorno"],
+      "variations": ["Música BPM", "Metrônomo", "Outdoor com variação leve"]
+    },
+
+    {
+      "id": "CYC-INIC-09",
+      "level": "iniciante",
+      "name": "Metabólico Leve com Recuperação Fácil",
+      "goal": "Elevar gasto energético com picos moderados e retorno rápido",
+      "duration_minutes": 36,
+      "intensity": { "perceived_exertion": "5-6", "cadence_rpm": "80-95" },
+      "execution": [
+        "Pedale 4 minutos em PSE 5",
+        "Faça 30 segundos em PSE 6 com cadência um pouco maior",
+        "Retorne 2 minutos em PSE 4-5",
+        "Repita o padrão até completar"
+      ],
+      "focus": "Eficiência metabólica com controle",
+      "cues": ["Pico curto", "Recupera rápido", "Cadência estável"],
+      "common_errors": ["Picos longos demais", "Quebrar ritmo nos leves", "Perder técnica sob fadiga"],
+      "variations": ["Picos por música", "Picos por cronômetro", "Outdoor com acelerações curtas"]
+    },
+
+    {
+      "id": "CYC-INIC-10",
+      "level": "iniciante",
+      "name": "Base + Técnica de Finalização",
+      "goal": "Consolidar base aeróbia e encerrar com cadência técnica",
+      "duration_minutes": 35,
+      "intensity": { "perceived_exertion": "4-6", "cadence_rpm": "75-95" },
+      "execution": [
+        "Faça 20 minutos em PSE 4-5 com ritmo contínuo",
+        "Aumente para cadência mais alta por 8 minutos mantendo carga controlada",
+        "Finalize em ritmo confortável por 7 minutos",
+        "Mantenha técnica limpa até o fim"
+      ],
+      "focus": "Base aeróbia + controle técnico no final",
+      "cues": ["Final forte com controle", "Cadência suave", "Respiração estável"],
+      "common_errors": ["Aumentar carga junto com cadência", "Perder postura no final", "Oscilar ritmo na transição"],
+      "variations": ["Bike ergométrica", "Outdoor plano com final técnico", "Metrônomo na parte final"]
+    },
+
+    {
+      "id": "CYC-INT-01",
+      "level": "intermediario",
+      "name": "Cadência Técnica Progressiva",
+      "goal": "Melhorar economia de pedalada e coordenação em alta cadência controlada",
+      "duration_minutes": 40,
+      "intensity": { "perceived_exertion": "6", "cadence_rpm": "85-105" },
+      "execution": [
+        "Inicie em cadência moderada por 8 minutos",
+        "Aumente a cadência em blocos de 4 minutos",
+        "Mantenha carga controlada sem travar a pedalada",
+        "Finalize retornando à cadência inicial"
+      ],
+      "focus": "Eficiência mecânica e estabilidade do tronco",
+      "cues": ["Suave em alta cadência", "Core firme", "Ombros soltos"],
+      "common_errors": ["Excesso de carga em alta cadência", "Perder controle do tronco", "Tensionar ombros"],
+      "variations": ["Metrônomo", "Música BPM", "Outdoor plano em cadência alta"]
+    }
+,
+    {
+      "id": "CYC-INT-02",
+      "level": "intermediario",
+      "name": "Intervalado Metabólico (2:1)",
+      "goal": "Elevar capacidade cardiovascular e sustentar esforço variável com recuperação eficiente",
+      "duration_minutes": 45,
+      "intensity": { "perceived_exertion": "7-8", "cadence_rpm": "80-95" },
+      "execution": [
+        "Aqueça 8 minutos em ritmo confortável",
+        "Faça 2 minutos em PSE 7 (cadência firme)",
+        "Faça 1 minuto em PSE 5-6 recuperando",
+        "Repita os ciclos até completar o bloco principal",
+        "Finalize 6 minutos em ritmo leve"
+      ],
+      "focus": "Sustentação de intensidade e recuperação rápida",
+      "cues": ["Recupera pedalando", "Cadência firme", "Controle total do tronco"],
+      "common_errors": ["Alongar demais o bloco forte", "Cair demais a cadência na recuperação", "Oscilar carga sem necessidade"],
+      "variations": ["Intervalos por distância", "Intervalos com subida simulada moderada", "Outdoor em terreno levemente ondulado"]
+    },
+    {
+      "id": "CYC-INT-03",
+      "level": "intermediario",
+      "name": "Ritmo Sustentado (Tempo Controlado)",
+      "goal": "Desenvolver tolerância ao esforço contínuo moderado-alto com técnica estável",
+      "duration_minutes": 42,
+      "intensity": { "perceived_exertion": "6-7", "cadence_rpm": "80-95" },
+      "execution": [
+        "Aqueça 10 minutos em PSE 4-5",
+        "Sustente 3 blocos de 8 minutos em PSE 6-7",
+        "Recupere 3 minutos em PSE 4-5 entre blocos",
+        "Finalize 6 minutos leve, cadência solta"
+      ],
+      "focus": "Ritmo estável e economia de pedalada",
+      "cues": ["Firme sem travar", "Respiração ritmada", "Tronco estável"],
+      "common_errors": ["Começar forte demais", "Aumentar carga para compensar", "Perder técnica no fim do bloco"],
+      "variations": ["Bike ergométrica com tempo fixo", "Outdoor em plano com ritmo contínuo", "Tempo guiado por música estável"]
+    },
+    {
+      "id": "CYC-INT-04",
+      "level": "intermediario",
+      "name": "Torque Moderado em Blocos",
+      "goal": "Aumentar força específica no pedal com controle de cadência e estabilidade",
+      "duration_minutes": 48,
+      "intensity": { "perceived_exertion": "7", "cadence_rpm": "60-75" },
+      "execution": [
+        "Aqueça 10 minutos em cadência confortável",
+        "Faça 5 blocos de 4 minutos com carga moderada-alta e cadência 60-75",
+        "Recupere 2 minutos com carga leve e cadência 85-95",
+        "Finalize 6 minutos leve"
+      ],
+      "focus": "Produção de força com técnica limpa",
+      "cues": ["Empurra e puxa controlado", "Core firme", "Sem trancos"],
+      "common_errors": ["Carga alta demais", "Travamento da pedalada", "Perder estabilidade do tronco"],
+      "variations": ["Subida simulada contínua", "Outdoor em aclive moderado", "Torque alternado (1 min forte / 1 min leve)"]
+    },
+    {
+      "id": "CYC-INT-05",
+      "level": "intermediario",
+      "name": "Cadência Alta em Degraus",
+      "goal": "Aprimorar coordenação e eficiência em cadência elevada sem perder controle",
+      "duration_minutes": 38,
+      "intensity": { "perceived_exertion": "6", "cadence_rpm": "95-110" },
+      "execution": [
+        "Aqueça 8 minutos em PSE 4-5",
+        "Faça 4 blocos de 5 minutos subindo a cadência a cada minuto até 110 RPM",
+        "Recupere 2 minutos em cadência confortável",
+        "Finalize 6 minutos leve"
+      ],
+      "focus": "Eficiência neuromuscular em alta cadência",
+      "cues": ["Suave e redondo", "Sem saltar no banco", "Ombros soltos"],
+      "common_errors": ["Excesso de carga em alta cadência", "Perder controle do tronco", "Oscilar muito o ritmo"],
+      "variations": ["Metrônomo", "Música BPM alta", "Outdoor plano com cadência guiada"]
+    },
+    {
+      "id": "CYC-INT-06",
+      "level": "intermediario",
+      "name": "Progressivo Forte (Base → Tempo)",
+      "goal": "Construir intensidade gradualmente até ritmo sustentado forte com controle",
+      "duration_minutes": 50,
+      "intensity": { "perceived_exertion": "5-8", "cadence_rpm": "75-95" },
+      "execution": [
+        "Aqueça 10 minutos em PSE 4-5",
+        "Faça 12 minutos em PSE 5-6",
+        "Faça 12 minutos em PSE 6-7",
+        "Faça 10 minutos em PSE 7-8 mantendo cadência firme",
+        "Finalize 6 minutos leve"
+      ],
+      "focus": "Progressão de ritmo com consistência",
+      "cues": ["Sobe um degrau por vez", "Sem picos", "Respiração estável"],
+      "common_errors": ["Acelerar cedo demais", "Mudar carga sem critério", "Quebrar cadência no final"],
+      "variations": ["Progressivo por música", "Progressivo por tempo/cronômetro", "Outdoor com progressão em plano"]
+    },
+    {
+      "id": "CYC-INT-07",
+      "level": "intermediario",
+      "name": "Sprint Controlado (Repetições Curtas)",
+      "goal": "Melhorar capacidade de aceleração com técnica e recuperação ativa",
+      "duration_minutes": 36,
+      "intensity": { "perceived_exertion": "8", "cadence_rpm": "95-115" },
+      "execution": [
+        "Aqueça 10 minutos em PSE 4-5",
+        "Faça 10 repetições de 20 segundos em PSE 8",
+        "Recupere 70 segundos em PSE 4-5 pedalando",
+        "Finalize 8 minutos leve"
+      ],
+      "focus": "Aceleração com controle e retomada rápida",
+      "cues": ["Explosão controlada", "Recupera pedalando", "Tronco firme"],
+      "common_errors": ["Sair com carga errada", "Parar na recuperação", "Perder técnica nas últimas repetições"],
+      "variations": ["Sprint por inclinação", "Sprint por cadência", "Outdoor com acelerações curtas em plano"]
+    },
+    {
+      "id": "CYC-INT-08",
+      "level": "intermediario",
+      "name": "Over-Under Metabólico",
+      "goal": "Treinar alternância de ritmo forte e moderado mantendo consistência",
+      "duration_minutes": 46,
+      "intensity": { "perceived_exertion": "6-8", "cadence_rpm": "80-95" },
+      "execution": [
+        "Aqueça 10 minutos em PSE 4-5",
+        "Faça 4 blocos de 8 minutos alternando: 2 min PSE 7-8 + 2 min PSE 6 (repetir)",
+        "Recupere 3 minutos leve entre blocos",
+        "Finalize 6 minutos leve"
+      ],
+      "focus": "Controle de ritmo sob variação",
+      "cues": ["Forte sem travar", "Volta rápido no under", "Cadência firme"],
+      "common_errors": ["Transformar o under em descanso total", "Subir carga demais no over", "Oscilar cadência demais"],
+      "variations": ["Over-under por música", "Over-under por distância", "Outdoor com variação em trecho plano"]
+    },
+    {
+      "id": "CYC-INT-09",
+      "level": "intermediario",
+      "name": "Endurance Longo (Base Premium)",
+      "goal": "Aumentar capacidade oxidativa e consistência de pedalada por mais tempo",
+      "duration_minutes": 60,
+      "intensity": { "perceived_exertion": "5-6", "cadence_rpm": "75-90" },
+      "execution": [
+        "Aqueça 10 minutos em PSE 4-5",
+        "Sustente 40 minutos em PSE 5-6 com ritmo constante",
+        "Inclua 3 acelerações técnicas de 30 segundos em cadência alta (sem pico de carga)",
+        "Finalize 10 minutos leve"
+      ],
+      "focus": "Base aeróbia longa e técnica consistente",
+      "cues": ["Ritmo constante", "Pedalada redonda", "Respiração fluida"],
+      "common_errors": ["Aumentar carga ao longo do treino sem controle", "Oscilar cadência", "Perder postura no final"],
+      "variations": ["Bike ergométrica", "Outdoor plano contínuo", "Endurance por música estável"]
+    },
+    {
+      "id": "CYC-INT-10",
+      "level": "intermediario",
+      "name": "Regenerativo Técnico com Final Progressivo",
+      "goal": "Recuperar ativo e encerrar com progressão leve de cadência",
+      "duration_minutes": 40,
+      "intensity": { "perceived_exertion": "3-6", "cadence_rpm": "80-100" },
+      "execution": [
+        "Pedale 25 minutos em PSE 3-4 com carga leve",
+        "Faça 10 minutos aumentando gradualmente a cadência até 100 RPM",
+        "Mantenha carga controlada e técnica limpa",
+        "Finalize 5 minutos leve"
+      ],
+      "focus": "Recuperação ativa + refinamento técnico",
+      "cues": ["Leve e solto", "Cadência suave", "Tronco estável"],
+      "common_errors": ["Transformar em treino forte", "Aumentar carga junto com cadência", "Oscilar ritmo no final"],
+      "variations": ["Bike ergométrica leve", "Outdoor muito leve", "Cadência guiada por metrônomo"]
+    },
+
+    {
+      "id": "CYC-AV-01",
+      "level": "avancado",
+      "name": "HIIT Ciclismo Indoor (30/90)",
+      "goal": "Maximizar capacidade anaeróbia e recuperação rápida mantendo técnica",
+      "duration_minutes": 30,
+      "intensity": { "perceived_exertion": "9", "cadence_rpm": "90-115" },
+      "execution": [
+        "Aqueça 8 minutos em PSE 4-5",
+        "Faça 10 repetições de 30 segundos em PSE 9",
+        "Recupere 90 segundos em PSE 4-5 pedalando",
+        "Finalize 5 minutos leve"
+      ],
+      "focus": "Potência relativa e retomada rápida",
+      "cues": ["Explosão controlada", "Recupera pedalando", "Postura firme"],
+      "common_errors": ["Explodir cedo demais", "Parar na recuperação", "Perder técnica nas últimas séries"],
+      "variations": ["HIIT por inclinação", "HIIT por cadência", "Outdoor: sprints curtos em plano"]
+    },
+    {
+      "id": "CYC-AV-02",
+      "level": "avancado",
+      "name": "Força no Pedal (Torque Avançado)",
+      "goal": "Aumentar força específica e controle de torque em blocos longos",
+      "duration_minutes": 55,
+      "intensity": { "perceived_exertion": "8", "cadence_rpm": "55-70" },
+      "execution": [
+        "Aqueça 10 minutos em cadência confortável",
+        "Faça 4 blocos de 6 minutos em torque (cadência 55-70)",
+        "Recupere 3 minutos em cadência 90-100 com carga leve",
+        "Finalize 10 minutos leve"
+      ],
+      "focus": "Força específica e estabilidade sob carga",
+      "cues": ["Empurra e puxa o pedal", "Core firme", "Sem trancos"],
+      "common_errors": ["Carga excessiva", "Travamento de pedalada", "Oscilar tronco"],
+      "variations": ["Subida simulada", "Outdoor em aclive", "Torque alternado unilateral (controlado)"]
+    },
+    {
+      "id": "CYC-AV-03",
+      "level": "avancado",
+      "name": "VO2-Style (3x4 Forte)",
+      "goal": "Elevar capacidade cardiovascular em blocos fortes sustentados",
+      "duration_minutes": 48,
+      "intensity": { "perceived_exertion": "8-9", "cadence_rpm": "85-100" },
+      "execution": [
+        "Aqueça 12 minutos em PSE 4-6",
+        "Faça 3 blocos de 4 minutos em PSE 8-9",
+        "Recupere 4 minutos em PSE 4-5 entre blocos",
+        "Finalize 8 minutos leve"
+      ],
+      "focus": "Sustentação forte com recuperação eficiente",
+      "cues": ["Forte e controlado", "Cadência firme", "Respiração estável"],
+      "common_errors": ["Sair forte demais no 1º minuto", "Cair cadência no final", "Recuperar parado"],
+      "variations": ["4x3 forte", "Forte por inclinação", "Outdoor em subida curta e controlada"]
+    },
+    {
+      "id": "CYC-AV-04",
+      "level": "avancado",
+      "name": "Over-Under Avançado (Alta Consistência)",
+      "goal": "Sustentar alternância de esforço alto sem perder estabilidade e ritmo",
+      "duration_minutes": 50,
+      "intensity": { "perceived_exertion": "7-9", "cadence_rpm": "80-95" },
+      "execution": [
+        "Aqueça 12 minutos em PSE 4-6",
+        "Faça 3 blocos de 10 minutos alternando: 1 min PSE 9 + 2 min PSE 7 (repetir)",
+        "Recupere 4 minutos em PSE 4-5",
+        "Finalize 8 minutos leve"
+      ],
+      "focus": "Controle metabólico sob alternância intensa",
+      "cues": ["Over curto e agressivo", "Under firme", "Cadência constante"],
+      "common_errors": ["Under virar descanso", "Pico longo demais", "Oscilar carga sem critério"],
+      "variations": ["Over-under por música", "Over-under por distância", "Outdoor com variação em plano"]
+    },
+    {
+      "id": "CYC-AV-05",
+      "level": "avancado",
+      "name": "Sprint Repetido (15x15)",
+      "goal": "Aprimorar explosão repetida e tolerância a acelerações frequentes",
+      "duration_minutes": 35,
+      "intensity": { "perceived_exertion": "9-10", "cadence_rpm": "100-120" },
+      "execution": [
+        "Aqueça 10 minutos em PSE 4-6",
+        "Faça 15 repetições de 15 segundos muito forte",
+        "Recupere 45 segundos em PSE 4-5 pedalando",
+        "Finalize 8 minutos leve"
+      ],
+      "focus": "Explosões repetidas com técnica",
+      "cues": ["Acelera sem desorganizar", "Recupera pedalando", "Tronco firme"],
+      "common_errors": ["Queimar tudo nas primeiras repetições", "Parar nas recuperações", "Perder estabilidade"],
+      "variations": ["Sprint por inclinação", "Sprint por cadência", "Outdoor em plano com acelerações"]
+    },
+    {
+      "id": "CYC-AV-06",
+      "level": "avancado",
+      "name": "Tempo Forte Sustentado (2x15)",
+      "goal": "Sustentar ritmo forte por períodos longos com constância",
+      "duration_minutes": 60,
+      "intensity": { "perceived_exertion": "7-8", "cadence_rpm": "80-95" },
+      "execution": [
+        "Aqueça 12 minutos em PSE 4-6",
+        "Faça 2 blocos de 15 minutos em PSE 7-8",
+        "Recupere 6 minutos em PSE 4-5 entre blocos",
+        "Finalize 12 minutos leve"
+      ],
+      "focus": "Consistência em ritmo forte",
+      "cues": ["Ritmo constante", "Sem picos", "Respiração ritmada"],
+      "common_errors": ["Começar acima do alvo", "Quebrar cadência no final", "Recuperar parado"],
+      "variations": ["3x10 tempo forte", "Tempo por música constante", "Outdoor plano em ritmo sustentado"]
+    },
+    {
+      "id": "CYC-AV-07",
+      "level": "avancado",
+      "name": "Piramidal Intenso",
+      "goal": "Trabalhar variação de intensidade com pico controlado e retorno consistente",
+      "duration_minutes": 45,
+      "intensity": { "perceived_exertion": "6-9", "cadence_rpm": "80-105" },
+      "execution": [
+        "Aqueça 10 minutos em PSE 4-6",
+        "Suba em degraus de 3 minutos: PSE 6 → 7 → 8 → 9",
+        "Retorne em degraus de 3 minutos: PSE 8 → 7 → 6",
+        "Recupere 2 minutos leve entre pirâmides e repita 2x",
+        "Finalize leve"
+      ],
+      "focus": "Controle de variação e pico eficiente",
+      "cues": ["Sobe com controle", "Pico curto", "Volta consistente"],
+      "common_errors": ["Pico longo demais", "Recuperar demais no retorno", "Oscilar carga a todo momento"],
+      "variations": ["Piramidal por música", "Piramidal por distância", "Outdoor com variação controlada"]
+    },
+    {
+      "id": "CYC-AV-08",
+      "level": "avancado",
+      "name": "Endurance Longo com Acelerações Técnicas",
+      "goal": "Aumentar capacidade oxidativa e incluir estímulos técnicos de cadência",
+      "duration_minutes": 75,
+      "intensity": { "perceived_exertion": "5-7", "cadence_rpm": "75-100" },
+      "execution": [
+        "Aqueça 10 minutos em PSE 4-5",
+        "Sustente 55 minutos em PSE 5-6 ritmo constante",
+        "A cada 10 minutos, faça 40 segundos em cadência alta (sem pico de carga)",
+        "Finalize 10 minutos leve"
+      ],
+      "focus": "Base longa + técnica sob fadiga",
+      "cues": ["Constância", "Pedalada redonda", "Cadência alta controlada"],
+      "common_errors": ["Transformar acelerações em sprint", "Oscilar ritmo base", "Perder postura no final"],
+      "variations": ["Bike ergométrica", "Outdoor plano contínuo", "Endurance guiado por música"]
+    },
+    {
+      "id": "CYC-AV-09",
+      "level": "avancado",
+      "name": "Intervalado Intenso (1:1)",
+      "goal": "Elevar demanda metabólica com alternância rápida e consistência",
+      "duration_minutes": 50,
+      "intensity": { "perceived_exertion": "8-9", "cadence_rpm": "85-105" },
+      "execution": [
+        "Aqueça 12 minutos em PSE 4-6",
+        "Faça 12 repetições de 1 minuto forte (PSE 8-9)",
+        "Recupere 1 minuto em PSE 5-6 pedalando",
+        "Finalize 10 minutos leve"
+      ],
+      "focus": "Consistência de esforço intenso e recuperação ativa",
+      "cues": ["Forte e constante", "Recupera pedalando", "Tronco firme"],
+      "common_errors": ["Explodir nas primeiras", "Cair cadência no forte", "Recuperação parada"],
+      "variations": ["1:1 por distância", "1:1 com inclinação moderada", "Outdoor em trechos curtos e controlados"]
+    },
+    {
+      "id": "CYC-AV-10",
+      "level": "avancado",
+      "name": "Regenerativo Avançado (Técnica Premium)",
+      "goal": "Recuperar ativo mantendo técnica refinada e cadência solta",
+      "duration_minutes": 40,
+      "intensity": { "perceived_exertion": "3-4", "cadence_rpm": "85-100" },
+      "execution": [
+        "Use carga leve e cadência confortável",
+        "Mantenha pedalada contínua e estável",
+        "Inclua 6 acelerações técnicas de 15 segundos em cadência alta (sem pico)",
+        "Finalize desacelerando progressivamente"
+      ],
+      "focus": "Recuperação ativa com refinamento técnico",
+      "cues": ["Leve e solto", "Pedalada redonda", "Respiração fluida"],
+      "common_errors": ["Virar treino forte", "Cadência muito baixa", "Oscilar tronco"],
+      "variations": ["Bike ergométrica leve", "Outdoor muito leve", "Cadência guiada por metrônomo"]
+    }
+  ]
+}
