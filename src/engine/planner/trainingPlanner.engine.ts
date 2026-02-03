@@ -1,7 +1,9 @@
 import cyclingLib from "../training_library/cycling/cycling_bike_indoor.v1.json";
 import { buildWeeklyPlan } from "../periodization/weeklyPeriodization.engine";
-import { resolveHybridLoad } from "../motors/hybridRunningCycling.engine";
+import { generateRunningWeek } from "@/modules/running";
 
+// type derivado do export real (evita drift de unions)
+type RunningReq = Parameters<typeof generateRunningWeek>[0];
 type Level = "iniciante" | "intermediario" | "avancado";
 type Goal = "emagrecimento" | "performance" | "condicionamento";
 
@@ -166,19 +168,51 @@ export function planWeek(input: PlannerInput): WeeklyPlanOutput {
     }
 
     if (t.startsWith("running_") && input.modalities.includes("running")) {
-      // placeholder: o catálogo de corrida já existe no teu engine; aqui só “tag” (integração real vem no próximo bloco)
-      const tag = t.replace("running_", "");
-      const pse = tag.includes("interval") ? 8 : tag.includes("progress") ? 7 : 6;
-
-      // híbrido: se corrida é hard, ciclismo do dia (se existisse) vira leve. Aqui mantemos regra interna.
-      const hybrid = resolveHybridLoad({ running_pse: pse });
-      out[d] = {
-        modality: "running",
-        tag,
-        title: `Corrida: ${tag}`,
-        pse_hint: hybrid.cycling === "leve_ou_regenerativo" ? pse : pse
+      // corrida REAL via módulo running
+      // map goal do planner -> objetivo de corrida (conservador)
+      const goalMap: Record<Goal, RunningReq["goal"]> = {
+        emagrecimento: "5K",
+        condicionamento: "10K",
+        performance: "21K"
       };
-      prevWasHard = pse >= 8;
+
+      // map level do planner -> level do running module
+      const levelMap: Record<Level, RunningReq["level"]> = {
+        iniciante: "INICIANTE",
+        intermediario: "INTERMEDIARIO",
+        avancado: "AVANCADO"
+      };
+
+      const daysPerWeek = Math.min(6, Math.max(3, input.available_days)) as 3|4|5|6;
+
+            const req: RunningReq = {
+        level: levelMap[input.level],
+        goal: goalMap[input.goal],
+        daysPerWeek,
+        weekIndex: 1,
+        hasStrength: input.modalities.includes("strength")
+      };
+
+      const week = generateRunningWeek(req);
+const w = pickRunningDayFromWeek(week as any, d);
+
+      // fallback se não casou dia: pega 1ª sessão
+      const w0 = w || (week as any)?.sessions?.[0]?.workout || null;
+
+      const planned = runningSessionToPlanned(w0);
+
+      // regra: hardCount max 2 e não consecutivo
+      const isHard = (planned.pse_hint || 0) >= 8;
+      if (isHard) {
+        if (hardCount >= 2 || prevWasHard) {
+          planned.tag = "regenerativo";
+          planned.title = "Corrida: Regenerativo";
+          planned.pse_hint = 4;
+        }
+      }
+
+      out[d] = planned;
+      prevWasHard = (out[d]?.pse_hint || 0) >= 8;
       if (prevWasHard) hardCount++;
       continue;
     }
@@ -219,4 +253,34 @@ export function planWeek(input: PlannerInput): WeeklyPlanOutput {
   }
 
   return out;
+}
+
+
+function runningTagToPse(tag: string): number {
+  // conservador e estável
+  if (tag.includes("interval")) return 8;
+  if (tag.includes("tempo")) return 7;
+  if (tag.includes("progress")) return 7;
+  if (tag.includes("long")) return 6;
+  if (tag.includes("regen")) return 4;
+  return 6;
+}
+
+function runningSessionToPlanned(w: any) {
+  const title = w?.title || "Corrida";
+  const tag = (w?.type || "running").toString().toLowerCase();
+  const pse = runningTagToPse(tag);
+  return { modality: "running" as const, tag, title, pse_hint: pse };
+}
+
+function pickRunningDayFromWeek(week: any, dayKey: string) {
+  // week.sessions: [{dayLabel, workout}]
+  const sessions = week?.sessions || [];
+  // tenta casar por dayKey (monday..sunday) -> labels SEG/TER/...
+  const map: Record<string,string> = {
+    monday:"SEG", tuesday:"TER", wednesday:"QUA", thursday:"QUI", friday:"SEX", saturday:"SAB", sunday:"DOM"
+  };
+  const want = map[dayKey] || "";
+  const hit = sessions.find((x:any)=> (x?.dayLabel||"") === want);
+  return hit?.workout || null;
 }
