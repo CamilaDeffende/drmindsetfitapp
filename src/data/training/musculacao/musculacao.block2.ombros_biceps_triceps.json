@@ -1,0 +1,253 @@
+{
+  "musculacao": {
+    "ombros": {
+      "halteres": [
+        {
+          "name": "Desenvolvimento com halteres (sentado)",
+          "goal": "Construir força e volume do deltoide com controle de trajetória.",
+          "execution": [
+            "Sente-se com tronco firme e halteres na altura dos ombros.",
+            "Empurre para cima mantendo cotovelos em linha estável.",
+            "Retorne controlando até a posição inicial."
+          ],
+          "focus": "Deltoide anterior e medial.",
+          "cues": [
+            "Ombros baixos e escápulas firmes.",
+            "Trajetória vertical consistente.",
+            "Controle total na descida."
+          ],
+          "common_errors": [
+            "Arquear o tronco e perder estabilidade.",
+            "Descer curto e reduzir amplitude.",
+            "Punhos quebrados e instáveis."
+          ],
+          "variations": [
+            "Desenvolvimento na máquina",
+            "Desenvolvimento no cabo (unilateral)",
+            "Desenvolvimento com barra"
+          ]
+        }
+      ],
+      "maquinas": [
+        {
+          "name": "Elevação lateral na máquina",
+          "goal": "Isolar deltoide medial com estabilidade e tensão constante.",
+          "execution": [
+            "Ajuste o assento e apoios para alinhar com o ombro.",
+            "Eleve os braços em arco até a altura do ombro.",
+            "Retorne devagar mantendo controle."
+          ],
+          "focus": "Deltoide medial.",
+          "cues": [
+            "Cotovelos conduzem; mãos acompanham.",
+            "Sem encolher ombros.",
+            "Descida lenta para manter tensão."
+          ],
+          "common_errors": [
+            "Amplitude curta e sem pico de contração.",
+            "Subir ombros e perder alinhamento.",
+            "Velocidade alta e sem controle."
+          ],
+          "variations": [
+            "Elevação lateral com halteres",
+            "Elevação lateral no cabo",
+            "Elevação lateral sentado com halteres"
+          ]
+        }
+      ],
+      "cabos": [
+        {
+          "name": "Face pull no cabo (corda)",
+          "goal": "Aprimorar controle escapular e ênfase em deltoide posterior.",
+          "execution": [
+            "Ajuste a polia na altura do rosto e segure a corda.",
+            "Puxe a corda em direção ao rosto abrindo as mãos para fora.",
+            "Retorne controlando a fase excêntrica sem perder postura."
+          ],
+          "focus": "Deltoide posterior e trapézio médio.",
+          "cues": [
+            "Cotovelo alto e trajetória estável.",
+            "Abra a corda no final, sem tranco.",
+            "Volta lenta mantendo tensão."
+          ],
+          "common_errors": [
+            "Puxar para baixo e mudar o padrão do movimento.",
+            "Perder postura e deixar ombros subirem.",
+            "Executar rápido e sem controle."
+          ],
+          "variations": [
+            "Crucifixo inverso na máquina",
+            "Crucifixo inverso com halteres",
+            "Face pull unilateral no cabo"
+          ]
+        }
+      ]
+    },
+    "biceps": {
+      "halteres": [
+        {
+          "name": "Rosca direta com halteres (alternada)",
+          "goal": "Desenvolver bíceps com controle unilateral e amplitude completa.",
+          "execution": [
+            "Em pé, tronco firme, halteres ao lado do corpo.",
+            "Flexione o cotovelo trazendo o halter até próximo ao ombro.",
+            "Retorne devagar mantendo tensão e punho estável."
+          ],
+          "focus": "Bíceps braquial.",
+          "cues": [
+            "Cotovelo fixo ao lado do corpo.",
+            "Subida forte, descida lenta.",
+            "Punho neutro e firme."
+          ],
+          "common_errors": [
+            "Balançar o tronco para levantar a carga.",
+            "Deixar cotovelo ir para frente e perder isolamento.",
+            "Descer rápido e perder tensão."
+          ],
+          "variations": [
+            "Rosca direta no cabo",
+            "Rosca direta na máquina",
+            "Rosca direta com barra"
+          ]
+        }
+      ],
+      "maquinas": [
+        {
+          "name": "Rosca Scott na máquina",
+          "goal": "Isolar bíceps com estabilidade e trajetória consistente.",
+          "execution": [
+            "Ajuste o banco e apoie os braços no suporte.",
+            "Flexione o cotovelo até a contração máxima controlada.",
+            "Retorne lentamente até quase estender completamente."
+          ],
+          "focus": "Bíceps braquial (ênfase em controle).",
+          "cues": [
+            "Braços totalmente apoiados.",
+            "Pico controlado sem relaxar.",
+            "Retorno lento mantendo tensão."
+          ],
+          "common_errors": [
+            "Tirar o braço do apoio e perder estabilidade.",
+            "Bater no topo e relaxar.",
+            "Cortar amplitude na descida."
+          ],
+          "variations": [
+            "Rosca Scott com halteres (apoio)",
+            "Rosca Scott no cabo",
+            "Rosca direta no cabo"
+          ]
+        }
+      ],
+      "cabos": [
+        {
+          "name": "Rosca martelo no cabo (corda)",
+          "goal": "Aumentar ênfase no braquial e braquiorradial com tensão contínua.",
+          "execution": [
+            "Segure a corda na polia baixa com pegada neutra.",
+            "Flexione os cotovelos mantendo punhos alinhados.",
+            "Retorne lentamente controlando a resistência."
+          ],
+          "focus": "Braquial e braquiorradial com bíceps.",
+          "cues": [
+            "Pegada neutra e firme.",
+            "Cotovelos estáveis ao lado do tronco.",
+            "Descida lenta, sem soltar a carga."
+          ],
+          "common_errors": [
+            "Rotacionar punho e mudar o padrão.",
+            "Balançar o tronco para completar reps.",
+            "Amplitude curta e sem controle."
+          ],
+          "variations": [
+            "Rosca martelo com halteres",
+            "Rosca martelo na máquina",
+            "Rosca martelo cruzada com halteres"
+          ]
+        }
+      ]
+    },
+    "triceps": {
+      "halteres": [
+        {
+          "name": "Extensão acima da cabeça com halter (unilateral)",
+          "goal": "Aumentar ênfase na cabeça longa do tríceps com controle unilateral.",
+          "execution": [
+            "Em pé ou sentado, leve um halter acima da cabeça e estabilize o tronco.",
+            "Flexione o cotovelo levando o halter atrás da cabeça com controle.",
+            "Estenda o cotovelo retornando ao topo mantendo o braço estável."
+          ],
+          "focus": "Tríceps (cabeça longa).",
+          "cues": [
+            "Braço apontado para cima e firme.",
+            "Sem mover o ombro; apenas cotovelo.",
+            "Descida lenta e estável."
+          ],
+          "common_errors": [
+            "Abrir demais o cotovelo e perder alinhamento.",
+            "Arquear o tronco para ajudar.",
+            "Executar rápido e sem controle."
+          ],
+          "variations": [
+            "Extensão acima da cabeça no cabo (corda)",
+            "Extensão acima da cabeça na máquina",
+            "Extensão acima da cabeça com barra"
+          ]
+        }
+      ],
+      "maquinas": [
+        {
+          "name": "Extensão de tríceps na máquina (sentado)",
+          "goal": "Isolar tríceps com trajetória guiada e consistência.",
+          "execution": [
+            "Ajuste assento e apoios; alinhe cotovelos ao eixo da máquina.",
+            "Estenda os cotovelos até a contração controlada.",
+            "Retorne lentamente até amplitude completa e estável."
+          ],
+          "focus": "Tríceps (todas as cabeças).",
+          "cues": [
+            "Cotovelo alinhado ao eixo da máquina.",
+            "Subida firme, descida controlada.",
+            "Sem tirar o braço do apoio."
+          ],
+          "common_errors": [
+            "Ajuste incorreto e eixo desalinhado.",
+            "Travar no topo e relaxar.",
+            "Cortar amplitude na descida."
+          ],
+          "variations": [
+            "Tríceps no cabo (barra reta)",
+            "Tríceps testa com halteres",
+            "Mergulho na máquina (assistido)"
+          ]
+        }
+      ],
+      "cabos": [
+        {
+          "name": "Tríceps no cabo (corda)",
+          "goal": "Aumentar controle e pico de contração com ajuste fino de pegada.",
+          "execution": [
+            "Segure a corda na polia alta e estabilize o tronco.",
+            "Empurre para baixo estendendo cotovelos e abrindo a corda no final.",
+            "Retorne devagar mantendo tensão constante."
+          ],
+          "focus": "Tríceps (todas as cabeças).",
+          "cues": [
+            "Abra a corda no final sem perder controle.",
+            "Ombros baixos e estáveis.",
+            "Retorno lento e ativo."
+          ],
+          "common_errors": [
+            "Mover ombro para ajudar e perder cotovelo fixo.",
+            "Executar rápido sem controle.",
+            "Amplitude curta e sem extensão completa."
+          ],
+          "variations": [
+            "Tríceps no cabo (barra reta)",
+            "Mergulho na máquina (assistido)",
+            "Tríceps testa no cabo"
+          ]
+        }
+      ]
+    }
+  }
+}

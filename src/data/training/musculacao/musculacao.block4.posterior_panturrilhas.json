@@ -1,0 +1,170 @@
+{
+  "musculacao": {
+    "posterior_coxa": {
+      "halteres": [
+        {
+          "name": "Levantamento romeno com halteres",
+          "goal": "Desenvolver posterior de coxa com controle de hinge e amplitude.",
+          "execution": [
+            "Em pé, halteres próximos ao corpo, coluna neutra.",
+            "Desça levando o quadril para trás com joelhos semi-flexionados.",
+            "Suba estendendo o quadril com controle e tensão."
+          ],
+          "focus": "Posterior de coxa e glúteos.",
+          "cues": [
+            "Quadril para trás na descida.",
+            "Halteres colados ao corpo.",
+            "Subida contínua sem tranco."
+          ],
+          "common_errors": [
+            "Arredondar a coluna e perder padrão.",
+            "Dobrar demais os joelhos e virar agachamento.",
+            "Afastar halteres e perder alavanca."
+          ],
+          "variations": [
+            "Levantamento romeno com barra",
+            "Good morning com barra",
+            "Pull-through no cabo"
+          ]
+        }
+      ],
+      "maquinas": [
+        {
+          "name": "Cadeira flexora (sentado)",
+          "goal": "Trabalhar posterior de coxa com estabilidade e tensão contínua.",
+          "execution": [
+            "Ajuste encosto e rolos para travar a coxa.",
+            "Flexione os joelhos até contração controlada.",
+            "Retorne lentamente mantendo tensão."
+          ],
+          "focus": "Posterior de coxa (isolamento).",
+          "cues": [
+            "Coxa travada e postura firme.",
+            "Pico controlado sem relaxar.",
+            "Retorno lento e ativo."
+          ],
+          "common_errors": [
+            "Ajuste ruim e rolos fora da posição.",
+            "Bater no final e perder controle.",
+            "Retorno rápido e sem tensão."
+          ],
+          "variations": [
+            "Mesa flexora (deitado)",
+            "Flexora unilateral",
+            "Flexão de joelho no cabo (tornozeleira)"
+          ]
+        }
+      ],
+      "cabos": [
+        {
+          "name": "Flexão de joelho no cabo (tornozeleira)",
+          "goal": "Isolar posterior de coxa unilateral com tensão contínua.",
+          "execution": [
+            "Prenda a tornozeleira na polia baixa e estabilize o tronco.",
+            "Flexione o joelho trazendo o calcanhar em direção ao glúteo com controle.",
+            "Retorne lentamente mantendo tensão."
+          ],
+          "focus": "Posterior de coxa (unilateral).",
+          "cues": [
+            "Coxa firme; movimento só no joelho.",
+            "Pico controlado sem tranco.",
+            "Descida lenta e constante."
+          ],
+          "common_errors": [
+            "Mover quadril e perder isolamento.",
+            "Executar rápido sem controle.",
+            "Amplitude curta e sem pico."
+          ],
+          "variations": [
+            "Mesa flexora (deitado)",
+            "Cadeira flexora (sentado)",
+            "Flexora unilateral na máquina"
+          ]
+        }
+      ]
+    },
+    "panturrilhas": {
+      "halteres": [
+        {
+          "name": "Elevação de panturrilha em pé com halteres",
+          "goal": "Desenvolver panturrilha com amplitude completa e controle de pico.",
+          "execution": [
+            "Em pé, segure halteres ao lado do corpo e mantenha postura firme.",
+            "Suba na ponta dos pés até o pico controlado.",
+            "Desça lentamente até amplitude completa."
+          ],
+          "focus": "Gastrocnêmio (ênfase em pé).",
+          "cues": [
+            "Suba o máximo com controle.",
+            "Pausa curta no topo sem relaxar.",
+            "Desça devagar mantendo amplitude."
+          ],
+          "common_errors": [
+            "Repetições rápidas e curtas.",
+            "Balançar o corpo para ganhar altura.",
+            "Descer pouco e perder amplitude."
+          ],
+          "variations": [
+            "Elevação de panturrilha na máquina em pé",
+            "Elevação de panturrilha no leg press",
+            "Elevação de panturrilha no Smith"
+          ]
+        }
+      ],
+      "maquinas": [
+        {
+          "name": "Elevação de panturrilha em pé na máquina",
+          "goal": "Desenvolver gastrocnêmio com estabilidade e progressão consistente.",
+          "execution": [
+            "Ajuste o equipamento e posicione os ombros no apoio.",
+            "Suba na ponta dos pés até pico controlado.",
+            "Desça lentamente mantendo amplitude total."
+          ],
+          "focus": "Gastrocnêmio.",
+          "cues": [
+            "Pico controlado no topo.",
+            "Descida lenta e completa.",
+            "Sem balançar o tronco."
+          ],
+          "common_errors": [
+            "Amplitude curta e rápida.",
+            "Relaxar no final e perder tensão.",
+            "Empurrar com impulso do corpo."
+          ],
+          "variations": [
+            "Panturrilha no Smith",
+            "Panturrilha em pé com halteres",
+            "Panturrilha no leg press"
+          ]
+        }
+      ],
+      "cabos": [
+        {
+          "name": "Panturrilha no cabo (tornozeleira, unilateral)",
+          "goal": "Treinar panturrilha unilateral com tensão contínua e controle fino.",
+          "execution": [
+            "Prenda a tornozeleira na polia baixa e estabilize a postura.",
+            "Faça flexão plantar elevando o calcanhar até o pico controlado.",
+            "Retorne lentamente mantendo tensão do cabo."
+          ],
+          "focus": "Panturrilha (unilateral).",
+          "cues": [
+            "Amplitude total e controlada.",
+            "Pico firme sem relaxar.",
+            "Descida lenta sem soltar o cabo."
+          ],
+          "common_errors": [
+            "Movimento rápido e curto.",
+            "Perder postura e balançar.",
+            "Relaxar na base e perder tensão."
+          ],
+          "variations": [
+            "Panturrilha em pé na máquina",
+            "Panturrilha em pé com halteres",
+            "Panturrilha no Smith"
+          ]
+        }
+      ]
+    }
+  }
+}

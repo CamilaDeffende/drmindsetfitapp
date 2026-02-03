@@ -1,0 +1,170 @@
+{
+  "musculacao": {
+    "gluteos": {
+      "halteres": [
+        {
+          "name": "Hip thrust com halter (no banco)",
+          "goal": "Desenvolver glúteos com foco em extensão de quadril e controle de pico.",
+          "execution": [
+            "Apoie as escápulas no banco e posicione o halter sobre o quadril.",
+            "Eleve o quadril até alinhamento firme do tronco com o fêmur.",
+            "Desça controlando sem perder tensão na base."
+          ],
+          "focus": "Glúteo máximo.",
+          "cues": [
+            "Tronco estável e subida controlada.",
+            "Pausa curta no topo sem relaxar.",
+            "Descida lenta mantendo tensão."
+          ],
+          "common_errors": [
+            "Amplitude curta e sem extensão firme.",
+            "Descer rápido e perder tensão.",
+            "Posicionar o halter instável e desalinhado."
+          ],
+          "variations": [
+            "Hip thrust na máquina",
+            "Hip thrust no Smith",
+            "Hip thrust no cabo (cinto)"
+          ]
+        }
+      ],
+      "maquinas": [
+        {
+          "name": "Abdução de quadril na máquina",
+          "goal": "Desenvolver glúteo médio com tensão constante e controle.",
+          "execution": [
+            "Ajuste o assento e posicione as pernas nos apoios.",
+            "Abra as pernas controlando a amplitude até o pico.",
+            "Retorne lentamente sem relaxar no final."
+          ],
+          "focus": "Glúteo médio.",
+          "cues": [
+            "Movimento controlado e contínuo.",
+            "Pico com controle sem tranco.",
+            "Retorno lento mantendo tensão."
+          ],
+          "common_errors": [
+            "Fazer reps rápidas e sem controle.",
+            "Relaxar no final e perder tensão.",
+            "Amplitude curta e sem pico."
+          ],
+          "variations": [
+            "Abdução no cabo (unilateral)",
+            "Abdução com miniband",
+            "Abdução na polia baixa com tornozeleira"
+          ]
+        }
+      ],
+      "cabos": [
+        {
+          "name": "Extensão de quadril no cabo (coice)",
+          "goal": "Isolar glúteo com controle unilateral e tensão contínua.",
+          "execution": [
+            "Coloque a tornozeleira na polia baixa e estabilize o tronco.",
+            "Empurre o pé para trás e para cima com controle sem girar o quadril.",
+            "Retorne lentamente mantendo tensão."
+          ],
+          "focus": "Glúteo máximo (unilateral).",
+          "cues": [
+            "Quadril quadrado e tronco firme.",
+            "Amplitude controlada sem balanço.",
+            "Retorno lento, sem encostar a carga."
+          ],
+          "common_errors": [
+            "Rotacionar o quadril para facilitar.",
+            "Balançar o corpo para gerar impulso.",
+            "Executar curto e sem controle."
+          ],
+          "variations": [
+            "Extensão de quadril na máquina",
+            "Hip thrust unilateral",
+            "Coice no cabo em quatro apoios"
+          ]
+        }
+      ]
+    },
+    "quadriceps": {
+      "halteres": [
+        {
+          "name": "Afundo búlgaro com halteres",
+          "goal": "Aumentar ênfase unilateral em quadríceps com estabilidade.",
+          "execution": [
+            "Apoie o pé de trás no banco e segure halteres ao lado do corpo.",
+            "Desça controlando até formar ângulos estáveis no joelho e quadril.",
+            "Suba mantendo tronco firme e alinhamento do joelho."
+          ],
+          "focus": "Quadríceps (unilateral).",
+          "cues": [
+            "Tronco firme e descida controlada.",
+            "Joelho segue a linha do pé.",
+            "Subida sem empurrar com o pé de trás."
+          ],
+          "common_errors": [
+            "Perder equilíbrio e balançar.",
+            "Joelho colapsar para dentro.",
+            "Amplitude curta e sem controle."
+          ],
+          "variations": [
+            "Afundo no Smith",
+            "Afundo na máquina (guiado)",
+            "Passada no cabo (unilateral)"
+          ]
+        }
+      ],
+      "maquinas": [
+        {
+          "name": "Cadeira extensora",
+          "goal": "Isolar quadríceps com tensão contínua e controle de amplitude.",
+          "execution": [
+            "Ajuste o banco e o rolo na canela.",
+            "Estenda o joelho até contração controlada.",
+            "Retorne lentamente mantendo tensão."
+          ],
+          "focus": "Quadríceps (isolamento).",
+          "cues": [
+            "Subida firme e controlada.",
+            "Pico controlado sem relaxar.",
+            "Descida lenta mantendo tensão."
+          ],
+          "common_errors": [
+            "Bater no topo e relaxar.",
+            "Descer rápido e perder controle.",
+            "Ajuste incorreto e rolo mal posicionado."
+          ],
+          "variations": [
+            "Extensora unilateral",
+            "Extensão de joelho no cabo (tornozeleira)",
+            "Sissy squat na máquina"
+          ]
+        }
+      ],
+      "cabos": [
+        {
+          "name": "Extensão de joelho no cabo (tornozeleira)",
+          "goal": "Isolar quadríceps unilateral com tensão contínua e controle fino.",
+          "execution": [
+            "Prenda a tornozeleira na polia baixa e estabilize o tronco sentado.",
+            "Estenda o joelho até contração controlada.",
+            "Retorne lentamente mantendo tensão."
+          ],
+          "focus": "Quadríceps (unilateral).",
+          "cues": [
+            "Movimento suave, sem trancos.",
+            "Pico controlado sem relaxar.",
+            "Descida lenta e ativa."
+          ],
+          "common_errors": [
+            "Chutar rápido e perder controle.",
+            "Amplitude curta e sem pico.",
+            "Perder estabilidade do tronco."
+          ],
+          "variations": [
+            "Cadeira extensora",
+            "Cadeira extensora unilateral",
+            "Sissy squat na máquina"
+          ]
+        }
+      ]
+    }
+  }
+}
