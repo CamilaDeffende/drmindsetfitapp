@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { buildWeeklyProtocol } from "@/features/fitness-suite/engine/weeklyProtocol";
+import { planWeek, type PlannerInput } from "@/engine/planner/trainingPlanner.engine";
+import { plannerWeekToTreinoPlan } from "@/engine/planner/plannerWeekToTreino.adapter";
 
 import { buildStrengthWeekPlan } from "@/features/fitness-suite/engine/strength/strengthWeekPlanner";
 import { toWeekdayKey } from "@/utils/strength/weekdayMap";
@@ -51,7 +53,36 @@ function __mfSortDays(keys: __MfDayKey[]) {
   const order = new Map(__mfWeekDays.map((d, i) => [d.key, i] as const));
   return [...keys].sort((a,b) => (order.get(a) ?? 999) - (order.get(b) ?? 999));
 }
-import { generateWeeklyWorkout } from "@/features/fitness-suite/engine/workoutGenerator";
+/* MF_PLANNER2_MODALITY_MAP_V1 */
+function mfMapModalitiesToPlanner(raw: any): PlannerInput["modalities"] {
+  const arr = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+  const out = [];
+  for (const x of arr) {
+    const k = String(x ?? "").toLowerCase();
+    if (!k) continue;
+    if (k.includes("mus") || k.includes("strength") || k.includes("gym")) out.push("strength");
+    else if (k.includes("corr") || k.includes("run")) out.push("running");
+    else if (k.includes("cic") || k.includes("bike") || k.includes("cycl")) out.push("cycling");
+  }
+  // fallback seguro
+  const unique = Array.from(new Set(out));
+  return (unique.length ? unique : (["strength"] as any)) as any;
+}
+
+function mfMapLevelToPlanner(raw: any): PlannerInput["level"] {
+  const k = String(raw ?? "").toLowerCase();
+  if (k.includes("avan")) return "avancado";
+  if (k.includes("inter")) return "intermediario";
+  return "iniciante";
+}
+
+function mfMapGoalToPlanner(raw: any): PlannerInput["goal"] {
+  const k = String(raw ?? "").toLowerCase();
+  if (k.includes("perf")) return "performance";
+  if (k.includes("cond")) return "condicionamento";
+  if (k.includes("emag") || k.includes("cut")) return "emagrecimento";
+  return "condicionamento";
+}
 
 export function Step5Treino() {
   const [strengthGroupsError, setStrengthGroupsError] = useState<string | null>(null);
@@ -249,8 +280,25 @@ if (!canContinue) return;
     } as any);
 
     // Treino inteligente (individualizado + variações por seed)
-    const treinoPlan = generateWeeklyWorkout({ state, daysSelected, planByDay: (planByDay as any) });
-    updateState({ treino: treinoPlan } as any);
+    /* MF_PLANNER2_TREINOPLAN_V1 */
+    const _rawModalities =
+      ((state as any)?.workoutModalities?.length ? (state as any).workoutModalities
+        : ((state as any)?.workoutModality ? [(state as any).workoutModality] : []));
+    const plannerInput: PlannerInput = {
+      level: mfMapLevelToPlanner((state as any)?.workoutLevel ?? (state as any)?.nivelTreino ?? "iniciante"),
+      goal: mfMapGoalToPlanner((state as any)?.objetivoTreino ?? (state as any)?.goal ?? "condicionamento"),
+      available_days: Array.isArray(daysSelected) ? daysSelected.length : Number((state as any)?.workoutDaysCount ?? 3),
+      modalities: mfMapModalitiesToPlanner(_rawModalities),
+    };
+
+    const weekly = planWeek(plannerInput);
+
+    const treinoPlan = plannerWeekToTreinoPlan({
+      weekly,
+      input: plannerInput,
+      daysSelectedPT: Array.isArray(daysSelected) && daysSelected.length ? daysSelected : ["Seg","Qua","Sex"],
+    });
+updateState({ treino: treinoPlan } as any);
 
     // anexar ao protocolo semanal (fallback p/ telas que leem workoutProtocolWeekly)
     try { (__protocol as any).treinoPlan = treinoPlan; } catch (e) {}
