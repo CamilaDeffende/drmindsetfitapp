@@ -66,7 +66,7 @@ function App() {
 
               {/* Onboarding (Premium) — etapas 1..8 */}
               <Route
-                path="/onboarding"
+                path="/onboarding/*"
                 element={
                   <ProtectedRoute requiresPremium>
                     <OnboardingFlow />
@@ -74,7 +74,7 @@ function App() {
                 }
               />
 
-              {/* Onboarding — rota por step */}
+              {/* Onboarding — rota por step (necessário p/ URL avançar e useParams.step existir) */}
               <Route
                 path="/onboarding/step-:step"
                 element={
@@ -83,6 +83,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Onboarding — rota por step */}
               {/* Dashboard (após onboarding completo) */}
               <Route
                 path="/dashboard"
@@ -175,7 +177,7 @@ function App() {
                 }
               />
 
-              {/* Fallback */}<Route path="*" element={<Navigate to="/onboarding" replace />} />
+              {/* Fallback */}<Route path="*" element={<Navigate to="/onboarding/step-1" replace />} />
 
   <Route path="/dev/engine" element={<DevEngine />} />
 </Routes>
