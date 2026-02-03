@@ -1,0 +1,44 @@
+{
+  "weekIndex": 1,
+  "level": "AVANCADO",
+  "goal": "21K",
+  "daysPerWeek": 5,
+  "hasStrength": true,
+  "sessions": [
+    {
+      "day": 1,
+      "label": "Rodagem leve",
+      "type": "EASY",
+      "durationMin": 28,
+      "notes": "RPE 3-4"
+    },
+    {
+      "day": 2,
+      "label": "Intervalado",
+      "type": "INTERVAL",
+      "durationMin": 26,
+      "notes": "Aquecimento + tiros curtos + desaquecimento"
+    },
+    {
+      "day": 3,
+      "label": "Recuperação",
+      "type": "RECOVERY",
+      "durationMin": 20,
+      "notes": "Leve, foco em técnica"
+    },
+    {
+      "day": 4,
+      "label": "Tempo run",
+      "type": "TEMPO",
+      "durationMin": 33,
+      "notes": "Sustentado, RPE 6-7"
+    },
+    {
+      "day": 6,
+      "label": "Fortalecimento",
+      "type": "STRENGTH",
+      "durationMin": 30,
+      "notes": "Lower body + core + mobilidade"
+    }
+  ]
+}

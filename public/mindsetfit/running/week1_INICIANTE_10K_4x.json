@@ -1,0 +1,37 @@
+{
+  "weekIndex": 1,
+  "level": "INICIANTE",
+  "goal": "10K",
+  "daysPerWeek": 4,
+  "hasStrength": true,
+  "sessions": [
+    {
+      "day": 1,
+      "label": "Rodagem leve",
+      "type": "EASY",
+      "durationMin": 21,
+      "notes": "RPE 3-4"
+    },
+    {
+      "day": 2,
+      "label": "Intervalado",
+      "type": "INTERVAL",
+      "durationMin": 19,
+      "notes": "Aquecimento + tiros curtos + desaquecimento"
+    },
+    {
+      "day": 3,
+      "label": "Recuperação",
+      "type": "RECOVERY",
+      "durationMin": 15,
+      "notes": "Leve, foco em técnica"
+    },
+    {
+      "day": 4,
+      "label": "Tempo run",
+      "type": "TEMPO",
+      "durationMin": 21,
+      "notes": "Sustentado, RPE 6-7"
+    }
+  ]
+}
