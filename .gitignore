@@ -138,3 +138,6 @@ playwright-report/
 
 # MF: nunca versionar lixo
 node_modules 2/
+
+# MF: arquivos acidentais
+package-lock 2.json
