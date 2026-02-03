@@ -135,3 +135,6 @@ playwright-report/
 
 # local run artifacts
 .run/
+
+# MF: nunca versionar lixo
+node_modules 2/
