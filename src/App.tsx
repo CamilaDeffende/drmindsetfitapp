@@ -1,3 +1,4 @@
+import DevEngine from "@/pages/DevEngine";
 import * as React from "react";
 import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import Assinatura from "@/pages/Assinatura";
@@ -175,6 +176,8 @@ function App() {
               />
 
               {/* Fallback */}<Route path="*" element={<Navigate to="/onboarding" replace />} />
+
+  <Route path="/dev/engine" element={<DevEngine />} />
 </Routes>
             <LiveLocationPill />
           </BrowserRouter>
