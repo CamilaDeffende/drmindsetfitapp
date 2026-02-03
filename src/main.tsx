@@ -35,8 +35,18 @@ function RootProviders({ children }: { children: React.ReactNode }) {
   const userId = (auth as any)?.user?.id ?? (auth as any)?.session?.user?.id ?? null;
 
   // TODO (Phase 1.1): substituir por user.id real do AuthContext
-  if (!userId) return null;
-  return <ProfileProvider userId={userId} gate><AppProvider>{children}</AppProvider></ProfileProvider>;
+  // MF_MAIN_GATE_V1: nunca retornar null no bootstrap (evita root vazio).
+// Em DEMO/sem sessão: usar userId estável para permitir providers e onboarding renderizarem.
+const __demoUserId = "demo-user-123";
+const __resolvedUserId = userId ?? __demoUserId;
+// se quiser bloquear SEMPRE sem auth real, troque por: return <SplashScreen />
+// (mas em modo DEMO queremos UI viva)
+// if (!userId) return <SplashScreen />;
+// nota: __resolvedUserId garante ProfileProvider/AppProvider
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+void __resolvedUserId;
+  // MF_MAIN_PROFILE_GATE_FALSE_V1: demo mode — não bloquear UI
+  return (<ProfileProvider userId={__resolvedUserId} gate={false}><AppProvider>{children}</AppProvider></ProfileProvider>);
 }
 
 createRoot(el).render(<AuthProvider>

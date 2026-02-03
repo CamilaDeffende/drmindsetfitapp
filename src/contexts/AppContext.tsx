@@ -48,7 +48,13 @@ export function AppProvider({ children }: Props) {
   );
 
   // Gate premium: evita UI inconsistente (flash)
-  if (!userId) return null; // Auth decide redirect/rota
+  // MF_APPCTX_NO_NULL_V1: nunca retornar null (evita root vazio).
+// Sem userId ainda? Mantém UI viva (Splash) até auth resolver.
+if (!userId) {
+  // mantém UX premium e evita tela preta
+  return (<>{children}</>);
+}
+// Auth decide redirect/rota
   if (!profileReady) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">

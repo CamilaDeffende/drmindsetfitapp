@@ -1,8 +1,11 @@
+import { Outlet } from "react-router-dom";
+
 /**
- * NO_PAYWALL_ROUTE_GUARD_HARD_V1
- * Sem assinatura por enquanto.
- * Importante: NÃO redireciona nada. O controle de acesso fica no ProtectedRoute (login obrigatório).
+ * MF_ROUTE_GUARD_V1
+ * Guard "neutro": NÃO redireciona nada.
+ * Ele existe apenas para manter consistência de arquitetura e permitir instrumentação futura,
+ * sem jamais matar o render das rotas filhas.
  */
 export default function RouteGuard() {
-  return null;
+  return <Outlet />;
 }
