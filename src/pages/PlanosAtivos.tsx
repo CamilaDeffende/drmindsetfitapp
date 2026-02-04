@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ensureTrainingPlanInActivePlan } from "../services/training/trainingPlan.ssot";
 import { getActiveTrainingSummaries } from "../services/training/activeTraining.bridge";
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,6 +21,15 @@ const HIDE_ADVANCED_MODALITY_UI = true;
 
 export function PlanosAtivos() {
   const __mfTrainingSummaries = getActiveTrainingSummaries();
+
+  // MF_TRAINING_WORKOUTS_V2
+  const __mfActivePlanRaw = (typeof window !== "undefined") ? localStorage.getItem("mf:activePlan:v1") : null;
+  let __mfWorkouts: any[] = [];
+  try {
+    const ap = __mfActivePlanRaw ? JSON.parse(__mfActivePlanRaw) : {};
+    const ap2 = ensureTrainingPlanInActivePlan(ap);
+    __mfWorkouts = Array.isArray(ap2?.training?.workouts) ? ap2.training.workouts : [];
+  } catch {}
   // BLOCO G1 (fonte única): PlanosAtivos apenas LÊ ActivePlan e renderiza (não calcula aqui).
   const [activePlan, setActivePlan] = useState<any>(null);
   const [planLoaded, setPlanLoaded] = useState(false);
@@ -181,7 +191,33 @@ return (
               ))}
             </div>
           )}
-        </section>
+        
+          {/* MF_TRAINING_HUB_V2_UI */}
+          {__mfWorkouts && __mfWorkouts.length ? (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>Agenda da semana (prévia)</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+                {__mfWorkouts.map((w, i) => (
+                  <div key={(w.day||"D") + "-" + (w.modality||"M") + "-" + i} style={{
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 14,
+                    padding: 12,
+                    background: "rgba(255,255,255,0.02)"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ fontWeight: 900 }}>{w.day} • {w.modality}</div>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>{w.intensity || "Auto"} • {w.level || "Auto"}</div>
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 13, opacity: 0.9 }}>{w.title || "Treino do dia"}</div>
+                    {w.focus ? <div style={{ marginTop: 4, fontSize: 12, opacity: 0.75 }}>{w.focus}</div> : null}
+                    {w.durationMin ? <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>Duração: {w.durationMin} min</div> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+</section>
 
         <div className="mb-4">
           <div data-testid="active-plan-panel" className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm">
