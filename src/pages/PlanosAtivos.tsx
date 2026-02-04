@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getActiveTrainingSummaries } from "../services/training/activeTraining.bridge";
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ import { loadActivePlan } from "@/services/plan.service";
 const HIDE_ADVANCED_MODALITY_UI = true;
 
 export function PlanosAtivos() {
+  const __mfTrainingSummaries = getActiveTrainingSummaries();
   // BLOCO G1 (fonte única): PlanosAtivos apenas LÊ ActivePlan e renderiza (não calcula aqui).
   const [activePlan, setActivePlan] = useState<any>(null);
   const [planLoaded, setPlanLoaded] = useState(false);
@@ -136,6 +138,51 @@ const navigate = useNavigate()
 
 return (
       <div className="min-h-screen flex items-center justify-center bg-black">
+
+        {/* MF_TRAINING_HUB_V1 */}
+        <section style={{ marginTop: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 0.2 }}>Atividades físicas ativas</h2>
+            <span style={{ opacity: 0.75, fontSize: 12 }}>Modalidades • Dias • Intensidade</span>
+          </div>
+
+          {(!__mfTrainingSummaries || __mfTrainingSummaries.length === 0) ? (
+            <div style={{ marginTop: 10, opacity: 0.85 }}>
+              Nenhuma modalidade ativa encontrada ainda. Conclua o onboarding para gerar seus treinos.
+            </div>
+          ) : (
+            <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+              {__mfTrainingSummaries.map((t) => (
+                <div key={t.id} style={{
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 14,
+                  padding: 14,
+                  background: "rgba(255,255,255,0.03)"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+                    <div style={{ fontWeight: 900, fontSize: 16 }}>{t.modality}</div>
+                    <div style={{ fontSize: 12, opacity: 0.8 }}>
+                      {t.intensity ? t.intensity : "Intensidade: auto"}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 6, fontSize: 13, opacity: 0.85 }}>
+                    {t.level ? <>Nível: {t.level}</> : "Nível: auto"}
+                    {" • "}
+                    {t.days && t.days.length ? <>Dias: {t.days.join(", ")}</> : "Dias: auto"}
+                  </div>
+
+                  {t.note ? (
+                    <div style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
+                      {t.note}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
         <div className="mb-4">
           <div data-testid="active-plan-panel" className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
