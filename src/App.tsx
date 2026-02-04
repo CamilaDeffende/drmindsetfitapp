@@ -68,20 +68,16 @@ function App() {
               <Route
                 path="/onboarding/*"
                 element={
-                  <ProtectedRoute requiresPremium>
-                    <OnboardingFlow />
-                  </ProtectedRoute>
-                }
+                  <OnboardingFlow />
+                  }
               />
 
               {/* Onboarding — rota por step (necessário p/ URL avançar e useParams.step existir) */}
               <Route
                 path="/onboarding/step-:step"
                 element={
-                  <ProtectedRoute requiresPremium>
-                    <OnboardingFlow />
-                  </ProtectedRoute>
-                }
+                  <OnboardingFlow />
+                  }
               />
 
               {/* Onboarding — rota por step */}

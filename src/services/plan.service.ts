@@ -97,6 +97,13 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
 
   const metabolic = computeMetabolic({
     weightKg, heightCm, ageYears, gender,
+
+    // MF_AUTO_REE_INPUTS_V1 (precisão científica)
+    bodyFatPercent: Number(step2?.percentualGordura ?? step2?.bodyFatPercent ?? step2?.bf ?? step2?.gorduraCorporal ?? step2?.["%gordura"] ?? undefined) || undefined,
+    fatFreeMassKg: Number(step2?.massaMagra ?? step2?.fatFreeMassKg ?? step2?.ffm ?? step2?.magraKg ?? undefined) || undefined,
+    // activityLevel/isAthlete: vem do Step3 (nivel/frequencia). Mantém opcional e seguro.
+    activityLevel: (String(step3?.nivelAtividade ?? step3?.activityLevel ?? "").toLowerCase() || undefined) as any,
+    isAthlete: Boolean(String(step3?.nivelAtividade ?? step3?.activityLevel ?? "").toLowerCase().includes("athlete") || String(step3?.nivel ?? "").toLowerCase().includes("avanc")),
     activityFactor,
     goal,
   });

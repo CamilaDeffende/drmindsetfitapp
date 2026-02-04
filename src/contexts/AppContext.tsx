@@ -52,7 +52,11 @@ export function AppProvider({ children }: Props) {
 // Sem userId ainda? Mantém UI viva (Splash) até auth resolver.
 if (!userId) {
   // mantém UX premium e evita tela preta
-  return (<>{children}</>);
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
 }
 // Auth decide redirect/rota
   if (!profileReady) {

@@ -11,6 +11,7 @@ import type { DietaAtiva, TreinoAtivo } from '@/types'
 import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
 import { loadActivePlan } from "@/services/plan.service";
 
@@ -33,7 +34,10 @@ export function PlanosAtivos() {
   const kcal = activePlan?.nutrition?.kcalTarget ?? activePlan?.nutrition?.kcal ?? null;
   const macros = activePlan?.nutrition?.macros ?? null;
   const meals = activePlan?.nutrition?.meals ?? [];
-  const week = activePlan?.workout?.week ?? activePlan?.workout?.days ?? [];
+  
+  // __MF_NUTRITION_ADAPTER_V1__
+  const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
+const week = activePlan?.workout?.week ?? activePlan?.workout?.days ?? [];
 
   const { state, updateState } = useDrMindSetfit()
   
@@ -54,6 +58,22 @@ const navigate = useNavigate()
 
   // Inicializar planos ativos na primeira renderização (se ainda não existirem)
   useEffect(() => {
+    // __MF_NUTRITION_ADAPTER_APPLY_V1__
+    // Se houver plano ativo com meals/macros e nutricao ainda nao estiver hidratada, popula no formato do app.
+    try {
+      const hasRef = !!(state as any)?.nutricao?.refeicoes?.length;
+      const hasMacros = !!(state as any)?.nutricao?.macros;
+      if ((!hasRef || !hasMacros) && adapted) {
+        updateState({
+          nutricao: {
+            ...(state as any).nutricao,
+            macros: adapted.macros,
+            refeicoes: adapted.refeicoes,
+          },
+        });
+      }
+    } catch {}
+
     // Criar dieta ativa se ainda não existir
     if (state.nutricao && !state.dietaAtiva) {
       const hoje = new Date()

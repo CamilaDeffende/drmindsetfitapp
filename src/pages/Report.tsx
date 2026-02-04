@@ -6,6 +6,7 @@ import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { loadActivePlan } from "@/services/plan.service"
 import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
 function mfActivityWeeklyLabel(v: unknown) {
   const x = String(v || "").toLowerCase();
@@ -39,6 +40,11 @@ export function Report() {
 
   const { state } = useDrMindSetfit()
   const navigate = useNavigate()
+
+  // __MF_REPORT_ADAPTER_V1__
+  const activePlan = loadActivePlan?.() as any;
+  const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
+
 
   if (!state.concluido) {
     
@@ -205,7 +211,19 @@ export function Report() {
       </div>
     );
   }
-  const dietaAtiva = state.dietaAtiva;
+    // __MF_REPORT_DIETA_FALLBACK_V1__
+  const dietaAtiva = (state as any).dietaAtiva ?? (
+    adapted?.macros ? {
+      estrategia: (activePlan?.nutrition?.strategy ?? activePlan?.nutrition?.estrategia ?? "Plano personalizado"),
+      dataInicio: new Date().toISOString(),
+      dataFim: new Date(Date.now() + 28*24*60*60*1000).toISOString(),
+      duracaoSemanas: 4,
+      nutricao: {
+        macros: adapted.macros,
+        refeicoes: adapted.refeicoes ?? [],
+      },
+    } : null
+  );
   const treinoAtivo = state.treinoAtivo;
   // Calcular dias do plano
   const diasDieta = dietaAtiva ? differenceInDays(new Date(dietaAtiva.dataFim), new Date(dietaAtiva.dataInicio)) : 0

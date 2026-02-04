@@ -21,12 +21,14 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { loadActivePlan } from "@/services/plan.service";
 import { ACTIVE_PLAN_KEY } from "../services/activePlan.bridge";
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
 export function DashboardPremium() {
   
   // BLOCO G2: Dashboard apenas LÊ ActivePlan (source of truth) e mostra resumo premium.
   const [activePlan, setActivePlan] = useState<any>(null);
   const [planLoaded, setPlanLoaded] = useState(false);
+  const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
 
   const [noPlan, setNoPlan] = useState(false);
 
@@ -35,14 +37,17 @@ export function DashboardPremium() {
 
     try {
       setActivePlan(loadActivePlan());
+      // __MF_DASH_PREMIUM_ADAPTER_V1__
+      // Adapter: normaliza nutrition para o shape do app (macros/refeicoes)
+
     } finally {
       setPlanLoaded(true);
     }
   }, []);
 
-  const kcal = activePlan?.nutrition?.kcalTarget ?? activePlan?.nutrition?.kcal ?? null;
-  const macros = activePlan?.nutrition?.macros ?? null;
-  const nextMeal = (activePlan?.nutrition?.meals && activePlan.nutrition.meals[0]) ? activePlan.nutrition.meals[0] : null;
+  const kcal = adapted?.kcalTarget ?? activePlan?.nutrition?.kcalTarget ?? activePlan?.nutrition?.kcal ?? null;
+  const macros = adapted?.macros ?? activePlan?.nutrition?.macros ?? null;
+  const nextMeal = (adapted?.meals?.[0] ?? activePlan?.nutrition?.meals?.[0]) ?? null;
   const week = activePlan?.workout?.week ?? activePlan?.workout?.days ?? [];
 const { state } = useDrMindSetfit()
 

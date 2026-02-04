@@ -59,6 +59,7 @@ function saveDraft(d: Draft) {
 // ✅ Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
   // MF_SAFE_NAV_GUARD_V1
+  const navigate = useNavigate();
   // Guard anti-loop: só navega quando o destino muda e é diferente do pathname atual.
   const location = useLocation();
   const __mfLastNavRef = useRef<string | null>(null);
@@ -71,9 +72,6 @@ export function OnboardingFlow() {
       navigate(to, (opts ?? { replace: true }));
     } catch {}
   };
-
-  const navigate = useNavigate();
-
   // UNLOCK_FLOW_REDIRECT_EFFECT_V1: /onboarding deve respeitar progresso salvo (sem apagar dados)
   useEffect(() => {
     try {
@@ -140,6 +138,22 @@ return Number.isFinite(i) ? i : 0;
   // Gate depois dos hooks
   // __MF_APPREADY_NO_BLANK_V1__
   if (!appReady) {
+  // MF_FALLBACK_STEPVIEW (não altera UX normal; só evita crash)
+  // Se por qualquer motivo o StepView não existir, mostramos um fallback mínimo (sem travar a árvore React).
+  // Mantemos página viva para debug e para o runner conseguir capturar DOM.
+  // (Não mexer em copy/layout premium agora.)
+  // @ts-expect-error StepView pode ser undefined em runtime-safe guard
+  if (typeof StepView === "undefined" || StepView === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="text-sm text-gray-400">
+          Onboarding carregou, mas o step não pôde ser renderizado. (safeStep={String((globalThis as any)?.safeStep ?? "")})
+        </div>
+      </div>
+    );
+  }
+  // MF_FALLBACK_STEPVIEW_END
+
     return (
       <div
 data-testid="app-loading" className="min-h-screen flex items-center justify-center">

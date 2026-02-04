@@ -1,3 +1,5 @@
+import { calculateREEAuto } from "@/services/nutrition/energyEquations";
+
 export type Gender = "male" | "female" | "other";
 
 export type MetabolicInput = {
@@ -5,6 +7,10 @@ export type MetabolicInput = {
   heightCm: number;
   ageYears: number;
   gender: Gender;
+  bodyFatPercent?: number;
+  fatFreeMassKg?: number;
+  activityLevel?: "sedentary" | "light" | "moderate" | "high" | "athlete";
+  isAthlete?: boolean;
   activityFactor: number; // ex.: 1.2, 1.375, 1.55, 1.725
   goal: "cut" | "maintain" | "bulk";
 };
@@ -14,7 +20,9 @@ export type MetabolicOutput = {
   tdeeKcal: number;
   targetKcal: number;
   activityFactor: number;
-  method: "mifflin";
+  equationUsed?: string;
+  reeKcalAuto?: number;
+  method: "mifflin" | "auto";
 };
 
 function round(n: number) {
@@ -22,28 +30,35 @@ function round(n: number) {
 }
 
 /**
- * Determinístico: Mifflin-St Jeor (padrão)
+ * Determin stico: Mifflin-St Jeor (padr o)
  * male: 10W + 6.25H - 5A + 5
  * female: 10W + 6.25H - 5A - 161
- * other: usa média conservadora (0) sem +5/-161
+ * other: usa m dia conservadora (0) sem +5/-161
  */
 export function computeMetabolic(input: MetabolicInput): MetabolicOutput {
-  const W = input.weightKg;
-  const H = input.heightCm;
-  const A = input.ageYears;
+  /* MF_AUTO_REE_V1 */
+// MindsetFit Scientific REE (auto-equation)
+const sex: "male" | "female" = input.gender === "female" ? "female" : "male";
 
-  let sexConst = 0;
-  if (input.gender === "male") sexConst = 5;
-  if (input.gender === "female") sexConst = -161;
+const auto = calculateREEAuto({
+  sex,
+  age: input.ageYears,
+  weightKg: input.weightKg,
+  heightCm: input.heightCm,
+  bodyFatPercent: (input as any).bodyFatPercent,
+  fatFreeMassKg: (input as any).fatFreeMassKg,
+  activityLevel: (input as any).activityLevel,
+  isAthlete: Boolean((input as any).isAthlete),
+});
 
-  const bmr = (10 * W) + (6.25 * H) - (5 * A) + sexConst;
+const bmr = auto.reeKcal;
   const tdee = bmr * input.activityFactor;
 
   let target = tdee;
   if (input.goal === "cut") target = tdee - 400;
   if (input.goal === "bulk") target = tdee + 250;
 
-  // clamp mínimo seguro (não médico, só evita absurdo)
+  // clamp m nimo seguro (n o m dico, s  evita absurdo)
   if (target < 1200) target = 1200;
 
   return {
