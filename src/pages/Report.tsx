@@ -8,6 +8,20 @@ import { loadActivePlan } from "@/services/plan.service"
 import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
+
+// MF_REPORT_TRAINING_V3
+function __mfGetTrainingWorkouts(): any[] {
+  try {
+    if (typeof window === "undefined") return [];
+    const raw = localStorage.getItem("mf:activePlan:v1");
+    const ap = raw ? JSON.parse(raw) : null;
+    const w = ap?.training?.workouts;
+    return Array.isArray(w) ? w : [];
+  } catch {
+    return [];
+  }
+}
+
 function mfActivityWeeklyLabel(v: unknown) {
   const x = String(v || "").toLowerCase();
   if (x === "sedentario") return "Sedentário (0x/semana)";
@@ -556,3 +570,42 @@ export function Report() {
 }
 
 }
+
+
+        
+        {/* MF_REPORT_TRAINING_SECTION_V3 */}
+        <section style={{ marginTop: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900 }}>Treinos da semana</h2>
+            <span style={{ fontSize: 12, opacity: 0.75 }}>SSOT • Agenda</span>
+          </div>
+
+          {(() => {
+            const __mfReportWorkouts = __mfGetTrainingWorkouts();
+
+            return (!__mfReportWorkouts || __mfReportWorkouts.length === 0) ? (
+              <div style={{ marginTop: 10, opacity: 0.85 }}>
+                Nenhum treino ativo encontrado no plano atual.
+              </div>
+            ) : (
+              <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+                {__mfReportWorkouts.map((w: any, i: number) => (
+                  <div key={(w.day||"D") + "-" + (w.modality||"M") + "-" + i} style={{
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    borderRadius: 14,
+                    padding: 12,
+                    background: "rgba(255,255,255,0.02)"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ fontWeight: 900 }}>{w.day} • {w.modality}</div>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>{w.intensity || "Auto"} • {w.level || "Auto"}</div>
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 13, opacity: 0.92 }}>{w.title || "Treino do dia"}</div>
+                    {w.focus ? <div style={{ marginTop: 4, fontSize: 12, opacity: 0.75 }}>{w.focus}</div> : null}
+                    {w.durationMin ? <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>Duração: {w.durationMin} min</div> : null}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </section>
