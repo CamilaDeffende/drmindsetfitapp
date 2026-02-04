@@ -315,7 +315,50 @@ yPos += 7
   doc.text('Este relatório contém dados sensíveis. Mantenha em sigilo.', 25, yPos)
 
   // Salvar PDF
-  const nomeArquivo = `DrMindSetFit_Completo_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`
+
+  // MF_PDF_TRAINING_V3 (Treinos da semana via SSOT)
+  try {
+    const __mfRaw = (typeof window !== "undefined") ? localStorage.getItem("mf:activePlan:v1") : null;
+    const __mfAp = __mfRaw ? JSON.parse(__mfRaw) : null;
+    const __mfW = (__mfAp && __mfAp.training && Array.isArray(__mfAp.training.workouts)) ? __mfAp.training.workouts : [];
+
+    if (__mfW.length) {
+      const __doc: any = doc; // jsPDF instance (template uses 'doc')
+      let yPdf = 20;          // cursor local (não depende do template)
+      const xPdf = 14;
+
+      // título
+      __doc.setFontSize(14);
+      __doc.text("Treinos da semana", xPdf, yPdf);
+      yPdf += 8;
+
+      __doc.setFontSize(10);
+
+      for (let i = 0; i < __mfW.length; i++) {
+        const w = __mfW[i] || {};
+        const line =
+          `${w.day || "DIA"} • ${w.modality || "Atividade"} — ${w.title || "Treino do dia"}` +
+          (w.durationMin ? ` (${w.durationMin} min)` : "");
+
+        // quebra de página simples (A4 mm ~ 297; margem segura)
+        if (yPdf > 285) {
+          __doc.addPage();
+          yPdf = 20;
+          __doc.setFontSize(14);
+          __doc.text("Treinos da semana (cont.)", xPdf, yPdf);
+          yPdf += 8;
+          __doc.setFontSize(10);
+        }
+
+        yPdf += 6;
+        __doc.text(line, xPdf, yPdf);
+      }
+
+      yPdf += 8;
+    }
+  } catch {}
+
+const nomeArquivo = `DrMindSetFit_Completo_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`
   doc.save(nomeArquivo)
 
   return nomeArquivo
