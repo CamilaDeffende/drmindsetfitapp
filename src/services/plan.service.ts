@@ -2,6 +2,8 @@ import { computeMetabolic } from "@/engine/metabolic/MetabolicEngine";
 import { computeMacros, buildMealPlan } from "@/engine/nutrition/NutritionEngine";
 import { buildWorkoutWeek, Modality } from "@/engine/workout/WorkoutEngine";
 
+import { persistTrainingPlanToActivePlan } from "./training/activePlan.trainingWriter";
+
 export type ActivePlanV1 = {
   version: "v1";
   /** ISO string (preferido). Mantemos createdAtISO opcional para compatibilidade. */
@@ -47,7 +49,9 @@ export type PlanDraft = {
 const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
 
 export function saveActivePlan(plan: ActivePlanV1) {
-  try { localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(plan)); } catch {}
+  try { localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(plan));
+  // MF_PERSIST_TRAININGPLAN_V3
+  try { persistTrainingPlanToActivePlan(); } catch {} } catch {}
 }
 
 export function loadActivePlan(): ActivePlanV1 | null {
