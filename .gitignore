@@ -141,3 +141,7 @@ node_modules 2/
 
 # MF: arquivos acidentais
 package-lock 2.json
+
+# MF_ALLOW_MF_UI_SMOKE_SSOT (permitir versionar 1 tool específico)
+!.mf_master/_tools/
+!.mf_master/_tools/mf_ui_smoke_ssot.sh
