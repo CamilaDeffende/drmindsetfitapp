@@ -12,6 +12,28 @@ import type { PlanejamentoNutricional, Restricao, TipoRefeicao, AlimentoRefeicao
 import { ALIMENTOS_DATABASE, calcularMacros } from '@/types/alimentos'
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 
+import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
+// MF_NUTRITION_WIRE_V1
+function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
+  // tenta pegar do form primeiro, depois do state
+  const sexo = (anyForm?.sexo ?? anyState?.perfil?.sexo ?? anyState?.sexo ?? "masculino") as any;
+  const idade = Number(anyForm?.idade ?? anyState?.perfil?.idade ?? anyState?.idade ?? 30);
+  const pesoKg = Number(anyForm?.peso ?? anyForm?.pesoKg ?? anyState?.perfil?.peso ?? anyState?.peso ?? 70);
+  const alturaCm = Number(anyForm?.altura ?? anyForm?.alturaCm ?? anyState?.perfil?.altura ?? anyState?.altura ?? 170);
+  const massaMagraKg = anyForm?.massaMagraKg ?? anyState?.bioimpedancia?.massaMagraKg ?? anyState?.massaMagraKg ?? null;
+
+  const objetivo = (anyForm?.objetivo ?? anyState?.objetivo ?? anyState?.meta ?? "manutencao") as any;
+  const biotipo = (anyForm?.biotipo ?? anyState?.biotipo ?? null) as any;
+  const atividade = (anyForm?.atividade ?? anyState?.atividade ?? anyState?.nivelAtividade ?? "moderado") as any;
+
+  return {
+    body: { sexo, idade, pesoKg, alturaCm, massaMagraKg },
+    opts: { objetivo, biotipo, atividade },
+  };
+}
+
+
+
 type OnboardingStepProps = {
   value?: any;
 
@@ -49,6 +71,11 @@ export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingSte
 
   function mfOnContinue(){
     try { mfPersistStep4(); } catch {}
+    /* MF_SAVE_ACTIVEPLAN_NUTRITION_V1 */
+    try {
+      const inputs = __mfBuildNutritionInputs(state, undefined);
+      saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
+    } catch {}
     if (typeof nextStep === "function") nextStep();
     else if (typeof onNext === "function") onNext();
   }
