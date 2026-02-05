@@ -155,6 +155,14 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     let alimentosPermitidos = ALIMENTOS_DATABASE
     if (isVegano) {
       alimentosPermitidos = alimentosPermitidos.filter(a => a.vegano)
+
+    /* MF_SAVE_ACTIVEPLAN_NUTRITION_ON_GENERATE_V1 */
+    try {
+      const inputs = __mfBuildNutritionInputs(state, undefined);
+      saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
+    } catch {}
+
+
     } else if (isVegetariano) {
       alimentosPermitidos = alimentosPermitidos.filter(a => a.vegetariano)
     }
