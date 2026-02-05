@@ -1,6 +1,6 @@
-// MF_SSOT_ACTIVEPLAN_V2
-// SSOT — leitura normalizada do plano ativo (sem dependência de store para não quebrar build).
-// Regra: nunca lançar erro; sempre retornar objeto consistente.
+// MF_SSOT_ACTIVEPLAN_V3
+// SSOT — leitura normalizada do plano ativo (storage-first, sem dependência de store).
+// Importante: expõe também `nutrition` no shape esperado pela UI (compat).
 
 export const MF_ACTIVEPLAN_KEY_V1 = "mf:activePlan:v1" as const;
 
@@ -36,49 +36,57 @@ function getStoragePlan(): AnyObj | null {
 function normalizePlan(plan: AnyObj | null): AnyObj {
   const p = plan || {};
 
-  const dieta = pickFirst(
+  // nutrition candidates
+  const nutrition = pickFirst(
+    p.nutrition,
+    p.nutricao,
     p.dieta,
-    p.dietaAtiva,
-    p.nutricao
+    p.dietaAtiva
   ) as AnyObj | undefined;
 
   const macros = pickFirst(
     p.macros,
-    dieta?.macros,
+    nutrition?.macros,
     p.nutricao?.macros
   ) as AnyObj | undefined;
 
   const kcal = pickFirst(
     p.kcal,
-    macros?.kcal,
-    dieta?.kcal
+    nutrition?.kcalTarget,
+    nutrition?.kcal,
+    macros?.kcal
   );
 
-  const modalidades = asArray(pickFirst(
-    p.modalidades,
-    p.modalities
-  ));
+  const meals = pickFirst(
+    nutrition?.meals,
+    nutrition?.refeicoes,
+    p.meals,
+    p.refeicoes
+  ) as any[] | undefined;
 
-  const schedule = pickFirst(
-    p.schedule,
-    p.calendario,
-    p.week
-  ) as AnyObj | undefined;
+  const modalidades = asArray(pickFirst(p.modalidades, p.modalities));
+  const schedule = pickFirst(p.schedule, p.calendario, p.week) as AnyObj | undefined;
+  const treinos = pickFirst(p.treinos, p.workouts, schedule?.treinos, p.training?.workouts) as AnyObj | undefined;
 
-  const treinos = pickFirst(
-    p.treinos,
-    p.workouts,
-    schedule?.treinos
-  ) as AnyObj | undefined;
+  // shape compatível para telas existentes:
+  const nutritionCompat = {
+    kcalTarget: kcal ?? null,
+    kcal: kcal ?? null,
+    macros: macros || null,
+    meals: Array.isArray(meals) ? meals : [],
+  };
 
   return {
     __raw: p,
-    dieta: dieta || null,
-    macros: macros || null,
+    // campos normalizados
     kcal: kcal ?? null,
+    macros: macros || null,
+    dieta: nutrition || null,
     modalidades,
     schedule: schedule || null,
     treinos: treinos || null,
+    // compat UI
+    nutrition: nutritionCompat,
   };
 }
 
