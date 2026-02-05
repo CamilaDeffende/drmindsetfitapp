@@ -9,7 +9,8 @@ import reactRefresh from "eslint-plugin-react-refresh";
  * Objetivo: não quebrar build e manter regras essenciais.
  */
 export default [
-  {
+  { ignores: ["dist/**", ".scan/**", "Drmindsetfitpro/**"] },
+{
     ignores: [
       "dist/**",
       "build/**",
