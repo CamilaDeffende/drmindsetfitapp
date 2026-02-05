@@ -148,13 +148,6 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     // recalcula kcal final para exibição coerente (diferenças por arredondamento)
     const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
     caloriasFinais = mfClamp(Math.round(kcalFinal), 800, 6500);
-// Filtrar alimentos baseado nas restrições
-    const isVegano = restricoes.includes('vegano')
-    const isVegetariano = restricoes.includes('vegetariano')
-
-    let alimentosPermitidos = ALIMENTOS_DATABASE
-    if (isVegano) {
-      alimentosPermitidos = alimentosPermitidos.filter(a => a.vegano)
 
     /* MF_SAVE_ACTIVEPLAN_NUTRITION_ON_GENERATE_V1 */
     try {
@@ -162,7 +155,13 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
       saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
     } catch {}
 
+// Filtrar alimentos baseado nas restrições
+    const isVegano = restricoes.includes('vegano')
+    const isVegetariano = restricoes.includes('vegetariano')
 
+    let alimentosPermitidos = ALIMENTOS_DATABASE
+    if (isVegano) {
+      alimentosPermitidos = alimentosPermitidos.filter(a => a.vegano)
     } else if (isVegetariano) {
       alimentosPermitidos = alimentosPermitidos.filter(a => a.vegetariano)
     }
