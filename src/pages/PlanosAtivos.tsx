@@ -14,8 +14,7 @@ import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
 import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
-
-import { loadActivePlan } from "@/services/plan.service";
+import { getActivePlanNormalized } from "@/services/ssot/getActivePlanNormalized";
 
 const HIDE_ADVANCED_MODALITY_UI = true;
 
@@ -36,7 +35,7 @@ export function PlanosAtivos() {
 
   useEffect(() => {
     try {
-      const p = loadActivePlan();
+      const p = getActivePlanNormalized();
       setActivePlan(p);
     } finally {
       setPlanLoaded(true);
