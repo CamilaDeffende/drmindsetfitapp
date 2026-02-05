@@ -156,3 +156,6 @@ package-lock 2.json
 # MF_UNIGNORE_PDF_SMOKE_V4
 !/.mf_master/_tools/mf_pdf_smoke_v4.sh
 !/.mf_master/_tools/mf_pdf_smoke_v4_runner.js
+
+# MF_IGNORE_STRAY_V4
+MF_SH_V4_ARGS_V1
