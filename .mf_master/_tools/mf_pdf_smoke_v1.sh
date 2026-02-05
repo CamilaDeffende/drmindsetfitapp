@@ -63,14 +63,30 @@ if [ -n "${LAST_OUT:-}" ]; then
   ls -1 "$LAST_OUT"/*.pdf 2>/dev/null || echo "(nenhum PDF ainda)" | tee -a "$LOG"
 fi
 
-# MF_ASSERT_PDF_V1
+# MF_ASSERT_PDF_V2
 if [ "${MF_PDF_STRICT:-0}" = "1" ]; then
-  NEED=1
+  # esperamos 4 rotas gerando PDF fallback_render: report, relatorio, relatorio-completo, pdf
+  NEED=4
   GOT="$(ls -1 "$LAST_OUT"/*__fallback_render.pdf 2>/dev/null | wc -l | tr -d " ")"
+
   if [ "${GOT:-0}" -lt "$NEED" ]; then
-    echo "❌ STRICT FAIL: nenhum PDF fallback_render gerado em $LAST_OUT" | tee -a "$LOG"
+    echo "❌ STRICT FAIL: esperado >=$NEED PDFs fallback_render, obtido $GOT em $LAST_OUT" | tee -a "$LOG"
+    ls -1 "$LAST_OUT"/*__fallback_render.pdf 2>/dev/null | tee -a "$LOG" || true
     exit 41
   fi
-  echo "✅ STRICT OK: PDFs fallback_render gerados: $GOT" | tee -a "$LOG"
+
+  # sanidade: cada arquivo precisa começar com %PDF-
+  bad=0
+  for fp in "$LAST_OUT"/*__fallback_render.pdf; do
+    head -c 5 "$fp" | grep -q "%PDF-" || bad=$((bad+1))
+  done
+  if [ "$bad" -gt 0 ]; then
+    echo "❌ STRICT FAIL: $bad PDF(s) sem header %PDF- (possível arquivo corrompido)" | tee -a "$LOG"
+    exit 42
+  fi
+
+  echo "✅ STRICT OK: PDFs fallback_render gerados: $GOT (todos com header %PDF-)" | tee -a "$LOG"
 fi
+
+
 
