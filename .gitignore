@@ -149,3 +149,6 @@ package-lock 2.json
 # MF_ALLOW_MF_PDF_SMOKE_V1 (permitir versionar 1 tool específico)
 !.mf_master/_tools/
 !.mf_master/_tools/mf_pdf_smoke_v1.sh
+
+# MF_PDF_SMOKE_ALLOWLIST_V1
+!/.mf_master/_tools/mf_pdf_smoke_v1_runner.js

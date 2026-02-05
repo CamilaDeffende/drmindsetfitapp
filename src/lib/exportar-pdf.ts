@@ -1,4 +1,6 @@
 import { jsPDF } from "jspdf";
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+
 /**
  * Sistema completo de exportação de PDF
  * Inclui todos os dados: perfil, métricas, planos ativos (dieta e treino), cargas registradas
@@ -314,7 +316,25 @@ yPos += 7
   yPos += 10
   doc.text('Este relatório contém dados sensíveis. Mantenha em sigilo.', 25, yPos)
 
-  // Salvar PDF
+  
+  // MF_PDF_DIAG_V1
+  const __mfPdfDiagEnabled =
+    (typeof window !== "undefined") &&
+    (String(localStorage.getItem("mf:pdf:diag") || "") === "1");
+
+  const __mfPdfDiag = (msg: string, extra?: any) => {
+    try {
+      if (!__mfPdfDiagEnabled) return;
+      // eslint-disable-next-line no-console
+      console.log("MF_PDF_DIAG:", msg, extra ?? "");
+    } catch {}
+  };
+
+  try {
+    __mfPdfDiag("start", { ua: typeof navigator !== "undefined" ? navigator.userAgent : "na" });
+  } catch {}
+
+// Salvar PDF
 
   // MF_PDF_TRAINING_V3 (Treinos da semana via SSOT)
   try {
@@ -356,10 +376,126 @@ yPos += 7
 
       yPdf += 8;
     }
-  } catch {}
+  
+  } catch (e) {
+    __mfPdfDiag('MF_PDF_TRAINING_V3 error', String(e));
+  }
+
+  // MF_PDF_NUTRITION_SSOT_V1 (Dieta do dia via SSOT / localStorage)
+  // Motivo: no export, state.dietaAtiva pode não estar populado. Fonte da verdade: mf:activePlan:v1.
+  try {
+    const __mfRawN = (typeof window !== "undefined") ? localStorage.getItem("mf:activePlan:v1") : null;
+    const __mfApN = __mfRawN ? JSON.parse(__mfRawN) : null;
+
+    const __adapted: any = adaptActivePlanNutrition(__mfApN?.nutrition);
+    const __kcal = (__adapted?.kcalTarget ?? null);
+    const __macros = (__adapted?.macros ?? null);
+    const __meals = Array.isArray(__adapted?.meals) ? __adapted.meals : [];
+
+    const __hasMacros =
+      !!(__macros && (
+        Number(__macros?.proteina || 0) > 0 ||
+        Number(__macros?.carboidratos || 0) > 0 ||
+        Number(__macros?.gorduras || 0) > 0 ||
+        Number(__macros?.calorias || 0) > 0
+      ));
+
+    const __hasMeals = __meals.length > 0;
+    const __hasKcal = Number(__kcal || 0) > 0;
+
+    // Renderiza se houver evidência real de dieta (kcal+macros ou refeições)
+    if (__hasMeals || __hasMacros || __hasKcal) {
+      const __docN: any = doc;
+
+      // Página nova: evita colidir com rodapé/template
+      __docN.addPage();
+      let yN = 20;
+      const xN = 14;
+
+      const __ensure = (need: number) => {
+        if (yN + need > 285) {
+          __docN.addPage();
+          yN = 20;
+        }
+      };
+
+      __docN.setFontSize(14);
+      __docN.text("Dieta do dia", xN, yN);
+      yN += 8;
+
+      __docN.setFontSize(10);
+
+      if (__hasKcal) {
+        __ensure(10);
+        __docN.text(`Calorias alvo: ${Number(__kcal).toFixed(0)} kcal`, xN, yN);
+        yN += 7;
+      }
+
+      if (__hasMacros) {
+        __ensure(16);
+        const cal = Number(__macros?.calorias || 0);
+        const pG = Number(__macros?.proteina || 0);
+        const cG = Number(__macros?.carboidratos || 0);
+        const gG = Number(__macros?.gorduras || 0);
+
+        if (cal > 0) { __docN.text(`Calorias: ${cal.toFixed(0)} kcal/dia`, xN, yN); yN += 6; }
+        if (pG > 0)  { __docN.text(`Proteínas: ${pG.toFixed(0)} g`, xN, yN); yN += 6; }
+        if (cG > 0)  { __docN.text(`Carboidratos: ${cG.toFixed(0)} g`, xN, yN); yN += 6; }
+        if (gG > 0)  { __docN.text(`Gorduras: ${gG.toFixed(0)} g`, xN, yN); yN += 6; }
+
+        yN += 2;
+      }
+
+      if (__hasMeals) {
+        __ensure(10);
+        __docN.setFontSize(12);
+        __docN.text("Refeições", xN, yN);
+        yN += 7;
+        __docN.setFontSize(9);
+
+        for (let i = 0; i < __meals.length; i++) {
+          const m = __meals[i] || {};
+          const nome = String(m?.nome || m?.tipo || `Refeição ${i+1}`);
+          const horario = String(m?.horario || "");
+          const title = horario ? `${nome} (${horario})` : nome;
+
+          __ensure(10);
+          __docN.text(title, xN, yN);
+          yN += 5;
+
+          const foods = Array.isArray(m?.alimentos) ? m.alimentos : [];
+          for (let j = 0; j < foods.length; j++) {
+            const a = foods[j] || {};
+            const an = String(a?.nome || a?.food || a?.alimento || "Item");
+            const aq = (a?.quantidade ?? a?.gramas ?? a?.g ?? null);
+            const unit = (aq !== null && aq !== undefined) ? `${String(aq)}g` : "";
+            const kcal = (a?.calorias ?? a?.kcal ?? null);
+            const kcalTxt = (kcal !== null && kcal !== undefined) ? ` (${String(kcal)} kcal)` : "";
+            const line = `• ${an}${unit ? " - " + unit : ""}${kcalTxt}`;
+            __ensure(6);
+            __docN.text(line, xN + 4, yN);
+            yN += 4;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    try { __mfPdfDiag?.("MF_PDF_NUTRITION_SSOT_V1 error", String(e)); } catch {}
+  }
+
+
 
 const nomeArquivo = `DrMindSetFit_Completo_${format(new Date(), 'yyyyMMdd_HHmmss')}.pdf`
+  try {
+    if (__mfPdfDiagEnabled) {
+      try { (doc as any).setFontSize?.(9); } catch {}
+      try { (doc as any).text?.("MF_PDF_DIAG_OK", 14, 292); } catch {}
+      try {
+        const n = (doc as any).getNumberOfPages ? (doc as any).getNumberOfPages() : null;
+        __mfPdfDiag("before_save pages", n);
+      } catch (e) { __mfPdfDiag("before_save pages err", String(e)); }
+    }
+  } catch {}
   doc.save(nomeArquivo)
-
   return nomeArquivo
 }
