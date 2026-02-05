@@ -106,7 +106,7 @@ void value; void onChange; void onNext; void onBack;
                        Number(data.subescapular) + Number(data.abdominal) + Number(data.supraIliaca) + Number(data.coxa)
 
     let densidadeCorporal: number
-    let percentualGordura: number = 0
+let percentualGordura: number = 0
     if (sexo === 'masculino') {
       densidadeCorporal = 1.112 - (0.00043499 * somaDobras) + (0.00000055 * Math.pow(somaDobras, 2)) - (0.00028826 * (state.perfil?.idade || 30))
     } else {
