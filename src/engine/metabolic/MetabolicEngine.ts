@@ -71,7 +71,7 @@ export function computeMetabolic(input: MetabolicInput): MetabolicOutput {
 
   // Selecionar equação baseada no método
   switch (method) {
-    case "cunningham":
+    case "cunningham": {
       if (!input.leanBodyMassKg || input.leanBodyMassKg <= 0) {
         // Fallback para Mifflin se não tem massa magra
         bmr = computeMifflin(input);
@@ -80,8 +80,9 @@ export function computeMetabolic(input: MetabolicInput): MetabolicOutput {
         bmr = result.bmrKcal;
       }
       break;
+    }
 
-    case "harris-benedict":
+    case "harris-benedict": {
       const hbResult = computeHarrisBenedict({
         weightKg: input.weightKg,
         heightCm: input.heightCm,
@@ -90,8 +91,9 @@ export function computeMetabolic(input: MetabolicInput): MetabolicOutput {
       });
       bmr = hbResult.bmrKcal;
       break;
+    }
 
-    case "fao-who":
+    case "fao-who": {
       const faoResult = computeFAOWHO({
         weightKg: input.weightKg,
         ageYears: input.ageYears,
@@ -99,11 +101,13 @@ export function computeMetabolic(input: MetabolicInput): MetabolicOutput {
       });
       bmr = faoResult.bmrKcal;
       break;
+    }
 
     case "mifflin":
-    default:
+    default: {
       bmr = computeMifflin(input);
       break;
+    }
   }
 
   // Calcular TDEE
