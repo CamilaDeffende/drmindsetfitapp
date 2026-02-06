@@ -31,6 +31,8 @@ import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
 import CorridaPro from "@/pages/CorridaPro";
+import { DiagnosticPage } from "@/pages/DiagnosticPage";
+
 function App() {
     // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
 
@@ -52,8 +54,12 @@ function App() {
               <Route path="/profile" element={<Navigate to="/onboarding/step-1" replace />} />
         
 <Route path="/corrida-pro" element={<ProtectedRoute requiresPremium><CorridaPro /></ProtectedRoute>} />
+
+              {/* Diagnóstico */}
+              <Route path="/diagnostic" element={<DiagnosticPage />} />
+
               {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
-              <Route path="/" element={<Navigate to="/onboarding/step-1" replace />} />
+              <Route path="/" element={<Navigate to="/diagnostic" replace />} />
 
               {/* Públicas */}
               <Route path="/assinatura" element={<Assinatura />} />

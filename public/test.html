@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste DrMindSetFit</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00f;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            background: #1a1a1a;
+            border-radius: 8px;
+        }
+        .success {
+            border-left: 4px solid #0f0;
+        }
+        button {
+            padding: 10px 20px;
+            background: #00f;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0080ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Servidor DrMindSetFit Funcionando!</h1>
+
+        <div class="status success">
+            <h2>Status do Sistema:</h2>
+            <p>✅ Servidor Vite: <strong>ONLINE</strong></p>
+            <p>✅ Arquivos estáticos: <strong>OK</strong></p>
+            <p>✅ JavaScript: <strong>CARREGADO</strong></p>
+        </div>
+
+        <div class="status">
+            <h3>Informações:</h3>
+            <p><strong>URL Atual:</strong> <span id="url"></span></p>
+            <p><strong>User Agent:</strong> <span id="ua"></span></p>
+            <p><strong>LocalStorage:</strong> <span id="ls"></span></p>
+        </div>
+
+        <button onclick="window.location.href='/'">
+            Ir para o App Principal
+        </button>
+    </div>
+
+    <script>
+        document.getElementById('url').textContent = window.location.href;
+        document.getElementById('ua').textContent = navigator.userAgent;
+
+        try {
+            localStorage.setItem('test', 'ok');
+            document.getElementById('ls').textContent = '✅ Funcionando';
+            localStorage.removeItem('test');
+        } catch(e) {
+            document.getElementById('ls').textContent = '❌ Bloqueado';
+        }
+
+        console.log('✅ Teste page carregada com sucesso!');
+        console.log('Se você está vendo isso, o JavaScript está funcionando.');
+    </script>
+</body>
+</html>
