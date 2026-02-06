@@ -5,8 +5,6 @@ import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
-;
-import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -45,9 +43,8 @@ function App() {
     <FitnessSuiteDemo />
   ) : (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <AuthProvider>
-        <DrMindSetfitProvider>
-          <BrowserRouter>
+      <DrMindSetfitProvider>
+        <BrowserRouter>
             <RouteGuard />
             <Routes>
               <Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
@@ -185,7 +182,6 @@ function App() {
           </BrowserRouter>
           <Toaster />
         </DrMindSetfitProvider>
-      </AuthProvider>
     </ThemeProvider>
   );
 }
