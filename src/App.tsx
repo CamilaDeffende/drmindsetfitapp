@@ -4,6 +4,9 @@ import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AIDashboardPage } from "@/pages/ai-dashboard/AIDashboardPage";
+import { WearablesPage } from "@/pages/wearables/WearablesPage";
+import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
 ;
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -50,7 +53,9 @@ function App() {
           <BrowserRouter>
             <RouteGuard />
             <Routes>
-              <Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
+              
+              
+              <Route path="/ai" element={<AIDashboardPage />} /><Route path="/wearables" element={<WearablesPage />} /><Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
               <Route path="/perfil" element={<Navigate to="/onboarding/step-1" replace />} />
               <Route path="/profile" element={<Navigate to="/onboarding/step-1" replace />} />
         
@@ -177,6 +182,7 @@ function App() {
 
   <Route path="/dev/engine" element={<DevEngine />} />
 </Routes>
+            <OfflineIndicator />
             <LiveLocationPill />
           </BrowserRouter>
           <Toaster />
