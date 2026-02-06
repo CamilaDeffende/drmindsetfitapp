@@ -1,8 +1,6 @@
 node_modules
 dist
 .vite
-.env
-.env.local
 .DS_Store
 *.log
 *.bak
@@ -10,7 +8,6 @@ dist
 
 .bak.*
 .vercel
-.env*.local
 *.bak.*
 src/**/*.bak.*
 .scan
@@ -141,3 +138,4 @@ node_modules 2/
 
 # MF: arquivos acidentais
 package-lock 2.json
+.lasy/

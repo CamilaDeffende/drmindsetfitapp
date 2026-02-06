@@ -1,0 +1,1 @@
+{"hooks":{"Stop":[{"matcher":"","hooks":[{"type":"command","command":"bash /workspace/.claude/hooks/backup.sh","timeout":120000}]}]}}
