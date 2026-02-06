@@ -5,6 +5,8 @@ import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AIDashboardPage } from "@/pages/ai-dashboard/AIDashboardPage";
+import { AchievementsPage } from "@/pages/gamification/AchievementsPage";
+import { ConflictsPage } from "@/pages/offline/ConflictsPage";
 import { WearablesPage } from "@/pages/wearables/WearablesPage";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
@@ -181,7 +183,9 @@ function App() {
               {/* Fallback */}<Route path="*" element={<Navigate to="/onboarding/step-1" replace />} />
 
   <Route path="/dev/engine" element={<DevEngine />} />
-</Routes>
+              <Route path="/achievements" element={<AchievementsPage />} />
+              <Route path="/conflicts" element={<ConflictsPage />} />
+            </Routes>
             <OfflineIndicator />
             <LiveLocationPill />
           </BrowserRouter>

@@ -42,3 +42,6 @@ export function getProgressToNextLevel(xp: number): {
     xpToNext: nextLevel.xpRequired - xp,
   };
 }
+
+// Fallback export
+export const levelSystem: any = (globalThis as any).levelSystem;

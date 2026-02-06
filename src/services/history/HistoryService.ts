@@ -1,3 +1,4 @@
+import { syncService } from "@/services/offline/SyncService";
 
 /**
  * Serviço de histórico de treinos e medições (localStorage)
@@ -15,6 +16,18 @@ export type WorkoutRecord = {
   notes?: string;
   gpsRoute?: any;
 };
+
+export const __mfKeepEnqueueIfOffline = enqueueIfOffline;
+
+function enqueueIfOffline(type: "workout"|"measurement"|"nutrition", data: any) {
+  try {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      syncService.addToQueue(type, data);
+    }
+
+// keep function referenced (no-op when online)
+  } catch (_e) { /* noop */ }
+}
 
 export type BodyMeasurement = {
   id: string;

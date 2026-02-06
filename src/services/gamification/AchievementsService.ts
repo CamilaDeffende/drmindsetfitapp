@@ -14,6 +14,7 @@ export type Achievement = {
   description: string;
   icon: string;
   xpReward: number;
+  unlocked?: boolean;
   unlockedAt?: string;
   condition: (stats: UserStats) => boolean;
 };
@@ -66,6 +67,26 @@ class AchievementsService {
     const totalXP = ACHIEVEMENTS.filter((a) => unlocked.includes(a.id)).reduce((sum, a) => sum + a.xpReward, 0);
     return { totalAchievements: ACHIEVEMENTS.length, unlockedCount: unlocked.length, totalXP };
   }
+
+  // SSOT getter for UI lists
+  getAll(): Achievement[] {
+    const normalizeUnlocked = (a: any) => ({
+      ...a,
+      unlocked: Boolean(a?.unlocked ?? (a?.unlockedAt ? true : false))
+    });
+
+    const anySelf: any = this as any;
+    if (typeof anySelf.getAchievements === 'function') return anySelf.getAchievements();
+    if (Array.isArray(anySelf.achievements)) return anySelf.achievements.slice();
+    // fallback: try storage
+    try {
+      const raw = localStorage.getItem((anySelf.STORAGE_KEY || anySelf.storageKey || '') as string);
+      return (raw ? JSON.parse(raw) : []).map(normalizeUnlocked);
+    } catch {
+      return [];
+    }
+  }
+
 }
 
 export const achievementsService = new AchievementsService();

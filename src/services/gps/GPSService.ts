@@ -185,6 +185,33 @@ ${this.coordinates
 </gpx>`;
     return gpx;
   }
+  getCoordinates() {
+    return this.coordinates.slice();
+  }
+
+  clearCoordinates() {
+    this.coordinates = [];
+  }
+
+  exportGPX(name: string = "drmindsetfit-activity"): { filename: string; gpx: string } {
+    const coords = this.getCoordinates();
+    const now = new Date().toISOString();
+    const trk = coords
+      .map((c) => {
+        const time = new Date(c.timestamp).toISOString();
+        const ele = c.altitude ?? 0;
+        return `<trkpt lat="${c.latitude}" lon="${c.longitude}"><ele>${ele}</ele><time>${time}</time></trkpt>`;
+      })
+      .join("");
+    const gpx =
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<gpx version="1.1" creator="DrMindSetFit" xmlns="http://www.topografix.com/GPX/1/1">\n` +
+      `<metadata><time>${now}</time></metadata>\n` +
+      `<trk><name>${name}</name><trkseg>${trk}</trkseg></trk>\n` +
+      `</gpx>`;
+    return { filename: `${name}.gpx`, gpx };
+  }
+
 }
 
 export const gpsService = new GPSService();
