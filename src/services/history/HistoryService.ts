@@ -1,5 +1,5 @@
 import { syncService } from "@/services/offline/SyncService";
-
+import { mfApplyGamification } from "@/services/gamification/GamificationBridge";
 /**
  * Serviço de histórico de treinos e medições (localStorage)
  */
@@ -58,9 +58,9 @@ class HistoryService {
   private readonly STORAGE_KEY_MEASUREMENTS = "drmindsetfit:measurements";
   private readonly STORAGE_KEY_NUTRITION = "drmindsetfit:nutrition";
 
-  addWorkout(workout: Omit<WorkoutRecord, "id">): WorkoutRecord {
-    const workouts = this.getAllWorkouts();
+  addWorkout(workout: Omit<WorkoutRecord, "id">): WorkoutRecord {const workouts = this.getAllWorkouts();
     const newWorkout: WorkoutRecord = { ...workout, id: `workout-${Date.now()}` };
+    mfApplyGamification("workout", newWorkout);
     workouts.push(newWorkout);
     localStorage.setItem(this.STORAGE_KEY_WORKOUTS, JSON.stringify(workouts));
     return newWorkout;
@@ -84,9 +84,9 @@ class HistoryService {
     localStorage.setItem(this.STORAGE_KEY_WORKOUTS, JSON.stringify(workouts));
   }
 
-  addMeasurement(measurement: Omit<BodyMeasurement, "id">): BodyMeasurement {
-    const measurements = this.getAllMeasurements();
+  addMeasurement(measurement: Omit<BodyMeasurement, "id">): BodyMeasurement {const measurements = this.getAllMeasurements();
     const newMeasurement: BodyMeasurement = { ...measurement, id: `measurement-${Date.now()}` };
+    mfApplyGamification("measurement", newMeasurement);
     measurements.push(newMeasurement);
     localStorage.setItem(this.STORAGE_KEY_MEASUREMENTS, JSON.stringify(measurements));
     return newMeasurement;
@@ -107,9 +107,9 @@ class HistoryService {
     return measurements.sort((a, b) => b.date.localeCompare(a.date))[0];
   }
 
-  addNutritionLog(log: Omit<NutritionLog, "id">): NutritionLog {
-    const logs = this.getAllNutritionLogs();
+  addNutritionLog(log: Omit<NutritionLog, "id">): NutritionLog {const logs = this.getAllNutritionLogs();
     const newLog: NutritionLog = { ...log, id: `nutrition-${Date.now()}` };
+    mfApplyGamification("nutrition", newLog);
     logs.push(newLog);
     localStorage.setItem(this.STORAGE_KEY_NUTRITION, JSON.stringify(logs));
     return newLog;
