@@ -1,164 +1,210 @@
-
-import { useState, useEffect } from "react";
-import { useGPS } from "@/hooks/useGPS/useGPS";
-import { LiveMetricsDisplay } from "@/components/live-metrics/LiveMetricsDisplay";
-import { Button } from "@/components/ui/button";
-import { Play, Pause, Square, Download } from "lucide-react";
+import { useMemo, useState  } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGPS } from "@/hooks/useGPS/useGPS";
 import { historyService } from "@/services/history/HistoryService";
+
+type StatsLike = {
+  distanceKm?: number;
+  durationMin?: number;
+  calories?: number;
+  avgPaceMinKm?: number;
+};
+
+function n(v: any): number {
+  const x = Number(v);
+  return Number.isFinite(x) ? x : 0;
+}
 
 export function LiveWorkoutPage() {
   const navigate = useNavigate();
-  const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [workoutType, setWorkoutType] = useState<"corrida"|"ciclismo"|"musculacao"|"crossfit"|"funcional">("corrida");
-
   const { isTracking, stats, error, startTracking, stopTracking, reset, exportGPX } = useGPS();
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
 
-  useEffect(() => {
-    let interval: number | undefined;
-    if (isTracking && !isPaused) {
-      interval = window.setInterval(() => setElapsedSeconds((p) => p + 1), 1000);
+  const [workoutType, setWorkoutType] = useState<"corrida" | "ciclismo" | "musculacao" | "crossfit" | "funcional">(
+    "corrida"
+  );
+
+  const s = (stats ?? {}) as StatsLike;
+
+  const distanceKm = useMemo(() => n((s as any).distanceKm ?? (s as any).distance ?? 0), [s]);
+  const durationMin = useMemo(() => n((s as any).durationMin ?? (s as any).durationMinutes ?? 0), [s]);
+  const calories = useMemo(() => n((s as any).calories ?? 0), [s]);
+  const avgPaceMinKm = useMemo(() => {
+    const v = (s as any).avgPaceMinKm ?? (s as any).paceMinKm;
+    const num = Number(v);
+    return Number.isFinite(num) && num > 0 ? num : undefined;
+  }, [s]);
+
+  const handleStart = async () => {
+    try {
+      await startTracking();
+    } catch (e) {
+      console.error("MF handleStart:", e);
     }
-
-  const estimateCalories = (type: string, durationMin: number): number => {
-    const perMin: Record<string, number> = {
-      corrida: 10,
-      ciclismo: 9,
-      musculacao: 6,
-      crossfit: 11,
-      funcional: 8,
-    };
-    const k = perMin[type] ?? 8;
-    return Math.max(20, Math.round(durationMin * k));
   };
 
-  const handleStart = async () => {
-    setStartedAt(Date.now());
-    await startTracking();
-  };
-  const handleFinish = async () => {
-    try { await stopTracking(); } catch {}
-    const now = Date.now();
-    const start = startedAt ?? now;
-    const durationMin = Math.max(1, Math.round((now - start) / 60000));
-
-    const distanceKm =
-      (stats as any)?.distanceKm ??
-      (stats as any)?.distance ??
-      0;
-
-    const calories = estimateCalories(workoutType, durationMin);
-
-    const workout: any = {
-      date: new Date().toISOString(),
-      type: workoutType,
-      durationMin,
-      distanceKm: typeof distanceKm === "number" ? distanceKm : 0,
-      calories,
-      caloriesBurned: calories,
-      pse: Math.min(10, Math.max(1, Math.round(((stats as any)?.avgPSE ?? 7)))),
-      source: "live-gps",
-    };
-
-  // MF_KEEP_HANDLERS_USED (TS6133-safe, no side-effect)
-  void handleStart;
-  void handleFinish;
-
-
-    historyService.addWorkout(workout);
-
-    try { reset(); } catch {}
-    setStartedAt(null);
-    navigate("/progress");
-  };
-
-    return () => {
-      if (interval) window.clearInterval(interval);
-    };
-  }, [isTracking, isPaused]);
-
-  const handleStart = async () => {
-    reset();
-    await startTracking();
-    setElapsedSeconds(0);
-    setIsPaused(false);
-  };
-
-  const handlePause = () => setIsPaused((p) => !p);
-
-  const handleStop = () => {
-    stopTracking();
-    setIsPaused(false);
+  const handleStop = async () => {
+    try {
+      await stopTracking();
+    } catch (e) {
+      console.error("MF handleStop:", e);
+    }
   };
 
   const handleExport = () => {
-    const gpx = exportGPX(`Treino ${new Date().toLocaleDateString("pt-BR")}`);
-    const blob = new Blob([gpx], { type: "application/gpx+xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `drmindsetfit-treino-${Date.now()}.gpx`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const gpx = exportGPX(`Treino ${new Date().toLocaleDateString("pt-BR")}`);
+      const blob = new Blob([gpx], { type: "application/gpx+xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `drmindsetfit-treino-${Date.now()}.gpx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("MF exportGPX:", e);
+    }
+  };
+
+  const handleFinish = async () => {
+    try {
+      // encerra tracking se estiver ativo (não depende disso para salvar)
+      if (isTracking) {
+        try {
+          await stopTracking();
+        } catch {}
+      }
+
+      const nowIso = new Date().toISOString();
+
+      // Monta payload TS-safe (não assume nomes de campos do WorkoutRecord)
+      const base: any = { type: workoutType, date: nowIso };
+
+      // tenta atribuir em campos comuns SEM quebrar o tipo real do app
+      // (se o teu WorkoutRecord usa outros nomes, isso não injeta chaves inválidas)
+      const payload: any = { ...base };
+
+      // distância (quando suportado)
+      if ("distanceKm" in base) payload.distanceKm = distanceKm;
+      else if ("distance" in base) payload.distance = distanceKm;
+
+      // duração (quando suportado)
+      if ("durationMin" in base) payload.durationMin = durationMin;
+      else if ("durationMinutes" in base) payload.durationMinutes = durationMin;
+      else if ("duration" in base) payload.duration = durationMin;
+
+      // calorias (quando suportado)
+      if ("calories" in base) payload.calories = calories;
+      else if ("kcal" in base) payload.kcal = calories;
+
+      // pace (quando suportado)
+      if (avgPaceMinKm != null) {
+        if ("avgPaceMinKm" in base) payload.avgPaceMinKm = avgPaceMinKm;
+        else if ("paceMinKm" in base) payload.paceMinKm = avgPaceMinKm;
+      }
+
+      historyService.addWorkout(payload);
+// gamification dispara automaticamente via HistoryService
+      navigate("/progress");
+    } catch (e) {
+      console.error("MF handleFinish:", e);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-        <div className="mb-4">
-          <label className="text-xs text-gray-400">Tipo de treino</label>
-          <select
-            name="workoutType"
-            value={workoutType}
-            onChange={(e) => setWorkoutType(e.target.value as any)}
-            className="mt-2 w-full rounded-lg bg-gray-900/60 border border-gray-700 px-3 py-2 text-sm text-gray-100"
-          >
-            <option value="corrida">Corrida</option>
-            <option value="ciclismo">Ciclismo</option>
-            <option value="musculacao">Musculação</option>
-            <option value="crossfit">CrossFit</option>
-            <option value="funcional">Funcional</option>
-          </select>
-        </div>
-
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-blue-400 mb-6">Treino ao Vivo</h1>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500 text-red-400 rounded-xl p-4 mb-6">
-            {error}
+    <div className="min-h-screen bg-black text-white p-4">
+      <div className="mx-auto max-w-xl space-y-4">
+        <div className="rounded-2xl bg-neutral-900/60 border border-white/10 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-lg font-semibold">Treino Ao Vivo</div>
+              <div className="text-xs text-white/60">GPS + métricas em tempo real • export GPX • salvar histórico</div>
+            </div>
+            <div className={`text-xs px-2 py-1 rounded-full ${isTracking ? "bg-green-500/20 text-green-300" : "bg-white/10 text-white/70"}`}>
+              {isTracking ? "Ativo" : "Parado"}
+            </div>
           </div>
-        )}
 
-        <LiveMetricsDisplay stats={stats} elapsedSeconds={elapsedSeconds} />
+          {error ? (
+            <div className="mt-3 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-200">
+              {String(error)}
+            </div>
+          ) : null}
 
-        <div className="flex gap-4 mt-6">
-          {!isTracking ? (
-            <Button onClick={handleStart} className="flex-1 bg-green-600 hover:bg-green-700 h-14 text-lg">
-              <Play className="mr-2" />
-              Iniciar
-            </Button>
-          ) : (
-            <>
-              <Button onClick={handlePause} className="flex-1 bg-yellow-600 hover:bg-yellow-700 h-14 text-lg">
-                <Pause className="mr-2" />
-                {isPaused ? "Retomar" : "Pausar"}
-              </Button>
-              <Button onClick={handleStop} className="flex-1 bg-red-600 hover:bg-red-700 h-14 text-lg">
-                <Square className="mr-2" />
-                Finalizar
-              </Button>
-            </>
-          )}
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl bg-white/5 p-3">
+              <div className="text-white/60 text-xs">Distância</div>
+              <div className="text-xl font-bold">{distanceKm.toFixed(2)} km</div>
+            </div>
+            <div className="rounded-xl bg-white/5 p-3">
+              <div className="text-white/60 text-xs">Duração</div>
+              <div className="text-xl font-bold">{Math.round(durationMin)} min</div>
+            </div>
+            <div className="rounded-xl bg-white/5 p-3">
+              <div className="text-white/60 text-xs">Calorias</div>
+              <div className="text-xl font-bold">{Math.round(calories)} kcal</div>
+            </div>
+            <div className="rounded-xl bg-white/5 p-3">
+              <div className="text-white/60 text-xs">Pace médio</div>
+              <div className="text-xl font-bold">{avgPaceMinKm ? `${avgPaceMinKm.toFixed(2)} min/km` : "—"}</div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="text-xs text-white/60">Modalidade</label>
+            <select
+              className="mt-1 w-full rounded-xl bg-black/40 border border-white/10 p-3 text-sm"
+              value={workoutType}
+              onChange={(e) => setWorkoutType(e.target.value as any)}
+            >
+              <option value="corrida">Corrida</option>
+              <option value="ciclismo">Ciclismo</option>
+              <option value="musculacao">Musculação</option>
+              <option value="crossfit">CrossFit</option>
+              <option value="funcional">Funcional</option>
+            </select>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3">
+            {!isTracking ? (
+              <button
+                onClick={handleStart}
+                className="w-full rounded-xl px-4 py-3 bg-blue-600/80 hover:bg-blue-600 text-white font-semibold"
+              >
+                Iniciar (GPS)
+              </button>
+            ) : (
+              <button
+                onClick={handleStop}
+                className="w-full rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-semibold"
+              >
+                Parar (GPS)
+              </button>
+            )}
+
+            <button
+              onClick={handleExport}
+              className="w-full rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-semibold"
+            >
+              Exportar GPX
+            </button>
+
+            <button
+              onClick={handleFinish}
+              className="w-full rounded-xl px-4 py-3 bg-green-600/80 hover:bg-green-600 text-white font-semibold"
+            >
+              Finalizar e Salvar
+            </button>
+
+            <button
+              onClick={() => reset()}
+              className="w-full rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 text-white/90 font-semibold"
+            >
+              Resetar métricas
+            </button>
+          </div>
         </div>
-
-        {!isTracking && stats.distanceMeters > 0 && (
-          <Button onClick={handleExport} className="w-full mt-4 bg-blue-600 hover:bg-blue-700 h-12">
-            <Download className="mr-2" />
-            Exportar GPX
-          </Button>
-        )}
       </div>
     </div>
   );
