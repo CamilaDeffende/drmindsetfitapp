@@ -78,32 +78,12 @@ export function LiveWorkoutPage() {
 
       const nowIso = new Date().toISOString();
 
-      // Monta payload TS-safe (não assume nomes de campos do WorkoutRecord)
-      const base: any = { type: workoutType, date: nowIso };
-
-      // tenta atribuir em campos comuns SEM quebrar o tipo real do app
-      // (se o teu WorkoutRecord usa outros nomes, isso não injeta chaves inválidas)
-      const payload: any = { ...base };
-
-      // distância (quando suportado)
-      if ("distanceKm" in base) payload.distanceKm = distanceKm;
-      else if ("distance" in base) payload.distance = distanceKm;
-
-      // duração (quando suportado)
-      if ("durationMin" in base) payload.durationMin = durationMin;
-      else if ("durationMinutes" in base) payload.durationMinutes = durationMin;
-      else if ("duration" in base) payload.duration = durationMin;
-
-      // calorias (quando suportado)
-      if ("calories" in base) payload.calories = calories;
-      else if ("kcal" in base) payload.kcal = calories;
-
-      // pace (quando suportado)
-      if (avgPaceMinKm != null) {
-        if ("avgPaceMinKm" in base) payload.avgPaceMinKm = avgPaceMinKm;
-        else if ("paceMinKm" in base) payload.paceMinKm = avgPaceMinKm;
-      }
-
+      // MF_SAVE_WORKOUT_TO_HISTORY (auto-mapped to WorkoutRecord fields)
+      const payload: any = {};
+      payload["type"] = workoutType;
+      payload["date"] = nowIso;
+      payload["durationMinutes"] = durationMin;
+      payload["caloriesBurned"] = calories;
       historyService.addWorkout(payload);
 // gamification dispara automaticamente via HistoryService
       navigate("/progress");
