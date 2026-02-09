@@ -4,7 +4,7 @@ import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AIDashboardPage } from "@/pages/ai-dashboard/AIDashboardPage";
+import AIDashboardPage from "@/pages/ai-dashboard/AIDashboardPage";
 import { AchievementsPage } from "@/pages/gamification/AchievementsPage";
 import { ConflictsPage } from "@/pages/offline/ConflictsPage";
 import { WearablesPage } from "@/pages/wearables/WearablesPage";

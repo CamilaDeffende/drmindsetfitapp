@@ -42,31 +42,21 @@ function distanceKm(w: any): number | undefined {
 }
 
 export class PredictionEngine {
-
-
   private getDefaultDuration(type: any): number {
     switch (type) {
-      case "corrida":
-        return 40;
-      case "ciclismo":
-        return 50;
-      case "musculacao":
-        return 55;
-      default:
-        return 45;
+      case "corrida": return 40;
+      case "ciclismo": return 50;
+      case "musculacao": return 55;
+      default: return 45;
     }
   }
 
   private getDefaultCalories(type: any): number {
     switch (type) {
-      case "corrida":
-        return 380;
-      case "ciclismo":
-        return 420;
-      case "musculacao":
-        return 360;
-      default:
-        return 350;
+      case "corrida": return 380;
+      case "ciclismo": return 420;
+      case "musculacao": return 360;
+      default: return 350;
     }
   }
 

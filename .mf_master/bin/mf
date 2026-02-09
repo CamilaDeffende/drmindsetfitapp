@@ -20,8 +20,20 @@ case "$cmd" in
     [[ -f "$f" ]] || { echo "❌ não existe: $f"; exit 2; }
     bash "$f" "$@"
     ;;
+
+  mk)
+    # Cria um arquivo a partir do STDIN com caminho seguro:
+    # uso: printf 'conteudo' | ./.mf_master/bin/mf mk path/do/arquivo
+    out="${1:-}"; shift || true
+    [[ -n "$out" ]] || { echo "Uso: mf mk <path>"; exit 2; }
+    mkdir -p "$(dirname "$out")"
+    cat > "$out"
+    chmod +x "$out" 2>/dev/null || true
+    echo "OK: wrote $out"
+    ;;
+
   *)
-    echo "Uso: mf {sanity|verify|run}"
+    echo "Uso: mf {sanity|verify|run|mk}"
     exit 2
     ;;
 esac

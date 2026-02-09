@@ -1,55 +1,28 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { adaptiveEngine, AdaptiveRecommendation, PerformanceMetrics } from "@/services/ai/AdaptiveEngine";
-import { predictionEngine, WorkoutPrediction, WeightPrediction, OptimalWorkoutTime } from "@/services/ml/PredictionEngine";
-import { WorkoutRecord } from "@/services/history/HistoryService";
+import { predictionEngine, WorkoutPrediction, WeightPrediction } from "@/services/ml/PredictionEngine";
+import { WorkoutType } from "@/services/history/HistoryService";
 
 export function useAI() {
-  const [recommendations, setRecommendations] = useState<AdaptiveRecommendation[]>([]);
-  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [metrics, setMetrics] = useState<PerformanceMetrics>(() => adaptiveEngine.computeMetrics(new Date()));
+  const [recs, setRecs] = useState<AdaptiveRecommendation[]>(() => adaptiveEngine.getRecommendations(new Date()));
+  const [weightPred, setWeightPred] = useState<WeightPrediction>(() => predictionEngine.predictWeight());
 
   useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const now = new Date();
+    setMetrics(adaptiveEngine.computeMetrics(now));
+    setRecs(adaptiveEngine.getRecommendations(now));
+    setWeightPred(predictionEngine.predictWeight());
   }, []);
 
-  const refresh = () => {
-    setLoading(true);
-    try {
-      const recs = adaptiveEngine.generateRecommendations();
-      const perf = adaptiveEngine.analyzePerformance();
-      setRecommendations(recs);
-      setMetrics(perf);
-    } catch (e) {
-      console.error("Erro ao carregar IA:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const predictWorkout = (type: WorkoutRecord["type"], distanceKm?: number): WorkoutPrediction =>
+  const predictWorkout = (type: WorkoutType, distanceKm?: number): WorkoutPrediction =>
     predictionEngine.predictWorkout(type, distanceKm);
 
-  const predictWeight = (daysInFuture: number): WeightPrediction =>
-    predictionEngine.predictWeight(daysInFuture);
+  const bestHour = useMemo(() => ({
+    corrida: { hour: 7, confidence01: 0.25 },
+    musculacao: { hour: 7, confidence01: 0.25 },
+    ciclismo: { hour: 7, confidence01: 0.25 },
+  }), []);
 
-  const getOptimalWorkoutTime = (): OptimalWorkoutTime =>
-    predictionEngine.findOptimalWorkoutTime();
-
-  const getOvertrainingRisk = () => adaptiveEngine.predictOvertrainingRisk();
-
-  const getRecoveryPlan = (riskLevel: "baixo" | "moderado" | "alto" | "crítico") =>
-    adaptiveEngine.generateRecoveryPlan(riskLevel);
-
-  return {
-    recommendations,
-    metrics,
-    loading,
-    predictWorkout,
-    predictWeight,
-    getOptimalWorkoutTime,
-    getOvertrainingRisk,
-    getRecoveryPlan,
-    refresh,
-  };
+  return { metrics, recs, weightPred, predictWorkout, bestHour };
 }

@@ -1,136 +1,66 @@
 import { useAI } from "@/hooks/useAI/useAI";
-import { Brain, TrendingUp, AlertTriangle, Info, CheckCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+
+function Badge({ t }: { t: string }) {
+  return <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80">{t}</span>;
+}
 
 export function AIInsights() {
-  const { recommendations, metrics, loading, getOvertrainingRisk } = useAI();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400" />
-      </div>
-    );
-  }
-
-  const overtrainingRisk = getOvertrainingRisk();
-
-  const iconFor = (type: string) => {
-    switch (type) {
-      case "warning":
-        return <AlertTriangle className="w-5 h-5 text-yellow-400" />;
-      case "success":
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
-      case "info":
-        return <Info className="w-5 h-5 text-blue-400" />;
-      default:
-        return <TrendingUp className="w-5 h-5 text-gray-400" />;
-    }
-  };
-
-  const riskClass = (level: string) => {
-    switch (level) {
-      case "crítico":
-        return "text-red-500 bg-red-500/10 border-red-500";
-      case "alto":
-        return "text-orange-500 bg-orange-500/10 border-orange-500";
-      case "moderado":
-        return "text-yellow-500 bg-yellow-500/10 border-yellow-500";
-      default:
-        return "text-green-500 bg-green-500/10 border-green-500";
-    }
-  };
+  const { metrics, recs, weightPred } = useAI();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-blue-500/10 p-3 rounded-xl">
-          <Brain className="w-8 h-8 text-blue-400" />
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-zinc-900/60 border border-white/10 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-white font-semibold">Resumo IA</div>
+          <div className="flex gap-2">
+            <Badge t={`${metrics.recoveryScore}/100 recuperação`} />
+            <Badge t={`Carga: ${metrics.loadTrend14d}`} />
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-white">Insights de IA</h2>
-          <p className="text-gray-400 text-sm">Análise inteligente da sua performance</p>
+
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <div className="rounded-xl bg-white/5 p-3">
+            <div className="text-xs text-white/60">Treinos (7d)</div>
+            <div className="text-lg text-white font-semibold">{metrics.workoutFrequency7d}</div>
+          </div>
+          <div className="rounded-xl bg-white/5 p-3">
+            <div className="text-xs text-white/60">PSE média (7d)</div>
+            <div className="text-lg text-white font-semibold">{metrics.avgPSE7d || 0}</div>
+          </div>
+          <div className="rounded-xl bg-white/5 p-3">
+            <div className="text-xs text-white/60">Duração média</div>
+            <div className="text-lg text-white font-semibold">{metrics.avgDurationMin7d} min</div>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-xl bg-white/5 p-3">
+          <div className="text-xs text-white/60">Peso (ML)</div>
+          <div className="mt-1 text-sm text-white/90">
+            slope: {weightPred.slopeKgPerDay} kg/dia · R²: {weightPred.r2}
+            {typeof weightPred.projectedKg7d === "number" ? ` · 7d: ${weightPred.projectedKg7d} kg` : ""}
+            {typeof weightPred.projectedKg30d === "number" ? ` · 30d: ${weightPred.projectedKg30d} kg` : ""}
+          </div>
         </div>
       </div>
 
-      <Card className="bg-gray-900 border-gray-800">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center justify-between">
-            <span>Risco de Overtraining</span>
-            <Badge className={riskClass(overtrainingRisk.riskLevel)}>
-              {String(overtrainingRisk.riskLevel).toUpperCase()}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Progress value={overtrainingRisk.riskScore} className="mb-4" />
-          <div className="text-gray-300 text-sm mb-3">Score: {overtrainingRisk.riskScore}/100</div>
-
-          {overtrainingRisk.factors?.length > 0 && (
-            <div>
-              <div className="text-gray-400 text-sm mb-2">Fatores detectados:</div>
-              <ul className="space-y-1">
-                {overtrainingRisk.factors.map((factor: string, idx: number) => (
-                  <li key={idx} className="text-gray-300 text-sm flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
-                    {factor}
-                  </li>
-                ))}
-              </ul>
+      <div className="rounded-2xl bg-zinc-900/60 border border-white/10 p-4">
+        <div className="text-white font-semibold">Recomendações</div>
+        <div className="mt-3 space-y-2">
+          {recs.map((r, idx) => (
+            <div key={idx} className="rounded-xl bg-white/5 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm text-white">{r.title}</div>
+                <div className="text-xs text-white/60">{r.type}</div>
+              </div>
+              <div className="mt-1 text-xs text-white/70">{r.message}</div>
+              {r.action?.href ? (
+                <a href={r.action.href} className="mt-2 inline-block text-xs text-blue-400 hover:text-blue-300">
+                  {r.action.label} →
+                </a>
+              ) : null}
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {metrics && (
-        <Card className="bg-gray-900 border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-white">Métricas de Performance (7 dias)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-gray-400 text-sm">Frequência</div>
-                <div className="text-2xl font-bold text-white">{metrics.workoutFrequency} treinos</div>
-              </div>
-              <div>
-                <div className="text-gray-400 text-sm">PSE Médio</div>
-                <div className="text-2xl font-bold text-white">{metrics.averagePSE}/10</div>
-              </div>
-              <div>
-                <div className="text-gray-400 text-sm">Recuperação</div>
-                <div className="text-2xl font-bold text-green-400">{metrics.recoveryScore}%</div>
-              </div>
-              <div>
-                <div className="text-gray-400 text-sm">Aderência</div>
-                <div className="text-2xl font-bold text-blue-400">{metrics.adherenceRate}%</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="space-y-3">
-        {recommendations.map((rec, idx) => (
-          <Card
-            key={idx}
-            className={`bg-gray-900 border-gray-800 ${
-              rec.type === "warning" ? "border-l-4 border-l-yellow-500" : ""
-            } ${rec.type === "success" ? "border-l-4 border-l-green-500" : ""}`}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">{iconFor(rec.type)}</div>
-                <div className="flex-1">
-                  <div className="font-semibold text-white mb-1">{rec.title}</div>
-                  <div className="text-gray-300 text-sm">{rec.message}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
