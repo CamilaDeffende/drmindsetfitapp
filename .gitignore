@@ -159,3 +159,13 @@ package-lock 2.json
 
 # MF_IGNORE_STRAY_V4
 MF_SH_V4_ARGS_V1
+# MF_ALLOW_MF_MASTER_SCRIPTS_V1
+# Mantém o padrão de ignorar artefatos temporários, mas permite versionar runners/scripts do MindsetFit
+!/.mf_master/
+!/.mf_master/bin/
+!/.mf_master/bin/mf
+!/.mf_master/phases/
+!/.mf_master/phases/*.sh
+!/.mf_master/fixes/
+!/.mf_master/fixes/*.sh
+
