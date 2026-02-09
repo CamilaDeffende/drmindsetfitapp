@@ -38,6 +38,7 @@ import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
 import CorridaPro from "@/pages/CorridaPro";
+import ProgressPage from "@/pages/progress/ProgressPage";
 function App() {
     // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
 
@@ -185,12 +186,15 @@ function App() {
   <Route path="/dev/engine" element={<DevEngine />} />
               <Route path="/achievements" element={<AchievementsPage />} />
               <Route path="/conflicts" element={<ConflictsPage />} />
-            </Routes>
+              <Route path="/progress" element={<ProgressPage />} />
+
             <OfflineIndicator />
             <LiveLocationPill />
-          </BrowserRouter>
+          
+  </Routes>
+</BrowserRouter>
           <Toaster />
-        </DrMindSetfitProvider>
+</DrMindSetfitProvider>
       </AuthProvider>
     </ThemeProvider>
   );
