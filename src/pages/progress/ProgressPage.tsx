@@ -1,49 +1,50 @@
-
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import WeightChart from "@/components/charts/WeightChart";
+import WorkoutFrequencyChart from "@/components/charts/WorkoutFrequencyChart";
 import { historyService } from "@/services/history/HistoryService";
-import { WeightChart } from "@/components/charts/WeightChart";
-import { StatsOverview } from "@/components/charts/StatsOverview";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
 
-export function ProgressPage() {
-  const [weightData, setWeightData] = useState<{ date: string; weight: number }[]>([]);
-  const [stats, setStats] = useState({ totalWorkouts: 0, totalDistanceKm: 0, totalCalories: 0, avgDurationMin: 0 });
+export default function ProgressPage() {
+  const [seeded, setSeeded] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    historyService.seedDemo(35);
+    setSeeded(true);
+  }, []);
 
-  const loadData = () => {
-    setWeightData(historyService.getWeightProgress());
-    setStats({
-      totalWorkouts: historyService.getTotalWorkouts(),
-      totalDistanceKm: historyService.getTotalDistanceKm(),
-      totalCalories: historyService.getTotalCaloriesBurned(),
-      avgDurationMin: historyService.getAverageWorkoutDuration(),
-    });
-  };
+  const weight = useMemo(() => historyService.getWeightSeries(60), [seeded]);
+  const weekly = useMemo(() => historyService.getWorkoutWeeklyCounts(12), [seeded]);
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-blue-400">Seu Progresso</h1>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Calendar className="mr-2 w-4 h-4" />
-            Período
-          </Button>
+    <div className="mx-auto w-full max-w-6xl px-4 py-6">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <div className="text-xs uppercase tracking-wide text-white/60">Analytics</div>
+          <h1 className="text-2xl font-bold text-white">Progresso</h1>
+          <p className="mt-1 text-sm text-white/70">
+            Evolução de peso e consistência de treinos com histórico local (SSOT).
+          </p>
         </div>
+      </div>
 
-        <StatsOverview {...stats} />
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <WeightChart data={weight} />
+        <WorkoutFrequencyChart data={weekly} />
+      </div>
 
-        <div className="mt-8">
-          {weightData.length > 0 ? (
-            <WeightChart data={weightData} />
-          ) : (
-            <div className="bg-gray-900 rounded-2xl p-12 text-center border border-gray-800">
-              <p className="text-gray-400">Nenhum dado de peso registrado ainda.</p>
-              <p className="text-gray-500 text-sm mt-2">Adicione suas primeiras medições para ver gráficos aqui!</p>
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="text-sm font-semibold text-white">Últimos treinos</div>
+        <div className="mt-3 grid gap-2">
+          {historyService.getWorkouts(8).map((w) => (
+            <div key={w.id} className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm text-white">{w.title}</div>
+                <div className="text-xs text-white/60">{new Date(w.dateIso).toLocaleDateString("pt-BR")}</div>
+              </div>
+              <div className="mt-1 text-xs text-white/60">
+                {w.modality} · {w.durationMin ?? 0} min {w.distanceKm ? `· ${w.distanceKm} km` : ""} {w.caloriesKcal ? `· ${w.caloriesKcal} kcal` : ""}
+              </div>
             </div>
-          )}
+          ))}
         </div>
       </div>
     </div>

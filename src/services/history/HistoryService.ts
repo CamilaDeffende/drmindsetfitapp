@@ -1,163 +1,232 @@
-import { syncService } from "@/services/offline/SyncService";
-import { mfApplyGamification } from "@/services/gamification/GamificationBridge";
-/**
- * Serviço de histórico de treinos e medições (localStorage)
- */
+export type WorkoutType =
+  | "musculacao"
+  | "corrida"
+  | "ciclismo"
+  | "crossfit"
+  | "funcional"
+  | "outro";
+
 export type WorkoutRecord = {
   id: string;
-  date: string; // ISO
-  type: "corrida" | "ciclismo" | "musculacao" | "crossfit" | "funcional";
-  durationMinutes: number;
-  distanceMeters?: number;
-  caloriesBurned: number;
-  averageHeartRate?: number;
-  maxHeartRate?: number;
-  pse?: number;
+  dateIso: string;
+  modality: WorkoutType;
+  title: string;
+
+  durationMin?: number;
+  distanceKm?: number;
+  caloriesKcal?: number;
+  avgHeartRate?: number;
   notes?: string;
-  gpsRoute?: any;
+
+  // compat
+  type: WorkoutType;
+  startTime?: string;
+  durationMinutes?: number;
+  caloriesBurned?: number;
+  distanceMeters?: number;
+  pse?: number;
 };
-
-export const __mfKeepEnqueueIfOffline = enqueueIfOffline;
-
-function enqueueIfOffline(type: "workout"|"measurement"|"nutrition", data: any) {
-  try {
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-      syncService.addToQueue(type, data);
-    }
-
-// keep function referenced (no-op when online)
-  } catch (_e) { /* noop */ }
-}
 
 export type BodyMeasurement = {
-  id: string;
-  date: string;
-  weightKg: number;
-  bodyFatPercentage?: number;
-  muscleMassKg?: number;
+  dateIso: string;
+  weightKg?: number;
+  bodyFatPct?: number;
   waistCm?: number;
-  chestCm?: number;
-  armCm?: number;
-  thighCm?: number;
-  photos?: string[];
+  hipCm?: number;
 };
 
-export type NutritionLog = {
-  id: string;
-  date: string;
-  totalKcal: number;
-  proteinG: number;
-  carbsG: number;
-  fatG: number;
-  waterLiters: number;
-  meals: number;
+export type NutritionRecord = {
+  dateIso: string;
+  caloriesKcal?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
 };
 
-class HistoryService {
-  private readonly STORAGE_KEY_WORKOUTS = "drmindsetfit:workouts";
-  private readonly STORAGE_KEY_MEASUREMENTS = "drmindsetfit:measurements";
-  private readonly STORAGE_KEY_NUTRITION = "drmindsetfit:nutrition";
+type HistoryDB = {
+  workouts: WorkoutRecord[];
+  measurements: BodyMeasurement[];
+  nutrition: NutritionRecord[];
+};
 
-  addWorkout(workout: Omit<WorkoutRecord, "id">): WorkoutRecord {const workouts = this.getAllWorkouts();
-    const newWorkout: WorkoutRecord = { ...workout, id: `workout-${Date.now()}` };
-    mfApplyGamification("workout", newWorkout);
-    workouts.push(newWorkout);
-    localStorage.setItem(this.STORAGE_KEY_WORKOUTS, JSON.stringify(workouts));
-    return newWorkout;
+const LS_KEY = "mf:history:v1";
+
+function safeJsonParse<T>(s: string | null, fallback: T): T {
+  if (!s) return fallback;
+  try {
+    return JSON.parse(s) as T;
+  } catch {
+    return fallback;
   }
+}
+function nowIso() {
+  return new Date().toISOString();
+}
+function uid() {
+  return "w_" + Math.random().toString(36).slice(2, 10) + "_" + Date.now().toString(36);
+}
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+function isoWeekKey(dateIso: string) {
+  const t = Date.parse(dateIso);
+  if (!Number.isFinite(t)) return "invalid";
+  const d = new Date(t);
+  const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = tmp.getUTCDay() || 7;
+  tmp.setUTCDate(tmp.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${tmp.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
 
-  getAllWorkouts(): WorkoutRecord[] {
-    const data = localStorage.getItem(this.STORAGE_KEY_WORKOUTS);
-    return data ? JSON.parse(data) : [];
-  }
+export class HistoryService {
+  private db: HistoryDB;
 
-  getWorkoutsByDateRange(startDate: string, endDate: string): WorkoutRecord[] {
-    return this.getAllWorkouts().filter((w) => w.date >= startDate && w.date <= endDate);
-  }
-
-  getWorkoutsByType(type: WorkoutRecord["type"]): WorkoutRecord[] {
-    return this.getAllWorkouts().filter((w) => w.type === type);
-  }
-
-  deleteWorkout(id: string): void {
-    const workouts = this.getAllWorkouts().filter((w) => w.id !== id);
-    localStorage.setItem(this.STORAGE_KEY_WORKOUTS, JSON.stringify(workouts));
-  }
-
-  addMeasurement(measurement: Omit<BodyMeasurement, "id">): BodyMeasurement {const measurements = this.getAllMeasurements();
-    const newMeasurement: BodyMeasurement = { ...measurement, id: `measurement-${Date.now()}` };
-    mfApplyGamification("measurement", newMeasurement);
-    measurements.push(newMeasurement);
-    localStorage.setItem(this.STORAGE_KEY_MEASUREMENTS, JSON.stringify(measurements));
-    return newMeasurement;
-  }
-
-  getAllMeasurements(): BodyMeasurement[] {
-    const data = localStorage.getItem(this.STORAGE_KEY_MEASUREMENTS);
-    return data ? JSON.parse(data) : [];
-  }
-
-  getMeasurementsByDateRange(startDate: string, endDate: string): BodyMeasurement[] {
-    return this.getAllMeasurements().filter((m) => m.date >= startDate && m.date <= endDate);
-  }
-
-  getLatestMeasurement(): BodyMeasurement | null {
-    const measurements = this.getAllMeasurements();
-    if (measurements.length === 0) return null;
-    return measurements.sort((a, b) => b.date.localeCompare(a.date))[0];
-  }
-
-  addNutritionLog(log: Omit<NutritionLog, "id">): NutritionLog {const logs = this.getAllNutritionLogs();
-    const newLog: NutritionLog = { ...log, id: `nutrition-${Date.now()}` };
-    mfApplyGamification("nutrition", newLog);
-    logs.push(newLog);
-    localStorage.setItem(this.STORAGE_KEY_NUTRITION, JSON.stringify(logs));
-    return newLog;
-  }
-
-  getAllNutritionLogs(): NutritionLog[] {
-    const data = localStorage.getItem(this.STORAGE_KEY_NUTRITION);
-    return data ? JSON.parse(data) : [];
-  }
-
-  getNutritionLogsByDateRange(startDate: string, endDate: string): NutritionLog[] {
-    return this.getAllNutritionLogs().filter((n) => n.date >= startDate && n.date <= endDate);
-  }
-
-  getTotalWorkouts(): number {
-    return this.getAllWorkouts().length;
-  }
-
-  getTotalDistanceKm(): number {
-    return (
-      this.getAllWorkouts()
-        .filter((w) => w.distanceMeters)
-        .reduce((sum, w) => sum + (w.distanceMeters || 0), 0) / 1000
+  constructor() {
+    this.db = safeJsonParse<HistoryDB>(
+      typeof window !== "undefined" ? window.localStorage.getItem(LS_KEY) : null,
+      { workouts: [], measurements: [], nutrition: [] }
     );
+    this.db.workouts = (this.db.workouts || []).map((w) => this.normalizeWorkout(w as any));
   }
 
-  getTotalCaloriesBurned(): number {
-    return this.getAllWorkouts().reduce((sum, w) => sum + w.caloriesBurned, 0);
+  private persist() {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(LS_KEY, JSON.stringify(this.db));
   }
 
-  getAverageWorkoutDuration(): number {
-    const workouts = this.getAllWorkouts();
-    if (workouts.length === 0) return 0;
-    const total = workouts.reduce((sum, w) => sum + w.durationMinutes, 0);
-    return Math.round(total / workouts.length);
+  private normalizeWorkout(w: Partial<WorkoutRecord> & Record<string, any>): WorkoutRecord {
+    const dateIso = String((w as any).dateIso || (w as any).startTime || (w as any).date || nowIso());
+    const modality: WorkoutType = (((w as any).modality || (w as any).type || "outro") as WorkoutType);
+
+    const durationMin =
+      typeof (w as any).durationMin === "number"
+        ? (w as any).durationMin
+        : typeof (w as any).durationMinutes === "number"
+          ? (w as any).durationMinutes
+          : undefined;
+
+    const caloriesKcal =
+      typeof (w as any).caloriesKcal === "number"
+        ? (w as any).caloriesKcal
+        : typeof (w as any).caloriesBurned === "number"
+          ? (w as any).caloriesBurned
+          : undefined;
+
+    const distanceKm =
+      typeof (w as any).distanceKm === "number"
+        ? (w as any).distanceKm
+        : typeof (w as any).distanceMeters === "number"
+          ? (w as any).distanceMeters / 1000
+          : undefined;
+
+    const pse = typeof (w as any).pse === "number" ? clamp((w as any).pse, 0, 10) : undefined;
+
+    const rec: WorkoutRecord = {
+      id: String((w as any).id || uid()),
+      dateIso,
+      modality,
+      title: String((w as any).title || "Treino"),
+      durationMin: typeof durationMin === "number" ? durationMin : undefined,
+      distanceKm: typeof distanceKm === "number" ? distanceKm : undefined,
+      caloriesKcal: typeof caloriesKcal === "number" ? caloriesKcal : undefined,
+      avgHeartRate: typeof (w as any).avgHeartRate === "number" ? (w as any).avgHeartRate : undefined,
+      notes: typeof (w as any).notes === "string" ? (w as any).notes : undefined,
+
+      type: modality,
+      startTime: dateIso,
+      durationMinutes: typeof durationMin === "number" ? durationMin : undefined,
+      caloriesBurned: typeof caloriesKcal === "number" ? caloriesKcal : undefined,
+      distanceMeters: typeof distanceKm === "number" ? Math.round(distanceKm * 1000) : undefined,
+      pse,
+    };
+    return rec;
   }
 
-  getWeightProgress(): { date: string; weight: number }[] {
-    return this.getAllMeasurements()
-      .map((m) => ({ date: m.date, weight: m.weightKg }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+  getAll() { return { ...this.db }; }
+  getAllWorkouts() { return this.db.workouts.slice(); }
+  getWorkouts(limit = 200) { return this.db.workouts.slice(0, limit); }
+  getWorkoutsByType(type: WorkoutType) { return this.db.workouts.filter((w) => w.type === type || w.modality === type); }
+
+  getWorkoutsByDateRange(startIso: string, endIso: string) {
+    const a = Date.parse(startIso);
+    const b = Date.parse(endIso);
+    const lo = Number.isFinite(a) ? a : -Infinity;
+    const hi = Number.isFinite(b) ? b : Infinity;
+    return this.db.workouts.filter((w) => {
+      const t = Date.parse(w.dateIso);
+      return Number.isFinite(t) && t >= lo && t <= hi;
+    });
   }
 
-  getBodyFatProgress(): { date: string; bodyFat: number }[] {
-    return this.getAllMeasurements()
-      .filter((m) => m.bodyFatPercentage !== undefined)
-      .map((m) => ({ date: m.date, bodyFat: m.bodyFatPercentage! }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+  getWeightProgress(days = 120) { return this.getWeightSeries(days); }
+
+  addWorkout(input: (Omit<WorkoutRecord, "id"> & { id?: string }) & Record<string, any>) {
+    const rec = this.normalizeWorkout({ ...input, id: input.id || uid() });
+    this.db.workouts.unshift(rec);
+    this.persist();
+    return rec;
+  }
+
+  addMeasurement(rec: BodyMeasurement) {
+    this.db.measurements.unshift({ ...rec, dateIso: rec.dateIso || nowIso() });
+    this.persist();
+  }
+
+  addNutrition(rec: NutritionRecord) {
+    this.db.nutrition.unshift({ ...rec, dateIso: rec.dateIso || nowIso() });
+    this.persist();
+  }
+
+  getMeasurements(limit = 365) { return this.db.measurements.slice(0, limit); }
+
+  getWeightSeries(days = 60) {
+    const cutoff = Date.now() - days * 86400 * 1000;
+    return this.db.measurements
+      .filter((m) => typeof m.weightKg === "number" && Date.parse(m.dateIso) >= cutoff)
+      .map((m) => ({ dateIso: m.dateIso, weightKg: m.weightKg as number }))
+      .sort((a, b) => Date.parse(a.dateIso) - Date.parse(b.dateIso));
+  }
+
+  getWorkoutWeeklyCounts(weeks = 12) {
+    const cutoff = Date.now() - weeks * 7 * 86400 * 1000;
+    const map = new Map<string, number>();
+    for (const w of this.db.workouts) {
+      const t = Date.parse(w.dateIso);
+      if (!Number.isFinite(t) || t < cutoff) continue;
+      const key = isoWeekKey(w.dateIso);
+      map.set(key, (map.get(key) || 0) + 1);
+    }
+    const keys = Array.from(map.keys()).sort();
+    return keys.map((k) => ({ week: k, workouts: map.get(k) || 0 }));
+  }
+
+  seedDemo(days = 35) {
+    if (this.db.workouts.length > 0 || this.db.measurements.length > 0) return;
+    const base = Date.now();
+    let weight = 86.0;
+    for (let i = days; i >= 0; i--) {
+      const dt = new Date(base - i * 86400 * 1000);
+      const dateIso = dt.toISOString();
+      if (dt.getDay() !== 0 && dt.getDay() !== 3) {
+        const isStrength = dt.getDay() % 2 === 0;
+        this.addWorkout({
+          dateIso,
+          modality: isStrength ? "musculacao" : "corrida",
+          type: isStrength ? "musculacao" : "corrida",
+          title: isStrength ? "Treino A (Força)" : "Corrida Z2",
+          durationMin: 45 + (dt.getDay() % 3) * 10,
+          distanceKm: isStrength ? undefined : 5 + (dt.getDay() % 3),
+          caloriesKcal: 320 + (dt.getDay() % 4) * 40,
+          pse: isStrength ? 7 : 6,
+        });
+      }
+      if ([1, 3, 5].includes(dt.getDay())) {
+        weight -= 0.03;
+        this.addMeasurement({ dateIso, weightKg: Math.round(weight * 10) / 10 });
+      }
+    }
   }
 }
 

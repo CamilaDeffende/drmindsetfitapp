@@ -36,8 +36,8 @@ class PredictionEngine {
       };
     }
 
-    const avgDuration = hist.reduce((s, w) => s + w.durationMinutes, 0) / hist.length;
-    const avgCalories = hist.reduce((s, w) => s + w.caloriesBurned, 0) / hist.length;
+    const avgDuration = hist.reduce((s, w) => s + (w.durationMinutes ?? w.durationMin ?? 0), 0) / hist.length;
+    const avgCalories = hist.reduce((s, w) => s + (w.caloriesBurned ?? w.caloriesKcal ?? 0), 0) / hist.length;
 
     const pse = hist.filter((w) => typeof w.pse === "number");
     const avgPSE =
@@ -53,7 +53,7 @@ class PredictionEngine {
         const avgPaceMinPerKm =
           withDist.reduce((s, w) => {
             const km = (w.distanceMeters || 0) / 1000;
-            return s + (km > 0 ? w.durationMinutes / km : 0);
+            return s + (km > 0 ? (w.durationMinutes ?? w.durationMin ?? 0) / km : 0);
           }, 0) / withDist.length;
 
         estimatedDuration = avgPaceMinPerKm * targetDistanceKm;
@@ -83,10 +83,10 @@ class PredictionEngine {
       return { predictedWeightKg: 0, daysInFuture, confidence: 0, trend: "estável" };
     }
 
-    const first = new Date(data[0].date).getTime();
+    const first = new Date(data[0].dateIso).getTime();
     const pts = data.map((d) => ({
-      x: (new Date(d.date).getTime() - first) / (1000 * 60 * 60 * 24),
-      y: d.weight,
+      x: (new Date(d.dateIso).getTime() - first) / (1000 * 60 * 60 * 24),
+      y: d.weightKg,
     }));
 
     const n = pts.length;
@@ -135,7 +135,7 @@ class PredictionEngine {
     const buckets: Record<number, Bucket> = {};
 
     for (const w of workouts) {
-      const h = new Date(w.date).getHours();
+      const h = new Date(w.dateIso).getHours();
       if (!buckets[h]) buckets[h] = { count: 0, pseCount: 0, pseSum: 0 };
       buckets[h].count++;
       if (typeof w.pse === "number") {

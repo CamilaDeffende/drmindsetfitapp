@@ -1,5 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="/Users/luizhenriquealexandrepereira/Desktop/DrMindsetfitapp"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
-exec bash -lc "./.mf_master/mf_master.sh ${1:-all}"
+
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  sanity)
+    echo "pwd: $(pwd)"
+    echo "node: $(node -v)"
+    echo "npm: $(npm -v)"
+    echo "git: $(git rev-parse --short HEAD 2>/dev/null || true)"
+    ;;
+  verify)
+    npm run -s verify
+    ;;
+  run)
+    f="${1:-}"; shift || true
+    [[ -n "$f" ]] || { echo "Uso: mf run <arquivo.sh>"; exit 2; }
+    [[ -f "$f" ]] || { echo "❌ não existe: $f"; exit 2; }
+    bash "$f" "$@"
+    ;;
+  *)
+    echo "Uso: mf {sanity|verify|run}"
+    exit 2
+    ;;
+esac

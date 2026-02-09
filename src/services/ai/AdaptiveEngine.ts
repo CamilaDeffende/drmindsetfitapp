@@ -56,9 +56,9 @@ class AdaptiveEngine {
     );
 
     const avgDuration7 =
-      workouts.length > 0 ? workouts.reduce((sum, w) => sum + w.durationMinutes, 0) / workouts.length : 0;
+      workouts.length > 0 ? workouts.reduce((sum, w) => sum  + (w.durationMinutes ?? w.durationMin ?? 0), 0) / workouts.length : 0;
     const avgDuration14 =
-      workouts14.length > 0 ? workouts14.reduce((sum, w) => sum + w.durationMinutes, 0) / workouts14.length : 0;
+      workouts14.length > 0 ? workouts14.reduce((sum, w) => sum  + (w.durationMinutes ?? w.durationMin ?? 0), 0) / workouts14.length : 0;
 
     const progressionRate = avgDuration14 > 0 ? ((avgDuration7 - avgDuration14) / avgDuration14) * 100 : 0;
 
@@ -164,7 +164,7 @@ class AdaptiveEngine {
     const weight = historyService.getWeightProgress();
     if (weight.length >= 2) {
       const recent = weight.slice(-2);
-      const change = recent[1].weight - recent[0].weight;
+      const change = recent[1].weightKg - recent[0].weightKg;
       if (Math.abs(change) > 0.5) {
         recs.push({
           type: "info",
