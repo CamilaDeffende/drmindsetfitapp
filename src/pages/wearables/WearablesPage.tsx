@@ -32,17 +32,43 @@ export function WearablesPage() {
       const workout = await importFile(file);
 
       historyService.addWorkout({
-        date: workout.startTime,
-        type: workout.type === "running" ? "corrida" : "ciclismo",
-        durationMinutes: Math.round(workout.durationSeconds / 60),
+        dateIso: workout.startTime,
+        modality:
+          workout.type === "running"
+            ? "corrida"
+            : workout.type === "cycling"
+              ? "ciclismo"
+              : workout.type === "strength"
+                ? "musculacao"
+                : "outro",
+        type:
+          workout.type === "running"
+            ? "corrida"
+            : workout.type === "cycling"
+              ? "ciclismo"
+              : workout.type === "strength"
+                ? "musculacao"
+                : "outro",
+        title:
+          workout.type === "running"
+            ? "Treino Wearable — Corrida"
+            : workout.type === "cycling"
+              ? "Treino Wearable — Ciclismo"
+              : workout.type === "strength"
+                ? "Treino Wearable — Força"
+                : "Treino Wearable",
+        durationMinutes:
+          (workout as any).durationMinutes ??
+          (workout as any).durationMin ??
+          (typeof (workout as any).durationSec === "number"
+            ? Math.round((workout as any).durationSec / 60)
+            : undefined),
         distanceMeters: workout.distanceMeters,
         caloriesBurned: workout.caloriesBurned,
-        averageHeartRate: workout.averageHeartRate,
-        maxHeartRate: workout.maxHeartRate,
+        avgHeartRate: workout.averageHeartRate,
         gpsRoute: workout.gpsRoute,
       });
-
-      alert("Treino importado com sucesso!");
+alert("Treino importado com sucesso!");
       event.target.value = "";
     } catch (err) {
       console.error("Erro ao importar:", err);
