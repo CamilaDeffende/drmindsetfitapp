@@ -170,3 +170,6 @@ MF_SH_V4_ARGS_V1
 !/.mf_master/fixes/*.sh
 # MF_IGNORE_PERSONAL_SCRIPTS
 .mf_master/fixes/meu_script.sh
+
+# MF_IGNORE_LOCAL
+dev-dist/
