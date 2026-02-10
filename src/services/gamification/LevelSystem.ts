@@ -7,7 +7,6 @@ export type LevelInfo = {
   progress01: number; // 0..1
   xp: number; // alias: total XP
   nextLevelXp: number; // alias: XP do próximo level
-
 };
 
 const LEVELS: { level: number; title: string; xp: number }[] = [
@@ -51,4 +50,6 @@ static getLevelInfo(totalXp: number): LevelInfo {
   }
 }
 
+
+// MF_AUTOHEAL
 export const levelSystem = new LevelSystem();

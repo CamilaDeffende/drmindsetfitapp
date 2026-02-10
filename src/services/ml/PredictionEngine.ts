@@ -1,44 +1,60 @@
-import { historyService, WorkoutRecord, WorkoutType } from "@/services/history/HistoryService";
+import { historyService, WorkoutType } from "@/services/history/HistoryService";
 
 export type WorkoutPrediction = {
   type: WorkoutType;
   suggestedDurationMin: number;
   suggestedCaloriesKcal: number;
   suggestedDistanceKm?: number;
-  confidence01: number;
+  confidence01: number; // 0..1
+  bestHour?: number; // 0..23
 };
 
 export type WeightPrediction = {
   slopeKgPerDay: number;
-  r2: number;
+  r2: number; // 0..1
   projectedKg7d?: number;
   projectedKg30d?: number;
+  predictedKg30d?: number; // alias compat
+  bestWeighInHour?: number; // 0..23
+  points?: { dateIso: string; weightKg: number }[];
 };
 
-function getAllWorkouts(): WorkoutRecord[] {
-  const ws = (historyService as any).getWorkouts?.(9999) ?? [];
-  return Array.isArray(ws) ? (ws as WorkoutRecord[]) : [];
-}
-
+// -----------------------------------------------------------------------------
+// Helpers (lint-safe) — normalize history/workout shapes (SSOT compatible)
+// -----------------------------------------------------------------------------
 function durationMin(w: any): number {
-  const v =
-    w.durationMinutes ??
-    w.durationMin ??
-    (typeof w.durationSec === "number" ? Math.round(w.durationSec / 60) : undefined);
-  return typeof v === "number" ? v : 0;
+  if (!w) return 0;
+  const a = (w as any).durationMinutes;
+  if (typeof a === "number") return a;
+  const b = (w as any).durationMin;
+  if (typeof b === "number") return b;
+  const c = (w as any).durationSec;
+  if (typeof c === "number") return Math.round(c / 60);
+  return 0;
 }
 
 function caloriesKcal(w: any): number {
-  const v = w.caloriesBurned ?? w.caloriesKcal;
-  return typeof v === "number" ? v : 0;
+  if (!w) return 0;
+  const a = (w as any).caloriesBurned;
+  if (typeof a === "number") return a;
+  const b = (w as any).caloriesKcal;
+  if (typeof b === "number") return b;
+  return 0;
 }
 
 function distanceKm(w: any): number | undefined {
-  const m = w.distanceMeters;
-  if (typeof m === "number" && m > 0) return Math.round((m / 1000) * 100) / 100;
-  const km = w.distanceKm;
-  if (typeof km === "number" && km > 0) return Math.round(km * 100) / 100;
+  if (!w) return undefined;
+  const km = (w as any).distanceKm;
+  if (typeof km === "number") return km;
+  const m = (w as any).distanceMeters;
+  if (typeof m === "number") return m / 1000;
   return undefined;
+}
+
+function getAllWorkouts(): any[] {
+  const hs: any = historyService as any;
+  const ws = hs.getWorkouts ? hs.getWorkouts() : (hs.workouts ?? hs.records?.workouts ?? []);
+  return Array.isArray(ws) ? ws : [];
 }
 
 export class PredictionEngine {
@@ -59,7 +75,6 @@ export class PredictionEngine {
       default: return 350;
     }
   }
-
   predictWorkout(type: WorkoutType, targetDistanceKm?: number): WorkoutPrediction {
     const all = getAllWorkouts();
     const hist = all.filter((w: any) => (w.type ?? w.modality) === type);
@@ -67,37 +82,36 @@ export class PredictionEngine {
     const n = hist.length;
     const conf = Math.min(0.9, Math.max(0.25, n / 20));
 
-    const avgDur = n ? hist.reduce((s, w) => s + durationMin(w), 0) / n : this.getDefaultDuration(type);
-    const avgCal = n ? hist.reduce((s, w) => s + caloriesKcal(w), 0) / n : this.getDefaultCalories(type);
+    const avgDur = n ? hist.reduce((s: number, w: any) => s + durationMin(w), 0) / n : this.getDefaultDuration(type);
+    const avgCal = n ? hist.reduce((s: number, w: any) => s + caloriesKcal(w), 0) / n : this.getDefaultCalories(type);
 
     let suggestedDistanceKm: number | undefined = undefined;
     if (type === "corrida" || type === "ciclismo") {
       if (typeof targetDistanceKm === "number" && targetDistanceKm > 0) suggestedDistanceKm = targetDistanceKm;
       else {
-        const d = hist.map(distanceKm).filter((x): x is number => typeof x === "number");
-        if (d.length) suggestedDistanceKm = d.sort((a, b) => a - b)[Math.floor(d.length * 0.6)];
+        const d = hist.map(distanceKm).filter((x: unknown): x is number => typeof x === "number");
+        if (d.length) suggestedDistanceKm = d.sort((a: number, b: number) => a - b)[Math.floor(d.length * 0.6)];
       }
     }
 
     let suggestedDurationMin = Math.round(avgDur);
     if (suggestedDistanceKm && (type === "corrida" || type === "ciclismo")) {
-      const d = hist.map(distanceKm).filter((x): x is number => typeof x === "number");
-      const med = d.length ? d.sort((a, b) => a - b)[Math.floor(d.length / 2)] : undefined;
+      const d = hist.map(distanceKm).filter((x: unknown): x is number => typeof x === "number");
+      const med = d.length ? d.sort((a: number, b: number) => a - b)[Math.floor(d.length / 2)] : undefined;
       if (med && med > 0 && suggestedDistanceKm > med) suggestedDurationMin = Math.round(avgDur * (suggestedDistanceKm / med));
     }
 
     return { type, suggestedDurationMin, suggestedCaloriesKcal: Math.round(avgCal), suggestedDistanceKm, confidence01: Math.round(conf * 100) / 100 };
   }
-
   predictWeight(): WeightPrediction {
     const data = (historyService as any).getWeightProgress?.() ?? [];
-    if (!Array.isArray(data) || data.length < 2) return { slopeKgPerDay: 0, r2: 0 };
+    if (!Array.isArray(data) || data.length < 2) return { slopeKgPerDay: 0, r2: 0, projectedKg7d: undefined, projectedKg30d: undefined, predictedKg30d: undefined, points: [] };
 
     const pts = data
-      .map((d: any) => ({ dateIso: d.dateIso ?? d.date, weightKg: d.weightKg ?? d.weight }))
+      .map((d: any) => ({ dateIso: d.dateIso ?? d.dateIso, weightKg: d.weightKg ?? d.weightKg }))
       .filter((d: any) => d.dateIso && typeof d.weightKg === "number");
 
-    if (pts.length < 2) return { slopeKgPerDay: 0, r2: 0 };
+    if (pts.length < 2) return { slopeKgPerDay: 0, r2: 0, projectedKg7d: undefined, projectedKg30d: undefined, predictedKg30d: undefined, points: [] };
 
     const t0 = new Date(pts[0].dateIso).getTime();
     const xs = pts.map((d: any) => (new Date(d.dateIso).getTime() - t0) / (1000 * 60 * 60 * 24));
