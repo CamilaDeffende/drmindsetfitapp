@@ -33,21 +33,16 @@ export function useOffline() {
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
 
-    // best effort: background sync (se suportado)
-    if ("serviceWorker" in navigator && "SyncManager" in window) {
-      }
-
-        // Background Sync (best effort) — sem depender de tipos TS
+    // Background Sync (best effort) — sem depender de tipos TS
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.ready
         .then((reg) => {
           const anyReg = reg as unknown as { sync?: { register: (tag: string) => Promise<void> } };
-          return anyReg.sync?.register ? anyReg.sync.register("sync-workouts") : Promise.resolve();
+          return anyReg.sync?.register ? anyReg.sync.register("mf-sync-v1") : Promise.resolve();
         })
         .catch(() => {});
     }
-
-return () => {
+    return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
     };

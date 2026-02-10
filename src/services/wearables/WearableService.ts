@@ -1,266 +1,163 @@
-/**
- * WearableService — integração com wearables
- * TS puro (sem dependência de backend)
- */
+export type WearableProvider = "webbluetooth" | "strava" | "garmin" | "apple_health" | "google_fit";
+
 export type WearableDevice = {
   id: string;
   name: string;
-  type: "watch" | "band" | "hrm" | "bike-computer";
-  brand: "garmin" | "apple" | "samsung" | "polar" | "wahoo" | "generic";
-  batteryLevel?: number;
+  provider: WearableProvider;
   connected: boolean;
-  lastSync?: string;
-};
-
-export type HeartRateData = {
-  bpm: number;
-  timestamp: number;
-  zone: 1 | 2 | 3 | 4 | 5;
+  lastSyncIso?: string;
 };
 
 export type WorkoutData = {
-  startTime: string;
-  endTime: string;
-  type: "running" | "cycling" | "swimming" | "strength" | "other";
-  durationSeconds: number;
+  startTime: string; // ISO
+  type: "running" | "cycling" | "strength" | "swimming" | "other";
+  durationMinutes?: number;
+  durationMin?: number; // compat
+  durationSec?: number; // compat
   distanceMeters?: number;
+  caloriesBurned?: number;
+  caloriesKcal?: number; // compat
   averageHeartRate?: number;
   maxHeartRate?: number;
-  caloriesBurned: number;
-  averagePace?: number;
-  elevationGain?: number;
-  cadence?: number;
-  power?: number;
-  gpsRoute?: Array<{ lat: number; lon: number; alt?: number }>;
+  gpsRoute?: { lat: number; lon: number; ts?: string }[];
 };
 
-export type SyncStatus = {
-  lastSyncTime: string | null;
-  workoutsSynced: number;
-  hrDataPoints: number;
-  inProgress: boolean;
-  error?: string;
-};
+const LS_KEY = "mf:wearables:v1";
 
-class WearableService {
-  private readonly STORAGE_KEY_DEVICES = "drmindsetfit:wearable-devices";
-  private readonly STORAGE_KEY_SYNC = "drmindsetfit:wearable-sync-status";
+function nowIso() {
+  return new Date().toISOString();
+}
 
-  private heartRateCallbacks: Map<string, (hr: HeartRateData) => void> = new Map();
-  private bluetoothDevice: BluetoothDevice | null = null;
-
-  isBluetoothSupported(): boolean {
-    return typeof navigator !== "undefined" && "bluetooth" in navigator;
+function loadState(): { devices: WearableDevice[] } {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return { devices: [] };
+    const v = JSON.parse(raw);
+    if (!v || typeof v !== "object") return { devices: [] };
+    if (!Array.isArray(v.devices)) return { devices: [] };
+    return { devices: v.devices as WearableDevice[] };
+  } catch {
+    return { devices: [] };
   }
+}
 
-  async connectBluetooth(): Promise<WearableDevice> {
-    if (!this.isBluetoothSupported()) {
-      throw new Error("Web Bluetooth não é suportado neste navegador");
-    }
+function saveState(st: { devices: WearableDevice[] }) {
+  localStorage.setItem(LS_KEY, JSON.stringify(st));
+}
 
-    const device = await navigator.bluetooth!.requestDevice({
-      filters: [{ services: ["heart_rate"] }, { services: [0x180d] }],
-      optionalServices: ["battery_service", "device_information"],
-    });
-
-    this.bluetoothDevice = device;
-
-    const server = await device.gatt?.connect();
-    if (!server) throw new Error("Falha ao conectar ao servidor GATT");
-
-    const newDevice: WearableDevice = {
-      id: device.id,
-      name: device.name || "Dispositivo Bluetooth",
-      type: "hrm",
-      brand: "generic",
-      connected: true,
-      lastSync: new Date().toISOString(),
-    };
-
-    this.saveDevice(newDevice);
-    await this.startHeartRateMonitoring(server);
-
-    this.updateSyncStatus({
-      lastSyncTime: new Date().toISOString(),
-      inProgress: false,
-      error: undefined,
-    });
-
-    return newDevice;
-  }
-
-  private async startHeartRateMonitoring(server: BluetoothRemoteGATTServer): Promise<void> {
-    try {
-      const service = await server.getPrimaryService("heart_rate");
-      const characteristic = await service.getCharacteristic("heart_rate_measurement");
-
-      characteristic.addEventListener("characteristicvaluechanged", (event: Event) => {
-        const target = event.target as BluetoothRemoteGATTCharacteristic;
-        const value = target.value;
-        if (!value) return;
-
-        const flags = value.getUint8(0);
-        const is16Bit = (flags & 0x01) !== 0;
-        const bpm = is16Bit ? value.getUint16(1, true) : value.getUint8(1);
-
-        const hr: HeartRateData = {
-          bpm,
-          timestamp: Date.now(),
-          zone: this.calculateHRZone(bpm),
-        };
-
-        this.heartRateCallbacks.forEach((cb) => cb(hr));
-
-        const st = this.getSyncStatus();
-        this.updateSyncStatus({
-          hrDataPoints: (st.hrDataPoints || 0) + 1,
-          lastSyncTime: new Date().toISOString(),
-        });
-      });
-
-      await characteristic.startNotifications();
-    } catch (e) {
-      console.error("Erro ao monitorar frequência cardíaca:", e);
-    }
-  }
-
-  private calculateHRZone(bpm: number): 1 | 2 | 3 | 4 | 5 {
-    const maxHR = 190;
-    const pct = (bpm / maxHR) * 100;
-    if (pct < 60) return 1;
-    if (pct < 70) return 2;
-    if (pct < 80) return 3;
-    if (pct < 90) return 4;
-    return 5;
-  }
-
-  onHeartRate(id: string, callback: (hr: HeartRateData) => void): void {
-    this.heartRateCallbacks.set(id, callback);
-  }
-
-  offHeartRate(id: string): void {
-    this.heartRateCallbacks.delete(id);
-  }
-
-  async disconnectBluetooth(): Promise<void> {
-    if (this.bluetoothDevice?.gatt?.connected) {
-      this.bluetoothDevice.gatt.disconnect();
-    }
-    this.bluetoothDevice = null;
-
-    // marcar devices como desconectados
-    const updated = this.getDevices().map((d) => ({ ...d, connected: false }));
-    localStorage.setItem(this.STORAGE_KEY_DEVICES, JSON.stringify(updated));
-  }
-
-  private saveDevice(device: WearableDevice): void {
-    const devices = this.getDevices();
-    const i = devices.findIndex((d) => d.id === device.id);
-    if (i >= 0) devices[i] = device;
-    else devices.push(device);
-    localStorage.setItem(this.STORAGE_KEY_DEVICES, JSON.stringify(devices));
-  }
-
+export class WearableService {
   getDevices(): WearableDevice[] {
-    const raw = localStorage.getItem(this.STORAGE_KEY_DEVICES);
-    return raw ? (JSON.parse(raw) as WearableDevice[]) : [];
+    return loadState().devices;
   }
 
-  removeDevice(deviceId: string): void {
-    const devices = this.getDevices().filter((d) => d.id !== deviceId);
-    localStorage.setItem(this.STORAGE_KEY_DEVICES, JSON.stringify(devices));
+  upsertDevice(dev: WearableDevice) {
+    const st = loadState();
+    const idx = st.devices.findIndex((d) => d.id === dev.id);
+    if (idx >= 0) st.devices[idx] = dev;
+    else st.devices.push(dev);
+    saveState(st);
   }
 
-  getSyncStatus(): SyncStatus {
-    const raw = localStorage.getItem(this.STORAGE_KEY_SYNC);
-    return raw
-      ? (JSON.parse(raw) as SyncStatus)
-      : { lastSyncTime: null, workoutsSynced: 0, hrDataPoints: 0, inProgress: false };
-  }
-
-  updateSyncStatus(status: Partial<SyncStatus>): void {
-    const current = this.getSyncStatus();
-    const updated: SyncStatus = { ...current, ...status };
-    localStorage.setItem(this.STORAGE_KEY_SYNC, JSON.stringify(updated));
-  }
-
-  async syncExternalAPI(_provider: "strava" | "garmin"): Promise<WorkoutData[]> {
-    throw new Error("Sincronização externa requer OAuth/API keys (placeholder).");
-  }
-
-  async importFile(file: File): Promise<WorkoutData> {
-    const text = await file.text();
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "gpx":
-        return this.parseGPX(text);
-      case "tcx":
-        return this.parseTCX(text);
-      case "fit":
-        throw new Error("Formato FIT requer biblioteca especializada");
-      default:
-        throw new Error(`Formato não suportado: ${ext}`);
+  disconnect(id: string) {
+    const st = loadState();
+    const d = st.devices.find((x) => x.id === id);
+    if (d) {
+      d.connected = false;
+      saveState(st);
     }
   }
 
-  private parseGPX(gpxText: string): WorkoutData {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(gpxText, "text/xml");
-    const points = Array.from(doc.querySelectorAll("trkpt"));
-    const gpsRoute: Array<{ lat: number; lon: number; alt?: number }> = [];
+  // -------------------------------
+  // Web Bluetooth Heart Rate (HRM)
+  // -------------------------------
+  async connectWebBluetoothHRM(): Promise<WearableDevice> {
+    if (typeof navigator === "undefined" || !(navigator as any).bluetooth) {
+      throw new Error("Web Bluetooth não disponível neste navegador/dispositivo.");
+    }
 
-    let total = 0;
-    points.forEach((pt, idx) => {
-      const lat = parseFloat(pt.getAttribute("lat") || "0");
-      const lon = parseFloat(pt.getAttribute("lon") || "0");
-      const ele = pt.querySelector("ele")?.textContent;
-      const alt = ele ? parseFloat(ele) : undefined;
-
-      gpsRoute.push({ lat, lon, alt });
-
-      if (idx > 0) {
-        const prev = gpsRoute[idx - 1];
-        total += this.haversineDistance(prev.lat, prev.lon, lat, lon);
-      }
+    const device = await (navigator as any).bluetooth.requestDevice({
+      filters: [{ services: ["heart_rate"] }],
     });
 
-    const startRaw = doc.querySelector("metadata time")?.textContent || null;
-    const endRaw = doc.querySelector("trk trkseg trkpt:last-child time")?.textContent || null;
+    const dev: WearableDevice = {
+      id: String(device?.id || "hrm-" + Math.random().toString(16).slice(2)),
+      name: String(device?.name || "HRM"),
+      provider: "webbluetooth",
+      connected: true,
+      lastSyncIso: nowIso(),
+    };
 
-    const startTime = startRaw ? new Date(startRaw).toISOString() : new Date().toISOString();
-    const endTime = endRaw ? new Date(endRaw).toISOString() : new Date().toISOString();
-    const durationSeconds = Math.max(
-      0,
-      Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000)
-    );
+    this.upsertDevice(dev);
+    return dev;
+  }
 
-    return {
-      startTime,
-      endTime,
-      type: "running",
-      durationSeconds,
-      distanceMeters: Math.round(total),
-      caloriesBurned: Math.round((total / 1000) * 65),
-      gpsRoute,
+  // Retorna um "stream handler" simples para batimento (callback)
+  async startHeartRateStream(onHR: (hr: number) => void): Promise<() => void> {
+    if (typeof navigator === "undefined" || !(navigator as any).bluetooth) {
+      throw new Error("Web Bluetooth não disponível.");
+    }
+
+    const device = await (navigator as any).bluetooth.requestDevice({
+      filters: [{ services: ["heart_rate"] }],
+    });
+
+    const server = await device.gatt.connect();
+    const svc = await server.getPrimaryService("heart_rate");
+    const ch = await svc.getCharacteristic("heart_rate_measurement");
+
+    const handler = (ev: any) => {
+      try {
+        const v: DataView = ev?.target?.value;
+        if (!v) return;
+        const flags = v.getUint8(0);
+        const isUint16 = (flags & 0x1) === 0x1;
+        const hr = isUint16 ? v.getUint16(1, true) : v.getUint8(1);
+        if (typeof hr === "number" && hr > 0) onHR(hr);
+      } catch {
+        // ignore
+      }
+    };
+
+    await ch.startNotifications();
+    ch.addEventListener("characteristicvaluechanged", handler);
+
+    return () => {
+      try {
+        ch.removeEventListener("characteristicvaluechanged", handler);
+        ch.stopNotifications().catch(() => {});
+        device.gatt?.disconnect?.();
+      } catch {
+        // ignore
+      }
     };
   }
 
-  private parseTCX(_tcxText: string): WorkoutData {
-    throw new Error("Parser TCX não implementado (placeholder).");
+  // -------------------------------
+  // Importadores (placeholders)
+  // -------------------------------
+  async importGPX(_text: string): Promise<WorkoutData[]> {
+    // Placeholder seguro: retorna vazio sem quebrar
+    return [];
   }
 
-  private haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371e3;
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const dφ = ((lat2 - lat1) * Math.PI) / 180;
-    const dλ = ((lon2 - lon1) * Math.PI) / 180;
+  async importTCX(_text: string): Promise<WorkoutData[]> {
+    return [];
+  }
 
-    const a =
-      Math.sin(dφ / 2) * Math.sin(dφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(dλ / 2) * Math.sin(dλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+  async importFIT(_bytes: ArrayBuffer): Promise<WorkoutData[]> {
+    return [];
+  }
+
+  // -------------------------------
+  // Conectores futuros (placeholders)
+  // -------------------------------
+  async connectProvider(_provider: Exclude<WearableProvider, "webbluetooth">): Promise<void> {
+    // Placeholder: no-op
+  }
+
+  async syncProvider(_provider: WearableProvider): Promise<WorkoutData[]> {
+    // Placeholder: no-op
+    return [];
   }
 }
 

@@ -24,7 +24,8 @@ fi
 # 3) AdaptiveEngine null-safe + weightKg
 AE="src/services/ai/AdaptiveEngine.ts"
 if [[ -f "$AE" ]]; then
-  perl -0777 -i -pe 's/\+\s*w\.durationMinutes\b/ + (w.durationMinutes ?? w.durationMin ?? 0)/g' "$AE"
+# MF_HARDEN_FIX_TS_STRICT_V1: disabled (eslint-safe)
+#   perl -0777 -i -pe 's/\+\s*w\.durationMinutes\b/ + (w.durationMinutes ?? w.durationMin ?? 0)/g' "$AE"
   perl -0777 -i -pe 's/\.weight\b/.weightKg/g' "$AE"
 fi
 
@@ -37,8 +38,10 @@ fi
 # 5) PredictionEngine: dateIso/weightKg + null-safe
 PE="src/services/ml/PredictionEngine.ts"
 if [[ -f "$PE" ]]; then
-  perl -0777 -i -pe 's/\bw\.durationMinutes\b/(w.durationMinutes ?? w.durationMin ?? 0)/g' "$PE"
-  perl -0777 -i -pe 's/\bw\.caloriesBurned\b/(w.caloriesBurned ?? w.caloriesKcal ?? 0)/g' "$PE"
+# MF_HARDEN_FIX_TS_STRICT_V1: disabled (eslint-safe)
+#   perl -0777 -i -pe 's/\bw\.durationMinutes\b/(w.durationMinutes ?? w.durationMin ?? 0)/g' "$PE"
+# MF_HARDEN_FIX_TS_STRICT_V1: disabled (eslint-safe)
+#   perl -0777 -i -pe 's/\bw\.caloriesBurned\b/(w.caloriesBurned ?? w.caloriesKcal ?? 0)/g' "$PE"
   perl -0777 -i -pe 's/\bdata\[0\]\.date\b/data[0].dateIso/g' "$PE"
   perl -0777 -i -pe 's/\bd\.date\b/d.dateIso/g' "$PE"
   perl -0777 -i -pe 's/\bd\.weight\b/d.weightKg/g' "$PE"

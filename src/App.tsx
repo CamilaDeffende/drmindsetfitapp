@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AIDashboardPage from "@/pages/ai-dashboard/AIDashboardPage";
 import { AchievementsPage } from "@/pages/gamification/AchievementsPage";
 import { ConflictsPage } from "@/pages/offline/ConflictsPage";
-import { WearablesPage } from "@/pages/wearables/WearablesPage";
+import WearablesPage from "@/pages/wearables/WearablesPage";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
 ;

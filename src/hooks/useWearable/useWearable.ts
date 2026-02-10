@@ -1,72 +1,51 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-  wearableService,
-  WearableDevice,
-  HeartRateData,
-  SyncStatus,
-} from "@/services/wearables/WearableService";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { wearableService, WearableDevice } from "@/services/wearables/WearableService";
 
 export function useWearable() {
-  const [devices, setDevices] = useState<WearableDevice[]>([]);
-  const [currentHeartRate, setCurrentHeartRate] = useState<HeartRateData | null>(null);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(wearableService.getSyncStatus());
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [devices, setDevices] = useState<WearableDevice[]>(() => wearableService.getDevices());
+  const stopRef = useRef<null | (() => void)>(null);
+  const [hr, setHr] = useState<number | null>(null);
+  const [streaming, setStreaming] = useState(false);
 
-  const loadDevices = () => setDevices(wearableService.getDevices());
+  const refresh = useCallback(() => {
+    setDevices(wearableService.getDevices());
+  }, []);
 
   useEffect(() => {
-    loadDevices();
-    const id = `wearable-hook-${Date.now()}`;
-    wearableService.onHeartRate(id, (hr: HeartRateData) => setCurrentHeartRate(hr));
-    return () => wearableService.offHeartRate(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    refresh();
+  }, [refresh]);
+
+  const connectHRM = useCallback(async () => {
+    const dev = await wearableService.connectWebBluetoothHRM();
+    refresh();
+    return dev;
+  }, [refresh]);
+
+  const startHR = useCallback(async () => {
+    if (stopRef.current) stopRef.current();
+    setStreaming(true);
+    const stop = await wearableService.startHeartRateStream((x) => setHr(x));
+    stopRef.current = stop;
   }, []);
 
-  const connectBluetooth = useCallback(async () => {
-    setIsConnecting(true);
-    setError(null);
-    try {
-      const device = await wearableService.connectBluetooth();
-      setDevices((prev) => [...prev.filter((d) => d.id !== device.id), device]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao conectar dispositivo");
-    } finally {
-      setIsConnecting(false);
-    }
+  const stopHR = useCallback(() => {
+    if (stopRef.current) stopRef.current();
+    stopRef.current = null;
+    setStreaming(false);
   }, []);
 
-  const disconnectBluetooth = useCallback(async () => {
-    await wearableService.disconnectBluetooth();
-    setCurrentHeartRate(null);
-    loadDevices();
-  }, []);
-
-  const removeDevice = useCallback((deviceId: string) => {
-    wearableService.removeDevice(deviceId);
-    loadDevices();
-  }, []);
-
-  const importFile = useCallback(async (file: File) => {
-    const workout = await wearableService.importFile(file);
-    return workout;
-  }, []);
-
-  const refreshSyncStatus = useCallback(() => {
-    setSyncStatus(wearableService.getSyncStatus());
+  const hasBluetooth = useMemo(() => {
+    return typeof navigator !== "undefined" && !!(navigator as any).bluetooth;
   }, []);
 
   return {
     devices,
-    currentHeartRate,
-    syncStatus,
-    isConnecting,
-    error,
-    isBluetoothSupported: wearableService.isBluetoothSupported(),
-    connectBluetooth,
-    disconnectBluetooth,
-    removeDevice,
-    importFile,
-    refreshSyncStatus,
+    hr,
+    streaming,
+    hasBluetooth,
+    refresh,
+    connectHRM,
+    startHR,
+    stopHR,
   };
 }
