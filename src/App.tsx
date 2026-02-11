@@ -55,7 +55,10 @@ function App() {
         <DrMindSetfitProvider>
           <BrowserRouter>
             <RouteGuard />
-            <Routes>
+  <OfflineIndicator />
+  <LiveLocationPill />
+
+<Routes>
               
               
               <Route path="/ai" element={<AIDashboardPage />} /><Route path="/wearables" element={<WearablesPage />} /><Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
@@ -188,10 +191,7 @@ function App() {
               <Route path="/conflicts" element={<ConflictsPage />} />
               <Route path="/progress" element={<ProgressPage />} />
 
-            <OfflineIndicator />
-            <LiveLocationPill />
-          
-  </Routes>
+</Routes>
 </BrowserRouter>
           <Toaster />
 </DrMindSetfitProvider>

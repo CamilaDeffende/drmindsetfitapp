@@ -30,7 +30,7 @@ react(),
           { src: "/pwa-512.png", sizes: "512x512", type: "image/png" },
         ],
       },
-      devOptions: { enabled: true },
+      devOptions: { enabled: false },
       injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         globIgnores: ["**/brand/mindsetfit-wordmark.png"],

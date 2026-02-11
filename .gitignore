@@ -173,3 +173,7 @@ MF_SH_V4_ARGS_V1
 
 # MF_IGNORE_LOCAL
 dev-dist/
+
+# MF_IGNORE_LOCAL_ARTIFACTS
+.mf_white_screen.png
+.mf_dev_white_screen.log
