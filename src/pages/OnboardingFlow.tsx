@@ -144,7 +144,7 @@ return Number.isFinite(i) ? i : 0;
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="text-sm text-gray-400">
-          Onboarding carregou, mas o step não pôde ser renderizado. (safeStep={String((globalThis as any)?.safeStep ?? "")})
+          Carregando onboarding...
         </div>
       </div>
     );
