@@ -83,7 +83,6 @@ export function OnboardingFlow() {
         mfSafeNavigate(redirect, { replace: true });
       }
     } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const SHOW_LEGACY_NAV: boolean = false;
@@ -109,7 +108,6 @@ return Number.isFinite(i) ? i : 0;
   useEffect(() => {
     const target = __stepFromUrl - 1;
     setActive((cur) => (cur === target ? cur : target));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [__stepFromUrl]);
 
   useEffect(() => {
@@ -125,7 +123,6 @@ return Number.isFinite(i) ? i : 0;
       }
       try { saveOnboardingProgress({ step: active + 1 }); } catch {}
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   useEffect(() => {

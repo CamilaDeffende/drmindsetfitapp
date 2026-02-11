@@ -325,7 +325,6 @@ yPos += 7
   const __mfPdfDiag = (msg: string, extra?: any) => {
     try {
       if (!__mfPdfDiagEnabled) return;
-      // eslint-disable-next-line no-console
       console.log("MF_PDF_DIAG:", msg, extra ?? "");
     } catch {}
   };
@@ -377,8 +376,8 @@ yPos += 7
       yPdf += 8;
     }
   
-  } catch (e) {
-    __mfPdfDiag('MF_PDF_TRAINING_V3 error', String(e));
+  } catch(_e) {
+    __mfPdfDiag('MF_PDF_TRAINING_V3 error', String(_e));
   }
 
   // MF_PDF_NUTRITION_SSOT_V1 (Dieta do dia via SSOT / localStorage)
@@ -479,8 +478,8 @@ yPos += 7
         }
       }
     }
-  } catch (e) {
-    try { __mfPdfDiag?.("MF_PDF_NUTRITION_SSOT_V1 error", String(e)); } catch {}
+  } catch(_e) {
+    try { __mfPdfDiag?.("MF_PDF_NUTRITION_SSOT_V1 error", String(_e)); } catch {}
   }
 
 
@@ -493,7 +492,7 @@ const nomeArquivo = `DrMindSetFit_Completo_${format(new Date(), 'yyyyMMdd_HHmmss
       try {
         const n = (doc as any).getNumberOfPages ? (doc as any).getNumberOfPages() : null;
         __mfPdfDiag("before_save pages", n);
-      } catch (e) { __mfPdfDiag("before_save pages err", String(e)); }
+      } catch(_e) { __mfPdfDiag("before_save pages err", String(_e)); }
     }
   } catch {}
   doc.save(nomeArquivo)

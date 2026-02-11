@@ -1,6 +1,4 @@
 /// <reference lib="webworker" />
-/* eslint-disable no-restricted-globals */
-
 // Workbox (bundleado pelo vite-plugin-pwa em injectManifest)
 import { precacheAndRoute, createHandlerBoundToURL } from "workbox-precaching";
 import { registerRoute, setCatchHandler } from "workbox-routing";

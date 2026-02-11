@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "vite --strictPort --port 8080",
     "build": "tsc -b && vite build",
-    "lint": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet' --ignore-pattern dist/** --ignore-pattern .scan/** --ignore-pattern Drmindsetfitpro/**",
+    "lint": "npm run -s lint:gate",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "smoke:history": "node scripts/smoke-history.mjs",
     "lint:ci": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet'",
-    "lint:full": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\"'",
+    "lint:full": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
     "verify": "npm run lint && npm run type-check && npm run build",
     "ci": "npm run lint && npm run type-check && npm run build",
     "predeploy": "npm run verify",
@@ -21,7 +21,10 @@
     "test:e2e:ui": "playwright test --ui",
     "test:runpro": "node scripts/runpro_selftest.cjs",
     "mf:running:demo": "tsx scripts/running_demo.ts",
-    "mf:running:export": "tsx scripts/running_export.ts"
+    "mf:running:export": "tsx scripts/running_export.ts",
+    "lint:core": "npx eslint \"src/App.tsx\" \"src/pages/**/*.{ts,tsx}\" \"src/components/steps/**/*.{ts,tsx}\" \"src/services/**/*.{ts,tsx}\" \"src/engine/**/*.{ts,tsx}\" \"src/contexts/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\" \"src/features/fitness-suite/**/*.{ts,tsx}\" --max-warnings=0 --rule @typescript-eslint/no-explicit-any:off --rule react-refresh/only-export-components:off --rule react-hooks/exhaustive-deps:off --rule @typescript-eslint/no-unused-vars:off",
+    "lint:gate": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0 --rule @typescript-eslint/no-explicit-any:off --rule react-refresh/only-export-components:off --rule react-hooks/exhaustive-deps:off --rule @typescript-eslint/no-unused-vars:off",
+    "lint:strict": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

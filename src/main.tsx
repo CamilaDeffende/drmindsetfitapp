@@ -43,7 +43,6 @@ const __resolvedUserId = userId ?? __demoUserId;
 // (mas em modo DEMO queremos UI viva)
 // if (!userId) return <SplashScreen />;
 // nota: __resolvedUserId garante ProfileProvider/AppProvider
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 void __resolvedUserId;
   // MF_MAIN_PROFILE_GATE_FALSE_V1: demo mode — não bloquear UI
   return (<ProfileProvider userId={__resolvedUserId} gate={false}><AppProvider>{children}</AppProvider></ProfileProvider>);

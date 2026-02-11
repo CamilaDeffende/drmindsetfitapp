@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useWorkoutStore } from "../../store/useWorkoutStore";
 import { useUIStore } from "../../store/useUIStore";
 import { useHistoryStore } from "../../store/useHistoryStore";

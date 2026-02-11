@@ -225,8 +225,8 @@ export function Step5Treino() {
       const plan = buildStrengthWeekPlan({ strengthDays, selectedGroups, userLevel, goal });
       saveWeekPlan(plan);
       return true;
-    } catch (e) {
-      console.warn("[strength] weekPlan ensure failed:", e);
+    } catch(_e) {
+      console.warn("[strength] weekPlan ensure failed:", _e);
       return true;
     }
   }
@@ -301,7 +301,7 @@ if (!canContinue) return;
 updateState({ treino: treinoPlan } as any);
 
     // anexar ao protocolo semanal (fallback p/ telas que leem workoutProtocolWeekly)
-    try { (__protocol as any).treinoPlan = treinoPlan; } catch (e) {}
+    try { (__protocol as any).treinoPlan = treinoPlan; } catch(_e) {}
     
 updateState({ workoutProtocolWeekly: __protocol } as any);
 

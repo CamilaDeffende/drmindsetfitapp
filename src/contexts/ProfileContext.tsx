@@ -75,7 +75,6 @@ export function ProfileProvider({ userId, children, gate = true }: Props) {
       setProfileReady(true);
       loadedForUserRef.current = safeUserId;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safeUserId]);
 
   async function refreshProfile() {

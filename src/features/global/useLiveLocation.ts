@@ -98,7 +98,7 @@ const enableHighAccuracy = options?.enableHighAccuracy ?? true;
         try {
           const tz = tzLookup(lat, lon);
           setTzIana(tz);
-        } catch (e) {
+        } catch(_e) {
           // fallback seguro: timezone do sistema
           try {
             const sysTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -155,7 +155,6 @@ const enableHighAccuracy = options?.enableHighAccuracy ?? true;
     if (status !== "idle") return;
     start();
     // não parar automaticamente; parar só se quiser
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const nowInTz = useMemo(() => {

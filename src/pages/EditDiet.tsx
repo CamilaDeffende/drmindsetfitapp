@@ -234,7 +234,6 @@ return (
   }
 
   const handleSalvar = () => {
-
   void handleSalvar;
     if (state.dietaAtiva) {
       updateState({

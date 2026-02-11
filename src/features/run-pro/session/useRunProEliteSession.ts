@@ -40,7 +40,6 @@ export function useRunProEliteSession() {
     // registra raw sempre; smooth apenas se mudou
     pushFix(raw, after && after !== before ? after : undefined);
     setState(nextState);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveCoords?.updatedAt]);
 
   // fallback: se não tiver live store, usa watchPosition direto

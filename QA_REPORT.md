@@ -8,4 +8,4 @@
 - ✅ `src/components/onboarding/OnboardingCarouselShell.tsx`
 
 ## Remnants
-- "lasy" occurrences in repo (excluding dist/node_modules/.git/.scan/Drmindsetfitpro): **0 file(s)**
+- "(removido)" occurrences in repo (excluding dist/node_modules/.git/.scan/Drmindsetfitpro): **0 file(s)**
