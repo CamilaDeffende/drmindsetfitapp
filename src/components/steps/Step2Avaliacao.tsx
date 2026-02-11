@@ -15,6 +15,7 @@ import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { AvaliacaoFisica, MetodoComposicao } from '@/types';
 import { useState } from 'react'
+import { useNavigate } from "react-router-dom";
 
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 
@@ -118,6 +119,7 @@ type AvaliacaoFormData = z.infer<typeof avaliacaoSchema>
 export function Step2Avaliacao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
 void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
+  const navigate = useNavigate();
   const [metodoSelecionado, setMetodoSelecionado] = useState<MetodoComposicao>('nenhum')
 
   const form = useForm<AvaliacaoFormData>({
@@ -176,8 +178,6 @@ let percentualGordura: number = 0
   }
 
   const onSubmit = (data: AvaliacaoFormData) => {
-    const goNext = (typeof onNext === "function" ? onNext : nextStep) as unknown as (() => void);
-    
     // BLOCO 3: persist step=3 + HARD NAV (bulletproof)
     try { saveOnboardingProgress({ step: 3, data: { step2: data } }); } catch {}
     const imc = Number(calcularIMC(data.peso, data.altura))
@@ -230,7 +230,13 @@ let percentualGordura: number = 0
     }
 
     updateState({ avaliacao })
-    try { goNext(); } catch {}
+    try {
+      if (typeof onNext === "function") { onNext(); }
+      else {
+        try { navigate("/onboarding/step-3", { replace: true }); }
+        catch { try { if (typeof nextStep === "function") nextStep(); } catch {} }
+      }
+    } catch {}
   }
 
   const peso = form.watch('peso')
