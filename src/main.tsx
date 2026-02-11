@@ -57,3 +57,14 @@ createRoot(el).render(<AuthProvider>
       </BootSplash>
   </React.StrictMode></RootProviders>
 </AuthProvider>);
+
+// MF_DEV_SW_UNREGISTER_V1
+// Evita loading infinito em DEV por cache/Service Worker antigo.
+// Seguro: só roda em DEV (Vite) e ignora erros.
+try {
+  if (import.meta.env.DEV && typeof window !== "undefined" && "serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations()
+      .then((regs) => regs.forEach((r) => { try { r.unregister(); } catch {} }))
+      .catch(() => {});
+  }
+} catch {}
