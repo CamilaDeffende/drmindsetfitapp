@@ -1,72 +1,65 @@
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { fmtDistance, fmtPace, fmtSpeed, fmtTime } from "./format";
 
-import { formatPace, formatDistance, formatElevation } from "@/lib/format-utils";
-import { GPSStats } from "@/services/gps/GPSService";
+type Props = {
+  distanceM: number;
+  durationS: number;
+  paceSecPerKm?: number | null;
+  avgSpeedMps?: number | null;
+  maxSpeedMps?: number | null;
+  accuracy?: number | null;
+};
 
-type Props = { stats: GPSStats; elapsedSeconds: number };
-
-export function LiveMetricsDisplay({ stats, elapsedSeconds }: Props) {
-  const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
+export const LiveMetricsDisplay: React.FC<Props> = ({
+  distanceM,
+  durationS,
+  paceSecPerKm,
+  avgSpeedMps,
+  maxSpeedMps,
+  accuracy,
+}) => {
   return (
-    <div className="grid grid-cols-2 gap-4 p-6 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl">
-      <div className="col-span-2 text-center">
-        <div className="text-6xl font-bold text-blue-400 tabular-nums">
-          {formatTime(elapsedSeconds)}
+    <Card className="bg-zinc-900/70 border-zinc-800">
+      <CardHeader>
+        <CardTitle className="text-white">Métricas ao vivo</CardTitle>
+        <p className="text-xs text-zinc-400">
+          Distância, tempo e ritmo estimados pelo GPS (best-effort).
+        </p>
+      </CardHeader>
+      <CardContent className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl bg-zinc-950/40 border border-zinc-800 p-3">
+          <div className="text-xs text-zinc-400">Tempo</div>
+          <div className="text-xl font-semibold text-white">{fmtTime(durationS)}</div>
         </div>
-        <div className="text-sm text-gray-400 mt-1">Tempo Decorrido</div>
-      </div>
 
-      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-        <div className="text-3xl font-bold text-white tabular-nums">
-          {formatDistance(stats.distanceMeters)}
+        <div className="rounded-xl bg-zinc-950/40 border border-zinc-800 p-3">
+          <div className="text-xs text-zinc-400">Distância</div>
+          <div className="text-xl font-semibold text-white">{fmtDistance(distanceM)}</div>
         </div>
-        <div className="text-sm text-gray-400 mt-1">Distância</div>
-      </div>
 
-      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-        <div className="text-3xl font-bold text-green-400 tabular-nums">
-          {formatPace(stats.currentPaceMinPerKm)}
+        <div className="rounded-xl bg-zinc-950/40 border border-zinc-800 p-3">
+          <div className="text-xs text-zinc-400">Ritmo</div>
+          <div className="text-xl font-semibold text-white">{fmtPace(paceSecPerKm)}</div>
         </div>
-        <div className="text-sm text-gray-400 mt-1">Pace Atual</div>
-      </div>
 
-      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-        <div className="text-2xl font-bold text-white tabular-nums">
-          {formatPace(stats.averagePaceMinPerKm)}
+        <div className="rounded-xl bg-zinc-950/40 border border-zinc-800 p-3">
+          <div className="text-xs text-zinc-400">Vel. média</div>
+          <div className="text-xl font-semibold text-white">{fmtSpeed(avgSpeedMps)}</div>
         </div>
-        <div className="text-sm text-gray-400 mt-1">Pace Médio</div>
-      </div>
 
-      <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-        <div className="text-2xl font-bold text-white tabular-nums">
-          {stats.currentSpeedKmh.toFixed(1)} <span className="text-base">km/h</span>
+        <div className="rounded-xl bg-zinc-950/40 border border-zinc-800 p-3">
+          <div className="text-xs text-zinc-400">Vel. máx</div>
+          <div className="text-lg font-semibold text-white">{fmtSpeed(maxSpeedMps)}</div>
         </div>
-        <div className="text-sm text-gray-400 mt-1">Velocidade</div>
-      </div>
 
-      <div className="col-span-2 bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-        <div className="flex justify-around">
-          <div>
-            <div className="text-2xl font-bold text-green-400 tabular-nums">
-              ↑ {formatElevation(stats.elevationGainMeters)}
-            </div>
-            <div className="text-xs text-gray-400 mt-1">Ganho</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-red-400 tabular-nums">
-              ↓ {formatElevation(stats.elevationLossMeters)}
-            </div>
-            <div className="text-xs text-gray-400 mt-1">Perda</div>
+        <div className="rounded-xl bg-zinc-950/40 border border-zinc-800 p-3">
+          <div className="text-xs text-zinc-400">Precisão</div>
+          <div className="text-lg font-semibold text-white">
+            {accuracy && accuracy > 0 ? `${Math.round(accuracy)} m` : "—"}
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
-}
+};

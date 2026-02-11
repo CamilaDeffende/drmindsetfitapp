@@ -10,6 +10,7 @@ import { ConflictsPage } from "@/pages/offline/ConflictsPage";
 import WearablesPage from "@/pages/wearables/WearablesPage";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
+import LiveWorkoutPage from "@/pages/live/LiveWorkoutPage";
 ;
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from 'next-themes'
@@ -191,6 +192,7 @@ function App() {
               <Route path="/conflicts" element={<ConflictsPage />} />
               <Route path="/progress" element={<ProgressPage />} />
 
+        <Route path="/live-workout" element={<LiveWorkoutPage />} />
 </Routes>
 </BrowserRouter>
           <Toaster />

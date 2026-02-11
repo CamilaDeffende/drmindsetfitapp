@@ -1,60 +1,128 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GPSPoint, GPSService, GPSStats } from "@/services/gps/GPSService";
 
-import { useState, useEffect, useCallback } from "react";
-import { gpsService, GPSStats } from "@/services/gps/GPSService";
+export type GPSStatus = "idle" | "requesting" | "running" | "error" | "unsupported";
 
-export function useGPS() {
-  const [isTracking, setIsTracking] = useState(false);
-  const [stats, setStats] = useState<GPSStats>({
-    distanceMeters: 0,
-    currentPaceMinPerKm: 0,
-    averagePaceMinPerKm: 0,
-    elevationGainMeters: 0,
-    elevationLossMeters: 0,
-    currentSpeedKmh: 0,
-    route: [],
+export type UseGPSState = {
+  status: GPSStatus;
+  error?: string | null;
+  points: GPSPoint[];
+  startedAtMs: number | null;
+  stats: GPSStats;
+  lastPoint?: GPSPoint | null;
+};
+
+export const useGPS = () => {
+  const [status, setStatus] = useState<GPSStatus>(() => {
+    if (typeof window === "undefined") return "idle";
+    return navigator.geolocation ? "idle" : "unsupported";
   });
   const [error, setError] = useState<string | null>(null);
+  const [points, setPoints] = useState<GPSPoint[]>([]);
+  const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
+  const watchIdRef = useRef<number | null>(null);
 
+  const nowRef = useRef<number>(Date.now());
   useEffect(() => {
-    const id = `gps-hook-${Date.now()}`;
-    gpsService.onUpdate(id, (s) => setStats(s));
-    return () => gpsService.offUpdate(id);
+    const t = setInterval(() => { nowRef.current = Date.now(); }, 1000);
+    return () => clearInterval(t);
   }, []);
 
-  const startTracking = useCallback(async () => {
+  const lastPoint = useMemo(() => (points.length ? points[points.length - 1] : null), [points]);
+
+  const stats = useMemo(() => {
+    return GPSService.stats(points, startedAtMs, nowRef.current);
+  }, [points, startedAtMs]);
+
+  const stop = useCallback(() => {
     try {
-      setError(null);
-      await gpsService.startTracking();
-      setIsTracking(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao iniciar GPS");
-      setIsTracking(false);
-    }
-  }, []);
-
-  const stopTracking = useCallback(() => {
-    const finalStats = gpsService.stopTracking();
-    setStats(finalStats);
-    setIsTracking(false);
-    return finalStats;
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    } catch {}
+    watchIdRef.current = null;
+    setStatus((s) => (s === "unsupported" ? s : "idle"));
   }, []);
 
   const reset = useCallback(() => {
-    gpsService.reset();
-    setStats({
-      distanceMeters: 0,
-      currentPaceMinPerKm: 0,
-      averagePaceMinPerKm: 0,
-      elevationGainMeters: 0,
-      elevationLossMeters: 0,
-      currentSpeedKmh: 0,
-      route: [],
-    });
+    stop();
+    setPoints([]);
+    setStartedAtMs(null);
+    setError(null);
+  }, [stop]);
+
+  const start = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (!navigator.geolocation) {
+      setStatus("unsupported");
+      return;
+    }
+
+    setError(null);
+    setStatus("requesting");
+
+    const options: PositionOptions = {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 15000,
+    };
+
+    const onPos = (pos: GeolocationPosition) => {
+      const c = pos.coords;
+      const p: GPSPoint = {
+        lat: c.latitude,
+        lon: c.longitude,
+        accuracy: typeof c.accuracy === "number" ? c.accuracy : null,
+        altitude: typeof c.altitude === "number" ? c.altitude : null,
+        heading: typeof c.heading === "number" ? c.heading : null,
+        speed: typeof c.speed === "number" ? c.speed : null,
+        ts: pos.timestamp || Date.now(),
+      };
+
+      setPoints((prev) => {
+        // filtro premium: evita spam se posição não mudou e timestamp muito próximo
+        const last = prev.length ? prev[prev.length - 1] : null;
+        if (last) {
+          const dt = Math.abs(p.ts - last.ts);
+          const dd = GPSService.haversineMeters(last, p);
+          if (dt < 700 && dd < 1) return prev;
+        }
+        return [...prev, p];
+      });
+
+      setStatus("running");
+      setStartedAtMs((v) => (v ? v : Date.now()));
+    };
+
+    const onErr = (e: GeolocationPositionError) => {
+      setStatus("error");
+      setError(e?.message || "Falha ao acessar GPS");
+    };
+
+    try {
+      const id = navigator.geolocation.watchPosition(onPos, onErr, options);
+      watchIdRef.current = id;
+    } catch (e: any) {
+      setStatus("error");
+      setError(String(e?.message || e));
+    }
   }, []);
 
-  const exportGPX = useCallback((workoutName: string) => {
-    return gpsService.exportToGPX(workoutName);
-  }, []);
+  // cleanup
+  useEffect(() => () => stop(), [stop]);
 
-  return { isTracking, stats, error, startTracking, stopTracking, reset, exportGPX };
-}
+  const state: UseGPSState = {
+    status,
+    error,
+    points,
+    startedAtMs,
+    stats,
+    lastPoint,
+  };
+
+  const exportGPX = useCallback((name?: string) => {
+    return GPSService.toGPX(points, name || "MindsetFit Activity");
+  }, [points]);
+
+  return { ...state, start, stop, reset, exportGPX };
+};
