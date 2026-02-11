@@ -1,21 +1,21 @@
 import { useMemo } from "react";
 import type { WorkoutRecord } from "@/services/history/HistoryService";
-import { summarize } from "@/components/analytics/analytics-utils";
+import { filterByDays, summarizeWorkouts, pickTs } from "@/components/analytics/analytics-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-function fmtHMS(totalS: number) {
-  const s = Math.max(0, Math.round(totalS));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+function formatK(n: number) {
+  if (!Number.isFinite(n)) return "-";
+  if (n >= 1000) return (n / 1000).toFixed(1) + "k";
+  return String(Math.round(n));
 }
 
-function fmtKm(totalM: number) {
-  const km = totalM / 1000;
-  if (!Number.isFinite(km) || km <= 0) return "0.0 km";
-  return `${km.toFixed(km < 10 ? 2 : 1)} km`;
+function consistencyLabel(sessions: number, days: number) {
+  const d = Math.max(1, days);
+  const perWeek = (sessions / d) * 7;
+  if (perWeek >= 5) return { label: "Consistência alta", tone: "bg-green-600" };
+  if (perWeek >= 3) return { label: "Consistência média", tone: "bg-yellow-600" };
+  return { label: "Consistência baixa", tone: "bg-white/10" };
 }
 
 export default function StatsOverview({
@@ -25,65 +25,58 @@ export default function StatsOverview({
   workouts: WorkoutRecord[];
   days?: number;
 }) {
-  const sum = useMemo(() => summarize(workouts ?? [], days), [workouts, days]);
+  const ws = useMemo(() => filterByDays(workouts ?? [], Math.max(1, days)), [workouts, days]);
 
-  const pseLabel =
-    sum.avgPSE.count > 0 ? sum.avgPSE.avg.toFixed(1) : "-";
-  const hrLabel =
-    sum.avgHeartRate.count > 0 ? `${Math.round(sum.avgHeartRate.avg)} bpm` : "-";
+  const summary = useMemo(() => summarizeWorkouts(ws as any, days), [ws, days]);
 
-  const topTypes = Object.entries(sum.byType)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
+  const lastTs = useMemo(() => {
+    let t = 0;
+    for (const w of (ws as any[])) {
+      const x = Number(pickTs(w));
+      if (Number.isFinite(x) && x > t) t = x;
+    }
+    return t || 0;
+  }, [ws, days]);
+
+  const badge = consistencyLabel(summary.count, days);
 
   return (
     <Card className="border-white/10 bg-white/5">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-base sm:text-lg">Resumo ({sum.days} dias)</CardTitle>
-          <Badge variant="secondary" className="border-white/10 bg-black/20">
-            {sum.count} sessão(ões)
-          </Badge>
+          <CardTitle className="text-base sm:text-lg">Resumo ({days} dias)</CardTitle>
+          <Badge className={badge.tone + " text-white border-white/10"}>{badge.label}</Badge>
         </div>
       </CardHeader>
+
       <CardContent className="pt-0">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-            <div className="text-xs text-muted-foreground">Duração total</div>
-            <div className="text-white font-semibold">{fmtHMS(sum.totalDurationS)}</div>
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="text-[11px] text-muted-foreground">Sessões</div>
+            <div className="text-white font-semibold text-lg">{summary.count}</div>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-            <div className="text-xs text-muted-foreground">Distância</div>
-            <div className="text-white font-semibold">{fmtKm(sum.totalDistanceM)}</div>
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="text-[11px] text-muted-foreground">Duração</div>
+            <div className="text-white font-semibold text-lg">{Math.round((summary.totalDurationS / 60))} min</div>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-            <div className="text-xs text-muted-foreground">PSE médio</div>
-            <div className="text-white font-semibold">{pseLabel}</div>
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="text-[11px] text-muted-foreground">Distância</div>
+            <div className="text-white font-semibold text-lg">{(summary.totalDistanceM / 1000).toFixed(1)} km</div>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-            <div className="text-xs text-muted-foreground">FC média</div>
-            <div className="text-white font-semibold">{hrLabel}</div>
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <div className="text-[11px] text-muted-foreground">Calorias</div>
+            <div className="text-white font-semibold text-lg">{formatK(summary.totalCaloriesKcal)} kcal</div>
           </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="text-xs text-muted-foreground">Top modalidades:</div>
-          {topTypes.length ? (
-            topTypes.map(([k, v]) => (
-              <Badge key={k} variant="secondary" className="border-white/10 bg-black/20">
-                {k.toUpperCase()} • {v}
-              </Badge>
-            ))
-          ) : (
-            <Badge variant="secondary" className="border-white/10 bg-black/20">—</Badge>
-          )}
         </div>
 
         <div className="mt-3 text-[11px] text-muted-foreground">
-          Observação: métricas usam campos compatíveis (legacy wearables) quando existirem.
+          Última sessão:{" "}
+          <span className="text-white/90">
+            {lastTs ? new Date(lastTs).toLocaleString() : "—"}
+          </span>
         </div>
       </CardContent>
     </Card>

@@ -124,3 +124,6 @@ export const summarize = (workoutsAll: WorkoutRecord[], days: number): Analytics
     byType,
   };
 };
+
+// MF_ANALYTICS_EXPORT_ALIAS_V1
+export const summarizeWorkouts = summarize;
