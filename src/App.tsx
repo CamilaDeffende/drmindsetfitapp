@@ -40,6 +40,7 @@ import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
 import CorridaPro from "@/pages/CorridaPro";
 import ProgressPage from "@/pages/progress/ProgressPage";
+import WorkoutDetailsPage from "@/pages/workout-details/WorkoutDetailsPage";
 function App() {
     // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
 
@@ -191,6 +192,7 @@ function App() {
               <Route path="/achievements" element={<AchievementsPage />} />
               <Route path="/conflicts" element={<ConflictsPage />} />
               <Route path="/progress" element={<ProgressPage />} />
+              <Route path="/workout/:id" element={<WorkoutDetailsPage />} />
 
         <Route path="/live-workout" element={<LiveWorkoutPage />} />
 </Routes>

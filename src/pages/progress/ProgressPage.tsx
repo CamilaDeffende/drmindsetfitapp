@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { historyService } from "@/services/history/HistoryService";
 import StatsOverview from "@/components/analytics/StatsOverview";
 import WorkoutsChart from "@/components/analytics/WorkoutsChart";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 const DAY_PRESETS = [7, 14, 30, 90] as const;
 
 export default function ProgressPage() {
+  const nav = useNavigate();
   const [days, setDays] = useState<(typeof DAY_PRESETS)[number]>(14);
 
   const workouts = useMemo(() => {
@@ -55,7 +57,10 @@ export default function ProgressPage() {
                 {(workouts as any[]).slice(0, 20).map((w, i) => (
                   <div
                     key={String(w?.id ?? i)}
-                    className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-3"
+                    className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-3 cursor-pointer hover:bg-zinc-950/60 transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => nav(`/workout/${String(w?.id ?? "")}`)}
                   >
                     <div className="text-white font-semibold">{String(w?.title ?? w?.type ?? "Treino")}</div>
                     <div className="text-xs text-zinc-400">{new Date(Number(w?.ts ?? Date.now())).toLocaleString()}</div>
