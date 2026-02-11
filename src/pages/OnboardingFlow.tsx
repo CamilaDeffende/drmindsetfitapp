@@ -1,3 +1,5 @@
+// MF_ONBOARDING_WATCHDOG_UNUSED_SILENCE_V1
+// MF_APPREADY_GATE_DEV_BYPASS_V1
 // MF_ONBOARDING_LOADER_WATCHDOG_V2
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -106,6 +108,13 @@ export function OnboardingFlow() {
     catch { try { window.location.reload(); } catch {} }
   };
 
+  // MF_ONBOARDING_WATCHDOG_UNUSED_SILENCE_V1
+  // Se o watchdog não estiver sendo renderizado, evitamos TS6133.
+  void mfBootMs;
+  void mfStuck;
+  void mfPath;
+  void mfResetOnboarding;
+
   // MF_SAFE_NAV_GUARD_V1
   const navigate = useNavigate();
   // Guard anti-loop: só navega quando o destino muda e é diferente do pathname atual.
@@ -136,6 +145,12 @@ export function OnboardingFlow() {
   const SHOW_LEGACY_NAV: boolean = false;
 
   const { appReady } = useApp();
+
+
+  // MF_APPREADY_GATE_DEV_BYPASS_V1
+  // Em DEV, não travar a árvore inteira aguardando hydrate/async do AppContext.
+  // PROD mantém comportamento original.
+  const mfAppReady = Boolean(appReady) || Boolean(import.meta.env.DEV);
 
   // Hooks sempre no topo (rules-of-hooks)
   const [draft, setDraft] = useState<Draft>(() => loadDraft());
@@ -182,37 +197,7 @@ return Number.isFinite(i) ? i : 0;
 
   // Gate depois dos hooks
   // __MF_APPREADY_NO_BLANK_V1__
-  if (!appReady) {
-  // MF_FALLBACK_STEPVIEW (não altera UX normal; só evita crash)
-  // Se por qualquer motivo o StepView não existir, mostramos um fallback mínimo (sem travar a árvore React).
-  // Mantemos página viva para debug e para o runner conseguir capturar DOM.
-  // (Não mexer em copy/layout premium agora.)
-  // @ts-expect-error StepView pode ser undefined em runtime-safe guard
-  if (typeof StepView === "undefined" || StepView === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="text-sm text-gray-400">
-          Carregando onboarding...
-      {mfStuck && (
-        <div className="mt-4 text-xs text-zinc-400">
-          <div className="opacity-80">MF loader stuck &gt; 1500ms</div>
-          <div className="opacity-80">path: <span className="text-zinc-200">{mfPath || "-"}</span></div>
-          <div className="opacity-80">ms: <span className="text-zinc-200">{Date.now() - mfBootMs}</span></div>
-          <button
-            type="button"
-            onClick={mfResetOnboarding}
-            className="mt-3 inline-flex items-center rounded-md border border-zinc-700 px-3 py-2 text-zinc-100 hover:bg-zinc-900"
-          >
-            Resetar Onboarding (limpar cache local)
-          </button>
-        </div>
-      )}
-        </div>
-      </div>
-    );
-  }
-  // MF_FALLBACK_STEPVIEW_END
-
+  if (!mfAppReady) {
     return (
       <div
 data-testid="app-loading" className="min-h-screen flex items-center justify-center">
