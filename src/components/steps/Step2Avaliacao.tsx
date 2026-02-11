@@ -55,6 +55,62 @@ const avaliacaoSchema = z.object({
   bioPercentualMassaMagra: z.coerce.number().optional().or(z.literal('')),
   bioAguaCorporal: z.coerce.number().optional().or(z.literal('')),
   bioIdadeMetabolica: z.coerce.number().optional().or(z.literal(''))
+}).superRefine((data, ctx) => {
+  // ✅ Validação condicional conforme método de composição selecionado
+  const raw =
+    (data as any).metodoComposicao ??
+    (data as any).metodo ??
+    (data as any).composicaoMetodo ??
+    (data as any).metodoComposicaoCorporal;
+
+  const metodo = String(raw ?? "").toLowerCase();
+
+  const isPollock = metodo.includes("pollock") || metodo.includes("dobr");
+  const isBio = metodo.includes("bio") || metodo.includes("imped");
+
+  const req = (key: string, label: string) => {
+    const v = (data as any)[key];
+    const bad =
+      v === undefined ||
+      v === null ||
+      v === "" ||
+      (typeof v === "number" && Number.isNaN(v));
+
+    if (bad) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: `${label} é obrigatório.`,
+      });
+    }
+  };
+
+  if (isPollock) {
+    const fields: Array<[string, string]> = [
+      ["pollockPeitoral", "Dobra Peitoral"],
+      ["pollockAxilar", "Dobra Axilar média"],
+      ["pollockTriceps", "Dobra Tríceps"],
+      ["pollockSubescapular", "Dobra Subescapular"],
+      ["pollockAbdominal", "Dobra Abdominal"],
+      ["pollockSuprailiaca", "Dobra Supra-ilíaca"],
+      ["pollockCoxa", "Dobra Coxa"],
+    ];
+
+    for (const [k, label] of fields) {
+      // Só cobra se o campo existir no schema/data
+      if (k in (data as any)) req(k, label);
+    }
+  }
+
+  if (isBio) {
+    const fields: Array<[string, string]> = [
+      ["bioPercentualGordura", "% Gordura (Bioimpedância)"],
+      ["bioPercentualMassaMagra", "% Massa magra (Bioimpedância)"],
+    ];
+    for (const [k, label] of fields) {
+      if (k in (data as any)) req(k, label);
+    }
+  }
 })
 
 type AvaliacaoFormData = z.infer<typeof avaliacaoSchema>
@@ -204,7 +260,9 @@ let percentualGordura: number = 0
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
+        <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+      console.warn('[Step2Avaliacao] invalid:', errors);
+    })} className="space-y-6 sm:space-y-7">
 
           
           {/* Atividade semanal + Biotipo */}
