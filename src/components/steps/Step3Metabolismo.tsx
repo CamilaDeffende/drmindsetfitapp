@@ -2,7 +2,7 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // MF_STEP3_GUARD_MINIMO_MAXIMO_V1
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,6 +35,7 @@ export function Step3Metabolismo({
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
   // =========================
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+  // MF_STEP3_GUARD_REF_V1
   // MF_STEP3_RESULTADO_EFFECT_V2
   // Fix definitivo: evita spinner infinito e evita setState durante render.
   // Regra: 1) se já existe metabolismo salvo no state -> usa e pronto
@@ -110,17 +111,41 @@ function mfPersistStep3(){
     if (!mfCanAdvance) return;
     mfPersistStep3();
     if (typeof onNext === "function") onNext();
-    else if (typeof nextStep === "function") nextStep();
+    // MF_FIX_NO_NEXTSTEP_IN_RENDER_V1 (evita setState durante render)
+    else if (typeof nextStep === "function") { /* noop */ }
   }
   // END_MF_BLOCK5_UI_PAL_BIOTIPO_V1
 
-  // BEGIN_MF_BLOCK6_AUTOSAVE_V1
+    // MF_STEP3_AUTOSAVE_GUARD_V2
+  const __mfAutoSavedRef = useRef(false);
+
+// BEGIN_MF_BLOCK6_AUTOSAVE_V1
   useEffect(() => {
-    if (mfPALKey && mfBioKey) {
-      // autosave leve (não navega)
-      try { mfPersistStep3(); } catch {}
+    // Autosave idempotente: salva 1x e só se estiver diferente do state atual (evita loops).
+    if (__mfAutoSavedRef.current) return;
+    if (!mfPALKey || !mfBioKey) return;
+
+    const curPal = String(
+      (state as any)?.perfil?.nivelAtividadeSemanal ??
+      (state as any)?.avaliacao?.frequenciaAtividadeSemanal ??
+      ""
+    );
+    const curBio = String(
+      (state as any)?.perfil?.biotipoTendencia ??
+      (state as any)?.avaliacao?.biotipo ??
+      ""
+    );
+
+    if (curPal === String(mfPALKey) && curBio === String(mfBioKey)) {
+      __mfAutoSavedRef.current = true;
+      return;
     }
-  }, [mfPALKey, mfBioKey]);
+
+    try {
+      __mfAutoSavedRef.current = true;
+      mfPersistStep3();
+    } catch {}
+  }, [mfPALKey, mfBioKey, state]);
   // END_MF_BLOCK6_AUTOSAVE_V1
 
 // END_MF_PAL_BIOTIPO_V1
