@@ -1,7 +1,8 @@
+// MF_STEP3_SPINNER_FIX_V4
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // MF_STEP3_GUARD_MINIMO_MAXIMO_V1
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,85 +40,22 @@ export function Step3Metabolismo({
   // Regra: 1) se já existe metabolismo salvo no state -> usa e pronto
   //        2) senão calcula 1x e persiste no state, setando resultado local.
   const [resultado, setResultado] = useState<ResultadoMetabolico | null>(() => {
-    try {
-      const m = (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null;
-      return (m ? (m as any) : null);
-    } catch {
-      return null;
-    }
-  });
+  try {
+    const m = (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null;
+    return (m ? (m as any) : null);
+  } catch {
+    return null;
+  }
+});
 
-  useEffect(() => {
-    try {
-      const existing = (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null;
-      if (existing) {
-        setResultado(existing as any);
-        return;
-      }
-      const perfil = (state as any)?.perfil;
-      const avaliacao = (state as any)?.avaliacao;
-      if (!perfil || !avaliacao) return;
-
-      const calc: any = calcularMetabolismo(perfil, avaliacao);
-
-      // GET (best-effort) sem quebrar
-      try {
-        const nivel = inferNivelTreinoFromState(state as any);
-  // MF_SILENCE_UNUSED_NIVEL_V1
-  void nivel;
-
-        const palKey = String(
-          (state as any)?.perfil?.nivelAtividadeSemanal ??
-          (state as any)?.avaliacao?.frequenciaAtividadeSemanal ??
-          "moderadamente_ativo"
-        );
-        const af = getActivityFactor(palKey);
-        const tmb = Number(calc?.tmb ?? calc?.TMB ?? 0) || 0;
-        const getv = computeGET(tmb, af);
-        calc.get = getv;
-        calc.GET = getv;
-      } catch {}
-
-      setResultado(calc as any);
-
-      // Persiste 1x: ao persistir, na próxima render o "existing" acima bloqueia loop.
-      try {
-        updateState?.({
-          ...(state as any),
-          metabolismo: calc,
-          resultadoMetabolico: calc,
-        } as any);
-      } catch {}
-    } catch {}
-  }, [
-    (state as any)?.perfil,
-    (state as any)?.avaliacao,
-    (state as any)?.metabolismo,
-    (state as any)?.resultadoMetabolico,
-    updateState,
-  ]);
-
-  // MF_STEP3_NO_SETSTATE_IN_RENDER_V1
-  // Evita loading infinito: NUNCA executar setState/updateState durante render.
-  const mfCalcQueuedRef = useRef(false);
-  const mfCalcRunningRef = useRef(false);
-  const mfQueueCalc = () => { mfCalcQueuedRef.current = true; };
-  // Garantia: NUNCA chamar setState/updateState durante render.
-  // Qualquer cálculo/ajuste deve acontecer aqui (pós-render).
-  useEffect(() => {
-    try {
-      if (!mfCalcQueuedRef.current) return;
-      if (mfCalcRunningRef.current) return;
-      mfCalcQueuedRef.current = false;
-      mfCalcRunningRef.current = true;
-      // A lógica real de cálculo permanece nos seus effects existentes.
-      // Aqui só impede loop caso algum trecho antigo tente setState em render.
-    } finally {
-      mfCalcRunningRef.current = false;
-    }
-  });
-
-  void value; void onChange; void onBack;
+  
+  
+  // MF_MFQUEUECALC_STUB_V1
+  // Stub seguro: existia chamada legada (debounce/recalc). Mantemos para não quebrar build.
+  const mfQueueCalc = () => {};
+// MF_SILENCE_UNUSED_SETRESULTADO_V1
+  void setResultado;
+void value; void onChange; void onBack;
   const MF_AF_OPTIONS = [
     { key: "sedentario", label: "Sedentário", desc: "Pouca ou nenhuma atividade física semanal.", pal: 1.2 },
     { key: "moderadamente_ativo", label: "Moderadamente ativo (1–3x/sem)", desc: "Atividade leve a moderada algumas vezes por semana.", pal: 1.375 },
