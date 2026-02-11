@@ -18,6 +18,7 @@ import { useState } from 'react'
 import { useNavigate } from "react-router-dom";
 
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 type OnboardingStepProps = {
@@ -122,6 +123,7 @@ void value; void onChange; void onNext; void onBack;
   const navigate = useNavigate();
   const [metodoSelecionado, setMetodoSelecionado] = useState<MetodoComposicao>('nenhum')
 
+  const [mfInvalidMsg, setMfInvalidMsg] = useState<string | null>(null)
   const form = useForm<AvaliacaoFormData>({
     resolver: zodResolver(avaliacaoSchema),
     defaultValues: {
@@ -178,6 +180,7 @@ let percentualGordura: number = 0
   }
 
   const onSubmit = (data: AvaliacaoFormData) => {
+    try { setMfInvalidMsg(null); } catch {}
     // BLOCO 3: persist step=3 + HARD NAV (bulletproof)
     try { saveOnboardingProgress({ step: 3, data: { step2: data } }); } catch {}
     const imc = Number(calcularIMC(data.peso, data.altura))
@@ -271,6 +274,13 @@ let percentualGordura: number = 0
     })} className="space-y-6 sm:space-y-7">
 
           
+      {mfInvalidMsg && (
+        <Alert>
+          <AlertTitle>Não foi possível avançar</AlertTitle>
+          <AlertDescription>{mfInvalidMsg}</AlertDescription>
+        </Alert>
+      )}
+
           {/* Atividade semanal + Biotipo */}
           <div className="space-y-6">
             <Card>
