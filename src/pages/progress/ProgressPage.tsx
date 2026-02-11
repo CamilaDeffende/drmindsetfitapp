@@ -1,46 +1,51 @@
-import { useMemo } from "react";
-import { historyService } from "@/services/history/HistoryService";
-import { StatsOverview } from "@/components/progress/StatsOverview";
-import { WeightChart } from "@/components/progress/WeightChart";
-import { lastDelta, trendSlope, TimePoint } from "@/services/history/analytics/stats";
-
-function toWeightPoints(): TimePoint[] {
-  const m = historyService.getMeasurements?.() || [];
-  return m
-    .filter((x: any) => x && x.date && (x.weightKg ?? x.peso ?? x.weight))
-    .map((x: any) => ({
-      date: String(x.date).slice(0, 10),
-      value: Number(x.weightKg ?? x.peso ?? x.weight) || 0,
-    }))
-    .filter((p: any) => Number.isFinite(p.value) && p.value > 0);
-}
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { HistoryService } from "@/services/history/HistoryService";
 
 export default function ProgressPage() {
-  const points = useMemo(() => toWeightPoints(), []);
-  const d = useMemo(() => lastDelta(points), [points]);
-  const slope = useMemo(() => trendSlope(points), [points]);
-
-  const items = useMemo(
-    () => [
-      { label: "Registros de peso", value: String(points.length) },
-      { label: "Última variação", value: `${d.delta.toFixed(1)} kg`, hint: `${d.pct.toFixed(1)}%` },
-      { label: "Tendência", value: `${slope.toFixed(2)} kg/dia`, hint: slope < 0 ? "queda" : slope > 0 ? "alta" : "estável" },
-      { label: "Janela", value: "MM7", hint: "média móvel 7d" },
-    ],
-    [points.length, d.delta, d.pct, slope]
-  );
+  const [tick, setTick] = useState(0);
+  const workouts = useMemo(() => {
+    void tick;
+    return HistoryService.listWorkouts();
+  }, [tick]);
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="text-xl font-bold text-zinc-900 dark:text-zinc-50">Progresso</div>
-          <div className="text-sm text-zinc-500 dark:text-zinc-400">Análises do seu histórico (SSOT)</div>
-        </div>
+    <div className="mx-auto max-w-5xl px-4 py-6">
+      <h1 className="text-2xl font-bold text-white mb-2">Progresso</h1>
+      <p className="text-sm text-zinc-400 mb-4">Histórico e gráficos (Fase 7).</p>
+
+      <div className="flex gap-2 mb-4">
+        <Button variant="outline" onClick={() => setTick((v) => v + 1)}>Atualizar</Button>
+        <Button
+          variant="secondary"
+          onClick={() => { HistoryService.clearAll(); setTick((v) => v + 1); }}
+        >
+          Limpar histórico (dev)
+        </Button>
       </div>
 
-      <StatsOverview items={items} />
-      <WeightChart points={points} />
+      <Card className="bg-zinc-900/70 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="text-white">Sessões salvas</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-zinc-300">
+          {workouts.length === 0 ? (
+            <div className="text-zinc-500">Nenhum registro ainda.</div>
+          ) : (
+            workouts.slice(0, 20).map((w) => (
+              <div key={w.id} className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
+                <div className="text-white font-semibold">{w.title || w.type.toUpperCase()}</div>
+                <div className="text-xs text-zinc-400">{new Date(w.ts).toLocaleString()}</div>
+                <div className="mt-1">
+                  {typeof w.durationS === "number" ? <>⏱ {w.durationS}s </> : null}
+                  {typeof w.distanceM === "number" ? <>• 📍 {Math.round(w.distanceM)}m </> : null}
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
