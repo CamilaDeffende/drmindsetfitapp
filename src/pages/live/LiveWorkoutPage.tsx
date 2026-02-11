@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiveMetricsDisplay } from "@/components/live-metrics/LiveMetricsDisplay";
 import { useGPS } from "@/hooks/useGPS/useGPS";
+import { historyService } from "@/services/history/HistoryService";
 
 const downloadText = (filename: string, content: string, mime = "application/gpx+xml") => {
   const blob = new Blob([content], { type: mime });
@@ -19,6 +20,34 @@ const downloadText = (filename: string, content: string, mime = "application/gpx
 export default function LiveWorkoutPage() {
   const gps = useGPS();
 
+
+  // MF_SAVE_SESSION_V1
+  const saveSession = () => {
+    try {
+      const st = gps.stats;
+      const modality = (st.distanceM || 0) > 0 ? "corrida" : "outro";
+      historyService.addWorkout({
+        type: "gps",
+        modality,
+        title: "Treino ao vivo (GPS)",
+        durationS: st.durationS,
+        durationMin: st.durationS ? Math.round(st.durationS / 60) : undefined,
+        distanceM: st.distanceM,
+        distanceKm: st.distanceM ? st.distanceM / 1000 : undefined,
+        avgSpeedMps: st.avgSpeedMps ?? null,
+        paceSecPerKm: st.paceSecPerKm ?? null,
+        dateIso: new Date().toISOString(),
+        caloriesKcal: undefined,
+        pse: undefined,
+        avgHeartRate: undefined,
+        notes: gps.points?.length ? `Track points: ${gps.points.length}` : undefined,
+      });
+      alert("✅ Sessão salva no histórico!");
+    } catch (e: any) {
+      console.error("MF_SAVE_SESSION_V1 error", e);
+      alert("❌ Falha ao salvar sessão.");
+    }
+  };
   const accuracy = useMemo(() => gps.lastPoint?.accuracy ?? null, [gps.lastPoint]);
 
   const title = "Treino ao vivo (GPS)";
@@ -77,6 +106,13 @@ export default function LiveWorkoutPage() {
               </Button>
               <Button variant="outline" onClick={gps.reset}>
                 Reset
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={saveSession}
+                disabled={gps.stats.durationS < 10}
+              >
+                Salvar sessão
               </Button>
               <Button
                 variant="outline"

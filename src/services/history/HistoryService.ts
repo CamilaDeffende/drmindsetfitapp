@@ -54,7 +54,7 @@ export class HistoryService {
     localStorage.setItem(KEY, JSON.stringify(store));
   }
 
-  static addWorkout(input: Omit<WorkoutRecord, "ts"> & { ts?: number }) {
+  static addWorkout(input: Omit<WorkoutRecord, "id" | "ts"> & { id?: string; ts?: number }) {
     const store = HistoryService.read();
     const rec: WorkoutRecord = { id: (input as any).id || nowId(), ts: input.ts ?? Date.now(), ...(input as any) };
     store.workouts = [rec, ...store.workouts].slice(0, 500);
