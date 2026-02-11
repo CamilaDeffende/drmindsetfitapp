@@ -20,6 +20,25 @@ import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
 import { resetOnboardingProgress } from '@/lib/onboardingProgress';
 
+// MF_REDIRECT_LOOP_GUARD_V1
+function mfNavGuard(to: string) {
+  try {
+    const k = "mf:navguard:v1";
+    const now = Date.now();
+    const raw = sessionStorage.getItem(k);
+    const obj = raw ? JSON.parse(raw) : { t: now, n: 0 };
+    const dt = now - Number(obj.t || now);
+    const n = dt < 1500 ? Number(obj.n || 0) + 1 : 1;
+    sessionStorage.setItem(k, JSON.stringify({ t: dt < 1500 ? obj.t : now, n }));
+    if (n >= 20) {
+      console.error("MF_NAV_LOOP_GUARD: blocked navigation loop to", to);
+      return false;
+    }
+    return true;
+  } catch { return true; }
+}
+
+
 type Draft = {
   activeIndex?: number;
   step5?: any;
@@ -69,7 +88,7 @@ export function OnboardingFlow() {
       if (location?.pathname === to) return;
       if (__mfLastNavRef.current === to) return;
       __mfLastNavRef.current = to;
-      navigate(to, (opts ?? { replace: true }));
+      if (mfNavGuard(to)) navigate(to, (opts ?? { replace: true }));
     } catch {}
   };
   // UNLOCK_FLOW_REDIRECT_EFFECT_V1: /onboarding deve respeitar progresso salvo (sem apagar dados)
