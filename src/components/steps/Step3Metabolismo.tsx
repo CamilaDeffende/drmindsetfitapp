@@ -463,7 +463,7 @@ metabolismo: calc
             </div>
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Ideal</p>
-              <Badge className="bg-green-600 text-base">{resultado.faixaSegura.ideal} kcal</Badge>
+              <Badge className="bg-green-600 text-base">{ resultado.faixaSegura?.ideal ?? '-' } kcal</Badge>
             </div>
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Máximo</p>
