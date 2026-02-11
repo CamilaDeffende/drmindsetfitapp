@@ -34,13 +34,74 @@ export function Step3Metabolismo({
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
   // =========================
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+  // MF_STEP3_RESULTADO_EFFECT_V2
+  // Fix definitivo: evita spinner infinito e evita setState durante render.
+  // Regra: 1) se já existe metabolismo salvo no state -> usa e pronto
+  //        2) senão calcula 1x e persiste no state, setando resultado local.
+  const [resultado, setResultado] = useState<ResultadoMetabolico | null>(() => {
+    try {
+      const m = (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null;
+      return (m ? (m as any) : null);
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const existing = (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null;
+      if (existing) {
+        setResultado(existing as any);
+        return;
+      }
+      const perfil = (state as any)?.perfil;
+      const avaliacao = (state as any)?.avaliacao;
+      if (!perfil || !avaliacao) return;
+
+      const calc: any = calcularMetabolismo(perfil, avaliacao);
+
+      // GET (best-effort) sem quebrar
+      try {
+        const nivel = inferNivelTreinoFromState(state as any);
+  // MF_SILENCE_UNUSED_NIVEL_V1
+  void nivel;
+
+        const palKey = String(
+          (state as any)?.perfil?.nivelAtividadeSemanal ??
+          (state as any)?.avaliacao?.frequenciaAtividadeSemanal ??
+          "moderadamente_ativo"
+        );
+        const af = getActivityFactor(palKey);
+        const tmb = Number(calc?.tmb ?? calc?.TMB ?? 0) || 0;
+        const getv = computeGET(tmb, af);
+        calc.get = getv;
+        calc.GET = getv;
+      } catch {}
+
+      setResultado(calc as any);
+
+      // Persiste 1x: ao persistir, na próxima render o "existing" acima bloqueia loop.
+      try {
+        updateState?.({
+          ...(state as any),
+          metabolismo: calc,
+          resultadoMetabolico: calc,
+        } as any);
+      } catch {}
+    } catch {}
+  }, [
+    (state as any)?.perfil,
+    (state as any)?.avaliacao,
+    (state as any)?.metabolismo,
+    (state as any)?.resultadoMetabolico,
+    updateState,
+  ]);
+
   // MF_STEP3_NO_SETSTATE_IN_RENDER_V1
   // Evita loading infinito: NUNCA executar setState/updateState durante render.
   const mfCalcQueuedRef = useRef(false);
   const mfCalcRunningRef = useRef(false);
   const mfQueueCalc = () => { mfCalcQueuedRef.current = true; };
-
-  // MF_STEP3_CALC_EFFECT_V1
   // Garantia: NUNCA chamar setState/updateState durante render.
   // Qualquer cálculo/ajuste deve acontecer aqui (pós-render).
   useEffect(() => {
@@ -209,10 +270,6 @@ function mfPersistStep3(){
       </div>
     </div>
   ) : null;
-
-  const [resultado, setResultado] = useState<ResultadoMetabolico | null>(null)
-  // MF_STEP3_SILENCE_UNUSED_SETRESULTADO_V2
-  void setResultado;
 
   useEffect(() => {
     if (state.perfil && state.avaliacao && !state.metabolismo) {

@@ -108,7 +108,10 @@ export function OnboardingFlow() {
     catch { try { window.location.reload(); } catch {} }
   };
 
-  // MF_ONBOARDING_WATCHDOG_UNUSED_SILENCE_V1
+  
+  // MF_ONB_WATCHDOG_UNUSED_SILENCE_V1
+  void mfBootMs; void mfStuck; void mfPath; void mfResetOnboarding;
+// MF_ONBOARDING_WATCHDOG_UNUSED_SILENCE_V1
   // Se o watchdog não estiver sendo renderizado, evitamos TS6133.
   void mfBootMs;
   void mfStuck;
