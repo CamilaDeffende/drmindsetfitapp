@@ -26,7 +26,6 @@ type OnboardingStepProps = {
 };
 
 export function Step3Metabolismo({
-
   // Observação: biotipo = tendência prática (UX/planejamento), não diagnóstico.
 
  value, onChange, onNext, onBack }: OnboardingStepProps) {
@@ -34,6 +33,8 @@ export function Step3Metabolismo({
   // BEGIN_MF_PAL_BIOTIPO_V1
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
   // =========================
+  const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+  void value; void onChange; void onBack;
   const MF_AF_OPTIONS = [
     { key: "sedentario", label: "Sedentário", desc: "Pouca ou nenhuma atividade física semanal.", pal: 1.2 },
     { key: "moderadamente_ativo", label: "Moderadamente ativo (1–3x/sem)", desc: "Atividade leve a moderada algumas vezes por semana.", pal: 1.375 },
@@ -87,8 +88,8 @@ function mfPersistStep3(){
   function mfOnContinue(){
     if (!mfCanAdvance) return;
     mfPersistStep3();
-    if (typeof nextStep === "function") nextStep();
-    else if (typeof onNext === "function") onNext();
+    if (typeof onNext === "function") onNext();
+    else if (typeof nextStep === "function") nextStep();
   }
   // END_MF_BLOCK5_UI_PAL_BIOTIPO_V1
 
@@ -103,12 +104,6 @@ function mfPersistStep3(){
 
 // END_MF_PAL_BIOTIPO_V1
   // =========================
-
-  void value; void onChange; void onNext; void onBack;
-  const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
-
-  
-
   // MF_BLOCK15_COHERENCE_WARNING_V1
   // Coerência premium: Step1 (frequenciaSemanal 1–7) vs Step2 (PAL/atividade geral).
   // Não bloqueia. Apenas alerta quando há grande discrepância.
