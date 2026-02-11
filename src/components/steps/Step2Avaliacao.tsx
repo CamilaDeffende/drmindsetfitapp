@@ -1,7 +1,6 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { GlobalProfilePicker } from "@/features/global-profile/ui/GlobalProfilePicker";
-import { useNavigate } from "react-router-dom";
 import { useForm } from 'react-hook-form'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -61,8 +60,6 @@ const avaliacaoSchema = z.object({
 type AvaliacaoFormData = z.infer<typeof avaliacaoSchema>
 
 export function Step2Avaliacao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
-  
-  const navigate = useNavigate();
 void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
   const [metodoSelecionado, setMetodoSelecionado] = useState<MetodoComposicao>('nenhum')
@@ -123,11 +120,11 @@ let percentualGordura: number = 0
   }
 
   const onSubmit = (data: AvaliacaoFormData) => {
+    const goNext = (typeof onNext === "function" ? onNext : nextStep) as unknown as (() => void);
     
     // BLOCO 3: persist step=3 + HARD NAV (bulletproof)
     try { saveOnboardingProgress({ step: 3, data: { step2: data } }); } catch {}
-    try { navigate("/onboarding/step-3", { replace: true }); } catch {}
-const imc = Number(calcularIMC(data.peso, data.altura))
+    const imc = Number(calcularIMC(data.peso, data.altura))
 
     const avaliacao: AvaliacaoFisica = {
       frequenciaAtividadeSemanal: data.frequenciaAtividadeSemanal,
@@ -177,7 +174,7 @@ const imc = Number(calcularIMC(data.peso, data.altura))
     }
 
     updateState({ avaliacao })
-    nextStep()
+    try { goNext(); } catch {}
   }
 
   const peso = form.watch('peso')
@@ -538,7 +535,7 @@ const imc = Number(calcularIMC(data.peso, data.altura))
 
 
 
-            <Button type="button" variant="outline" size="lg" onClick={prevStep}>
+            <Button type="button" variant="outline" size="lg" onClick={() => { try { (typeof onBack === "function" ? onBack : prevStep)(); } catch {} }}>
               <ArrowLeft className="mr-2 w-4 h-4" />
               Voltar
             </Button>
