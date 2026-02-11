@@ -177,3 +177,5 @@ dev-dist/
 # MF_IGNORE_LOCAL_ARTIFACTS
 .mf_white_screen.png
 .mf_dev_white_screen.log
+
+# MF_IGNORE_GENERATED_V1
