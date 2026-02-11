@@ -1,6 +1,6 @@
+// MF_ONBOARDING_LOADER_WATCHDOG_V2
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
-
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { buildActivePlanFromDraft, saveActivePlan } from "@/services/plan.service";
 import { useApp } from "@/contexts/AppContext";
@@ -77,6 +77,35 @@ function saveDraft(d: Draft) {
 
 // ✅ Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
+
+  // MF_ONBOARDING_LOADER_WATCHDOG_V2
+  const [mfBootMs] = useState(() => Date.now());
+  const [mfStuck, setMfStuck] = useState(false);
+  const mfPath = useMemo(() => {
+    try { return (typeof window !== "undefined" && window.location) ? String(window.location.pathname || "") : ""; }
+    catch { return ""; }
+  }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setMfStuck(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+  const mfResetOnboarding = () => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const keys: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          const kl = k.toLowerCase();
+          if (kl.includes("onboarding") || kl.includes("mf:onboard") || kl.includes("mf:progress") || kl.includes("mf:draft")) keys.push(k);
+        }
+        keys.forEach((k) => { try { localStorage.removeItem(k); } catch {} });
+      }
+    } catch {}
+    try { window.location.href = "/onboarding/step-1"; }
+    catch { try { window.location.reload(); } catch {} }
+  };
+
   // MF_SAFE_NAV_GUARD_V1
   const navigate = useNavigate();
   // Guard anti-loop: só navega quando o destino muda e é diferente do pathname atual.
@@ -164,6 +193,20 @@ return Number.isFinite(i) ? i : 0;
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="text-sm text-gray-400">
           Carregando onboarding...
+      {mfStuck && (
+        <div className="mt-4 text-xs text-zinc-400">
+          <div className="opacity-80">MF loader stuck &gt; 1500ms</div>
+          <div className="opacity-80">path: <span className="text-zinc-200">{mfPath || "-"}</span></div>
+          <div className="opacity-80">ms: <span className="text-zinc-200">{Date.now() - mfBootMs}</span></div>
+          <button
+            type="button"
+            onClick={mfResetOnboarding}
+            className="mt-3 inline-flex items-center rounded-md border border-zinc-700 px-3 py-2 text-zinc-100 hover:bg-zinc-900"
+          >
+            Resetar Onboarding (limpar cache local)
+          </button>
+        </div>
+      )}
         </div>
       </div>
     );

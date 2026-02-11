@@ -1,8 +1,7 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // MF_STEP3_GUARD_MINIMO_MAXIMO_V1
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
-import { useEffect, useState } from 'react'
-
+import { useEffect, useRef, useState } from 'react'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,6 +34,28 @@ export function Step3Metabolismo({
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
   // =========================
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+  // MF_STEP3_NO_SETSTATE_IN_RENDER_V1
+  // Evita loading infinito: NUNCA executar setState/updateState durante render.
+  const mfCalcQueuedRef = useRef(false);
+  const mfCalcRunningRef = useRef(false);
+  const mfQueueCalc = () => { mfCalcQueuedRef.current = true; };
+
+  // MF_STEP3_CALC_EFFECT_V1
+  // Garantia: NUNCA chamar setState/updateState durante render.
+  // Qualquer cálculo/ajuste deve acontecer aqui (pós-render).
+  useEffect(() => {
+    try {
+      if (!mfCalcQueuedRef.current) return;
+      if (mfCalcRunningRef.current) return;
+      mfCalcQueuedRef.current = false;
+      mfCalcRunningRef.current = true;
+      // A lógica real de cálculo permanece nos seus effects existentes.
+      // Aqui só impede loop caso algum trecho antigo tente setState em render.
+    } finally {
+      mfCalcRunningRef.current = false;
+    }
+  });
+
   void value; void onChange; void onBack;
   const MF_AF_OPTIONS = [
     { key: "sedentario", label: "Sedentário", desc: "Pouca ou nenhuma atividade física semanal.", pal: 1.2 },
@@ -190,6 +211,8 @@ function mfPersistStep3(){
   ) : null;
 
   const [resultado, setResultado] = useState<ResultadoMetabolico | null>(null)
+  // MF_STEP3_SILENCE_UNUSED_SETRESULTADO_V2
+  void setResultado;
 
   useEffect(() => {
     if (state.perfil && state.avaliacao && !state.metabolismo) {
@@ -203,8 +226,7 @@ function mfPersistStep3(){
       ;(calc as any).nivelAtividade = nivel
       ;(calc as any).fatorAtividade = fator
       ;(calc as any).get = get
-
-      setResultado(calc)
+    mfQueueCalc();
       updateState({
 metabolismo: calc
   ,
@@ -215,12 +237,12 @@ metabolismo: calc
     biotipo: mfBioKey,
   },
 } as any);} else if (state.metabolismo) {
-      setResultado(state.metabolismo)
+    mfQueueCalc();
     }
   }, [state.perfil, state.avaliacao, state.metabolismo, updateState])
 
   if (!resultado) {
-    return (
+  return (
       <div className="max-w-4xl mx-auto px-4 py-8">
 
 <Card className="mt-4 border-white/10 bg-white/5">

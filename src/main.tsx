@@ -1,3 +1,4 @@
+// MF_BOOT_DEDUP_REACT_V1
 // MF_MAIN_REACT_DUPE_FIX_V1
 import React from "react";
 import { createRoot } from "react-dom/client";
