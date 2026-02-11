@@ -1,4 +1,5 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
+// MF_STEP3_GUARD_MINIMO_MAXIMO_V1
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { useEffect, useState } from 'react'
 
@@ -441,7 +442,7 @@ metabolismo: calc
           <div className="flex items-center justify-between mb-2">
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Mínimo</p>
-              <Badge variant="outline" className="text-base">{resultado.faixaSegura.minimo} kcal</Badge>
+              <Badge variant="outline" className="text-base">{(resultado.faixaSegura?.minimo ?? 0)} kcal</Badge>
             </div>
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Ideal</p>
@@ -449,7 +450,7 @@ metabolismo: calc
             </div>
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Máximo</p>
-              <Badge variant="outline" className="text-base">{resultado.faixaSegura.maximo} kcal</Badge>
+              <Badge variant="outline" className="text-base">{(resultado.faixaSegura?.maximo ?? 0)} kcal</Badge>
             
             
             <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
