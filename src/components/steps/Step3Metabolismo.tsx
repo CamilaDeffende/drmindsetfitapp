@@ -30,6 +30,9 @@ export function Step3Metabolismo({
   // Observação: biotipo = tendência prática (UX/planejamento), não diagnóstico.
 
  value, onChange, onNext, onBack }: OnboardingStepProps) {
+  // MF_SAFE_ENTRIES_V1
+  const mfEntries = (o: any): Array<[string, any]> => Object.entries(o ?? {}) as Array<[string, any]>;
+
   // =========================
   // BEGIN_MF_PAL_BIOTIPO_V1
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
@@ -568,7 +571,7 @@ metabolismo: calc
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {Object.entries(resultado.comparativo).map(([key, value]) => {
+            {mfEntries(resultado.comparativo).map(([key, value]) => {
               const isEscolhida = key === resultado.equacaoUtilizada.replace('-', '')
               return (
                 <div key={key} className="flex items-center justify-between p-3 rounded-lg bg-muted">
