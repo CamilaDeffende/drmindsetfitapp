@@ -120,6 +120,36 @@ async function pickFafModeradamenteAtivo(page: any) {
     "FAF: não consegui selecionar 'Moderadamente ativo'. Debug=" + JSON.stringify(dbg)
   );
 }
+async function waitReportReady(page: any) {
+  // MF_WAIT_REPORT_READY_V1
+  // Report pode abrir mostrando o Splash/Loader "Preparando sua experiência…"
+  // Espera SUMIR ou surgir conteúdo real (sem travar o teste).
+  const splash = page.getByText(/Preparando sua experiência/i);
+
+  const t0 = Date.now();
+  const maxMs = 25000;
+
+  // dá um pequeno respiro pra hidratar/rotear
+  await page.waitForTimeout(600);
+
+  while (Date.now() - t0 < maxMs) {
+    // se loader não existe/ não está visível -> ok
+    try {
+      const count = await splash.count();
+      if (count === 0) return;
+      const vis = await splash.first().isVisible().catch(() => false);
+      if (!vis) return;
+    } catch:
+      return
+
+    // se já pintou “cara de report” (heurística: algum texto típico de relatório/resultado)
+    const body = await page.locator("body").innerText().catch(() => "");
+    if (re.search(r"(relat|report|pdf|plano|resultado|dieta|macros|kcal)", body, re.I)):
+      return
+
+    await page.waitForTimeout(800);
+  }
+}
 
 test("FAF: Moderadamente ativo persiste e aparece no Report", async ({ page }) => {
   // ✅ Seed SSOT do guard (src/lib/onboardingProgress.ts)
@@ -204,6 +234,9 @@ test("FAF: Moderadamente ativo persiste e aparece no Report", async ({ page }) =
 
   // Report
   await goto(page, "/report");
+  // MF_WAIT_REPORT_READY_CALL_V1
+  await waitReportReady(page);
+
   // MF_FAF_REPORT_ASSERT_V2 (scoped)
   {
     // ASSERT ROBUSTO: FAF pode aparecer com labels diferentes no Report
