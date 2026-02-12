@@ -38,6 +38,17 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
   // =========================
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+  // MF_STEP3_BACK_HANDLER_V1
+  function mfOnBack() {
+    try {
+      if (typeof onBack === "function") {
+        onBack();
+        return;
+      }
+    } catch {}
+    try { if (typeof prevStep === "function") prevStep(); } catch {}
+  }
+
   // MF_STEP3_GUARD_REF_V1
   // MF_STEP3_RESULTADO_EFFECT_V2
   // Fix definitivo: evita spinner infinito e evita setState durante render.
@@ -54,7 +65,6 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
 
   // MF_STEP3_UNUSED_SETRESULTADO_SILENCE_V1
   void setResultado;
-
 
   
   
@@ -111,11 +121,27 @@ function mfPersistStep3(){
         biotipoTendencia: mfBioKey,
       } });
     } catch {}
-  }
+  
+    // MF_STEP3_SSV3_ONCHANGE_V1
+    try {
+      const prev = (value as any) ?? {};
+      const step3 = { ...(prev.step3 ?? {}), nivelAtividadeSemanal: mfPALKey, biotipoTendencia: mfBioKey };
+      onChange({ ...prev, step3 });
+    } catch {}
+}
 
   function mfOnContinue(){
     if (!mfCanAdvance) return;
     mfPersistStep3();
+
+    // MF_STEP3_NEXT_HANDLER_V1
+    try {
+      if (typeof onNext === "function") {
+        onNext();
+        return;
+      }
+    } catch {}
+    try { if (typeof nextStep === "function") nextStep(); } catch {}
     if (typeof onNext === "function") onNext();
     // MF_FIX_NO_NEXTSTEP_IN_RENDER_V1 (evita setState durante render)
     else if (typeof nextStep === "function") { /* noop */ }
@@ -596,7 +622,7 @@ metabolismo: calc
       </Card>
 
       <div className="flex justify-between pt-6">
-        <Button type="button" variant="outline" size="lg" onClick={prevStep}>
+        <Button type="button" variant="outline" size="lg" onClick={mfOnBack}>
           <ArrowLeft className="mr-2 w-4 h-4" />
           Voltar
         </Button>
