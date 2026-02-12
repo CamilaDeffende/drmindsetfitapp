@@ -185,3 +185,10 @@ dev-dist/
 
 # MF_IGNORE_LOCAL_LOGS
 .mf_devlog.txt
+
+# MF_ENTERPRISE_NO_SHIP_ASSETS_V1
+/public/*.zip
+/public/**/*.zip
+/public/brand/*backup*.png
+/public/brand/*.backup-*.png
+/dist

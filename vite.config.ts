@@ -33,7 +33,7 @@ react(),
       devOptions: { enabled: false },
       injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        globIgnores: ["**/brand/mindsetfit-wordmark.png"],
+        globIgnores: ["**/*.zip", "**/*backup*.*"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       },
     }),
