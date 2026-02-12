@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 // MF_REPORT_HYDRATION_UNBLOCK_V1
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +10,56 @@ import { loadActivePlan } from "@/services/plan.service"
 import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
+// MF_REPORT_UNBLOCK_LOADER_FAF_V1
+// DEMO-safe: hidrata Report via localStorage e evita loader infinito
+type MFAny = any;
 
+function mfSafeJsonParse(v: string | null): MFAny | null {
+  if (!v) return null;
+  try { return JSON.parse(v); } catch { return null; }
+}
+
+function mfReadFirstProfileFromLS(): MFAny | null {
+  const draft = mfSafeJsonParse(localStorage.getItem("mf:onboarding:draft:v1"));
+  if (draft) return draft;
+
+  const gp = mfSafeJsonParse(localStorage.getItem("drmindsetfit.globalProfile.v1"));
+  if (gp) return gp;
+
+  const st = mfSafeJsonParse(localStorage.getItem("drmindsetfit_state"));
+  if (st) return st;
+
+  return null;
+}
+
+function mfExtractFafLabel(profile: MFAny | null): string | null {
+  if (!profile) return null;
+  const cands = [
+    profile?.atividadeFisica?.fatorAtividade,
+    profile?.atividadeFisica?.nivelAtividade,
+    profile?.activityFactor,
+    profile?.faf,
+    profile?.fatorAtividade,
+    profile?.nivelAtividade,
+    profile?.globalProfile?.atividadeFisica?.fatorAtividade,
+    profile?.globalProfile?.atividadeFisica?.nivelAtividade,
+  ].filter(Boolean);
+
+  const raw = (cands[0] ?? null);
+  if (!raw) return null;
+
+  const v = String(raw).trim();
+  if (/sedent|leve|moder|alta|muito/i.test(v)) return v;
+
+  const num = Number(v.replace(",", "."));
+  if (!Number.isFinite(num)) return v;
+
+  if (num < 1.3) return "Sedentário";
+  if (num < 1.5) return "Levemente ativo";
+  if (num < 1.7) return "Moderadamente ativo";
+  if (num < 1.9) return "Muito ativo";
+  return "Extremamente ativo";
+}
 
 // MF_REPORT_HYDRATION_HELPERS_V1
 function mfReadAllLocalStorage(): Record<string, string> {
@@ -37,7 +87,6 @@ function mfPickFAF(ls: Record<string, string>): string | null {
   return null;
 }
 
-
 // MF_REPORT_TRAINING_V3
 function __mfGetTrainingWorkouts(): any[] {
   try {
@@ -61,6 +110,27 @@ function mfActivityWeeklyLabel(v: unknown) {
 }
 
 export function Report() {
+  // MF_REPORT_UNBLOCK_LOADER_FAF_V1: evita loader infinito (DEMO) + tenta ler perfil do LS
+  const mfProfile = useMemo(() => {
+    try { return mfReadFirstProfileFromLS(); } catch { return null; }
+  }, []);
+
+  const mfFafLabel = useMemo(() => mfExtractFafLabel(mfProfile), [mfProfile]);
+
+  const [mfForceReady, setMfForceReady] = useState(false);
+  const mfStartRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setMfForceReady(true), 2800);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (!mfForceReady) return;
+    const dt = Date.now() - mfStartRef.current;
+    console.warn("MF_REPORT_DEBUG: forceReady enabled after", dt, "ms | faf=", mfFafLabel);
+  }, [mfForceReady, mfFafLabel]);
+
   // MF_REPORT_DEBUG_ONCE_V1
   const __mfReportLogged = (globalThis as any).__mfReportLogged;
   if (!__mfReportLogged) {
@@ -71,7 +141,6 @@ export function Report() {
       console.warn("MF_REPORT_DEBUG: boot", { url: location.href, faf, keys: Object.keys(ls).slice(0, 30) });
     } catch {}
   }
-
 
   function safeRound(n: number | undefined, fallback: number = 0) {
     return Math.round((n ?? fallback));
@@ -99,7 +168,6 @@ export function Report() {
   // __MF_REPORT_ADAPTER_V1__
   const activePlan = loadActivePlan?.() as any;
   const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
-
 
   if (!state.concluido) {
     
@@ -611,7 +679,6 @@ export function Report() {
 }
 
 }
-
 
         
         {/* MF_REPORT_TRAINING_SECTION_V3 */}
