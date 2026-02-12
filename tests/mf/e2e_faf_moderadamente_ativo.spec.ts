@@ -26,39 +26,99 @@ async function clickNext(page: any) {
 }
 
 async function pickFafModeradamenteAtivo(page: any) {
-  
-  // MF_FAF_PICK_V2 — preferir selectOption (não clicar em <option>)
   const label = /Moderadamente ativo/i;
 
-  // 1) Se for <select> nativo:
-  const sel = page.locator('select').first();
-  if (await sel.count()) {
+  // (0) deixa o app estabilizar (evita pegar loader/placeholder)
+  await page.waitForTimeout(400);
+
+  // (1) Native <select> (melhor caminho)
+  const nativeCandidates = page.locator(
+    'select[name="nivelAtividadeSemanal"], select[id*="nivelAtividadeSemanal"], select'
+  );
+
+  for (let i = 0; i < (await nativeCandidates.count()); i++) {
+    const sel = nativeCandidates.nth(i);
     try {
-      await sel.selectOption({ label });
-      return;
-    } catch {}
+      const opts = await sel.locator("option").evaluateAll((els) =>
+        els.map((e) => ({
+          value: (e as HTMLOptionElement).value,
+          text: (e.textContent || "").trim(),
+        }))
+      );
+
+      const found = opts.find((o) => label.test(o.text));
+      if (found) {
+        if (found.value) {
+          await sel.selectOption(found.value);
+        } else {
+          await sel.selectOption({ label: found.text });
+        }
+        return;
+      }
+    } catch {
+      // ignore
+    }
   }
 
-  // 2) fallback: tenta achar select pelo name comum (se existir)
-  const byName = page.locator('select[name="nivelAtividadeSemanal"], select[name*="atividade"], select[id*="atividade"]').first();
-  if (await byName.count()) {
-    try {
-      await byName.selectOption({ label });
-      return;
-    } catch {}
-  }
+  // (2) Combobox/Listbox (Shadcn/Headless UI)
+  const triggers = page.locator(
+    '[role="combobox"], button[aria-haspopup="listbox"], [aria-haspopup="listbox"][data-state]'
+  );
 
-  // 3) fallback final: se for UI custom (radix/shadcn), abre combobox e clica option visível
-  const combo = page.getByRole('combobox').first();
-  if (await combo.count()) {
-    await combo.click();
-    const opt = page.getByRole('option', { name: label }).first();
-    await opt.click();
+  // tenta primeiro por proximidade textual
+  const triggerByContext = triggers
+    .filter({ hasText: /atividade|frequ|faf|nível/i })
+    .first();
+
+  if (await triggerByContext.count()) {
+    await triggerByContext.click({ force: true });
+    const listbox = page.locator('[role="listbox"]').first();
+    const opt = listbox.locator('text=/Moderadamente ativo/i').first();
+    await opt.click({ force: true });
     return;
   }
 
-  throw new Error("FAF: não consegui selecionar 'Moderadamente ativo' (nenhum select/combobox encontrado).");
+  // (3) tentativa genérica: abre o primeiro combobox/listbox e clica no texto
+  const anyTrigger = triggers.first();
+  if (await anyTrigger.count()) {
+    await anyTrigger.click({ force: true });
+    const opt = page.locator('text=/Moderadamente ativo/i').first();
+    if (await opt.count()) {
+      await opt.click({ force: true });
+      return;
+    }
+  }
 
+  // (4) fallback final: se o texto estiver clicável em algum lugar
+  const txt = page.getByText(label).first();
+  if (await txt.count()) {
+    await txt.click({ force: true });
+    return;
+  }
+
+  // Debug útil pra quando falhar: lista selects/comboboxes encontrados
+  const dbg = await page.evaluate(() => {
+    const selects = Array.from(document.querySelectorAll("select")).map((s) => ({
+      tag: "select",
+      name: s.getAttribute("name"),
+      id: s.getAttribute("id"),
+      options: Array.from(s.querySelectorAll("option")).map((o) => (o.textContent || "").trim()).slice(0, 12),
+    }));
+
+    const combos = Array.from(document.querySelectorAll('[role="combobox"],[aria-haspopup="listbox"]'))
+      .map((el) => ({
+        tag: el.tagName.toLowerCase(),
+        role: el.getAttribute("role"),
+        text: (el.textContent || "").trim().slice(0, 120),
+      }))
+      .slice(0, 20);
+
+    return { selects, combos };
+  }).catch(() => ({}));
+
+  throw new Error(
+    "FAF: não consegui selecionar 'Moderadamente ativo'. Debug=" + JSON.stringify(dbg)
+  );
 }
 
 test("FAF: Moderadamente ativo persiste e aparece no Report", async ({ page }) => {
@@ -117,8 +177,6 @@ test("FAF: Moderadamente ativo persiste e aparece no Report", async ({ page }) =
     console.log("MF_PROBE_STEP1_BUTTONS:", JSON.stringify(buttons));
     console.log("MF_PROBE_STEP1_ROOT_HTML_HEAD:", String(rootHtml).slice(0, 1200));
   }
-
-
 
   await expect(field).toBeVisible({ timeout: 30000 });
   await field.fill("Luiz Henrique Alexandre");
