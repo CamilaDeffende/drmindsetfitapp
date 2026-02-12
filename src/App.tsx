@@ -4,14 +4,8 @@ import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import Assinatura from "@/pages/Assinatura";
 import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import AIDashboardPage from "@/pages/ai-dashboard/AIDashboardPage";
-import { AchievementsPage } from "@/pages/gamification/AchievementsPage";
-import { ConflictsPage } from "@/pages/offline/ConflictsPage";
-import WearablesPage from "@/pages/wearables/WearablesPage";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
-import LiveWorkoutPage from "@/pages/live/LiveWorkoutPage";
-;
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
@@ -38,9 +32,27 @@ import { EditDiet } from '@/pages/EditDiet'
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
-import CorridaPro from "@/pages/CorridaPro";
-import ProgressPage from "@/pages/progress/ProgressPage";
-import WorkoutDetailsPage from "@/pages/workout-details/WorkoutDetailsPage";
+import CorridaPro from "@/pages/CorridaPro";// MF_ROUTE_CODE_SPLIT_V2
+const MFPageLoader = () => (
+  <div className="min-h-[40vh] flex items-center justify-center p-6 text-sm opacity-70">
+    Carregando…
+  </div>
+);
+
+const MFSuspense = ({ children }: { children: React.ReactNode }) => (
+  <React.Suspense fallback={<MFPageLoader />}>{children}</React.Suspense>
+);
+
+// Lazy routes (heavy pages)
+const LazyAIDashboardPage = React.lazy(() => import("@/pages/ai-dashboard/AIDashboardPage"));
+const LazyWearablesPage = React.lazy(() => import("@/pages/wearables/WearablesPage"));
+const LazyAchievementsPage = React.lazy(() => import("@/pages/gamification/AchievementsPage").then((m) => ({ default: m.AchievementsPage })));
+const LazyConflictsPage = React.lazy(() => import("@/pages/offline/ConflictsPage").then((m) => ({ default: m.ConflictsPage })));
+const LazyProgressPage = React.lazy(() => import("@/pages/progress/ProgressPage"));
+const LazyWorkoutDetailsPage = React.lazy(() => import("@/pages/workout-details/WorkoutDetailsPage"));
+const LazyLiveWorkoutPage = React.lazy(() => import("@/pages/live/LiveWorkoutPage"));
+
+
 function App() {
     // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
 
@@ -63,7 +75,7 @@ function App() {
 <Routes>
               
               
-              <Route path="/ai" element={<AIDashboardPage />} /><Route path="/wearables" element={<WearablesPage />} /><Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
+              <Route path="/ai" element={<MFSuspense><LazyAIDashboardPage /></MFSuspense>} /><Route path="/wearables" element={<MFSuspense><LazyWearablesPage /></MFSuspense>} /><Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
               <Route path="/perfil" element={<Navigate to="/onboarding/step-1" replace />} />
               <Route path="/profile" element={<Navigate to="/onboarding/step-1" replace />} />
         
@@ -189,12 +201,12 @@ function App() {
               {/* Fallback */}<Route path="*" element={<Navigate to="/onboarding/step-1" replace />} />
 
   <Route path="/dev/engine" element={<DevEngine />} />
-              <Route path="/achievements" element={<AchievementsPage />} />
-              <Route path="/conflicts" element={<ConflictsPage />} />
-              <Route path="/progress" element={<ProgressPage />} />
-              <Route path="/workout/:id" element={<WorkoutDetailsPage />} />
+              <Route path="/achievements" element={<MFSuspense><LazyAchievementsPage /></MFSuspense>} />
+              <Route path="/conflicts" element={<MFSuspense><LazyConflictsPage /></MFSuspense>} />
+              <Route path="/progress" element={<MFSuspense><LazyProgressPage /></MFSuspense>} />
+              <Route path="/workout/:id" element={<MFSuspense><LazyWorkoutDetailsPage /></MFSuspense>} />
 
-        <Route path="/live-workout" element={<LiveWorkoutPage />} />
+        <Route path="/live-workout" element={<MFSuspense><LazyLiveWorkoutPage /></MFSuspense>} />
 </Routes>
 </BrowserRouter>
           <Toaster />
