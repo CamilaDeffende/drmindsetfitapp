@@ -33,7 +33,7 @@ react(),
       devOptions: { enabled: false },
       injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        globIgnores: ["**/*.zip", "**/*backup*.*"],
+        globIgnores: ["**/*.zip", "**/*backup*.*", "**/*.backup-*.png"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       },
     }),
