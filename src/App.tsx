@@ -32,7 +32,6 @@ import { EditDiet } from '@/pages/EditDiet'
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import { CardioPlan } from '@/pages/CardioPlan'
 import HiitPlan from "@/pages/HiitPlan";
-import CorridaPro from "@/pages/CorridaPro";// MF_ROUTE_CODE_SPLIT_V2
 const MFPageLoader = () => (
   <div className="min-h-[40vh] flex items-center justify-center p-6 text-sm opacity-70">
     Carregando…
@@ -51,6 +50,8 @@ const LazyConflictsPage = React.lazy(() => import("@/pages/offline/ConflictsPage
 const LazyProgressPage = React.lazy(() => import("@/pages/progress/ProgressPage"));
 const LazyWorkoutDetailsPage = React.lazy(() => import("@/pages/workout-details/WorkoutDetailsPage"));
 const LazyLiveWorkoutPage = React.lazy(() => import("@/pages/live/LiveWorkoutPage"));
+const LazyCorridaPro = React.lazy(() => import("@/pages/CorridaPro").then((m) => ({ default: m.default })));
+
 
 
 function App() {
@@ -79,7 +80,7 @@ function App() {
               <Route path="/perfil" element={<Navigate to="/onboarding/step-1" replace />} />
               <Route path="/profile" element={<Navigate to="/onboarding/step-1" replace />} />
         
-<Route path="/corrida-pro" element={<ProtectedRoute requiresPremium><CorridaPro /></ProtectedRoute>} />
+<Route path="/corrida-pro" element={<ProtectedRoute requiresPremium><MFSuspense><LazyCorridaPro /></MFSuspense></ProtectedRoute>} />
               {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
               <Route path="/" element={<Navigate to="/onboarding/step-1" replace />} />
 
