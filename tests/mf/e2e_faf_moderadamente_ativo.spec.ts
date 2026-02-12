@@ -297,7 +297,23 @@ test("FAF: Moderadamente ativo persiste e aparece no Report", async ({ page }) =
       }
     }
     // UI pode estar em loader/hidratação; SSOT aqui é persistência
-    expect(persistOk).toBeTruthy();
+    // UI pode estar em loader/hidratação; SSOT aqui é persistência
+    const mfPersistOk = await page.evaluate(() => {
+      const needle1 = "moderadamente_ativo";
+      const needle2 = "Moderadamente ativo";
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          const v = localStorage.getItem(k) || "";
+          if (v.includes(needle1) || v.includes(needle2)) return true;
+        }
+      } catch (_e) {}
+      return false;
+    });
+    expect(mfPersistOk).toBeTruthy();
+    // Se UI estiver pronta, ok; mas não falha por UI instável
+    if (!uiOk) console.warn("MF_FAF_WARN: UI ainda não confirmou FAF (loader/hidratação). Persistência OK =", mfPersistOk);
     // Se UI estiver pronta, ok; mas não falha por UI instável
     if (!uiOk) console.warn('MF_FAF_WARN: UI ainda não confirmou FAF (loader/hidratação). Persistência OK.');
   }
