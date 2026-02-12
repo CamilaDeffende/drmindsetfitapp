@@ -179,3 +179,6 @@ dev-dist/
 .mf_dev_white_screen.log
 
 # MF_IGNORE_GENERATED_V1
+
+# MF_LOCAL_DEVLOG
+.mf_devlog.txt
