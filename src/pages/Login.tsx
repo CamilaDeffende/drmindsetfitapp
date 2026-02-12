@@ -14,7 +14,7 @@ export function Login() {
         <picture>
   <source srcSet="/brand/optimized/mindsetfit-wordmark.avif" type="image/avif" />
   <source srcSet="/brand/optimized/mindsetfit-wordmark.webp" type="image/webp" />
-  <img src="/brand/mindsetfit-wordmark.png" className="mx-auto w-40 drop-shadow-lg select-none" alt="MindsetFit" />
+  <img src="/brand/mindsetfit-logo.svg" className="mx-auto w-40 drop-shadow-lg select-none" alt="MindsetFit" />
 </picture>
 
         {/* USER INFO */}
