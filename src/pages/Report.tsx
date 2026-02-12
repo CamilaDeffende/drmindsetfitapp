@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-// MF_REPORT_HYDRATION_UNBLOCK_V1
+import { useEffect, useMemo, useState } from "react";
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,8 +8,6 @@ import { ptBR } from 'date-fns/locale'
 import { loadActivePlan } from "@/services/plan.service"
 import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
-
-// MF_REPORT_UNBLOCK_LOADER_FAF_V1
 // DEMO-safe: hidrata Report via localStorage e evita loader infinito
 type MFAny = any;
 
@@ -60,34 +57,6 @@ function mfExtractFafLabel(profile: MFAny | null): string | null {
   if (num < 1.9) return "Muito ativo";
   return "Extremamente ativo";
 }
-
-// MF_REPORT_HYDRATION_HELPERS_V1
-function mfReadAllLocalStorage(): Record<string, string> {
-  try {
-    const out: Record<string, string> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      out[k] = localStorage.getItem(k) || "";
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
-function mfPickFAF(ls: Record<string, string>): string | null {
-  const needles = ["moderadamente_ativo", "sedentario", "leve", "muito_ativo", "extremamente_ativo"];
-  for (const k of Object.keys(ls)) {
-    const v = ls[k] || "";
-    for (const n of needles) {
-      if (v.includes(n)) return n;
-    }
-  }
-  return null;
-}
-
-// MF_REPORT_TRAINING_V3
 function __mfGetTrainingWorkouts(): any[] {
   try {
     if (typeof window === "undefined") return [];
@@ -110,7 +79,6 @@ function mfActivityWeeklyLabel(v: unknown) {
 }
 
 export function Report() {
-  // MF_REPORT_UNBLOCK_LOADER_FAF_V1: evita loader infinito (DEMO) + tenta ler perfil do LS
   const mfProfile = useMemo(() => {
     try { return mfReadFirstProfileFromLS(); } catch { return null; }
   }, []);
@@ -118,7 +86,6 @@ export function Report() {
   const mfFafLabel = useMemo(() => mfExtractFafLabel(mfProfile), [mfProfile]);
 
   const [mfForceReady, setMfForceReady] = useState(false);
-  const mfStartRef = useRef<number>(Date.now());
 
   useEffect(() => {
     const t = window.setTimeout(() => setMfForceReady(true), 2800);
@@ -127,18 +94,11 @@ export function Report() {
 
   useEffect(() => {
     if (!mfForceReady) return;
-    const dt = Date.now() - mfStartRef.current;
-    console.warn("MF_REPORT_DEBUG: forceReady enabled after", dt, "ms | faf=", mfFafLabel);
   }, [mfForceReady, mfFafLabel]);
-
-  // MF_REPORT_DEBUG_ONCE_V1
   const __mfReportLogged = (globalThis as any).__mfReportLogged;
   if (!__mfReportLogged) {
     try {
       (globalThis as any).__mfReportLogged = true;
-      const ls = mfReadAllLocalStorage();
-      const faf = mfPickFAF(ls);
-      console.warn("MF_REPORT_DEBUG: boot", { url: location.href, faf, keys: Object.keys(ls).slice(0, 30) });
     } catch {}
   }
 
@@ -164,8 +124,6 @@ export function Report() {
 
   const { state } = useDrMindSetfit()
   const navigate = useNavigate()
-
-  // __MF_REPORT_ADAPTER_V1__
   const activePlan = loadActivePlan?.() as any;
   const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
 
@@ -334,7 +292,6 @@ export function Report() {
       </div>
     );
   }
-    // __MF_REPORT_DIETA_FALLBACK_V1__
   const dietaAtiva = (state as any).dietaAtiva ?? (
     adapted?.macros ? {
       estrategia: (activePlan?.nutrition?.strategy ?? activePlan?.nutrition?.estrategia ?? "Plano personalizado"),
@@ -679,9 +636,6 @@ export function Report() {
 }
 
 }
-
-        
-        {/* MF_REPORT_TRAINING_SECTION_V3 */}
         <section style={{ marginTop: 18 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <h2 style={{ fontSize: 18, fontWeight: 900 }}>Treinos da semana</h2>
