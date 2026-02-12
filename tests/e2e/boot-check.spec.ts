@@ -6,6 +6,9 @@ test("boot-check: JS runs and marks #root", async ({ page }) => {
 
   const root = page.locator("#root");
 
+  // MF_E2E_BOOT_HTML_ASSERT_V1
+  const html = await root.innerHTML();
+  expect(html.length).toBeGreaterThan(80);
   // MF_E2E_ROOT_RENDER_ASSERT_V1 — em vez de sentinel data-mf-boot
   const html = await root.innerHTML();
   expect(html.length).toBeGreaterThan(80);

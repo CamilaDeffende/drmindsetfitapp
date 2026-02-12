@@ -19,17 +19,15 @@ test("diagnose /onboarding/step-1: console + pageerror + root html", async ({ pa
   await page.goto("http://localhost:8080/onboarding/step-1", { waitUntil: "domcontentloaded" });
 
   const root = page.locator("#root");
-
-  // MF_E2E_ROOT_RENDER_ASSERT_V1 — em vez de sentinel data-mf-boot
-  const html = await root.innerHTML();
-  expect(html.length).toBeGreaterThan(80);
-  await expect(root).toBeAttached({ timeout: 20000 });
+await expect(root).toBeAttached({ timeout: 20000 });
 
   // Boot sentinel prova que o JS rodou
 // dá um tempo pra Router/guards rodarem
   await page.waitForTimeout(1500);
 
   const html = await root.innerHTML();
+  expect(html.length).toBeGreaterThan(80);
+
   const url = page.url();
 
   await page.screenshot({ path: "test-results/onboarding-step1-diagnose.png", fullPage: true });

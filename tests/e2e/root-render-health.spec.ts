@@ -4,13 +4,11 @@ async function assertRootRenders(page: any, url: string) {
   await page.goto(url, { waitUntil: "domcontentloaded" });
 
   const root = page.locator("#root");
-
-  // MF_E2E_ROOT_RENDER_ASSERT_V1 — em vez de sentinel data-mf-boot
-  const html = await root.innerHTML();
-  expect(html.length).toBeGreaterThan(80);
-  await expect(root).toBeAttached({ timeout: 20000 });
+await expect(root).toBeAttached({ timeout: 20000 });
 // “root vazio” = React renderizou null (ou algum Provider acima retornou null)
   const html = await root.innerHTML();
+  expect(html.length).toBeGreaterThan(80);
+
   console.log("URL:", url);
   console.log("root.innerHTML length:", html.length);
 
