@@ -5,7 +5,6 @@ import Assinatura from "@/pages/Assinatura";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
-import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -63,7 +62,6 @@ function App() {
 
   return __suite ? (<MFSuspense><LazyFitnessSuiteDemo /></MFSuspense>) : (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <AuthProvider>
         <DrMindSetfitProvider>
           <BrowserRouter>
             <RouteGuard />
@@ -209,7 +207,6 @@ function App() {
 </BrowserRouter>
           <Toaster />
 </DrMindSetfitProvider>
-      </AuthProvider>
     </ThemeProvider>
   );
 }
