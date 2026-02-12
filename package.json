@@ -24,7 +24,8 @@
     "mf:running:export": "tsx scripts/running_export.ts",
     "lint:core": "npx eslint \"src/App.tsx\" \"src/pages/**/*.{ts,tsx}\" \"src/components/steps/**/*.{ts,tsx}\" \"src/services/**/*.{ts,tsx}\" \"src/engine/**/*.{ts,tsx}\" \"src/contexts/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\" \"src/features/fitness-suite/**/*.{ts,tsx}\" --max-warnings=0 --rule @typescript-eslint/no-explicit-any:off --rule react-refresh/only-export-components:off --rule react-hooks/exhaustive-deps:off --rule @typescript-eslint/no-unused-vars:off",
     "lint:gate": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0 --rule @typescript-eslint/no-explicit-any:off --rule react-refresh/only-export-components:off --rule react-hooks/exhaustive-deps:off --rule @typescript-eslint/no-unused-vars:off",
-    "lint:strict": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0"
+    "lint:strict": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
