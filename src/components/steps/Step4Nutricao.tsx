@@ -107,6 +107,23 @@ export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingSte
   }
   // END_MF_BLOCK8_STEP4_PERSIST_V1
 const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')
+
+// MF_STEP4_STRATEGY_PERCENT_SSOT_V2
+const mfStrategyPercent = (e: string) => {
+  switch (e) {
+    case "deficit-leve":
+      return -10;
+    case "deficit-moderado":
+      return -20;
+    case "deficit-agressivo":
+      return -25;
+    case "superavit":
+      return +15;
+    case "manutencao":
+    default:
+      return 0;
+  }
+};
   const [restricoes, setRestricoes] = useState<Restricao[]>([])
   const [refeicoesSelecionadas, setRefeicoesSelecionadas] = useState<TipoRefeicao[]>(['cafe-da-manha', 'almoco', 'lanche-tarde', 'jantar'])
 
@@ -153,11 +170,9 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
 
     // Ajuste calórico baseado na estratégia
     let caloriasFinais = calorias
-    if (estrategia === 'deficit-leve') caloriasFinais = calorias * 0.9
-    if (estrategia === 'deficit-moderado') caloriasFinais = calorias * 0.8
-    if (estrategia === 'deficit-agressivo') caloriasFinais = calorias * 0.75
-    if (estrategia === 'superavit') caloriasFinais = calorias * 1.15
-
+  // MF_STEP4_CALC_KCAL_BY_PERCENT_V2
+  const __mfPctStrategy = mfStrategyPercent(estrategia);
+  caloriasFinais = calorias * (1 + __mfPctStrategy / 100);
     // Macronutrientes
     const proteina = Math.round(peso * 2) // 2g/kg
     const gorduras = Math.round(peso * 1) // 1g/kg
@@ -355,6 +370,8 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
 
     const planejamento: PlanejamentoNutricional = {
       estrategia,
+      percentualEstrategia: mfStrategyPercent(estrategia),
+      kcalAlvo: __mfKcalAlvo,
       restricoes,
       macros: {
         proteina,
@@ -394,9 +411,8 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     (state as any)?.nutricao?.percentual ??
     (state as any)?.nutricao?.strategyPercent ??
     0;
-
-  const __mfPercent = Number(__mfPercentRaw) || 0;
-
+  const __mfPercentFromStrategy = mfStrategyPercent(estrategia);
+  const __mfPercent = (Number(__mfPercentRaw) || __mfPercentFromStrategy || 0);
   const __mfFaixa = (state as any)?.metabolismo?.faixaSegura
     ? { minimo: Number((state as any)?.metabolismo?.faixaSegura?.minimo), maximo: Number((state as any)?.metabolismo?.faixaSegura?.maximo) }
     : null;

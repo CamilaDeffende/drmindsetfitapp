@@ -150,6 +150,10 @@ export interface PlanejamentoNutricional {
   macros: Macronutrientes
   refeicoesSelecionadas: TipoRefeicao[]
   refeicoes: Refeicao[]
+  // MF_PLANEJAMENTO_NUTRICIONAL_EXT_V1
+  percentualEstrategia?: number;
+  kcalAlvo?: number;
+
 }
 
 // Etapa 5 - Treinamento
@@ -340,7 +344,6 @@ export interface DrMindSetfitState {
   treinoAtivo?: TreinoAtivo
 }
 export type FrequenciaAtividadeSemanal = 'sedentario' | 'moderadamente_ativo' | 'ativo' | 'muito_ativo';
-
 
 /** MindsetFit: Atividade semanal (canônico) */
 export type MFActivityWeeklyLevel =
