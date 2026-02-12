@@ -13,10 +13,14 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
+  // MF_PW_WEBSERVER_V1 — Playwright sobe o Vite automaticamente (porta 8080)
   webServer: {
-    command: "npm run build && vite preview --host 127.0.0.1 --port 4173",
-    url: "http://127.0.0.1:4173",
+    command: "npm run dev -- --strictPort --port 8080",
+    url: "http://127.0.0.1:8080",
     reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
+    timeout: 120_000,
+    stdout: "pipe",
+    stderr: "pipe",
   },
+
 });
