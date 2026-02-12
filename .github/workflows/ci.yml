@@ -26,6 +26,9 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Instalar navegadores do Playwright
+        run: npx playwright install --with-deps
+
       - name: Verify
         run: npm run verify
       - name: E2E
