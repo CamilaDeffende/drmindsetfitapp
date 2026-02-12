@@ -14,7 +14,6 @@ import { calcularMetabolismo } from '@/lib/metabolismo'
 import type { ResultadoMetabolico } from '@/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/features/fitness-suite/engine/metabolismoActivity";
-import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 
 import { mfActivityWeeklyLabel } from "@/types";
 
@@ -415,7 +414,7 @@ metabolismo: calc
           <CardHeader className="pb-3">
             <CardDescription>TMB (repouso)</CardDescription>
 
-          /* MF_BLOCO3_WEEKLY_PROTOCOL_PREVIEW */
+          
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -427,10 +426,8 @@ metabolismo: calc
               </div>
             </div>
 
-            <div className="mt-3">
-              {/* Reusa o componente já existente no app (PlanosAtivos) */}
-              <WeeklyProtocolActive />
-            </div>
+            
+
 
             <div className="mt-3 text-xs text-gray-400">
               Dica: cada dia respeita a modalidade escolhida. Musculação mostra grupamentos; corrida/bike/crossfit/funcional mostram sessão completa.
