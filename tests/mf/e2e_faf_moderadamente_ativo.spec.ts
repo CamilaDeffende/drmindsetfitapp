@@ -133,19 +133,19 @@ async function waitReportReady(page: any) {
   await page.waitForTimeout(600);
 
   while (Date.now() - t0 < maxMs) {
-    // se loader não existe/ não está visível -> ok
     try {
       const count = await splash.count();
       if (count === 0) return;
+
       const vis = await splash.first().isVisible().catch(() => false);
       if (!vis) return;
-    } catch:
-      return
+    } catch (_e) {
+      return;
+    }
 
     // se já pintou “cara de report” (heurística: algum texto típico de relatório/resultado)
     const body = await page.locator("body").innerText().catch(() => "");
-    if (re.search(r"(relat|report|pdf|plano|resultado|dieta|macros|kcal)", body, re.I)):
-      return
+    if (/(relat|report|pdf|plano|resultado|dieta|macros|kcal)/i.test(body)) return;
 
     await page.waitForTimeout(800);
   }
