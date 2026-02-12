@@ -1,3 +1,4 @@
+// MF_STEP4_KCAL_SSOT_V1
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { useState } from 'react'
@@ -11,6 +12,34 @@ import { ArrowLeft, ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
 import type { PlanejamentoNutricional, Restricao, TipoRefeicao, AlimentoRefeicao } from '@/types'
 import { ALIMENTOS_DATABASE, calcularMacros } from '@/types/alimentos'
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
+
+// MF_STEP4_KCAL_SSOT_HELPERS_V1
+const mfClampSSOT = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+/**
+ * SSOT de kcal do Step4:
+ * - baseKcal vem do metabolismo calculado (GET/TDEE preferencial; fallback: metaDiaria)
+ * - estratégia aplica percent (+/-) automaticamente
+ * - clamp opcional pela faixa segura (quando disponível), preservando guardrails
+ */
+const mfComputeKcalAlvo = (opts: {
+  baseKcal: number;
+  percent: number; // ex: -15, 0, +10
+  faixa?: { minimo?: number; maximo?: number } | null;
+}) => {
+  const base = Number.isFinite(opts.baseKcal) ? opts.baseKcal : 0;
+  const pct = Number.isFinite(opts.percent) ? opts.percent : 0;
+  const raw = base * (1 + pct / 100);
+  const rounded = Math.round(raw);
+
+  const min = opts.faixa?.minimo;
+  const max = opts.faixa?.maximo;
+
+  if (Number.isFinite(min) && Number.isFinite(max) && (max as number) >= (min as number)) {
+    return mfClampSSOT(rounded, min as number, max as number);
+  }
+  return rounded;
+};
 
 import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
 // MF_NUTRITION_WIRE_V1
@@ -32,8 +61,6 @@ function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   };
 }
 
-
-
 type OnboardingStepProps = {
   value?: any;
 
@@ -43,7 +70,6 @@ type OnboardingStepProps = {
 };
 
 // MF_BLOCO4_GUARDRAILS_V2: helpers locais (escopo seguro no Step4)
-const mfClamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 const mfKcalFromMacros = (p: number, c: number, g: number) => (p * 4) + (c * 4) + (g * 9);
 
 export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
@@ -144,10 +170,10 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     const kcalRest = Math.max(0, kcalTarget - kcalFixas);
     const carboFix = Math.max(0, Math.round(kcalRest / 4));
     // clamp de carbo para evitar valores absurdos em cenários extremos
-    carboidratos = mfClamp(carboFix, 0, 900);
+    carboidratos = mfClampSSOT(carboFix, 0, 900);
     // recalcula kcal final para exibição coerente (diferenças por arredondamento)
     const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
-    caloriasFinais = mfClamp(Math.round(kcalFinal), 800, 6500);
+    caloriasFinais = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
 
     /* MF_SAVE_ACTIVEPLAN_NUTRITION_ON_GENERATE_V1 */
     try {
@@ -359,6 +385,24 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     mfOnContinue();
 }
 
+  // MF_STEP4_KCAL_SSOT_CALC_V1
+  const __mfBaseKcal =
+    Number((state as any)?.metabolismo?.get ?? (state as any)?.metabolismo?.GET ?? (state as any)?.metabolismo?.tdee ?? (state as any)?.metabolismo?.metaDiaria ?? 0);
+
+  const __mfPercentRaw =
+    (state as any)?.nutricao?.percentualEstrategia ??
+    (state as any)?.nutricao?.percentual ??
+    (state as any)?.nutricao?.strategyPercent ??
+    0;
+
+  const __mfPercent = Number(__mfPercentRaw) || 0;
+
+  const __mfFaixa = (state as any)?.metabolismo?.faixaSegura
+    ? { minimo: Number((state as any)?.metabolismo?.faixaSegura?.minimo), maximo: Number((state as any)?.metabolismo?.faixaSegura?.maximo) }
+    : null;
+
+  const __mfKcalAlvo = mfComputeKcalAlvo({ baseKcal: __mfBaseKcal, percent: __mfPercent, faixa: __mfFaixa });
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         
@@ -386,7 +430,7 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
         </CardHeader>
         <CardContent>
           <div className="text-center py-4 sm:py-6">
-            <p className="text-4xl sm:text-5xl font-bold text-white">{state.metabolismo?.caloriasAlvo || 0}</p>
+            <p className="text-4xl sm:text-5xl font-bold text-white">{__mfKcalAlvo}</p>
             <p className="text-sm sm:text-base text-muted-foreground mt-2">calorias por dia</p>
 
             {/* MF_BLOCO4_UX: aderência + guardrails (premium) */}

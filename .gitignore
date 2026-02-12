@@ -182,3 +182,6 @@ dev-dist/
 
 # MF_LOCAL_DEVLOG
 .mf_devlog.txt
+
+# MF_IGNORE_LOCAL_LOGS
+.mf_devlog.txt
