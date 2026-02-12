@@ -2,7 +2,6 @@ import DevEngine from "@/pages/DevEngine";
 import * as React from "react";
 import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import Assinatura from "@/pages/Assinatura";
-import HistoryReports from "./pages/HistoryReports";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
@@ -10,7 +9,6 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { FitnessSuiteDemo } from "./features/fitness-suite";
 import { maybeResetFromUrl } from "@/lib/resetApp";
 import { ErrorBoundary } from "@/components/system/ErrorBoundary";
 
@@ -22,16 +20,7 @@ import { Pricing } from '@/pages/Pricing'
 // Páginas Protegidas
 import { OnboardingFlow } from '@/pages/OnboardingFlow'
 import { DashboardPremium } from '@/pages/DashboardPremium'
-import { Running } from '@/pages/Running'
-import { TreinoAtivo } from '@/pages/TreinoAtivo'
-import { NutritionPlan } from '@/pages/NutritionPlan'
-import { PlanosAtivos } from '@/pages/PlanosAtivos'
-import Download from '@/pages/Download'
-import { Report } from '@/pages/Report'
-import { EditDiet } from '@/pages/EditDiet'
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
-import { CardioPlan } from '@/pages/CardioPlan'
-import HiitPlan from "@/pages/HiitPlan";
 const MFPageLoader = () => (
   <div className="min-h-[40vh] flex items-center justify-center p-6 text-sm opacity-70">
     Carregando…
@@ -50,10 +39,20 @@ const LazyConflictsPage = React.lazy(() => import("@/pages/offline/ConflictsPage
 const LazyProgressPage = React.lazy(() => import("@/pages/progress/ProgressPage"));
 const LazyWorkoutDetailsPage = React.lazy(() => import("@/pages/workout-details/WorkoutDetailsPage"));
 const LazyLiveWorkoutPage = React.lazy(() => import("@/pages/live/LiveWorkoutPage"));
+
+// MF_ROUTE_CODE_SPLIT_CORE_V1
+const LazyFitnessSuiteDemo = React.lazy(() => import("./features/fitness-suite").then((m) => ({ default: m.FitnessSuiteDemo })));
+const LazyRunning = React.lazy(() => import("@/pages/Running").then((m) => ({ default: m.Running })));
+const LazyTreinoAtivo = React.lazy(() => import("@/pages/TreinoAtivo").then((m) => ({ default: m.TreinoAtivo })));
+const LazyNutritionPlan = React.lazy(() => import("@/pages/NutritionPlan").then((m) => ({ default: m.NutritionPlan })));
+const LazyPlanosAtivos = React.lazy(() => import("@/pages/PlanosAtivos").then((m) => ({ default: m.PlanosAtivos })));
+const LazyDownload = React.lazy(() => import("@/pages/Download").then((m) => ({ default: m.default })));
+const LazyReport = React.lazy(() => import("@/pages/Report").then((m) => ({ default: m.Report })));
+const LazyEditDiet = React.lazy(() => import("@/pages/EditDiet").then((m) => ({ default: m.EditDiet })));
+const LazyHistoryReports = React.lazy(() => import("./pages/HistoryReports").then((m) => ({ default: m.default })));
+const LazyCardioPlan = React.lazy(() => import("@/pages/CardioPlan").then((m) => ({ default: m.CardioPlan })));
+const LazyHiitPlan = React.lazy(() => import("@/pages/HiitPlan").then((m) => ({ default: m.default })));
 const LazyCorridaPro = React.lazy(() => import("@/pages/CorridaPro").then((m) => ({ default: m.default })));
-
-
-
 function App() {
     // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
 
@@ -62,9 +61,7 @@ function App() {
 
   const __suite = new URLSearchParams(window.location.search).get("suite") === "1";
 
-  return __suite ? (
-    <FitnessSuiteDemo />
-  ) : (
+  return __suite ? (<MFSuspense><LazyFitnessSuiteDemo /></MFSuspense>) : (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <AuthProvider>
         <DrMindSetfitProvider>
@@ -122,7 +119,7 @@ function App() {
                 path="/running"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <Running />
+                    <MFSuspense><LazyRunning /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -130,7 +127,7 @@ function App() {
                 path="/treino"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <TreinoAtivo />
+                    <MFSuspense><LazyTreinoAtivo /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -138,7 +135,7 @@ function App() {
                 path="/nutrition"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <NutritionPlan />
+                    <MFSuspense><LazyNutritionPlan /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -146,7 +143,7 @@ function App() {
                 path="/cardio"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <CardioPlan />
+                    <MFSuspense><LazyCardioPlan /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -154,7 +151,7 @@ function App() {
                 path="/hiit"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <HiitPlan />
+                    <MFSuspense><LazyHiitPlan /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -162,7 +159,7 @@ function App() {
                 path="/planos-ativos"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <PlanosAtivos />
+                    <MFSuspense><LazyPlanosAtivos /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -170,7 +167,7 @@ function App() {
                 path="/report"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <Report />
+                    <MFSuspense><LazyReport /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -178,7 +175,7 @@ function App() {
                 path="/edit-diet"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <EditDiet />
+                    <MFSuspense><LazyEditDiet /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -186,7 +183,7 @@ function App() {
                 path="/history"
                 element={
                   <ProtectedRoute requiresPremium>
-                    <HistoryReports />
+                    <MFSuspense><LazyHistoryReports /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
@@ -194,7 +191,7 @@ function App() {
                 path="/download"
                 element={
                   <ProtectedRoute>
-                    <Download />
+                    <MFSuspense><LazyDownload /></MFSuspense>
                   </ProtectedRoute>
                 }
               />
