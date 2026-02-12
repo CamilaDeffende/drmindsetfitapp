@@ -26,37 +26,39 @@ async function clickNext(page: any) {
 }
 
 async function pickFafModeradamenteAtivo(page: any) {
-  // 1) texto/card clicável
-  const txt = page.getByText(/Moderadamente ativo/i).first();
-  if (await txt.count()) {
-    await txt.click({ force: true });
+  
+  // MF_FAF_PICK_V2 — preferir selectOption (não clicar em <option>)
+  const label = /Moderadamente ativo/i;
+
+  // 1) Se for <select> nativo:
+  const sel = page.locator('select').first();
+  if (await sel.count()) {
+    try {
+      await sel.selectOption({ label });
+      return;
+    } catch {}
+  }
+
+  // 2) fallback: tenta achar select pelo name comum (se existir)
+  const byName = page.locator('select[name="nivelAtividadeSemanal"], select[name*="atividade"], select[id*="atividade"]').first();
+  if (await byName.count()) {
+    try {
+      await byName.selectOption({ label });
+      return;
+    } catch {}
+  }
+
+  // 3) fallback final: se for UI custom (radix/shadcn), abre combobox e clica option visível
+  const combo = page.getByRole('combobox').first();
+  if (await combo.count()) {
+    await combo.click();
+    const opt = page.getByRole('option', { name: label }).first();
+    await opt.click();
     return;
   }
 
-  // 2) radio
-  const radio = page.getByRole("radio", { name: /Moderadamente ativo/i }).first();
-  if (await radio.count()) {
-    await radio.click({ force: true });
-    return;
-  }
+  throw new Error("FAF: não consegui selecionar 'Moderadamente ativo' (nenhum select/combobox encontrado).");
 
-  // 3) select/combobox
-  const trigger = page.locator('button[role="combobox"], button[aria-haspopup="listbox"]').first();
-  if (await trigger.count()) {
-    await trigger.click({ force: true });
-    const opt = page.getByRole("option", { name: /Moderadamente ativo/i }).first();
-    if (await opt.count()) {
-      await opt.click({ force: true });
-      return;
-    }
-    const item = page.getByText(/Moderadamente ativo/i).first();
-    if (await item.count()) {
-      await item.click({ force: true });
-      return;
-    }
-  }
-
-  throw new Error("Não consegui selecionar 'Moderadamente ativo' no Step-2 (UI diferente do esperado).");
 }
 
 test("FAF: Moderadamente ativo persiste e aparece no Report", async ({ page }) => {

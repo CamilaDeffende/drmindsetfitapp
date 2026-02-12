@@ -6,7 +6,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 1 : 0,
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: "http://127.0.0.1:8080",
     headless: true,
     viewport: { width: 390, height: 844 },
     trace: "retain-on-failure",
