@@ -192,3 +192,6 @@ dev-dist/
 /public/brand/*backup*.png
 /public/brand/*.backup-*.png
 /dist
+
+# local supabase (dev only)
+supabase/
