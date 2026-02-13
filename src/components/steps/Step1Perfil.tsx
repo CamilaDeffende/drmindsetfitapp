@@ -14,7 +14,8 @@ import { ArrowRight } from "lucide-react";import type { PerfilUsuario } from '@/
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { useNavigate } from "react-router-dom";
-
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+import { useOnboardingStore } from "@/store/onboarding/onboardingStore";
 
 type OnboardingStepProps = {
   value?: any;
@@ -42,22 +43,27 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
   // BLOCK2A: UNLOCK Step1 -> Step2 (persist progress + draft + goNext)
   const __goNextSafe = (data: PerfilUsuario) => {
     // HARD GUARANTEE: força URL step-2 (sem perder dados)
-    try { navigate("/onboarding/step-2", { replace: true }); } catch {}
-    try { saveOnboardingProgress({ step: 2, data: { step1: data } }); } catch {}
-    try { if (typeof onChange === "function") onChange(data); } catch {}
-    try { if (typeof onNext === "function") onNext(); } catch {}
+    try { navigate("/onboarding/step-2", { replace: true }); } catch (e) {}
+    try { saveOnboardingProgress({ step: 2, data: { step1: data } }); } catch (e) {}
+    try { if (typeof onChange === "function") onChange(data); } catch (e) {}
+    try { if (typeof onNext === "function") onNext(); } catch (e) {}
   };
   const { state, updateState, nextStep } = useDrMindSetfit()
-
 
   /* MF_STEP1_DRAFT_SEED
      Fonte de verdade do Step-1: draft vindo do OnboardingFlow (value/onChange).
      Isso impede o "preenche e some" em remount/re-render.
   */
   const draftSeed = (value && typeof value === "object" ? value : {}) as Partial<PerfilUsuario>;
+
+  // MF_STEP1_SSOT_DRAFT_V1: persist progressivo (SSOT local)
+  const draftSSOT = useOnboardingStore((st) => st.draft) as Record<string, any>;
+
   const form = useForm<PerfilUsuario>({
     resolver: (zodResolver(perfilSchema) as any),
     defaultValues: {
+      ...(draftSSOT as any),
+      ...(draftSeed as any),
       nomeCompleto: (draftSeed.nomeCompleto ?? state.perfil?.nomeCompleto ?? "") as any,
       sexo: (draftSeed.sexo ?? state.perfil?.sexo ?? "masculino") as any,
       idade: (draftSeed.idade ?? state.perfil?.idade ?? 30) as any,
@@ -71,6 +77,34 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
       objetivo: (draftSeed.objetivo ?? state.perfil?.objetivo ?? "hipertrofia") as any
     }
   })
+
+  // MF_STEP1_AUTOSAVE_WATCH_V1: salva conforme digita (debounced) p/ Motor Inteligente
+  const _watchAll = form.watch();
+  useOnboardingDraftSaver(
+    {
+      // chaves do Step1 (pt)
+      nomeCompleto: (_watchAll as any).nomeCompleto ?? "",
+      sexo: (_watchAll as any).sexo ?? "",
+      idade: (_watchAll as any).idade ?? "",
+      altura: (_watchAll as any).altura ?? "",
+      pesoAtual: (_watchAll as any).pesoAtual ?? "",
+
+      historicoPeso: (_watchAll as any).historicoPeso ?? "",
+      nivelTreino: (_watchAll as any).nivelTreino ?? "",
+      modalidadePrincipal: (_watchAll as any).modalidadePrincipal ?? "",
+      frequenciaSemanal: (_watchAll as any).frequenciaSemanal ?? "",
+      duracaoTreino: (_watchAll as any).duracaoTreino ?? "",
+      objetivo: (_watchAll as any).objetivo ?? "",
+
+      // aliases EN p/ SSOT futura
+      name: (_watchAll as any).nomeCompleto ?? "",
+      sex: (_watchAll as any).sexo ?? "",
+      age: (_watchAll as any).idade ?? "",
+      heightCm: (_watchAll as any).altura ?? "",
+      weightKg: (_watchAll as any).pesoAtual ?? "",
+    },
+    400
+  );
 const onSubmit = (data: PerfilUsuario) => {
     updateState({ perfil: data })
     nextStep()
@@ -127,7 +161,7 @@ const onSubmit = (data: PerfilUsuario) => {
                                 const next = { ...form.getValues(), nomeCompleto: (e.target as any).value };
                                 onChange(next);
                               }
-                            } catch {}
+                            } catch (e) {}
                           }}
                         />
                       </FormControl>

@@ -1,10 +1,14 @@
 import { Button } from '@/components/ui/button'
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react'
 export function Step7Acompanhamento() {
   const { state, nextStep, prevStep } = useDrMindSetfit()
+
+/* MF_BLOCK2_1_STEP7ACOMP_AUTOSAVE */
+  useOnboardingDraftSaver({ step7Acompanhamento: (state as any).acompanhamento ?? (state as any).followUp ?? (state as any) } as any, 400);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">

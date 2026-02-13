@@ -1,3 +1,4 @@
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 type Props = {
   value: { dieta: string };
   onChange: (v: Props["value"]) => void;
@@ -6,6 +7,9 @@ type Props = {
 };
 
 export default function Step7Preferencias({ value, onChange, onNext, onBack }: Props) {
+/* MF_BLOCK2_1_STEP7PREF_AUTOSAVE */
+  useOnboardingDraftSaver({ step7Preferencias: value } as any, 400);
+
   const options = [
     { k: "flexivel", label: "Flexível", desc: "Aderência acima de tudo." },
     { k: "onivoro", label: "Onívoro", desc: "Variedade completa." },

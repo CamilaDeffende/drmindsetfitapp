@@ -42,6 +42,7 @@ const mfComputeKcalAlvo = (opts: {
 };
 
 import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 // MF_NUTRITION_WIRE_V1
 function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   // tenta pegar do form primeiro, depois do state
@@ -77,6 +78,13 @@ export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingSte
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
 
   
+
+/* MF_BLOCK2_1_STEP4_AUTOSAVE */
+  const __mf_step4_payload = {
+    step4: (state as any).nutricao ?? (state as any).nutrition ?? {},
+    nutricao: (state as any).nutricao,
+  };
+  useOnboardingDraftSaver(__mf_step4_payload as any, 400);
 
   // BEGIN_MF_BLOCK8_STEP4_PERSIST_V1
   // Persistência Step4 (Nutrição) — step 4 (number), sem quebrar fluxo.

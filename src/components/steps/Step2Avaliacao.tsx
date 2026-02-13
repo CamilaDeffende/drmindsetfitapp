@@ -19,7 +19,8 @@ import { useNavigate } from "react-router-dom";
 
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+import { useOnboardingStore } from "@/store/onboarding/onboardingStore";
 
 type OnboardingStepProps = {
   value?: any;
@@ -118,6 +119,10 @@ const avaliacaoSchema = z.object({
 type AvaliacaoFormData = z.infer<typeof avaliacaoSchema>
 
 export function Step2Avaliacao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
+
+  // MF_STEP2_SSOT_DRAFT_V1: persist progressivo (SSOT local)
+  const draftSSOT = useOnboardingStore((st) => st.draft) as Record<string, any>;
+
 void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
   const navigate = useNavigate();
@@ -127,6 +132,7 @@ void value; void onChange; void onNext; void onBack;
   const form = useForm<AvaliacaoFormData>({
     resolver: zodResolver(avaliacaoSchema),
     defaultValues: {
+      ...(draftSSOT as any),
       peso: state.perfil?.pesoAtual || 70,
       altura: state.perfil?.altura || 170,
       metodoComposicao: 'nenhum',
@@ -149,7 +155,17 @@ void value; void onChange; void onNext; void onBack;
     }
   })
 
-  const calcularIMC = (peso: number, altura: number) => {
+  
+
+  // MF_STEP2_AUTOSAVE_WATCH_V1: salva conforme digita (debounced) p/ Motor Inteligente
+  const _watchAll = form.watch();
+  useOnboardingDraftSaver(
+    {
+      step2: _watchAll as any,
+    },
+    400
+  );
+const calcularIMC = (peso: number, altura: number) => {
     return (peso / Math.pow(altura / 100, 2)).toFixed(1)
   }
 
@@ -180,9 +196,9 @@ let percentualGordura: number = 0
   }
 
   const onSubmit = (data: AvaliacaoFormData) => {
-    try { setMfInvalidMsg(null); } catch {}
+    try { setMfInvalidMsg(null); } catch (e) {}
     // BLOCO 3: persist step=3 + HARD NAV (bulletproof)
-    try { saveOnboardingProgress({ step: 3, data: { step2: data } }); } catch {}
+    try { saveOnboardingProgress({ step: 3, data: { step2: data } }); } catch (e) {}
     const imc = Number(calcularIMC(data.peso, data.altura))
 
     const avaliacao: AvaliacaoFisica = {
@@ -237,9 +253,9 @@ let percentualGordura: number = 0
       if (typeof onNext === "function") { onNext(); }
       else {
         try { navigate("/onboarding/step-3", { replace: true }); }
-        catch { try { if (typeof nextStep === "function") nextStep(); } catch {} }
+        catch { try { if (typeof nextStep === "function") nextStep(); } catch (e) {} }
       }
-    } catch {}
+    } catch (e) {}
   }
 
   const peso = form.watch('peso')
@@ -606,10 +622,7 @@ let percentualGordura: number = 0
 
           <div className="flex justify-between pt-6">
 
-
-
-
-            <Button type="button" variant="outline" size="lg" onClick={() => { try { (typeof onBack === "function" ? onBack : prevStep)(); } catch {} }}>
+            <Button type="button" variant="outline" size="lg" onClick={() => { try { (typeof onBack === "function" ? onBack : prevStep)(); } catch (e) {} }}>
               <ArrowLeft className="mr-2 w-4 h-4" />
               Voltar
             </Button>

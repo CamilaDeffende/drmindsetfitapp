@@ -26,7 +26,7 @@ export function ConflictsPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {conflicts.map((c) => (
+            {conflicts.map((c: any) => (
               <Card key={c.id} className="bg-gray-900 border-gray-800">
                 <CardHeader>
                   <CardTitle className="text-white">Conflito: {c.id}</CardTitle>

@@ -1,3 +1,4 @@
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 
 type Props = {
   value: { days: string[] };
@@ -9,6 +10,9 @@ type Props = {
 const DAYS = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
 
 export default function Step6DiasSemana({ value, onChange, onNext, onBack }: Props) {
+/* MF_BLOCK2_1_STEP6_AUTOSAVE */
+  useOnboardingDraftSaver({ step6DiasSemana: value } as any, 400);
+
   const toggle = (d: string) => {
     const set = new Set(value.days);
     if (set.has(d)) {

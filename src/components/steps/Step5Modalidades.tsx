@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 type Props = {
   value: {
     primary: string | null;
@@ -11,6 +12,9 @@ type Props = {
 };
 
 export default function Step5Modalidades({ value, onChange, onNext, onBack }: Props) {
+/* MF_BLOCK2_1_STEP5MOD_AUTOSAVE */
+  useOnboardingDraftSaver({ step5Modalidades: value } as any, 400);
+
   const options = useMemo(() => ([
     { key: "musculacao", label: "Musculação" },
     { key: "corrida", label: "Corrida" },

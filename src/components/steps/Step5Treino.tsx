@@ -15,6 +15,7 @@ import { loadSelectedGroups, saveWeekPlan } from "@/utils/strength/strengthWeekS
 import { StrengthMuscleGroupsPicker } from "@/components/strength/StrengthMuscleGroupsPicker";
 import type { WeekdayKey } from "@/utils/strength/strengthWeekStorage";
 import { computeFinalTargetCalories } from "@/features/fitness-suite/engine/goalEnergy";
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 const __mfAllowedModalities = ["musculacao","funcional","corrida","bike_indoor","crossfit"] as const;
 type __MfModality = typeof __mfAllowedModalities[number];
 
@@ -28,7 +29,6 @@ const __mfLabelByKey: Record<__MfModality, string> = {
 
 const __mfLevels = ["iniciante","intermediario","avancado"] as const;
 type __MfLevel = typeof __mfLevels[number];
-
 
 const __mfDefaultLevels: Record<__MfModality, __MfLevel> = {
   musculacao: "iniciante",
@@ -87,6 +87,14 @@ function mfMapGoalToPlanner(raw: any): PlannerInput["goal"] {
 export function Step5Treino() {
   const [strengthGroupsError, setStrengthGroupsError] = useState<string | null>(null);
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+
+/* MF_BLOCK2_1_STEP5TREINO_AUTOSAVE */
+  const __mf_step5treino_payload = {
+    step5Treino: (state as any).treino ?? (state as any).training ?? {},
+    treino: (state as any).treino,
+    workoutProtocolWeekly: (state as any).workoutProtocolWeekly,
+  };
+  useOnboardingDraftSaver(__mf_step5treino_payload as any, 400);
 
   // ===== Fonte da verdade (state) =====
   const initialModalities = useMemo(() => {
@@ -192,7 +200,6 @@ export function Step5Treino() {
       workoutPlanByDay: planByDay,
     } as any);
   };
-
 
   function ensureStrengthWeekPlan(): boolean {
     try {
@@ -541,7 +548,6 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
           </CardContent>
         </Card>
       ) : null}
-
 
       <div className="mt-6 flex items-center justify-between gap-3">
         <Button type="button" variant="outline" onClick={prevStep} className="gap-2">

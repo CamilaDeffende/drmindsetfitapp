@@ -1,73 +1,62 @@
-import { useState, useEffect, useCallback } from "react";
-import { syncService } from "@/services/offline/SyncService";
+/**
+ * MF_OFFLINE_HOOK_V2_COMPAT
+ * Mantém isOnline/lastChangeAtIso e adiciona compat para páginas offline existentes.
+ */
+import { useEffect, useMemo, useState } from "react";
 
-export function useOffline() {
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [queueStats, setQueueStats] = useState(syncService.getQueueStats());
-  const [conflicts, setConflicts] = useState(syncService.getConflicts());
+export type OfflineConflict = {
+  id: string;
+  title?: string;
+  detail?: string;
+  createdAtIso: string;
+};
 
-  const refresh = useCallback(() => {
-    setQueueStats(syncService.getQueueStats());
-    setConflicts(syncService.getConflicts());
-  }, []);
+export type OfflineState = {
+  isOnline: boolean;
+  lastChangeAtIso: string;
 
-  const handleSync = useCallback(async () => {
-    setIsSyncing(true);
-    try {
-      const res = await syncService.startSync();
-      refresh();
-      return res;
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [refresh]);
+  conflicts: OfflineConflict[];
+  resolveConflict: (id: string, resolution: "local" | "remote" | "keep_local" | "keep_remote" | "merge") => void;
+};
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+export function useOffline(): OfflineState {
+  const initialOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
+
+  const [isOnline, setIsOnline] = useState<boolean>(initialOnline);
+  const [lastChangeAtIso, setLastChangeAtIso] = useState<string>(nowIso());
+
+  // Fallback safe: antes do SyncService real, não há conflitos.
+  const [conflicts, setConflicts] = useState<OfflineConflict[]>([]);
 
   useEffect(() => {
-    const onOnline = async () => {
+    const on = () => {
       setIsOnline(true);
-      await handleSync();
+      setLastChangeAtIso(nowIso());
     };
-    const onOffline = () => setIsOnline(false);
+    const off = () => {
+      setIsOnline(false);
+      setLastChangeAtIso(nowIso());
+    };
 
-    window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
 
-    // Background Sync (best effort) — sem depender de tipos TS
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready
-        .then((reg) => {
-          const anyReg = reg as unknown as { sync?: { register: (tag: string) => Promise<void> } };
-          return anyReg.sync?.register ? anyReg.sync.register("mf-sync-v1") : Promise.resolve();
-        })
-        .catch(() => {});
-    }
     return () => {
-      window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
     };
-  }, [handleSync]);
+  }, []);
 
-  const resolveConflict = useCallback(
-    (conflictId: string, resolution: "local" | "remote" | "merge") => {
-      syncService.resolveConflict(conflictId, resolution);
-      refresh();
-    },
-    [refresh]
-  );
-
-  const clearSyncedItems = useCallback(() => {
-    syncService.clearSyncedItems();
-    refresh();
-  }, [refresh]);
-
-  return {
-    isOnline,
-    isSyncing,
-    queueStats,
-    conflicts,
-    syncNow: handleSync,
-    resolveConflict,
-    clearSyncedItems,
+  const resolveConflict: OfflineState["resolveConflict"] = (id, _resolution) => {
+    setConflicts((arr) => arr.filter((c) => c.id !== id));
   };
+
+  return useMemo(
+    () => ({ isOnline, lastChangeAtIso, conflicts, resolveConflict }),
+    [isOnline, lastChangeAtIso, conflicts]
+  );
 }

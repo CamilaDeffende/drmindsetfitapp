@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { ArrowLeft, Download, RotateCcw } from 'lucide-react'
@@ -8,6 +9,9 @@ import { Separator } from '@/components/ui/separator'
 
 export function Step8Relatorio() {
   const { state, prevStep, resetApp } = useDrMindSetfit()
+
+/* MF_BLOCK2_1_STEP8REL_AUTOSAVE */
+  useOnboardingDraftSaver({ step8Relatorio: (state as any).relatorio ?? (state as any).report ?? (state as any) } as any, 400);
 
   const gerarRelatorioPDF = () => {
     alert('📄 Exportação em PDF: em evolução. Por enquanto, use este resumo na tela como base do seu plano. Em breve, você poderá baixar o PDF com layout premium.')

@@ -17,6 +17,7 @@ import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/feat
 
 import { mfActivityWeeklyLabel } from "@/types";
 
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 export type Step3MetabolismoProps = {
 
   value?: any;
@@ -38,6 +39,14 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
   // =========================
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+/* MF_BLOCK2_1_STEP3_AUTOSAVE */
+  const __mf_step3_fromValue = (value && typeof value === "object" ? (value as any) : {});
+  const __mf_step3_payload = {
+    step3: (__mf_step3_fromValue.step3 ?? (state as any).metabolismo ?? (state as any).metabolism ?? __mf_step3_fromValue ?? {}),
+    metabolismo: (state as any).metabolismo,
+  };
+  useOnboardingDraftSaver(__mf_step3_payload as any, 400);
+
   // MF_STEP3_BACK_HANDLER_V1
   function mfOnBack() {
     try {
