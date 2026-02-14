@@ -309,13 +309,13 @@ let percentualGordura: number = 0
                       <FormLabel>Qual a sua frequência de atividade física semanal?</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger data-testid="mf-faf-select">
                             <SelectValue placeholder="Selecione..." />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="sedentario">Sedentário</SelectItem>
-                          <SelectItem value="moderadamente_ativo">Moderadamente ativo (1 a 3x/semana)</SelectItem>
+                          <SelectItem value="moderadamente_ativo" data-testid="mf-faf-option-moderadamente-ativo">Moderadamente ativo (1 a 3x/semana)</SelectItem>
                           <SelectItem value="ativo">Ativo (3 a 5x/semana)</SelectItem>
                           <SelectItem value="muito_ativo">Muito ativo (+5x/semana)</SelectItem>
                         </SelectContent>
@@ -513,7 +513,7 @@ let percentualGordura: number = 0
                       setMetodoSelecionado(value as MetodoComposicao)
                     }} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger data-testid="mf-faf-select">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>

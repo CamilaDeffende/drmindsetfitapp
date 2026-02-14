@@ -114,7 +114,7 @@ export function OnboardingCarouselShell({
               type="button"
               onClick={goNext}
               className="w-2/3 rounded-2xl bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] py-3 text-[13px] font-extrabold text-white hover:opacity-95 active:scale-[0.99] transition"
-            >
+             data-testid="mf-next-step">
               {canNext ? "Próxima etapa" : "Finalizar"}
             </button>
           </div>

@@ -1,37 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BRANCH="feat/phases-6-11"
+FILE="tests/mf/e2e_faf_moderadamente_ativo.spec.ts"
+TS="$(date +%Y%m%d_%H%M%S)"
+BKP=".backups/e2e-faf-recreate-clean-ssot-$TS"
+
+echo "==> [0] branch guard"
+git rev-parse --abbrev-ref HEAD | grep -qx "$BRANCH" || { echo "❌ Você não está na branch $BRANCH"; exit 1; }
+
+echo "==> [1] backup"
+mkdir -p "$BKP/$(dirname "$FILE")"
+cp -a "$FILE" "$BKP/$FILE" 2>/dev/null || true
+echo "✅ backup em: $BKP"
+
+echo "==> [2] overwrite spec (clean, SSOT-only, no Report)"
+mkdir -p "$(dirname "$FILE")"
+cat > "$FILE" <<'TS'
 import { test, expect } from "@playwright/test";
-
-async function mfClickOptionByText(page: any, rx: RegExp) {
-  // pega o nó que contém o texto
-  const t = page.getByText(rx).first();
-  await t.waitFor({ state: "visible", timeout: 20000 });
-
-  // sobe para um alvo clicável real (button / role=button / a / label)
-  const clickable = t.locator(
-    "xpath=ancestor-or-self::*[self::button or @role='button' or self::a or self::label][1]"
-  );
-
-  const target = (await clickable.count().catch(() => 0)) ? clickable.first() : t;
-
-  // tentativa normal
-  try {
-    await target.click({ timeout: 8000 });
-    return;
-  } catch (e: any) {
-    const msg = String(e && (e.message || e));
-    // se houve intercept/camada, tenta force
-    try {
-      await target.click({ timeout: 8000, force: true });
-      return;
-    } catch {}
-    // fallback final: click via DOM
-    try {
-      await target.evaluate((el: any) => (el && el.click ? el.click() : null));
-      return;
-    } catch {}
-
-    throw new Error("MF: falha ao clicar opção por texto " + String(rx) + " | last=" + msg);
-  }
-}
 
 /**
  * MF E2E — FAF Moderadamente ativo (SSOT)
@@ -86,65 +72,40 @@ async function mfReachFAF(page: any) {
 }
 
 async function mfSelectFAFModerado(page: any) {
-  // ✅ Seleção correta para <select>: use selectOption (não clicar em <option>)
-  // 1) tenta por âncora/testid (se existir no app)
-  const directCandidates = [
-    page.getByTestId("mf-faf-select"),
-    page.getByTestId("nivelAtividadeSemanal"),
-    page.getByTestId("onboarding-faf-select"),
-  ];
+  const faf = page.getByTestId("mf-faf-select").first();
+  await faf.waitFor({ state: "visible", timeout: 20000 });
 
-  // 2) tenta localizar um <select> que contenha a opção de "Moderadamente ativo"
-  const byOptions = page.locator("select").filter({
-    has: page.locator("option", { hasText: /Moderadamente ativo/i }),
-  });
-
-  const all = [...directCandidates, byOptions.first()];
-
-  for (const sel of all) {
-    try {
-      // garante que existe
-      const cnt = await sel.count().catch(() => 0);
-      if (!cnt) continue;
-
-      // tenta por value (ideal)
-      await sel.selectOption({ value: "moderadamente_ativo" }, { timeout: 8000 }).catch(async () => {
-        // fallback por label (quando value muda)
-        await sel.selectOption({ label: /Moderadamente ativo/i }, { timeout: 8000 });
-      });
-
-      // sanity: espera a opção aplicada (best-effort)
-      await sel.waitFor({ state: "visible", timeout: 8000 }).catch(() => {});
-      return;
-    } catch {
-      // tenta próximo candidato
+  // Tenta como <select>
+  const tag = await faf.evaluate((el: any) => (el && el.tagName ? String(el.tagName).toLowerCase() : "")).catch(() => "");
+  if (tag === "select") {
+    const ok =
+      (await faf.selectOption({ value: "moderadamente_ativo" }).then(() => true).catch(() => false)) ||
+      (await faf.selectOption({ label: /moderadamente ativo/i }).then(() => true).catch(() => false));
+    if (!ok) {
+      // fallback: abre e clica por texto
+      await faf.click({ timeout: 8000 }).catch(() => {});
+      await page.getByText(/Moderadamente ativo/i).first().click({ timeout: 8000 });
     }
+    return;
   }
 
-  // 3) fallback final: encontra select via DOM e força value + change
-  const ok = await page.evaluate(() => {
-    const selects = Array.from(document.querySelectorAll("select"));
-    const target = selects.find((s) =>
-      Array.from(s.querySelectorAll("option")).some((o) => /moderadamente ativo/i.test(o.textContent || ""))
-    );
-    if (!target) return false;
+  // Se for um componente custom (combobox)
+  await faf.click({ timeout: 8000 }).catch(() => {});
+  const opt = page.getByText(/Moderadamente ativo/i).first();
+  if (await opt.count().catch(() => 0)) {
+    await opt.click({ timeout: 8000 });
+    return;
+  }
 
-    // tenta value conhecido
-    const optByValue = Array.from(target.options).find((o) => o.value === "moderadamente_ativo");
-    const optByText = Array.from(target.options).find((o) => /moderadamente ativo/i.test(o.textContent || ""));
+  // fallback final: tenta por role=option
+  const opt2 = page.getByRole("option", { name: /Moderadamente ativo/i }).first();
+  if (await opt2.count().catch(() => 0)) {
+    await opt2.click({ timeout: 8000 });
+    return;
+  }
 
-    const opt = optByValue || optByText;
-    if (!opt) return false;
-
-    target.value = opt.value;
-    target.dispatchEvent(new Event("input", { bubbles: true }));
-    target.dispatchEvent(new Event("change", { bubbles: true }));
-    return true;
-  });
-
-  if (!ok) throw new Error("MF: não consegui selecionar FAF Moderadamente ativo (selectOption falhou e fallback DOM não achou select).");
+  throw new Error("MF: não consegui selecionar 'Moderadamente ativo' no mf-faf-select.");
 }
-
 
 async function mfAssertFAFPersisted(page: any, expected = "moderadamente_ativo") {
   // Polling SSOT localStorage
@@ -211,9 +172,10 @@ test.describe("FAF", () => {
     await page.goto("/onboarding/step-1", { waitUntil: "domcontentloaded" });
 
     // Step-1 mínimo (baseado nos botões que você logou: Masculino + Hipertrofia + Continuar)
-    await mfClickOptionByText(page, /^Masculino$/i);
-await mfClickOptionByText(page, /^Hipertrofia$/i);
-await mfClickNext(page);
+    await page.getByText(/^Masculino$/i).first().click({ timeout: 15000 });
+    await page.getByText(/^Hipertrofia$/i).first().click({ timeout: 15000 });
+
+    await mfClickNext(page);
 
     // Agora avança até o passo onde tem o select do FAF
     await mfReachFAF(page);
@@ -229,3 +191,19 @@ await mfClickNext(page);
     await expect(true).toBeTruthy();
   });
 });
+TS
+
+echo "✅ wrote: $FILE"
+
+echo "==> [3] verify"
+npm run -s verify
+
+echo "==> [4] e2e (apenas este spec)"
+npx playwright test tests/mf/e2e_faf_moderadamente_ativo.spec.ts --workers=1
+
+echo "==> [5] commit + push"
+git add -A
+git commit -m "test(e2e): recreate FAF spec clean (SSOT persistence only; no report route) — fix accumulated syntax corruption" || echo "ℹ️ nada para commitar"
+git push -u origin "$BRANCH"
+
+echo "✅ DONE"

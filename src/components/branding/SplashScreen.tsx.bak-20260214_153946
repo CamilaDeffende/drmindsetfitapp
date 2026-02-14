@@ -1,16 +1,11 @@
+import { useEffect } from "react";
 import { BrandIcon } from "./BrandIcon";
 
 // MF_E2E_BOOT_BYPASS_V1
 // Bypass seguro para E2E/CI (Playwright): se o app ficar preso no splash, tenta recuperar.
 // Não afeta usuário real (navigator.webdriver === false em uso normal).
 function mfE2EBootBypass() {
-  // MF_E2E_BOOT_BYPASS_V1
-  try {
- mfE2EBootBypass();
-} catch (e) { /* MF_E2E_BYPASS_SAFE */ }
-
-
-  
+  useEffect(() => { mfE2EBootBypass(); }, []);
 
   try {
     const isE2E = typeof navigator !== "undefined" && (navigator as any).webdriver;
@@ -34,8 +29,6 @@ function mfE2EBootBypass() {
 
 
 export function SplashScreen() {
-  mfE2EBootBypass();
-
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center">
       <div className="flex flex-col items-center text-center gap-5 mf-fade-in">
