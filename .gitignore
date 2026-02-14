@@ -118,3 +118,6 @@ void
 .mf_master/fixes/mf_*_v3.sh
 .mf_master/fixes/mf_*_v4.sh
 # local supabase (dev only)
+
+# MF_IGNORE_BUNDLES_V1
+.mf_bundle/
