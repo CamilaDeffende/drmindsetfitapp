@@ -28,9 +28,7 @@ function stableJson(value: unknown): string {
 }
 
 export function useOnboardingDraftSaver(partial: OnboardingDraft, delayMs = 400) {
-  const saveDraftPartial = useOnboardingStore((s) => (s as any).saveDraftPartial) as
-    | ((p: OnboardingDraft) => void)
-    | undefined;
+  const saveDraftPartial = useOnboardingStore((s) => s.saveDraftPartial ?? s.saveDraft);
 
   const lastSavedSnapshotRef = useRef<string>("");
   const saveTimerRef = useRef<number | null>(null);

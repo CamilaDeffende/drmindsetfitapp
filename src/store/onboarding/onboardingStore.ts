@@ -18,6 +18,7 @@ export type OnboardingPersistedState = {
 
 // Estado em runtime (com actions)
 export type OnboardingState = OnboardingPersistedState & {
+  saveDraftPartial: (partial: OnboardingDraft) => void;
   saveDraft: (partial: OnboardingDraft) => void;
   markStepComplete: (step: number) => void;
   setCurrentStep: (step: number) => void;
@@ -39,6 +40,21 @@ export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set, get) => ({
       ...initialPersisted(),
+
+      saveDraftPartial: (partial) => {
+
+        set((st) => ({
+
+          ...st,
+
+          updatedAtIso: nowIso(),
+
+          draft: { ...st.draft, ...partial },
+
+        }));
+
+      },
+
 
       saveDraft: (partial) => {
         set((s) => ({
