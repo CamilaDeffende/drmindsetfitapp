@@ -1,3 +1,4 @@
+/* MF_NEON_DS_V1 */
 import DevEngine from "@/pages/DevEngine";
 import * as React from "react";
 import { LiveLocationPill } from "@/components/global/LiveLocationPill";
@@ -21,7 +22,7 @@ import { OnboardingFlow } from '@/pages/OnboardingFlow'
 import { DashboardPremium } from '@/pages/DashboardPremium'
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 const MFPageLoader = () => (
-  <div className="min-h-[40vh] flex items-center justify-center p-6 text-sm opacity-70">
+  <div className="min-h-[40vh] flex items-center justify-center p-6 text-sm opacity-70 mf-app-bg mf-bg-neon">
     Carregando…
   </div>
 );
