@@ -126,3 +126,9 @@ void
 !.mf_master/
 !.mf_master/qa/
 !.mf_master/qa/mf_guard_report_tsx_v1.sh
+
+# MF_BACKUPS
+.backups/
+
+# MF_NOISE
+*.bak-*
