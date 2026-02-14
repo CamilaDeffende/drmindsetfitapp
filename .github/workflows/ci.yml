@@ -1,18 +1,15 @@
-name: CI
+name: CI - DrMindSetFit
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main, feat/** ]
   pull_request:
-    branches: [ "main" ]
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [ main ]
 
 jobs:
-  verify:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,16 +17,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 20
           cache: "npm"
 
-      - name: Install
+      - name: Install dependencies (clean)
         run: npm ci
 
-      - name: Instalar navegadores do Playwright
+      - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Verify
+      - name: Verify (tsc + lint + build)
         run: npm run verify
-      - name: E2E
+
+      - name: Run E2E Tests
         run: npm run test:e2e
