@@ -28,6 +28,7 @@ jobs:
         with:
           path: |
             ~/.cache/ms-playwright
+            ~/.cache/playwright
           key: ${{ runner.os }}-ms-playwright-${{ hashFiles('**/package-lock.json') }}-pw-1.58.1
           restore-keys: |
             ${{ runner.os }}-ms-playwright-
