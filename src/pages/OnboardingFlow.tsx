@@ -120,6 +120,30 @@ export function OnboardingFlow() {
 
   // MF_SAFE_NAV_GUARD_V1
   const navigate = useNavigate();
+  // MF_NEXT_SYNC_V1: helper único para sincronizar Step (state + URL)
+  const mfClampStep = (n: number) => Math.max(1, Math.min(8, n));
+  const mfGotoStep = (n: number) => {
+    const step = mfClampStep(n);
+    const to = `/onboarding/step-${step}`;
+    try {
+      // usa o guard existente quando possível
+      const guard = (mfNavGuard as unknown);
+      if (typeof guard === "function") {
+        try {
+          const ok = Boolean((guard as (x: string) => unknown)(to));
+          if (ok) navigate(to, { replace: true });
+          else navigate(to, { replace: true });
+        } catch {
+          navigate(to, { replace: true });
+        }
+      } else {
+        navigate(to, { replace: true });
+      }
+    } catch {
+      try { window.history.replaceState({}, "", to); } catch {}
+    }
+  };
+
   // Guard anti-loop: só navega quando o destino muda e é diferente do pathname atual.
   const location = useLocation();
   const __mfLastNavRef = useRef<string | null>(null);
@@ -194,10 +218,22 @@ return Number.isFinite(i) ? i : 0;
   useEffect(() => {
     saveDraft({ ...draft, activeIndex: active });
   }, [draft, active]);
-
-  const goNext = () => setActive((x) => Math.min(x + 1, 7));
-  const goBack = () => setActive((x) => Math.max(x - 1, 0));
-
+  // MF_NEXT_SYNC_V1
+  const goNext = () => {
+    setActive((x) => {
+      const nx = Math.min(x + 1, 7);
+      mfGotoStep(nx + 1); // active 0..7 -> step 1..8
+      return nx;
+    });
+  };
+  // MF_NEXT_SYNC_V1
+  const goBack = () => {
+    setActive((x) => {
+      const nx = Math.max(x - 1, 0);
+      mfGotoStep(nx + 1);
+      return nx;
+    });
+  };
   // Gate depois dos hooks
   // __MF_APPREADY_NO_BLANK_V1__
   if (!mfAppReady) {
