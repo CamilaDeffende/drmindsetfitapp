@@ -84,8 +84,18 @@ function mfMapGoalToPlanner(raw: any): PlannerInput["goal"] {
   return "condicionamento";
 }
 
-export function Step5Treino() {
-  const [strengthGroupsError, setStrengthGroupsError] = useState<string | null>(null);
+// MF_STEP5_PROPS_V2
+export type Step5TreinoProps = {
+  onNext?: () => void;
+  onBack?: () => void;
+};
+export function Step5Treino({ onNext, onBack }: Step5TreinoProps) {
+  
+  // MF_STEP5_FLOW_V2: avanço/volta via props (OnboardingFlow) com fallback no context
+  const __onNext = typeof onNext === "function" ? onNext : () => { try { nextStep?.(); } catch {} };
+  const __onBack = typeof onBack === "function" ? onBack : () => { try { prevStep?.(); } catch {} };
+
+const [strengthGroupsError, setStrengthGroupsError] = useState<string | null>(null);
   const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
 
 /* MF_BLOCK2_1_STEP5TREINO_AUTOSAVE */
@@ -322,7 +332,7 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
   const handleContinuar = () => {
     if (!__mfGenerated) return;
     // já gerado e persistido — apenas avança no fluxo
-    nextStep();
+    __onNext();
   };
 
   return (
@@ -550,7 +560,7 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
       ) : null}
 
       <div className="mt-6 flex items-center justify-between gap-3">
-        <Button type="button" variant="outline" onClick={prevStep} className="gap-2">
+        <Button type="button" variant="outline" onClick={__onBack} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Button>
         <Button
