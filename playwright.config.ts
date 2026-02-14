@@ -1,6 +1,9 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
+  // MF_CI_FORCE_CHROMIUM_V1
+  ...(process.env.CI ? { projects: [{ name: "chromium", use: { browserName: "chromium" } }] } : {}),
+
   testDir: "tests",
   timeout: 60_000,
   expect: { timeout: 10_000 },
