@@ -21,6 +21,7 @@ import { Pricing } from '@/pages/Pricing'
 import { OnboardingFlow } from '@/pages/OnboardingFlow'
 import { DashboardPremium } from '@/pages/DashboardPremium'
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
+import StyleGuidePage from "@/pages/StyleGuidePage";
 const MFPageLoader = () => (
   <div className="min-h-[40vh] flex items-center justify-center p-6 text-sm opacity-70 mf-app-bg mf-bg-neon">
     Carregando…
@@ -70,6 +71,8 @@ function App() {
   <LiveLocationPill />
 
 <Routes>
+            {/* MF_STYLEGUIDE_ROUTE_V2 */}
+            <Route path="/styleguide" element={<StyleGuidePage />} />
               
               
               <Route path="/ai" element={<MFSuspense><LazyAIDashboardPage /></MFSuspense>} /><Route path="/wearables" element={<MFSuspense><LazyWearablesPage /></MFSuspense>} /><Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
