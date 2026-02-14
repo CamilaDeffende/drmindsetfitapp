@@ -121,3 +121,8 @@ void
 
 # MF_IGNORE_BUNDLES_V1
 .mf_bundle/
+
+# MF_ALLOW_QA_GUARDS_V1
+!.mf_master/
+!.mf_master/qa/
+!.mf_master/qa/mf_guard_report_tsx_v1.sh
