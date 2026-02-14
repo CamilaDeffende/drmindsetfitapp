@@ -20,7 +20,6 @@ import Step5Modalidades from "@/components/steps/Step5Modalidades";
 import Step6DiasSemana from "@/components/steps/Step6DiasSemana";
 import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
-import { resetOnboardingProgress } from '@/lib/onboardingProgress';
 
 // MF_REDIRECT_LOOP_GUARD_V1
 function mfNavGuard(to: string) {
@@ -39,7 +38,6 @@ function mfNavGuard(to: string) {
     return true;
   } catch { return true; }
 }
-
 
 type Draft = {
   activeIndex?: number;
@@ -172,7 +170,6 @@ export function OnboardingFlow() {
   const SHOW_LEGACY_NAV: boolean = false;
 
   const { appReady } = useApp();
-
 
   // MF_APPREADY_GATE_DEV_BYPASS_V1
   // Em DEV, não travar a árvore inteira aguardando hydrate/async do AppContext.
@@ -387,21 +384,7 @@ try { clearOnboardingDraft(); } catch {}
       </div>
 
       <div className="mt-6 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard", { replace: true })}
-          className="px-4 py-2 rounded-xl border border-white/10 text-sm opacity-90 hover:opacity-100"
-        >
-          Salvar e sair
-        </button>
-        <button
-          type="button"
-          onClick={() => { clearOnboardingDraft(); try { localStorage.removeItem(DONE_KEY); } catch {} ; try { resetOnboardingProgress(); } catch {} ; window.location.reload(); }}
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-        >
-          Reiniciar onboarding
-        </button>
-      </div>
+</div>
 
       {/* Navegação mínima para Steps 1–4 (legado) se eles não tiverem botões próprios */}
       
@@ -442,14 +425,7 @@ try { clearOnboardingDraft(); } catch {}
           >
             Voltar
           </button>
-          <button 
-            type="button"
-            onClick={goNext}
-            className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-          >
-            Continuar
-          </button>
-        </div>
+</div>
       )}
     </div>
   );
