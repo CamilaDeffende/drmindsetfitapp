@@ -3,12 +3,15 @@ import { BrandIcon } from "@/components/branding/BrandIcon";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { ArrowLeft, Download, RotateCcw } from 'lucide-react'
+import { Download } from 'lucide-react'
+
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 
 export function Step8Relatorio() {
-  const { state, prevStep, resetApp } = useDrMindSetfit()
+
+  // MF_STATE_RESTORE_V1
+  const { state } = useDrMindSetfit();
 
 /* MF_BLOCK2_1_STEP8REL_AUTOSAVE */
   useOnboardingDraftSaver({ step8Relatorio: (state as any).relatorio ?? (state as any).report ?? (state as any) } as any, 400);
@@ -150,7 +153,7 @@ export function Step8Relatorio() {
             <div className="mb-4">
               <p className="text-sm font-medium mb-2">Restrições:</p>
               <div className="flex gap-2 flex-wrap">
-                {state.nutricao.restricoes.map((r) => (
+                {state.nutricao.restricoes.map((r: any) => (
                   <Badge key={r} variant="outline">{r}</Badge>
                 ))}
               </div>
@@ -161,8 +164,8 @@ export function Step8Relatorio() {
 
           <div className="space-y-3">
             <h4 className="font-semibold">Refeições do Dia ({state.nutricao?.refeicoes.length}x)</h4>
-            {state.nutricao?.refeicoes.map((ref, idx) => {
-              const totalCalorias = ref.alimentos.reduce((acc, a) => acc + a.calorias, 0)
+            {state.nutricao?.refeicoes.map((ref: any, idx: number) => {
+              const totalCalorias = ref.alimentos.reduce((acc: number, a: any) => acc + a.calorias, 0)
               return (
                 <div key={idx} className="p-3 bg-muted rounded-lg">
                   <div className="flex justify-between items-center mb-2">
@@ -170,7 +173,7 @@ export function Step8Relatorio() {
                     <span className="text-sm text-muted-foreground">{ref.horario}</span>
                   </div>
                   <div className="space-y-1">
-                    {ref.alimentos.map((alimento, aIdx) => (
+                    {ref.alimentos.map((alimento: any, aIdx: number) => (
                       <div key={aIdx} className="text-xs sm:text-sm text-muted-foreground">
                         • {alimento.nome} ({alimento.gramas}g) - {alimento.calorias} kcal
                       </div>
@@ -196,7 +199,7 @@ export function Step8Relatorio() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {state.treino?.treinos.map((dia, idx) => (
+            {state.treino?.treinos.map((dia: any, idx: number) => (
               <div key={idx} className="p-3 bg-muted rounded-lg">
                 <div className="flex justify-between items-center">
                   <h5 className="font-medium">{dia.dia}</h5>
@@ -222,7 +225,7 @@ export function Step8Relatorio() {
               <div className="mb-3">
                 <p className="text-sm font-medium mb-2">Dores articulares:</p>
                 <div className="flex gap-2 flex-wrap">
-                  {state.saude.doresArticulares.map((dor) => (
+                  {state.saude.doresArticulares.map((dor: any) => (
                     <Badge key={dor} variant="destructive">{dor}</Badge>
                   ))}
                 </div>
@@ -271,23 +274,8 @@ export function Step8Relatorio() {
 
       {/* Ações */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <Button type="button" variant="outline" size="lg" onClick={prevStep}>
-          <ArrowLeft className="mr-2 w-4 h-4" />
-          Voltar
-        </Button>
-
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            size="lg"
-            variant="outline"
-            onClick={resetApp}
-          >
-            <RotateCcw className="mr-2 w-4 h-4" />
-            Novo Plano
-          </Button>
-
-          <Button
+<div className="flex gap-2">
+<Button
             type="button"
             size="lg"
             onClick={gerarRelatorioPDF}

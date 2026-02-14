@@ -7,6 +7,9 @@ type Props = {
 };
 
 export default function Step7Preferencias({ value, onChange, onNext, onBack }: Props) {
+  // MF_VOID_UNUSED_PROPS_V1
+  void onNext; void onBack;
+
 /* MF_BLOCK2_1_STEP7PREF_AUTOSAVE */
   useOnboardingDraftSaver({ step7Preferencias: value } as any, 400);
 
@@ -48,21 +51,7 @@ export default function Step7Preferencias({ value, onChange, onNext, onBack }: P
       </div>
 
       <div className="mt-6 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 rounded-xl border border-white/10 text-sm opacity-90 hover:opacity-100"
-        >
-          Voltar
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-        >
-          Continuar
-        </button>
-      </div>
+</div>
     </div>
   );
 }
