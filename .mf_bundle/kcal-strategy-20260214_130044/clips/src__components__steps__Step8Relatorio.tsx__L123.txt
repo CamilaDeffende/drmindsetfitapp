@@ -1,0 +1,241 @@
+     3 | import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+     4 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+     5 | import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+     6 | import { Download } from 'lucide-react'
+     7 | 
+     8 | import { Badge } from '@/components/ui/badge'
+     9 | import { Separator } from '@/components/ui/separator'
+    10 | 
+    11 | export function Step8Relatorio() {
+    12 | 
+    13 |   // MF_STATE_RESTORE_V1
+    14 |   const { state } = useDrMindSetfit();
+    15 | 
+    16 | /* MF_BLOCK2_1_STEP8REL_AUTOSAVE */
+    17 |   useOnboardingDraftSaver({ step8Relatorio: (state as any).relatorio ?? (state as any).report ?? (state as any) } as any, 400);
+    18 | 
+    19 |   const gerarRelatorioPDF = () => {
+    20 |     alert('📄 Exportação em PDF: em evolução. Por enquanto, use este resumo na tela como base do seu plano. Em breve, você poderá baixar o PDF com layout premium.')
+    21 |   }
+    22 | 
+    23 |   return (
+    24 |     <div className="max-w-4xl mx-auto px-4 py-8">
+    25 |         
+    26 |         
+    27 |         <div className="space-y-2">
+    28 |           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Revisão final do seu plano</h1>
+    29 |           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+    30 |             Aqui você vê um resumo executivo do seu plano (treino, nutrição e recomendações) com base no seu perfil,
+    31 |             avaliação corporal, metabolismo e rotina. Revise com calma — esse é o seu ponto de partida para as próximas 4–6 semanas.
+    32 |           </p>
+    33 |         </div>
+    34 | 
+    35 |       <div className="mb-8 text-center">
+    36 |         <div className="mb-4 flex items-center justify-center">
+    37 |           <BrandIcon size={64} />
+    38 |         </div>
+    39 |         <h2 className="text-3xl font-bold mb-2">Relatório Premium</h2>
+    40 |         <p className="text-muted-foreground">Seu plano completo — claro, objetivo e acionável</p>
+    41 |       </div>
+    42 | 
+    43 |       {/* Perfil */}
+    44 |       <Card className="mb-4">
+    45 |         <CardHeader>
+    46 |           <CardTitle>Perfil</CardTitle>
+    47 |         </CardHeader>
+    48 |         <CardContent className="space-y-2">
+    49 |           <div className="grid grid-cols-2 gap-4">
+    50 |             <div><span className="text-muted-foreground">Nome:</span> <strong>{state.perfil?.nomeCompleto}</strong></div>
+    51 |             <div><span className="text-muted-foreground">Idade:</span> <strong>{state.perfil?.idade} anos</strong></div>
+    52 |             <div><span className="text-muted-foreground">Sexo:</span> <strong>{state.perfil?.sexo}</strong></div>
+    53 |             <div><span className="text-muted-foreground">Altura:</span> <strong>{state.perfil?.altura} cm</strong></div>
+    54 |             <div><span className="text-muted-foreground">Peso:</span> <strong>{state.perfil?.pesoAtual} kg</strong></div>
+    55 |             <div><span className="text-muted-foreground">Nível:</span> <Badge>{state.perfil?.nivelTreino}</Badge></div>
+    56 |             <div><span className="text-muted-foreground">Modalidade:</span> <Badge variant="outline">{state.perfil?.modalidadePrincipal}</Badge></div>
+    57 |             <div><span className="text-muted-foreground">Objetivo:</span> <Badge className="bg-green-600">{state.perfil?.objetivo}</Badge></div>
+    58 |           </div>
+    59 |         </CardContent>
+    60 |       </Card>
+    61 | 
+    62 |       {/* Avaliação Física */}
+    63 |       <Card className="mb-4">
+    64 |         <CardHeader>
+    65 |           <CardTitle>Avaliação corporal</CardTitle>
+    66 |         </CardHeader>
+    67 |         <CardContent className="space-y-2">
+    68 |           <div className="grid grid-cols-3 gap-4">
+    69 |             <div className="text-center p-3 bg-muted rounded">
+    70 |               <p className="text-sm text-muted-foreground">Peso</p>
+    71 |               <p className="text-xl font-bold">{state.avaliacao?.peso} kg</p>
+    72 |             </div>
+    73 |             <div className="text-center p-3 bg-muted rounded">
+    74 |               <p className="text-sm text-muted-foreground">Altura</p>
+    75 |               <p className="text-xl font-bold">{state.avaliacao?.altura} cm</p>
+    76 |             </div>
+    77 |             <div className="text-center p-3 bg-muted rounded">
+    78 |               <p className="text-sm text-muted-foreground">IMC</p>
+    79 |               <p className="text-xl font-bold">{(state.avaliacao?.imc ?? 0).toFixed(1)}</p>
+    80 |             </div>
+    81 |           </div>
+    82 | 
+    83 |           {state.avaliacao?.composicao.percentualGordura && (
+    84 |             <div className="mt-4 p-4 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg">
+    85 |               <h4 className="font-semibold mb-2">Composição Corporal</h4>
+    86 |               <div className="grid grid-cols-2 gap-4">
+    87 |                 <div>
+    88 |                   <span className="text-sm text-muted-foreground">% Gordura:</span>
+    89 |                   <span className="ml-2 font-bold">{state.avaliacao.composicao.percentualGordura}%</span>
+    90 |                 </div>
+    91 |                 <div>
+    92 |                   <span className="text-sm text-muted-foreground">% Massa Magra:</span>
+    93 |                   <span className="ml-2 font-bold">{state.avaliacao.composicao.percentualMassaMagra}%</span>
+    94 |                 </div>
+    95 |               </div>
+    96 |               <p className="text-xs text-muted-foreground mt-2">
+    97 |                 Método: {state.avaliacao.composicao.metodo}
+    98 |               </p>
+    99 |             </div>
+   100 |           )}
+   101 |         </CardContent>
+   102 |       </Card>
+   103 | 
+   104 |       {/* Metabolismo */}
+   105 |       <Card className="mb-4">
+   106 |         <CardHeader>
+   107 |           <CardTitle>Metabolismo</CardTitle>
+   108 |           <CardDescription>Equação aplicada: {state.metabolismo?.equacaoUtilizada}</CardDescription>
+   109 |             <CardDescription>Atividade semanal: <span className="font-medium">{String(state.metabolismo?.nivelAtividadeSemanal || "—")}</span></CardDescription>
+   110 |         </CardHeader>
+   111 |         <CardContent>
+   112 |           <div className="grid grid-cols-3 gap-4 mb-4">
+   113 |             <div className="text-center p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded">
+   114 |               <p className="text-sm text-muted-foreground">TMB</p>
+   115 |               <p className="text-xl font-bold text-[#1E6BFF]">{state.metabolismo?.tmb} kcal</p>
+   116 |             </div>
+   117 |             <div className="text-center p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded">
+   118 |               <p className="text-sm text-muted-foreground">GET</p>
+   119 |               <p className="text-xl font-bold text-[#1E6BFF]">{state.metabolismo?.get} kcal</p>
+   120 |             </div>
+   121 |             <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded">
+   122 |               <p className="text-sm text-muted-foreground">Alvo</p>
+   123 |               <p className="text-xl font-bold text-green-600">{state.metabolismo?.caloriasAlvo} kcal</p>
+   124 |             </div>
+   125 |           </div>
+   126 |           <p className="text-sm text-muted-foreground italic">{state.metabolismo?.justificativa}</p>
+   127 |         </CardContent>
+   128 |       </Card>
+   129 | 
+   130 |       {/* Nutrição */}
+   131 |       <Card className="mb-4">
+   132 |         <CardHeader>
+   133 |           <CardTitle>Nutrição</CardTitle>
+   134 |           <CardDescription>Estratégia: {state.nutricao?.estrategia} (ajuste sustentável)</CardDescription>
+   135 |         </CardHeader>
+   136 |         <CardContent>
+   137 |           <div className="grid grid-cols-3 gap-4 mb-4">
+   138 |             <div className="text-center p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded">
+   139 |               <p className="text-sm text-muted-foreground">Proteína</p>
+   140 |               <p className="text-xl font-bold text-[#1E6BFF]">{state.nutricao?.macros.proteina}g</p>
+   141 |             </div>
+   142 |             <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950 rounded">
+   143 |               <p className="text-sm text-muted-foreground">Gorduras</p>
+   144 |               <p className="text-xl font-bold text-yellow-600">{state.nutricao?.macros.gorduras}g</p>
+   145 |             </div>
+   146 |             <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded">
+   147 |               <p className="text-sm text-muted-foreground">Carbos</p>
+   148 |               <p className="text-xl font-bold text-green-600">{state.nutricao?.macros.carboidratos}g</p>
+   149 |             </div>
+   150 |           </div>
+   151 | 
+   152 |           {state.nutricao?.restricoes && state.nutricao.restricoes.length > 0 && (
+   153 |             <div className="mb-4">
+   154 |               <p className="text-sm font-medium mb-2">Restrições:</p>
+   155 |               <div className="flex gap-2 flex-wrap">
+   156 |                 {state.nutricao.restricoes.map((r: any) => (
+   157 |                   <Badge key={r} variant="outline">{r}</Badge>
+   158 |                 ))}
+   159 |               </div>
+   160 |             </div>
+   161 |           )}
+   162 | 
+   163 |           <Separator className="my-4" />
+   164 | 
+   165 |           <div className="space-y-3">
+   166 |             <h4 className="font-semibold">Refeições do Dia ({state.nutricao?.refeicoes.length}x)</h4>
+   167 |             {state.nutricao?.refeicoes.map((ref: any, idx: number) => {
+   168 |               const totalCalorias = ref.alimentos.reduce((acc: number, a: any) => acc + a.calorias, 0)
+   169 |               return (
+   170 |                 <div key={idx} className="p-3 bg-muted rounded-lg">
+   171 |                   <div className="flex justify-between items-center mb-2">
+   172 |                     <h5 className="font-medium">{ref.nome}</h5>
+   173 |                     <span className="text-sm text-muted-foreground">{ref.horario}</span>
+   174 |                   </div>
+   175 |                   <div className="space-y-1">
+   176 |                     {ref.alimentos.map((alimento: any, aIdx: number) => (
+   177 |                       <div key={aIdx} className="text-xs sm:text-sm text-muted-foreground">
+   178 |                         • {alimento.nome} ({alimento.gramas}g) - {alimento.calorias} kcal
+   179 |                       </div>
+   180 |                     ))}
+   181 |                   </div>
+   182 |                   <div className="mt-2 pt-2 border-t border-border/50">
+   183 |                     <p className="text-xs font-medium">Total: {totalCalorias} kcal</p>
+   184 |                   </div>
+   185 |                 </div>
+   186 |               )
+   187 |             })}
+   188 |           </div>
+   189 |         </CardContent>
+   190 |       </Card>
+   191 | 
+   192 |       {/* Treino */}
+   193 |       <Card className="mb-4">
+   194 |         <CardHeader>
+   195 |           <CardTitle>Treino semanal</CardTitle>
+   196 |           <CardDescription>
+   197 |             {state.treino?.divisaoSemanal} • {state.treino?.frequencia}x por semana
+   198 |           </CardDescription>
+   199 |         </CardHeader>
+   200 |         <CardContent>
+   201 |           <div className="space-y-2">
+   202 |             {state.treino?.treinos.map((dia: any, idx: number) => (
+   203 |               <div key={idx} className="p-3 bg-muted rounded-lg">
+   204 |                 <div className="flex justify-between items-center">
+   205 |                   <h5 className="font-medium">{dia.dia}</h5>
+   206 |                   <Badge>{dia.exercicios.length} exercícios</Badge>
+   207 |                 </div>
+   208 |                 <p className="text-sm text-muted-foreground mt-1">
+   209 |                   {dia.grupamentos.join(' + ')}
+   210 |                 </p>
+   211 |               </div>
+   212 |             ))}
+   213 |           </div>
+   214 |         </CardContent>
+   215 |       </Card>
+   216 | 
+   217 |       {/* Saúde */}
+   218 |       {state.saude && (state.saude.doresArticulares.length > 0 || state.saude.observacoesClinicas) && (
+   219 |         <Card className="mb-4">
+   220 |           <CardHeader>
+   221 |             <CardTitle>Saúde e contexto</CardTitle>
+   222 |           </CardHeader>
+   223 |           <CardContent>
+   224 |             {state.saude.doresArticulares.length > 0 && (
+   225 |               <div className="mb-3">
+   226 |                 <p className="text-sm font-medium mb-2">Dores articulares:</p>
+   227 |                 <div className="flex gap-2 flex-wrap">
+   228 |                   {state.saude.doresArticulares.map((dor: any) => (
+   229 |                     <Badge key={dor} variant="destructive">{dor}</Badge>
+   230 |                   ))}
+   231 |                 </div>
+   232 |               </div>
+   233 |             )}
+   234 |             {state.saude.observacoesClinicas && (
+   235 |               <div>
+   236 |                 <p className="text-sm font-medium mb-2">Observações clínicas:</p>
+   237 |                 <p className="text-sm text-muted-foreground">{state.saude.observacoesClinicas}</p>
+   238 |               </div>
+   239 |             )}
+   240 |           </CardContent>
+   241 |         </Card>
+   242 |       )}
+   243 | 

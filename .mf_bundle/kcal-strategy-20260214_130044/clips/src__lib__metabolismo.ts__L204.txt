@@ -1,0 +1,179 @@
+    84 | }
+    85 | 
+    86 | // Mifflin-St Jeor
+    87 | export const calcularMifflin = (peso: number, altura: number, idade: number, sexo: string): number => {
+    88 |   if (sexo === 'masculino') {
+    89 |     return (10 * peso) + (6.25 * altura) - (5 * idade) + 5
+    90 |   }
+    91 |   return (10 * peso) + (6.25 * altura) - (5 * idade) - 161
+    92 | }
+    93 | 
+    94 | // FAO/WHO
+    95 | export const calcularFaoWho = (peso: number, idade: number, sexo: string): number => {
+    96 |   if (sexo === 'masculino') {
+    97 |     if (idade < 30) return (15.3 * peso) + 679
+    98 |     if (idade < 60) return (11.6 * peso) + 879
+    99 |     return (13.5 * peso) + 487
+   100 |   } else {
+   101 |     if (idade < 30) return (14.7 * peso) + 496
+   102 |     if (idade < 60) return (8.7 * peso) + 829
+   103 |     return (10.5 * peso) + 596
+   104 |   }
+   105 | }
+   106 | 
+   107 | // Tinsley (para atletas)
+   108 | export const calcularTinsley = (massaMagra: number): number => {
+   109 |   return 25.9 * massaMagra + 284
+   110 | }
+   111 | 
+   112 | // MOTOR DE DECISÃO INTELIGENTE
+   113 | export const decidirEquacaoMetabolica = (
+   114 |   perfil: PerfilUsuario,
+   115 |   avaliacao: AvaliacaoFisica
+   116 | ): EquacaoMetabolica => {
+   117 |   const temComposicao = avaliacao.composicao.percentualMassaMagra !== undefined
+   118 |   const { nivelTreino, objetivo } = perfil
+   119 | 
+   120 |   // Atleta + composição corporal → Tinsley
+   121 |   if (nivelTreino === 'atleta' && temComposicao) {
+   122 |     return 'tinsley'
+   123 |   }
+   124 | 
+   125 |   // Avançado/Intermediário + composição → Cunningham
+   126 |   if ((nivelTreino === 'avancado' || nivelTreino === 'intermediario') && temComposicao) {
+   127 |     return 'cunningham'
+   128 |   }
+   129 | 
+   130 |   // Performance/Hipertrofia → Mifflin
+   131 |   if (objetivo === 'performance' || objetivo === 'hipertrofia') {
+   132 |     return 'mifflin'
+   133 |   }
+   134 | 
+   135 |   // Longevidade/Sedentário → FAO/WHO
+   136 |   if (objetivo === 'longevidade' || nivelTreino === 'sedentario') {
+   137 |     return 'fao-who'
+   138 |   }
+   139 | 
+   140 |   // Default: Mifflin (mais moderno e preciso)
+   141 |   return 'mifflin'
+   142 | }
+   143 | 
+   144 | // Justificativa da escolha
+   145 | export const gerarJustificativa = (equacao: EquacaoMetabolica, perfil: PerfilUsuario): string => {
+   146 |   const justificativas: Record<EquacaoMetabolica, string> = {
+   147 |     cunningham: `Escolhida por você ${perfil.nivelTreino === 'avancado' ? 'treinar de forma avançada' : 'ter nível intermediário'} e possuir dados de composição corporal. A equação de Cunningham é mais precisa quando temos a massa magra real.`,
+   148 | 
+   149 |     'fao-who': `Recomendada pela Organização Mundial da Saúde para ${perfil.objetivo === 'longevidade' ? 'objetivos de saúde e longevidade' : 'iniciantes'}. É uma fórmula validada internacionalmente e considerada segura.`,
+   150 | 
+   151 |     'harris-benedict': `Equação clássica e amplamente utilizada. Apropriada para seu perfil atual.`,
+   152 | 
+   153 |     mifflin: `A equação de Mifflin-St Jeor é considerada a mais precisa para a população geral, especialmente para ${perfil.objetivo === 'hipertrofia' ? 'ganho de massa muscular' : 'melhoria de performance'}.`,
+   154 | 
+   155 |     tinsley: `Como você é atleta e temos seus dados de composição corporal, utilizamos a equação de Tinsley, desenvolvida especificamente para atletas de alto rendimento.`
+   156 |   }
+   157 | 
+   158 |   return justificativas[equacao]
+   159 | }
+   160 | 
+   161 | // Calcular metabolismo completo
+   162 | export const calcularMetabolismo = (
+   163 |   perfil: PerfilUsuario,
+   164 |   avaliacao: AvaliacaoFisica
+   165 | ): ResultadoMetabolico => {
+   166 |   const { peso, altura } = avaliacao
+   167 |   const { idade, sexo, nivelTreino } = perfil
+   168 | 
+   169 |   const massaMagra = avaliacao.composicao.percentualMassaMagra
+   170 |     ? peso * (avaliacao.composicao.percentualMassaMagra / 100)
+   171 |     : peso * 0.75 // Estimativa conservadora
+   172 | 
+   173 |   // Decidir equação automaticamente
+   174 |   const equacaoEscolhida = decidirEquacaoMetabolica(perfil, avaliacao)
+   175 | 
+   176 |   // Calcular TMB com a equação escolhida
+   177 |   let tmb = 0
+   178 |   switch (equacaoEscolhida) {
+   179 |     case 'cunningham':
+   180 |       tmb = calcularCunningham(massaMagra)
+   181 |       break
+   182 |     case 'fao-who':
+   183 |       tmb = calcularFaoWho(peso, idade, sexo)
+   184 |       break
+   185 |     case 'harris-benedict':
+   186 |       tmb = calcularHarrisBenedict(peso, altura, idade, sexo)
+   187 |       break
+   188 |     case 'mifflin':
+   189 |       tmb = calcularMifflin(peso, altura, idade, sexo)
+   190 |       break
+   191 |     case 'tinsley':
+   192 |       tmb = calcularTinsley(massaMagra)
+   193 |       break
+   194 |   }
+   195 | 
+   196 |   // GET = TMB × FAF
+   197 |   const fafBase = getFAF(nivelTreino)
+   198 |   const freqSemanal = (avaliacao as any)?.frequenciaAtividadeSemanal as (string | undefined);
+   199 |   const fafMult = getWeeklyActivityMultiplier(freqSemanal);
+   200 |   const fafFinal = Math.min(2.4, Math.max(1.0, fafBase * fafMult));
+   201 |   const faf = fafFinal;
+   202 |   const get = tmb * fafFinal
+   203 |   // Calorias alvo (baseado no objetivo)
+   204 |   let caloriasAlvo = get
+   205 |   if (perfil.objetivo === 'emagrecimento') {
+   206 |     caloriasAlvo = get * 0.85 // déficit de 15%
+   207 |   } else if (perfil.objetivo === 'hipertrofia') {
+   208 |     caloriasAlvo = get * 1.1 // superávit de 10%
+   209 |   }
+   210 |   // Faixa segura
+   211 |   let faixaSegura = {
+   212 |     minimo: Math.round(caloriasAlvo * 0.90),
+   213 |     ideal: Math.round(caloriasAlvo),
+   214 |     maximo: Math.round(caloriasAlvo * 1.10)
+   215 |   }
+   216 | 
+   217 |   // Ajuste por biotipo (premium, seguro e explicável)
+   218 |   const biotipo = (perfil as any)?.avaliacao?.biotipo as ("ectomorfo"|"mesomorfo"|"endomorfo"|undefined);
+   219 |   const imc = Number(peso) / Math.pow(Number(altura)/100, 2);
+   220 |   // tentar BF% quando houver (bioimpedância), senão null
+   221 |   const bfPct = (perfil as any)?.avaliacao?.bioPercentualGordura != null && String((perfil as any)?.avaliacao?.bioPercentualGordura) !== ''
+   222 |     ? Number((perfil as any)?.avaliacao?.bioPercentualGordura)
+   223 |     : null;
+   224 |   const ajusteBio = calcAjusteBiotipoKcal({ biotipo, objetivo: (perfil as any)?.objetivo, imc, bfPct });
+   225 |   const ajusteBiotipoKcal = ajusteBio.kcal;
+   226 |   const ajusteBiotipoMotivo = ajusteBio.motivo;
+   227 | 
+   228 | 
+   229 |   
+   230 | 
+   231 |   // aplica ajuste no alvo final + recalcula faixa segura
+   232 |   caloriasAlvo = caloriasAlvo + (ajusteBiotipoKcal || 0);
+   233 |   faixaSegura = {
+   234 |     minimo: Math.round(caloriasAlvo * 0.90),
+   235 |     ideal: Math.round(caloriasAlvo),
+   236 |     maximo: Math.round(caloriasAlvo * 1.10)
+   237 |   };
+   238 | 
+   239 |   // Comparativo com todas as fórmulas
+   240 |   const comparativo = {
+   241 |     cunningham: Math.round(calcularCunningham(massaMagra) * faf),
+   242 |     faoWho: Math.round(calcularFaoWho(peso, idade, sexo) * faf),
+   243 |     harrisBenedict: Math.round(calcularHarrisBenedict(peso, altura, idade, sexo) * faf),
+   244 |     mifflin: Math.round(calcularMifflin(peso, altura, idade, sexo) * faf),
+   245 |     tinsley: Math.round(calcularTinsley(massaMagra) * faf)
+   246 |   }
+   247 | 
+   248 |   return {
+   249 |     equacaoUtilizada: equacaoEscolhida,
+   250 |     justificativa: gerarJustificativa(equacaoEscolhida, perfil),
+   251 |     tmb: Math.round(tmb),
+   252 |     fafBase: Number(fafBase.toFixed(2)),
+   253 |     fafMult: Number(fafMult.toFixed(2)),
+   254 |     fafFinal: Number(fafFinal.toFixed(2)),
+   255 |     get: Math.round(get),
+   256 |     caloriasAlvo: Math.round(caloriasAlvo),
+   257 |     faixaSegura,
+   258 |     comparativo,
+   259 |     ajusteBiotipoKcal,
+   260 |     ajusteBiotipoMotivo,
+   261 |   }
+   262 | }

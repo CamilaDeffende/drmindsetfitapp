@@ -1,0 +1,128 @@
+     1 | {
+     2 |   "musculacao": {
+     3 |     "posterior_coxa": {
+     4 |       "halteres": [
+     5 |         {
+     6 |           "name": "Levantamento romeno com halteres",
+     7 |           "goal": "Desenvolver posterior de coxa com controle de hinge e amplitude.",
+     8 |           "execution": [
+     9 |             "Em pé, halteres próximos ao corpo, coluna neutra.",
+    10 |             "Desça levando o quadril para trás com joelhos semi-flexionados.",
+    11 |             "Suba estendendo o quadril com controle e tensão."
+    12 |           ],
+    13 |           "focus": "Posterior de coxa e glúteos.",
+    14 |           "cues": [
+    15 |             "Quadril para trás na descida.",
+    16 |             "Halteres colados ao corpo.",
+    17 |             "Subida contínua sem tranco."
+    18 |           ],
+    19 |           "common_errors": [
+    20 |             "Arredondar a coluna e perder padrão.",
+    21 |             "Dobrar demais os joelhos e virar agachamento.",
+    22 |             "Afastar halteres e perder alavanca."
+    23 |           ],
+    24 |           "variations": [
+    25 |             "Levantamento romeno com barra",
+    26 |             "Good morning com barra",
+    27 |             "Pull-through no cabo"
+    28 |           ]
+    29 |         }
+    30 |       ],
+    31 |       "maquinas": [
+    32 |         {
+    33 |           "name": "Cadeira flexora (sentado)",
+    34 |           "goal": "Trabalhar posterior de coxa com estabilidade e tensão contínua.",
+    35 |           "execution": [
+    36 |             "Ajuste encosto e rolos para travar a coxa.",
+    37 |             "Flexione os joelhos até contração controlada.",
+    38 |             "Retorne lentamente mantendo tensão."
+    39 |           ],
+    40 |           "focus": "Posterior de coxa (isolamento).",
+    41 |           "cues": [
+    42 |             "Coxa travada e postura firme.",
+    43 |             "Pico controlado sem relaxar.",
+    44 |             "Retorno lento e ativo."
+    45 |           ],
+    46 |           "common_errors": [
+    47 |             "Ajuste ruim e rolos fora da posição.",
+    48 |             "Bater no final e perder controle.",
+    49 |             "Retorno rápido e sem tensão."
+    50 |           ],
+    51 |           "variations": [
+    52 |             "Mesa flexora (deitado)",
+    53 |             "Flexora unilateral",
+    54 |             "Flexão de joelho no cabo (tornozeleira)"
+    55 |           ]
+    56 |         }
+    57 |       ],
+    58 |       "cabos": [
+    59 |         {
+    60 |           "name": "Flexão de joelho no cabo (tornozeleira)",
+    61 |           "goal": "Isolar posterior de coxa unilateral com tensão contínua.",
+    62 |           "execution": [
+    63 |             "Prenda a tornozeleira na polia baixa e estabilize o tronco.",
+    64 |             "Flexione o joelho trazendo o calcanhar em direção ao glúteo com controle.",
+    65 |             "Retorne lentamente mantendo tensão."
+    66 |           ],
+    67 |           "focus": "Posterior de coxa (unilateral).",
+    68 |           "cues": [
+    69 |             "Coxa firme; movimento só no joelho.",
+    70 |             "Pico controlado sem tranco.",
+    71 |             "Descida lenta e constante."
+    72 |           ],
+    73 |           "common_errors": [
+    74 |             "Mover quadril e perder isolamento.",
+    75 |             "Executar rápido sem controle.",
+    76 |             "Amplitude curta e sem pico."
+    77 |           ],
+    78 |           "variations": [
+    79 |             "Mesa flexora (deitado)",
+    80 |             "Cadeira flexora (sentado)",
+    81 |             "Flexora unilateral na máquina"
+    82 |           ]
+    83 |         }
+    84 |       ]
+    85 |     },
+    86 |     "panturrilhas": {
+    87 |       "halteres": [
+    88 |         {
+    89 |           "name": "Elevação de panturrilha em pé com halteres",
+    90 |           "goal": "Desenvolver panturrilha com amplitude completa e controle de pico.",
+    91 |           "execution": [
+    92 |             "Em pé, segure halteres ao lado do corpo e mantenha postura firme.",
+    93 |             "Suba na ponta dos pés até o pico controlado.",
+    94 |             "Desça lentamente até amplitude completa."
+    95 |           ],
+    96 |           "focus": "Gastrocnêmio (ênfase em pé).",
+    97 |           "cues": [
+    98 |             "Suba o máximo com controle.",
+    99 |             "Pausa curta no topo sem relaxar.",
+   100 |             "Desça devagar mantendo amplitude."
+   101 |           ],
+   102 |           "common_errors": [
+   103 |             "Repetições rápidas e curtas.",
+   104 |             "Balançar o corpo para ganhar altura.",
+   105 |             "Descer pouco e perder amplitude."
+   106 |           ],
+   107 |           "variations": [
+   108 |             "Elevação de panturrilha na máquina em pé",
+   109 |             "Elevação de panturrilha no leg press",
+   110 |             "Elevação de panturrilha no Smith"
+   111 |           ]
+   112 |         }
+   113 |       ],
+   114 |       "maquinas": [
+   115 |         {
+   116 |           "name": "Elevação de panturrilha em pé na máquina",
+   117 |           "goal": "Desenvolver gastrocnêmio com estabilidade e progressão consistente.",
+   118 |           "execution": [
+   119 |             "Ajuste o equipamento e posicione os ombros no apoio.",
+   120 |             "Suba na ponta dos pés até pico controlado.",
+   121 |             "Desça lentamente mantendo amplitude total."
+   122 |           ],
+   123 |           "focus": "Gastrocnêmio.",
+   124 |           "cues": [
+   125 |             "Pico controlado no topo.",
+   126 |             "Descida lenta e completa.",
+   127 |             "Sem balançar o tronco."
+   128 |           ],

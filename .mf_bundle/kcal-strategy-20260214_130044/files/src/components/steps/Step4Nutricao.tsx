@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-// MF_STEP4_DYNAMIC_KCAL_STRATEGY_V1
 // MF_STEP4_KCAL_SSOT_V1
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
@@ -109,46 +107,6 @@ export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingSte
   }
   // END_MF_BLOCK8_STEP4_PERSIST_V1
 const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')
-
-// MF_STEP4_DYNAMIC_KCAL_STRATEGY_V1
-// SSOT: kcal exibida = resultado real do Motor Metabólico (state.metabolismo.caloriasAlvo) + estratégia (percentual).
-// Regra: muda estratégia => recalcula kcal alvo + macros + persiste no estado (updateState), mantendo guardrails.
-const __mfBaseKcalFromMetabolic = Number((state as any)?.metabolismo?.caloriasAlvo ?? (state as any)?.metabolismo?.get ?? 0) || 2000;
-
-// recalcula automaticamente ao trocar estratégia (e quando base metabólica mudar)
-useEffect(() => {
-  try {
-    const peso = Number((state as any)?.perfil?.peso ?? (state as any)?.perfil?.pesoKg ?? (state as any)?.peso ?? 0) || 70;
-    const proteina = Math.round(peso * 2); // 2g/kg
-    const gorduras = Math.round(peso * 1); // 1g/kg
-
-    const kcalFixas = (proteina * 4) + (gorduras * 9);
-    const kcalTarget = Math.round(__mfKcalAlvo);
-    const kcalRest = Math.max(0, kcalTarget - kcalFixas);
-    const carboFix = Math.max(0, Math.round(kcalRest / 4));
-    const carboidratos = mfClampSSOT(carboFix, 0, 900);
-
-    const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
-    const kcalFinalClamped = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
-
-    updateState({
-      nutricao: {
-        ...(state as any)?.nutricao,
-        estrategia,
-        percentualEstrategia: __mfPercentFromStrategy,
-        kcalAlvo: kcalFinalClamped,
-        macros: {
-          proteina,
-          carboidratos,
-          gorduras,
-          calorias: kcalFinalClamped,
-        },
-      },
-    });
-  } catch (e) {
-    console.error("[MF] Step4 dynamic kcal strategy error:", e);
-  }
-}, [estrategia, __mfBaseKcalFromMetabolic]);
 
 // MF_STEP4_STRATEGY_PERCENT_SSOT_V2
 const mfStrategyPercent = (e: string) => {

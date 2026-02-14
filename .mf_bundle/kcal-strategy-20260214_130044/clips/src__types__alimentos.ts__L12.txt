@@ -1,0 +1,132 @@
+     1 | // Database de alimentos com macros e substituições
+     2 | 
+     3 | export interface AlimentoDatabase {
+     4 |   id: string
+     5 |   nome: string
+     6 |   categoria: 'carboidrato' | 'proteina' | 'proteina-vegetal' | 'legume' | 'folhoso' | 'fruta' | 'gordura' | 'laticinio'
+     7 |   porcaoPadrao: number // gramas
+     8 |   macrosPor100g: {
+     9 |     calorias: number
+    10 |     proteinas: number
+    11 |     carboidratos: number
+    12 |     gorduras: number
+    13 |   }
+    14 |   substituicoes: string[] // IDs de outros alimentos que podem substituir
+    15 |   vegano: boolean
+    16 |   vegetariano: boolean
+    17 | }
+    18 | 
+    19 | export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
+    20 |   // CARBOIDRATOS
+    21 |   {
+    22 |     id: 'arroz-branco',
+    23 |     nome: 'Arroz Branco',
+    24 |     categoria: 'carboidrato',
+    25 |     porcaoPadrao: 150,
+    26 |     macrosPor100g: { calorias: 130, proteinas: 2.7, carboidratos: 28, gorduras: 0.3 },
+    27 |     substituicoes: ['arroz-integral', 'batata-doce', 'batata-inglesa', 'macarrao-integral', 'quinoa'],
+    28 |     vegano: true,
+    29 |     vegetariano: true
+    30 |   },
+    31 |   {
+    32 |     id: 'arroz-integral',
+    33 |     nome: 'Arroz Integral',
+    34 |     categoria: 'carboidrato',
+    35 |     porcaoPadrao: 150,
+    36 |     macrosPor100g: { calorias: 123, proteinas: 2.6, carboidratos: 25.8, gorduras: 1 },
+    37 |     substituicoes: ['arroz-branco', 'batata-doce', 'quinoa', 'macarrao-integral', 'aveia'],
+    38 |     vegano: true,
+    39 |     vegetariano: true
+    40 |   },
+    41 |   {
+    42 |     id: 'batata-doce',
+    43 |     nome: 'Batata Doce',
+    44 |     categoria: 'carboidrato',
+    45 |     porcaoPadrao: 200,
+    46 |     macrosPor100g: { calorias: 86, proteinas: 1.6, carboidratos: 20, gorduras: 0.1 },
+    47 |     substituicoes: ['batata-inglesa', 'mandioca', 'inhame', 'arroz-branco', 'macarrao'],
+    48 |     vegano: true,
+    49 |     vegetariano: true
+    50 |   },
+    51 |   {
+    52 |     id: 'batata-inglesa',
+    53 |     nome: 'Batata Inglesa',
+    54 |     categoria: 'carboidrato',
+    55 |     porcaoPadrao: 200,
+    56 |     macrosPor100g: { calorias: 77, proteinas: 2, carboidratos: 17, gorduras: 0.1 },
+    57 |     substituicoes: ['batata-doce', 'mandioca', 'inhame', 'arroz-branco', 'macarrao'],
+    58 |     vegano: true,
+    59 |     vegetariano: true
+    60 |   },
+    61 |   {
+    62 |     id: 'macarrao-integral',
+    63 |     nome: 'Macarrão Integral',
+    64 |     categoria: 'carboidrato',
+    65 |     porcaoPadrao: 100,
+    66 |     macrosPor100g: { calorias: 124, proteinas: 5, carboidratos: 26, gorduras: 0.5 },
+    67 |     substituicoes: ['macarrao', 'arroz-integral', 'quinoa', 'batata-doce', 'aveia'],
+    68 |     vegano: true,
+    69 |     vegetariano: true
+    70 |   },
+    71 |   {
+    72 |     id: 'macarrao',
+    73 |     nome: 'Macarrão',
+    74 |     categoria: 'carboidrato',
+    75 |     porcaoPadrao: 100,
+    76 |     macrosPor100g: { calorias: 131, proteinas: 5, carboidratos: 25, gorduras: 1.1 },
+    77 |     substituicoes: ['macarrao-integral', 'arroz-branco', 'batata-inglesa', 'quinoa', 'aveia'],
+    78 |     vegano: true,
+    79 |     vegetariano: true
+    80 |   },
+    81 |   {
+    82 |     id: 'quinoa',
+    83 |     nome: 'Quinoa',
+    84 |     categoria: 'carboidrato',
+    85 |     porcaoPadrao: 150,
+    86 |     macrosPor100g: { calorias: 120, proteinas: 4.4, carboidratos: 21.3, gorduras: 1.9 },
+    87 |     substituicoes: ['arroz-integral', 'arroz-branco', 'macarrao-integral', 'batata-doce', 'aveia'],
+    88 |     vegano: true,
+    89 |     vegetariano: true
+    90 |   },
+    91 |   {
+    92 |     id: 'aveia',
+    93 |     nome: 'Aveia',
+    94 |     categoria: 'carboidrato',
+    95 |     porcaoPadrao: 50,
+    96 |     macrosPor100g: { calorias: 389, proteinas: 16.9, carboidratos: 66.3, gorduras: 6.9 },
+    97 |     substituicoes: ['granola', 'tapioca', 'pao-integral', 'batata-doce', 'quinoa'],
+    98 |     vegano: true,
+    99 |     vegetariano: true
+   100 |   },
+   101 |   {
+   102 |     id: 'mandioca',
+   103 |     nome: 'Mandioca',
+   104 |     categoria: 'carboidrato',
+   105 |     porcaoPadrao: 200,
+   106 |     macrosPor100g: { calorias: 125, proteinas: 0.6, carboidratos: 30, gorduras: 0.4 },
+   107 |     substituicoes: ['batata-doce', 'batata-inglesa', 'inhame', 'arroz-branco', 'macarrao'],
+   108 |     vegano: true,
+   109 |     vegetariano: true
+   110 |   },
+   111 |   {
+   112 |     id: 'inhame',
+   113 |     nome: 'Inhame',
+   114 |     categoria: 'carboidrato',
+   115 |     porcaoPadrao: 200,
+   116 |     macrosPor100g: { calorias: 118, proteinas: 1.5, carboidratos: 27.6, gorduras: 0.2 },
+   117 |     substituicoes: ['batata-doce', 'batata-inglesa', 'mandioca', 'arroz-integral', 'quinoa'],
+   118 |     vegano: true,
+   119 |     vegetariano: true
+   120 |   },
+   121 | 
+   122 |   // PROTEÍNAS ANIMAIS
+   123 |   {
+   124 |     id: 'frango-peito',
+   125 |     nome: 'Peito de Frango Grelhado',
+   126 |     categoria: 'proteina',
+   127 |     porcaoPadrao: 150,
+   128 |     macrosPor100g: { calorias: 165, proteinas: 31, carboidratos: 0, gorduras: 3.6 },
+   129 |     substituicoes: ['carne-bovina', 'peixe-tilapia', 'atum', 'carne-suina', 'peru'],
+   130 |     vegano: false,
+   131 |     vegetariano: false
+   132 |   },

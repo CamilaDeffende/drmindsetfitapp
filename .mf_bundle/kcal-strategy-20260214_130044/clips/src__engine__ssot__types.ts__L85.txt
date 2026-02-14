@@ -1,0 +1,88 @@
+     1 | export type Sex = "male" | "female" | "other" | "unknown";
+     2 | export type Goal = "cut" | "maintain" | "bulk";
+     3 | export type Biotype = "ecto" | "meso" | "endo" | "unknown";
+     4 | 
+     5 | export type ActivityMeta = {
+     6 |   palKey?: string;
+     7 |   frequencyPerWeek?: number;
+     8 |   activityFactor?: number;
+     9 | };
+    10 | 
+    11 | export type BodyProfile = {
+    12 |   weightKg?: number;
+    13 |   heightCm?: number;
+    14 |   age?: number;
+    15 |   sex?: Sex;
+    16 |   athlete?: boolean;
+    17 | };
+    18 | 
+    19 | export type BodyComp = {
+    20 |   ffmKg?: number;
+    21 |   bfPercent?: number;
+    22 | };
+    23 | 
+    24 | export type MetabolismInput = {
+    25 |   selectedEquation?:
+    26 |     | "cunningham"
+    27 |     | "fao-who"
+    28 |     | "harris-benedict"
+    29 |     | "mifflin"
+    30 |     | "tinsley"
+    31 |     | "auto";
+    32 | };
+    33 | 
+    34 | export type NutritionInput = {
+    35 |   goal?: Goal;
+    36 |   strategyPercent?: number;
+    37 | };
+    38 | 
+    39 | export type SSOTInputs = {
+    40 |   profile: BodyProfile;
+    41 |   bodyComp?: BodyComp;
+    42 |   activity?: ActivityMeta;
+    43 |   biotype?: Biotype;
+    44 |   metabolism?: MetabolismInput;
+    45 |   nutrition?: NutritionInput;
+    46 | };
+    47 | 
+    48 | export type SSOTWarnings =
+    49 |   | { code: "missing_profile"; message: string }
+    50 |   | { code: "missing_activity"; message: string }
+    51 |   | { code: "missing_freq"; message: string }
+    52 |   | { code: "clamp_applied"; message: string }
+    53 |   | { code: "ffm_missing_for_selected"; message: string }
+    54 |   | { code: "fallback_used"; message: string }
+    55 |   | { code: "extreme_values"; message: string };
+    56 | 
+    57 | export type SSOTAuditTrace = {
+    58 |   timestamp: string;
+    59 |   storageKey: string;
+    60 |   reeMethod: string;
+    61 |   reeKcal: number;
+    62 |   activityFactorRaw?: number;
+    63 |   activityFactorFinal: number;
+    64 |   tdeeKcal: number;
+    65 |   goal?: Goal;
+    66 |   targetKcal: number;
+    67 |   clamp?: { min: number; max: number; applied: boolean };
+    68 | };
+    69 | 
+    70 | export type SSOTOutputs = {
+    71 |   metabolic: {
+    72 |     reeKcal: number;
+    73 |     activityFactor: number;
+    74 |     tdeeKcal: number;
+    75 |   };
+    76 |   nutrition: {
+    77 |     targetKcal: number;
+    78 |   };
+    79 |   safeRange: {
+    80 |     min: number;
+    81 |     ideal: number;
+    82 |     max: number;
+    83 |   };
+    84 |   audit: {
+    85 |     trace: SSOTAuditTrace;
+    86 |     warnings: SSOTWarnings[];
+    87 |   };
+    88 | };

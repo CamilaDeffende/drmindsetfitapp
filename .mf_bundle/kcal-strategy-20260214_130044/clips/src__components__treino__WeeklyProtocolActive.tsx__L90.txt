@@ -1,0 +1,210 @@
+     1 | import { useMemo } from "react";
+     2 | import { toWeekdayKey } from "@/utils/strength/weekdayMap";
+     3 | import { loadWeekPlan } from "@/utils/strength/strengthWeekStorage";
+     4 | import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+     5 | 
+     6 | type Session = {
+     7 |   day: string;
+     8 |   modality: string;
+     9 |   modalityLevel?: string | null;
+    10 |   strategy?: string | null;
+    11 |   rationale?: string | null;
+    12 |   structure?: {
+    13 |     type?: string;
+    14 |     intensidade?: string;
+    15 |     descanso?: string;
+    16 |     duracaoEstimada?: string;
+    17 |   } | null;
+    18 |   plan?: any;
+    19 | };
+    20 | 
+    21 | const LABEL: Record<string, string> = {
+    22 |   musculacao: "musculacao",
+    23 |   funcional: "Funcional",
+    24 |   corrida: "Corrida",
+    25 |   bike_indoor: "Bike Indoor",
+    26 |   crossfit: "CrossFit",
+    27 | };
+    28 | 
+    29 | const ORDER: Record<string, number> = {
+    30 |   "Segunda": 1,
+    31 |   "Terça": 2,
+    32 |   "Terca": 2,
+    33 |   "Quarta": 3,
+    34 |   "Quinta": 4,
+    35 |   "Sexta": 5,
+    36 |   "Sábado": 6,
+    37 |   "Sabado": 6,
+    38 |   "Domingo": 7,
+    39 | };
+    40 | 
+    41 | function fmt(v: unknown) {
+    42 |   const s = String(v ?? "").trim();
+    43 |   return s.length ? s : "-";
+    44 | }
+    45 | 
+    46 | 
+    47 | 
+    48 | /* MF_FOCO_DO_DIA_CHIPS_V1
+    49 |    Chips premium de "Foco do dia" (Musculação), lendo weekPlan salvo (StrengthWeekPlan).
+    50 |    - Tolerante a variações de shape do weekPlan (tentativas em cascata).
+    51 |    - Nunca quebra a UI se não houver dados.
+    52 | */
+    53 | function getFocusGroupsFromWeekPlan(dayLabel: string): string[] {
+    54 |   return getStrengthFocusGroupsForDay(dayLabel);
+    55 | }
+    56 | 
+    57 | function focusChip(groups: string[]) {
+    58 |   if (!groups.length) return null;
+    59 |   return (
+    60 |     <div className="rounded-full border border-white/10 bg-gradient-to-r from-white/10 to-white/5 px-3 py-1 text-[11px]">
+    61 |       <span className="text-muted-foreground">Foco do dia:</span>{" "}
+    62 |       <span className="font-semibold">{groups.join(" • ")}</span>
+    63 |     </div>
+    64 |   );
+    65 | }
+    66 | 
+    67 | function chip(label: string, value: string) {
+    68 |   if (!value || value === "-") return null;
+    69 |   return (
+    70 |     <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px]">
+    71 |       <span className="text-muted-foreground">{label}:</span>{" "}
+    72 |       <span className="font-semibold">{value}</span>
+    73 |     </div>
+    74 |   );
+    75 | }
+    76 | function getStrengthFocusGroupsForDay(dayLabel: string): string[] {
+    77 |   try {
+    78 |         const plan = loadWeekPlan();
+    79 |         if (!plan) return [];
+    80 |     const k = toWeekdayKey(dayLabel);
+    81 |     if (!k) return [];
+    82 |     const arr = (plan as any)[k];
+    83 |     return Array.isArray(arr) ? arr.map(String).filter(Boolean) : [];
+    84 |   } catch {
+    85 |     return [];
+    86 |   }
+    87 | }
+    88 | 
+    89 | export function WeeklyProtocolActive() {
+    90 |   const { state } = useDrMindSetfit();
+    91 | 
+    92 |   const protocol = (state as any)?.workoutProtocolWeekly ?? null;
+    93 |   const sessions = useMemo(() => {
+    94 |     const raw = protocol?.sessions;
+    95 |     const arr: Session[] = Array.isArray(raw) ? raw : [];
+    96 |     return [...arr].sort((a, b) => (ORDER[a.day] ?? 99) - (ORDER[b.day] ?? 99));
+    97 |   }, [protocol]);
+    98 | 
+    99 |   const grouped = useMemo(() => {
+   100 |     const map: Record<string, Session[]> = {};
+   101 |     for (const s of sessions) {
+   102 |       const d = String(s.day ?? "");
+   103 |       if (!d) continue;
+   104 |       (map[d] ||= []).push(s);
+   105 |     }
+   106 |     return Object.entries(map).sort((a, b) => (ORDER[a[0]] ?? 99) - (ORDER[b[0]] ?? 99));
+   107 |   }, [sessions]);
+   108 | 
+   109 |   const modalities = useMemo(() => {
+   110 |     const m = protocol?.modalities;
+   111 |     const arr: string[] = Array.isArray(m) ? m.map(String) : [];
+   112 |     return arr.filter(Boolean);
+   113 |   }, [protocol]);
+   114 | 
+   115 |   const strategiesByModality = useMemo(() => {
+   116 |     const s = protocol?.modalityStrategies;
+   117 |     return (s && typeof s === "object") ? s : {};
+   118 |   }, [protocol]);
+   119 | 
+   120 |   if (!protocol) return null;
+   121 | 
+   122 |   return (
+   123 |     <div className="mt-4 space-y-4">
+   124 |       {/* Header ultra clean */}
+   125 |       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+   126 |         <div className="flex items-start justify-between gap-3">
+   127 |           <div>
+   128 |             <div className="text-sm font-semibold">Treinos Ativos</div>
+   129 |             <div className="mt-1 text-xs text-muted-foreground">
+   130 |               Plano semanal gerado automaticamente a partir das modalidades, níveis e dias selecionados.
+   131 |             </div>
+   132 |           </div>
+   133 |           <div className="text-[11px] text-muted-foreground">
+   134 |             Atualizado: <span className="font-semibold">{fmt(protocol?.generatedAt).slice(0, 10)}</span>
+   135 |           </div>
+   136 |         </div>
+   137 | 
+   138 |         {/* Modalidades ativas (chips) */}
+   139 |         {modalities.length ? (
+   140 |           <div className="mt-3 flex flex-wrap gap-2">
+   141 |             {modalities.map((k) => (
+   142 |               <div key={k} className="rounded-full border border-white/10 bg-black/10 px-3 py-1 text-[11px]">
+   143 |                 <span className="font-semibold">{LABEL[k] ?? k}</span>
+   144 |               </div>
+   145 |             ))}
+   146 |           </div>
+   147 |         ) : null}
+   148 |       </div>
+   149 | 
+   150 |       {/* Estratégia por modalidade (sempre para todas as selecionadas) */}
+   151 |       {modalities.length ? (
+   152 |         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+   153 |           <div className="text-sm font-semibold">Estratégia por modalidade</div>
+   154 |           <div className="mt-1 text-xs text-muted-foreground">
+   155 |             Resumo do racional aplicado pelo motor (determinístico) para cada modalidade escolhida.
+   156 |           </div>
+   157 | 
+   158 |           <div className="mt-4 grid grid-cols-1 gap-3">
+   159 |             {modalities.map((m) => {
+   160 |               const st = strategiesByModality?.[m] ?? {};
+   161 |               const title = LABEL[m] ?? m;
+   162 |               const strategy = fmt(st?.strategy);
+   163 |               const rationale = fmt(st?.rationale);
+   164 | 
+   165 |               return (
+   166 |                 <div key={m} className="rounded-2xl border border-white/10 bg-black/10 p-4">
+   167 |                   <div className="flex flex-wrap items-center justify-between gap-2">
+   168 |                     <div className="text-sm font-semibold">{title}</div>
+   169 |                     <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px]">
+   170 |                       <span className="text-muted-foreground">Estratégia:</span>{" "}
+   171 |                       <span className="font-semibold">{strategy}</span>
+   172 |                     </div>
+   173 |                   </div>
+   174 |                   <div className="mt-2 text-xs text-muted-foreground leading-relaxed">
+   175 |                     {rationale}
+   176 |                   </div>
+   177 |                 </div>
+   178 |               );
+   179 |             })}
+   180 |           </div>
+   181 |         </div>
+   182 |       ) : null}
+   183 | 
+   184 |       {/* Accordion por dia */}
+   185 |       {grouped.length ? (
+   186 |         <div className="rounded-2xl border border-white/10 bg-white/5 p-2 sm:p-3">
+   187 |           {grouped.map(([day, items]) => (
+   188 |             <details key={day} className="group rounded-2xl border border-white/10 bg-black/10 p-3 sm:p-4 mb-2 last:mb-0">
+   189 |               <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
+   190 |                 <div className="flex items-center gap-3">
+   191 |                   <div className="text-sm font-semibold">{day}</div>
+   192 |                   <div className="text-[11px] text-muted-foreground">
+   193 |                     {items.length} sessão(ões)
+   194 |                   </div>
+   195 |                 </div>
+   196 |                 <div className="text-[11px] text-muted-foreground group-open:hidden">Abrir</div>
+   197 |                 <div className="text-[11px] text-muted-foreground hidden group-open:block">Fechar</div>
+   198 |               </summary>
+   199 | 
+   200 |               <div className="mt-3 grid grid-cols-1 gap-3">
+   201 |                 {items.map((s, idx) => {
+   202 |                   const modKey = String(s.modality ?? "");
+   203 |                   const focusGroups = (modKey === "musculacao") ? getFocusGroupsFromWeekPlan(day) : [];
+   204 | 
+   205 |                   const modLabel = LABEL[modKey] ?? modKey;
+   206 |                   const lvl = fmt(s.modalityLevel);
+   207 |                   const st = s.structure ?? null;
+   208 | 
+   209 |                   const type = st?.type ? String(st.type) : "";
+   210 |                   const intensidade = st?.intensidade ? String(st.intensidade) : "";

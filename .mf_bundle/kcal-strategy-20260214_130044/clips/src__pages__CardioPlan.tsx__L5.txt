@@ -1,0 +1,125 @@
+     1 | import { useMemo } from "react";
+     2 | import { useNavigate } from "react-router-dom";
+     3 | import { Button } from "@/components/ui/button";
+     4 | import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5 | import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+     6 | import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+     7 | import { mindsetfitSignatureLines } from "@/assets/branding/signature";
+     8 | 
+     9 | type CardioItem = {
+    10 |   modalidade: "corrida" | "caminhada" | "bike" | "eliptico";
+    11 |   duracaoMin: number;
+    12 |   zona?: 1 | 2 | 3 | 4 | 5;
+    13 |   rpe?: number; // 0-10
+    14 |   objetivo: string;
+    15 | };
+    16 | 
+    17 | export function CardioPlan() {
+    18 |   const navigate = useNavigate();
+    19 |   const { state } = useDrMindSetfit();
+    20 | 
+    21 |   // MVP defensivo: se no futuro você salvar cardio no state, aqui já está pronto pra ler
+    22 |   const cardioSalvo = (state as any)?.treinosAlternativos?.cardio as CardioItem[] | undefined;
+    23 | 
+    24 |   const plano = useMemo<CardioItem[]>(() => {
+    25 |     if (Array.isArray(cardioSalvo) && cardioSalvo.length) return cardioSalvo;
+    26 | 
+    27 |     // fallback: sugestão padrão (não grava nada)
+    28 |     return [
+    29 |       { modalidade: "caminhada", duracaoMin: 35, zona: 2, rpe: 4, objetivo: "Base aeróbica / saúde" },
+    30 |       { modalidade: "corrida", duracaoMin: 25, zona: 3, rpe: 6, objetivo: "Condicionamento" },
+    31 |       { modalidade: "bike", duracaoMin: 40, zona: 2, rpe: 5, objetivo: "Gasto calórico (low impact)" },
+    32 |     ];
+    33 |   }, [cardioSalvo]);
+    34 | 
+    35 |   
+    36 |   function buildCardioExportText() {
+    37 |   const lines = [
+    38 |     "DRMINDSETFIT — CARDIO (RELATÓRIO)",
+    39 |     "",
+    40 |     "Template: MindSetFit Premium (PDF)",
+    41 |     ""
+    42 |   ];
+    43 | 
+    44 |   try {
+    45 |     const keys = Object.keys(localStorage || {}).filter((k) => /cardio/i.test(k));
+    46 |     if (keys.length) {
+    47 |       lines.push("DADOS (localStorage • cardio*):", "");
+    48 |       for (const k of keys.slice(0, 12)) {
+    49 |         const raw = localStorage.getItem(k);
+    50 |         if (!raw) continue;
+    51 |         lines.push(`# ${k}`);
+    52 |         try {
+    53 |           const obj = JSON.parse(raw);
+    54 |           lines.push(JSON.stringify(obj, null, 2));
+    55 |         } catch {
+    56 |           lines.push(raw);
+    57 |         }
+    58 |         lines.push("");
+    59 |       }
+    60 |     } else {
+    61 |       lines.push("Nenhuma chave 'cardio*' encontrada no localStorage.", "");
+    62 |     }
+    63 |   } catch {
+    64 |     lines.push("Não foi possível ler localStorage neste ambiente.", "");
+    65 |   }
+    66 | 
+    67 |   lines.push(
+    68 |     "Checklist sugerido:",
+    69 |     "- Frequência semanal",
+    70 |     "- Duração/tempo alvo",
+    71 |     "- Intensidade (RPE/Zonas)",
+    72 |     "- Progressão (semanas)",
+    73 |     "- Observações de recuperação"
+    74 |   );
+    75 | 
+    76 |   return lines.join("\n");
+    77 | }
+    78 | 
+    79 |   async function downloadPdfPremiumCardio() {
+    80 |     const bodyText = buildCardioExportText();
+    81 | await generateMindsetFitPremiumPdf({
+    82 |     signatureLines: mindsetfitSignatureLines,
+    83 |       wordmarkText: "MindSetFit",
+    84 |       reportLabel: "RELATÓRIO CARDIO",
+    85 |       metaLines: [
+    86 |         "Módulo: Cardio",
+    87 |         "Template: MindSetFit Premium (PDF)",
+    88 |       ],
+    89 |       bodyText,
+    90 |       layout: {
+    91 |         logoW: 220,
+    92 |         logoH: 150,
+    93 |         logoY: 78,
+    94 |         wordmarkSize: 38,
+    95 |         wordmarkGap: 92,
+    96 |         headerGap: 32,
+    97 |         margin: 60,
+    98 |         lineHeight: 13,
+    99 |         drawFrame: true,
+   100 |       },
+   101 |     });
+   102 | }
+   103 | 
+   104 | return (
+   105 |     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+   106 |       <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
+   107 |         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+   108 |           <div>
+   109 |             <h1 className="text-xl font-bold">Cardio</h1>
+   110 | 
+   111 |           <div className="mt-4 flex gap-2 flex-wrap">
+   112 |             <button type="button" onClick={downloadPdfPremiumCardio} className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60">Baixar PDF Premium</button>
+   113 |           </div>
+   114 | 
+   115 |             <p className="text-xs text-muted-foreground">Plano separado • sem interferir na musculação</p>
+   116 |           </div>
+   117 |           <div className="flex gap-2">
+   118 |             <Button variant="outline" onClick={() => navigate("/dashboard")}>Voltar</Button>
+   119 |           </div>
+   120 |         </div>
+   121 |       </header>
+   122 | 
+   123 |       <main className="max-w-5xl mx-auto px-4 py-8 space-y-4">
+   124 |         <Card className="border-white/10 bg-white/60 dark:bg-white/5">
+   125 |           <CardHeader>

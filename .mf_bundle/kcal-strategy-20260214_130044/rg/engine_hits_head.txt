@@ -1,0 +1,280 @@
+src/modules/running/catalog.ts:64:    description: "Endurance, economia e maior uso de gordura como substrato.",
+src/services/nutrition/nutrition.adapter.ts:3: * para o formato usado no estado/UI do app (refeicoes[] + macros pt-BR).
+src/services/nutrition/nutrition.adapter.ts:10:  proteina: number;
+src/services/nutrition/nutrition.adapter.ts:11:  carboidratos: number;
+src/services/nutrition/nutrition.adapter.ts:12:  gorduras: number;
+src/services/nutrition/nutrition.adapter.ts:23:    proteina?: number;
+src/services/nutrition/nutrition.adapter.ts:24:    carboidratos?: number;
+src/services/nutrition/nutrition.adapter.ts:25:    gorduras?: number;
+src/services/nutrition/nutrition.adapter.ts:31:  macros: MfMacros;
+src/services/nutrition/nutrition.adapter.ts:83:        proteina: n(it?.proteinG ?? it?.protein ?? it?.proteina ?? 0),
+src/services/nutrition/nutrition.adapter.ts:84:        carboidratos: n(it?.carbsG ?? it?.carbs ?? it?.carboidratos ?? 0),
+src/services/nutrition/nutrition.adapter.ts:85:        gorduras: n(it?.fatG ?? it?.fat ?? it?.gorduras ?? 0),
+src/services/nutrition/nutrition.adapter.ts:100: * Normaliza macros vindos do ActivePlan (podem ser proteinG/carbsG/fatG ou protein/carbs/fat)
+src/services/nutrition/nutrition.adapter.ts:101: * para o formato do app (proteina/carboidratos/gorduras/calorias).
+src/services/nutrition/nutrition.adapter.ts:103:export function adaptMacrosToPtBR(macros: any, kcalFallback = 0): MfMacros {
+src/services/nutrition/nutrition.adapter.ts:105:    n(macros?.calorias ?? macros?.kcal ?? macros?.kcalTarget ?? macros?.calories ?? kcalFallback, kcalFallback);
+src/services/nutrition/nutrition.adapter.ts:107:  const proteina = n(macros?.proteina ?? macros?.proteinG ?? macros?.protein ?? 0);
+src/services/nutrition/nutrition.adapter.ts:108:  const carboidratos = n(macros?.carboidratos ?? macros?.carbsG ?? macros?.carbs ?? 0);
+src/services/nutrition/nutrition.adapter.ts:109:  const gorduras = n(macros?.gorduras ?? macros?.fatG ?? macros?.fat ?? 0);
+src/services/nutrition/nutrition.adapter.ts:111:  return { calorias, proteina, carboidratos, gorduras };
+src/services/nutrition/nutrition.adapter.ts:134:      nutrition?.caloriasAlvo ??
+src/services/nutrition/nutrition.adapter.ts:142:  const macros = adaptMacrosToPtBR(nutrition?.macros ?? nutrition, kcalTargetNum);
+src/services/nutrition/nutrition.adapter.ts:144:  return { macros, refeicoes, kcalTarget, meals: mealsArr };
+src/pages/PlanosAtivos.tsx:46:  const macros = activePlan?.nutrition?.macros ?? null;
+src/pages/PlanosAtivos.tsx:73:    // Se houver plano ativo com meals/macros e nutricao ainda nao estiver hidratada, popula no formato do app.
+src/pages/PlanosAtivos.tsx:76:      const hasMacros = !!(state as any)?.nutricao?.macros;
+src/pages/PlanosAtivos.tsx:81:            macros: adapted.macros,
+src/pages/PlanosAtivos.tsx:240:                    {macros ? `${macros.protein ?? "—"}g P • ${macros.carbs ?? "—"}g C • ${macros.fat ?? "—"}g G` : "—"}
+src/pages/EditDiet.tsx:35:    "- Calorias e macros",
+src/pages/EditDiet.tsx:69:const SUBSTITUTOS_DATABASE: Record<string, { nome: string; calorias: number; proteinas: number; carboidratos: number; gorduras: number }[]> = {
+src/pages/EditDiet.tsx:70:  'proteina-animal': [
+src/pages/EditDiet.tsx:71:    { nome: 'Peito de Frango Grelhado', calorias: 165, proteinas: 31, carboidratos: 0, gorduras: 3.6 },
+src/pages/EditDiet.tsx:72:    { nome: 'Filé de Tilápia', calorias: 129, proteinas: 26, carboidratos: 0, gorduras: 2.7 },
+src/pages/EditDiet.tsx:73:    { nome: 'Atum em Água', calorias: 132, proteinas: 29, carboidratos: 0, gorduras: 1.3 },
+src/pages/EditDiet.tsx:74:    { nome: 'Salmão Grelhado', calorias: 206, proteinas: 22, carboidratos: 0, gorduras: 13 },
+src/pages/EditDiet.tsx:75:    { nome: 'Peito de Peru Fatiado', calorias: 111, proteinas: 24, carboidratos: 0.6, gorduras: 1 },
+src/pages/EditDiet.tsx:76:    { nome: 'Ovo Inteiro Cozido', calorias: 155, proteinas: 13, carboidratos: 1.1, gorduras: 11 },
+src/pages/EditDiet.tsx:77:    { nome: 'Clara de Ovo', calorias: 52, proteinas: 11, carboidratos: 0.7, gorduras: 0.2 },
+src/pages/EditDiet.tsx:78:    { nome: 'Patinho Moído Magro', calorias: 176, proteinas: 26, carboidratos: 0, gorduras: 7.5 },
+src/pages/EditDiet.tsx:79:    { nome: 'Sardinha em Conserva', calorias: 208, proteinas: 25, carboidratos: 0, gorduras: 11 },
+src/pages/EditDiet.tsx:80:    { nome: 'Camarão Cozido', calorias: 99, proteinas: 24, carboidratos: 0.2, gorduras: 0.3 },
+src/pages/EditDiet.tsx:81:    { nome: 'Bacalhau Dessalgado', calorias: 82, proteinas: 18, carboidratos: 0, gorduras: 0.7 },
+src/pages/EditDiet.tsx:82:    { nome: 'Alcatra Grelhada', calorias: 168, proteinas: 28, carboidratos: 0, gorduras: 5.8 }
+src/pages/EditDiet.tsx:84:  'proteina-vegetal': [
+src/pages/EditDiet.tsx:85:    { nome: 'Tofu Firme', calorias: 144, proteinas: 17, carboidratos: 3.5, gorduras: 9 },
+src/pages/EditDiet.tsx:86:    { nome: 'Tempeh', calorias: 193, proteinas: 19, carboidratos: 9, gorduras: 11 },
+src/pages/EditDiet.tsx:87:    { nome: 'Edamame Cozido', calorias: 122, proteinas: 11, carboidratos: 10, gorduras: 5 },
+src/pages/EditDiet.tsx:88:    { nome: 'Lentilha Cozida', calorias: 116, proteinas: 9, carboidratos: 20, gorduras: 0.4 },
+src/pages/EditDiet.tsx:89:    { nome: 'Grão de Bico Cozido', calorias: 164, proteinas: 9, carboidratos: 27, gorduras: 2.6 },
+src/pages/EditDiet.tsx:90:    { nome: 'Feijão Preto Cozido', calorias: 132, proteinas: 9, carboidratos: 24, gorduras: 0.5 },
+src/pages/EditDiet.tsx:91:    { nome: 'Quinoa Cozida', calorias: 120, proteinas: 4, carboidratos: 21, gorduras: 1.9 },
+src/pages/EditDiet.tsx:92:    { nome: 'Proteína de Soja Texturizada', calorias: 170, proteinas: 52, carboidratos: 30, gorduras: 1 },
+src/pages/EditDiet.tsx:93:    { nome: 'Ervilha Verde Cozida', calorias: 81, proteinas: 5, carboidratos: 14, gorduras: 0.4 },
+src/pages/EditDiet.tsx:94:    { nome: 'Seitan (Glúten de Trigo)', calorias: 120, proteinas: 25, carboidratos: 4, gorduras: 0.5 },
+src/pages/EditDiet.tsx:95:    { nome: 'Amendoim Cru', calorias: 567, proteinas: 26, carboidratos: 16, gorduras: 49 },
+src/pages/EditDiet.tsx:96:    { nome: 'Amêndoas', calorias: 579, proteinas: 21, carboidratos: 22, gorduras: 50 }
+src/pages/EditDiet.tsx:98:  'carboidrato': [
+src/pages/EditDiet.tsx:99:    { nome: 'Arroz Integral Cozido', calorias: 112, proteinas: 2.6, carboidratos: 24, gorduras: 0.9 },
+src/pages/EditDiet.tsx:100:    { nome: 'Arroz Branco Cozido', calorias: 130, proteinas: 2.7, carboidratos: 28, gorduras: 0.3 },
+src/pages/EditDiet.tsx:101:    { nome: 'Batata Doce Cozida', calorias: 86, proteinas: 1.6, carboidratos: 20, gorduras: 0.1 },
+src/pages/EditDiet.tsx:102:    { nome: 'Batata Inglesa Cozida', calorias: 87, proteinas: 2, carboidratos: 20, gorduras: 0.1 },
+src/pages/EditDiet.tsx:103:    { nome: 'Macarrão Integral Cozido', calorias: 124, proteinas: 5, carboidratos: 26, gorduras: 0.5 },
+src/pages/EditDiet.tsx:104:    { nome: 'Pão Integral', calorias: 247, proteinas: 13, carboidratos: 41, gorduras: 3.4 },
+src/pages/EditDiet.tsx:105:    { nome: 'Aveia em Flocos', calorias: 389, proteinas: 17, carboidratos: 66, gorduras: 7 },
+src/pages/EditDiet.tsx:106:    { nome: 'Tapioca', calorias: 358, proteinas: 0.2, carboidratos: 88, gorduras: 0.3 },
+src/pages/EditDiet.tsx:107:    { nome: 'Mandioca Cozida', calorias: 125, proteinas: 0.6, carboidratos: 30, gorduras: 0.3 },
+src/pages/EditDiet.tsx:108:    { nome: 'Cuscuz Marroquino', calorias: 112, proteinas: 3.8, carboidratos: 23, gorduras: 0.2 },
+src/pages/EditDiet.tsx:109:    { nome: 'Inhame Cozido', calorias: 118, proteinas: 1.5, carboidratos: 28, gorduras: 0.2 },
+src/pages/EditDiet.tsx:110:    { nome: 'Banana', calorias: 89, proteinas: 1.1, carboidratos: 23, gorduras: 0.3 }
+src/pages/EditDiet.tsx:112:  'gordura-saudavel': [
+src/pages/EditDiet.tsx:113:    { nome: 'Azeite de Oliva Extra Virgem', calorias: 884, proteinas: 0, carboidratos: 0, gorduras: 100 },
+src/pages/EditDiet.tsx:114:    { nome: 'Abacate', calorias: 160, proteinas: 2, carboidratos: 9, gorduras: 15 },
+src/pages/EditDiet.tsx:115:    { nome: 'Castanha do Pará', calorias: 656, proteinas: 14, carboidratos: 12, gorduras: 66 },
+src/pages/EditDiet.tsx:116:    { nome: 'Castanha de Caju', calorias: 553, proteinas: 18, carboidratos: 30, gorduras: 44 },
+src/pages/EditDiet.tsx:117:    { nome: 'Nozes', calorias: 654, proteinas: 15, carboidratos: 14, gorduras: 65 },
+src/pages/EditDiet.tsx:118:    { nome: 'Amêndoas', calorias: 579, proteinas: 21, carboidratos: 22, gorduras: 50 },
+src/pages/EditDiet.tsx:119:    { nome: 'Óleo de Coco', calorias: 862, proteinas: 0, carboidratos: 0, gorduras: 100 },
+src/pages/EditDiet.tsx:120:    { nome: 'Pasta de Amendoim Integral', calorias: 588, proteinas: 25, carboidratos: 20, gorduras: 50 },
+src/pages/EditDiet.tsx:121:    { nome: 'Semente de Chia', calorias: 486, proteinas: 17, carboidratos: 42, gorduras: 31 },
+src/pages/EditDiet.tsx:122:    { nome: 'Semente de Linhaça', calorias: 534, proteinas: 18, carboidratos: 29, gorduras: 42 },
+src/pages/EditDiet.tsx:123:    { nome: 'Gema de Ovo', calorias: 322, proteinas: 16, carboidratos: 3.6, gorduras: 27 },
+src/pages/EditDiet.tsx:124:    { nome: 'Salmão (gordura natural)', calorias: 206, proteinas: 22, carboidratos: 0, gorduras: 13 }
+src/pages/EditDiet.tsx:127:    { nome: 'Leite Desnatado', calorias: 34, proteinas: 3.4, carboidratos: 5, gorduras: 0.1 },
+src/pages/EditDiet.tsx:128:    { nome: 'Leite Integral', calorias: 61, proteinas: 3.2, carboidratos: 4.8, gorduras: 3.3 },
+src/pages/EditDiet.tsx:129:    { nome: 'Iogurte Grego Natural 0%', calorias: 59, proteinas: 10, carboidratos: 3.6, gorduras: 0.4 },
+src/pages/EditDiet.tsx:130:    { nome: 'Iogurte Natural Integral', calorias: 61, proteinas: 3.5, carboidratos: 4.7, gorduras: 3.3 },
+src/pages/EditDiet.tsx:131:    { nome: 'Queijo Cottage', calorias: 98, proteinas: 11, carboidratos: 3.4, gorduras: 4.3 },
+src/pages/EditDiet.tsx:132:    { nome: 'Queijo Minas Frescal', calorias: 264, proteinas: 17, carboidratos: 3.2, gorduras: 21 },
+src/pages/EditDiet.tsx:133:    { nome: 'Ricota Fresca', calorias: 174, proteinas: 11, carboidratos: 3.4, gorduras: 13 },
+src/pages/EditDiet.tsx:134:    { nome: 'Requeijão Light', calorias: 180, proteinas: 8, carboidratos: 3, gorduras: 15 },
+src/pages/EditDiet.tsx:135:    { nome: 'Whey Protein Isolado', calorias: 110, proteinas: 25, carboidratos: 2, gorduras: 0.5 },
+src/pages/EditDiet.tsx:136:    { nome: 'Kefir Natural', calorias: 41, proteinas: 3.3, carboidratos: 4.5, gorduras: 1 },
+src/pages/EditDiet.tsx:137:    { nome: 'Leite de Búfala', calorias: 97, proteinas: 3.8, carboidratos: 5.2, gorduras: 6.9 },
+src/pages/EditDiet.tsx:138:    { nome: 'Coalhada Natural', calorias: 45, proteinas: 3.4, carboidratos: 5, gorduras: 1.1 }
+src/pages/EditDiet.tsx:141:    { nome: 'Brócolis Cozido', calorias: 35, proteinas: 2.4, carboidratos: 7, gorduras: 0.4 },
+src/pages/EditDiet.tsx:142:    { nome: 'Couve-Flor', calorias: 25, proteinas: 1.9, carboidratos: 5, gorduras: 0.3 },
+src/pages/EditDiet.tsx:143:    { nome: 'Espinafre', calorias: 23, proteinas: 2.9, carboidratos: 3.6, gorduras: 0.4 },
+src/pages/EditDiet.tsx:144:    { nome: 'Abobrinha', calorias: 17, proteinas: 1.2, carboidratos: 3.1, gorduras: 0.3 },
+src/pages/EditDiet.tsx:145:    { nome: 'Tomate', calorias: 18, proteinas: 0.9, carboidratos: 3.9, gorduras: 0.2 },
+src/pages/EditDiet.tsx:146:    { nome: 'Alface Americana', calorias: 14, proteinas: 0.9, carboidratos: 2.9, gorduras: 0.1 },
+src/pages/EditDiet.tsx:147:    { nome: 'Cenoura', calorias: 41, proteinas: 0.9, carboidratos: 10, gorduras: 0.2 },
+src/pages/EditDiet.tsx:148:    { nome: 'Pepino', calorias: 15, proteinas: 0.7, carboidratos: 3.6, gorduras: 0.1 },
+src/pages/EditDiet.tsx:149:    { nome: 'Berinjela', calorias: 25, proteinas: 1, carboidratos: 6, gorduras: 0.2 },
+src/pages/EditDiet.tsx:150:    { nome: 'Rúcula', calorias: 25, proteinas: 2.6, carboidratos: 3.7, gorduras: 0.7 },
+src/pages/EditDiet.tsx:151:    { nome: 'Aspargos', calorias: 20, proteinas: 2.2, carboidratos: 3.9, gorduras: 0.1 },
+src/pages/EditDiet.tsx:152:    { nome: 'Vagem', calorias: 31, proteinas: 1.8, carboidratos: 7, gorduras: 0.2 }
+src/pages/EditDiet.tsx:162:    return 'proteina-animal'
+src/pages/EditDiet.tsx:165:    return 'proteina-vegetal'
+src/pages/EditDiet.tsx:169:    return 'carboidrato'
+src/pages/EditDiet.tsx:172:    return 'gordura-saudavel'
+src/pages/EditDiet.tsx:181:function ajustarGramas(alimentoOriginal: AlimentoRefeicao, substituto: typeof SUBSTITUTOS_DATABASE.proteina_animal[0]): number {
+src/pages/EditDiet.tsx:211:  const handleSubstituir = (refeicaoIdx: number, alimentoIdx: number, substituto: typeof SUBSTITUTOS_DATABASE.proteina_animal[0]) => {
+src/pages/EditDiet.tsx:223:      proteinas: substituto.proteinas * fatorAjuste,
+src/pages/EditDiet.tsx:224:      carboidratos: substituto.carboidratos * fatorAjuste,
+src/pages/EditDiet.tsx:225:      gorduras: substituto.gorduras * fatorAjuste
+src/pages/EditDiet.tsx:364:                                        <span className="text-red-400">{(substituto.proteinas * fator).toFixed(1)}g P</span>
+src/pages/EditDiet.tsx:365:                                        <span className="text-yellow-400">{(substituto.carboidratos * fator).toFixed(1)}g C</span>
+src/pages/EditDiet.tsx:366:                                        <span className="text-[#1E6BFF]">{(substituto.gorduras * fator).toFixed(1)}g G</span>
+src/pages/EditDiet.tsx:379:                      <span className="text-red-400">Proteínas: {alimento.proteinas.toFixed(1)}g</span>
+src/pages/EditDiet.tsx:380:                      <span className="text-yellow-400">Carbo: {alimento.carboidratos.toFixed(1)}g</span>
+src/pages/EditDiet.tsx:381:                      <span className="text-[#1E6BFF]">Gordura: {alimento.gorduras.toFixed(1)}g</span>
+src/pages/Dashboard.tsx:59:      meta: state.nutricao?.macros.calorias || 2000
+src/pages/Dashboard.tsx:138:              <p className="text-xs text-muted-foreground truncate">Meta: {state.nutricao?.macros.calorias || 0}</p>
+src/pages/Dashboard.tsx:248:                  {state.nutricao.refeicoes.length} refeições • {state.nutricao.macros.calorias} kcal/dia
+src/services/nutrition/engine/nutritionEngine.ts:2:// Motor nutricional puro: REE/TDEE/macros + heurística de biotipo (sem pseudociência).
+src/services/nutrition/engine/nutritionEngine.ts:34:  proteina_g: number;
+src/services/nutrition/engine/nutritionEngine.ts:36:  gordura_g: number;
+src/services/nutrition/engine/nutritionEngine.ts:47:  macros: Macros;
+src/services/nutrition/engine/nutritionEngine.ts:71:export function reeMifflin(input: BodyInput): number {
+src/services/nutrition/engine/nutritionEngine.ts:74:  // Mifflin-St Jeor (kcal/d)
+src/services/nutrition/engine/nutritionEngine.ts:78:export function reeCunningham(massaMagraKg: number): number {
+src/services/nutrition/engine/nutritionEngine.ts:79:  // Cunningham (kcal/d)
+src/services/nutrition/engine/nutritionEngine.ts:87:  // Só usa Cunningham se massa magra for plausível
+src/services/nutrition/engine/nutritionEngine.ts:89:    notas.push("REE por Cunningham (massa magra informada).");
+src/services/nutrition/engine/nutritionEngine.ts:90:    return { ree: reeCunningham(mm), metodo: "cunningham", notas };
+src/services/nutrition/engine/nutritionEngine.ts:92:  notas.push("REE por Mifflin-St Jeor (default).");
+src/services/nutrition/engine/nutritionEngine.ts:93:  return { ree: reeMifflin(input), metodo: "mifflin", notas };
+src/services/nutrition/engine/nutritionEngine.ts:188:  if (opts.biotipo === "mesomorfo") notas.push("Heurística mesomorfo: distribuição equilibrada de macros.");
+src/services/nutrition/engine/nutritionEngine.ts:198:    macros: {
+src/services/nutrition/engine/nutritionEngine.ts:200:      proteina_g: round(p),
+src/services/nutrition/engine/nutritionEngine.ts:202:      gordura_g: round(f),
+src/pages/NutritionPlan.tsx:85:    macros: { calorias: 0, proteina: 0, carboidratos: 0, gorduras: 0 },
+src/pages/NutritionPlan.tsx:92:  const kcalTarget = nutricaoSafe?.macros?.calorias;
+src/pages/NutritionPlan.tsx:154:              {nutricaoSafe.refeicoes.length} refeições • {nutricaoSafe.macros.calorias} kcal/dia
+src/pages/NutritionPlan.tsx:203:                <p className="text-3xl font-bold text-green-400">{nutricaoSafe.macros.calorias}</p>
+src/pages/NutritionPlan.tsx:208:                <p className="text-3xl font-bold text-[#1E6BFF]">{nutricaoSafe.macros.proteina}</p>
+src/pages/NutritionPlan.tsx:213:                <p className="text-3xl font-bold text-yellow-400">{nutricaoSafe.macros.gorduras}</p>
+src/pages/NutritionPlan.tsx:218:                <p className="text-3xl font-bold text-[#1E6BFF]">{nutricaoSafe.macros.carboidratos}</p>
+src/pages/NutritionPlan.tsx:267:                <p className="text-gray-100 font-semibold">{dayTotals.proteinas.toFixed(1)} g</p>
+src/pages/NutritionPlan.tsx:271:                <p className="text-gray-100 font-semibold">{dayTotals.carboidratos.toFixed(1)} g</p>
+src/pages/NutritionPlan.tsx:275:                <p className="text-gray-100 font-semibold">{dayTotals.gorduras.toFixed(1)} g</p>
+src/pages/NutritionPlan.tsx:309:                        P: {totals.proteinas.toFixed(1)}g
+src/pages/NutritionPlan.tsx:312:                        C: {totals.carboidratos.toFixed(1)}g
+src/pages/NutritionPlan.tsx:315:                        G: {totals.gorduras.toFixed(1)}g
+src/pages/NutritionPlan.tsx:348:                                  <span className="font-medium">{alimento.proteinas.toFixed(1)}g</span>
+src/pages/NutritionPlan.tsx:353:                                  <span className="font-medium">{alimento.carboidratos.toFixed(1)}g</span>
+src/pages/NutritionPlan.tsx:358:                                  <span className="font-medium">{alimento.gorduras.toFixed(1)}g</span>
+src/pages/NutritionPlan.tsx:380:                                      const macrosSub = {
+src/pages/NutritionPlan.tsx:381:                                        calorias: Math.round((sub.macrosPor100g.calorias * alimento.gramas) / 100),
+src/pages/NutritionPlan.tsx:382:                                        proteinas: ((sub.macrosPor100g.proteinas * alimento.gramas) / 100).toFixed(1),
+src/pages/NutritionPlan.tsx:383:                                        carboidratos: ((sub.macrosPor100g.carboidratos * alimento.gramas) / 100).toFixed(1),
+src/pages/NutritionPlan.tsx:384:                                        gorduras: ((sub.macrosPor100g.gorduras * alimento.gramas) / 100).toFixed(1)
+src/pages/NutritionPlan.tsx:400:                                              {macrosSub.calorias} kcal
+src/pages/NutritionPlan.tsx:406:                                              <span className="ml-1 font-medium text-[#1E6BFF]">{macrosSub.proteinas}g</span>
+src/pages/NutritionPlan.tsx:410:                                              <span className="ml-1 font-medium text-green-400">{macrosSub.carboidratos}g</span>
+src/pages/NutritionPlan.tsx:414:                                              <span className="ml-1 font-medium text-yellow-400">{macrosSub.gorduras}g</span>
+src/pages/Report.tsx:132:  // MF_BLOCO6_REPORT_RESOLVER: resolver determinístico (state/perfil) para auditoria premium
+src/pages/Report.tsx:138:    const metabolismo: any =
+src/pages/Report.tsx:139:      pf?.metabolismo ??
+src/pages/Report.tsx:142:      st?.metabolismo ??
+src/pages/Report.tsx:154:    const macros: any =
+src/pages/Report.tsx:155:      (st?.macros ?? pf?.macros ?? pf?.macroSplit ?? null);
+src/pages/Report.tsx:157:    return { st, pf, metabolismo, dieta, macros };
+src/pages/Report.tsx:166:    const metabolismo = (state?.metabolismo ?? perfil?.metabolismo ?? perfil?.calculoMetabolico ?? state?.calculoMetabolico ?? null) as any;
+src/pages/Report.tsx:184:    // Metabolismo / GET
+src/pages/Report.tsx:185:    if (!metabolismo) warn("metabolismo", "Metabolismo não encontrado no estado. Relatório pode ficar incompleto");
+src/pages/Report.tsx:187:      ok("metabolismo", "Metabolismo disponível");
+src/pages/Report.tsx:188:      const tmb = Number(metabolismo?.tmb ?? NaN);
+src/pages/Report.tsx:189:      const get = Number(metabolismo?.get ?? metabolismo?.caloriasManutencao ?? NaN);
+src/pages/Report.tsx:190:      const fafFinal = Number(metabolismo?.fafFinal ?? metabolismo?.faf ?? NaN);
+src/pages/Report.tsx:194:        if (delta > 25) warn("get_consistencia", "GET parece inconsistente (Δ≈" + String(delta) + " kcal)");
+src/pages/Report.tsx:195:        else ok("get_consistencia", "GET consistente com TMB×FAF");
+src/pages/Report.tsx:197:        warn("get_consistencia", "Não foi possível auditar GET/TMB/FAF (valores ausentes)");
+src/pages/Report.tsx:201:    // Dieta / macros (se existir)
+src/pages/Report.tsx:203:    const pG = Number(dieta?.proteinas ?? dieta?.proteina ?? NaN);
+src/pages/Report.tsx:204:    const cG = Number(dieta?.carboidratos ?? dieta?.carboidrato ?? NaN);
+src/pages/Report.tsx:205:    const gG = Number(dieta?.gorduras ?? dieta?.gordura ?? NaN);
+src/pages/Report.tsx:210:      if (delta > 50) warn("kcal_macros", "Kcal vs macros com diferença (Δ≈" + String(delta) + " kcal)");
+src/pages/Report.tsx:211:      else ok("kcal_macros", "Kcal coerente com macros");
+src/pages/Report.tsx:213:      warn("kcal_macros", "Não foi possível auditar macros/kcal (dieta parcial)");
+src/pages/Report.tsx:216:    return { perfil, avaliacao, metabolismo, dieta, issues };
+src/pages/Report.tsx:245:                      Atividade semanal: <b className="text-white">{mfActivityWeeklyLabel(state?.metabolismo?.nivelAtividadeSemanal)}</b>
+src/pages/Report.tsx:260:                  {plan?.macros?.targetKcal ? `${Math.round(plan.macros?.targetKcal)} kcal` : "—"}
+src/pages/Report.tsx:263:                  {plan?.macros
+src/pages/Report.tsx:264:                    ? `P ${safeRound(plan.macros?.proteinG)}g • C ${safeRound(plan.macros?.carbG)}g • G ${safeRound(plan.macros?.fatG)}g`
+src/pages/Report.tsx:296:    adapted?.macros ? {
+src/pages/Report.tsx:302:        macros: adapted.macros,
+src/pages/Report.tsx:441:                  <p className="text-2xl font-bold text-[#1E6BFF]">{dietaAtiva.nutricao.macros.calorias}</p>
+src/pages/Report.tsx:446:                  <p className="text-2xl font-bold text-red-400">{dietaAtiva.nutricao.macros.proteina}g</p>
+src/pages/Report.tsx:451:                  <p className="text-2xl font-bold text-yellow-400">{dietaAtiva.nutricao.macros.carboidratos}g</p>
+src/pages/Report.tsx:456:                  <p className="text-2xl font-bold text-[#1E6BFF]">{dietaAtiva.nutricao.macros.gorduras}g</p>
+src/pages/Report.tsx:488:                            <span className="text-red-400">{alimento.proteinas.toFixed(1)}g P</span>
+src/pages/Report.tsx:489:                            <span className="text-yellow-400">{alimento.carboidratos.toFixed(1)}g C</span>
+src/pages/Report.tsx:490:                            <span className="text-[#1E6BFF]">{alimento.gorduras.toFixed(1)}g G</span>
+src/pages/Report.tsx:581:        {state.metabolismo && (
+src/pages/Report.tsx:592:                  <p className="text-xs text-gray-400 mb-1">TMB</p>
+src/pages/Report.tsx:593:                  <p className="text-2xl font-bold text-yellow-400">{state.metabolismo.tmb}</p>
+src/pages/Report.tsx:597:                  <p className="text-xs text-gray-400 mb-1">GET</p>
+src/pages/Report.tsx:598:                  <p className="text-2xl font-bold text-orange-400">{state.metabolismo.get}</p>
+src/pages/Report.tsx:604:                <p className="font-semibold capitalize">{state.metabolismo.equacaoUtilizada}</p>
+src/pages/Report.tsx:605:                <p className="text-xs text-gray-500 mt-2">{state.metabolismo.justificativa}</p>
+src/pages/Report.tsx:606:                {state.metabolismo.faixaSegura && (
+src/pages/Report.tsx:610:                      <span className="px-2 py-1 rounded bg-white/5 border border-white/10">Mínimo: <b className="text-white">{state.metabolismo.faixaSegura.minimo}</b> kcal</span>
+src/pages/Report.tsx:611:                      <span className="px-2 py-1 rounded bg-white/5 border border-white/10">Ideal: <b className="text-white">{state.metabolismo.faixaSegura.ideal}</b> kcal</span>
+src/pages/Report.tsx:612:                      <span className="px-2 py-1 rounded bg-white/5 border border-white/10">Máximo: <b className="text-white">{state.metabolismo.faixaSegura.maximo}</b> kcal</span>
+src/pages/Report.tsx:617:                        {state?.metabolismo?.ajusteBiotipoKcal ? (
+src/pages/Report.tsx:618:                          <span className="text-green-400"> • ajuste +{state.metabolismo.ajusteBiotipoKcal} kcal</span>
+src/pages/DashboardPremium.tsx:41:      // Adapter: normaliza nutrition para o shape do app (macros/refeicoes)
+src/pages/DashboardPremium.tsx:49:  const macros = adapted?.macros ?? activePlan?.nutrition?.macros ?? null;
+src/pages/DashboardPremium.tsx:192:                    {macros ? `${macros.protein ?? "—"}g P • ${macros.carbs ?? "—"}g C • ${macros.fat ?? "—"}g G` : "—"}
+src/pages/DashboardPremium.tsx:331:              <div className="text-xs text-gray-500">Meta: {(state.nutricao?.macros?.calorias ?? 0)}</div>
+src/services/nutrition/engine/nutritionEngine.demo.ts:15:    macros: plan.macros,
+src/lib/exportar-pdf.ts:95:    __src?.metabolismo?.nivelAtividadeSemanal ??
+src/lib/exportar-pdf.ts:143:    const { macros } = state.dietaAtiva.nutricao
+src/lib/exportar-pdf.ts:144:    doc.text(`Calorias: ${macros.calorias} kcal/dia`, 30, yPos)
+src/lib/exportar-pdf.ts:146:    doc.text(`Proteínas: ${macros.proteina}g`, 30, yPos)
+src/lib/exportar-pdf.ts:148:    doc.text(`Carboidratos: ${macros.carboidratos}g`, 30, yPos)
+src/lib/exportar-pdf.ts:150:    doc.text(`Gorduras: ${macros.gorduras}g`, 30, yPos)
+src/lib/exportar-pdf.ts:391:    const __macros = (__adapted?.macros ?? null);
+src/lib/exportar-pdf.ts:395:      !!(__macros && (
+src/lib/exportar-pdf.ts:396:        Number(__macros?.proteina || 0) > 0 ||
+src/lib/exportar-pdf.ts:397:        Number(__macros?.carboidratos || 0) > 0 ||
+src/lib/exportar-pdf.ts:398:        Number(__macros?.gorduras || 0) > 0 ||
+src/lib/exportar-pdf.ts:399:        Number(__macros?.calorias || 0) > 0
+src/lib/exportar-pdf.ts:405:    // Renderiza se houver evidência real de dieta (kcal+macros ou refeições)
+src/lib/exportar-pdf.ts:435:        const cal = Number(__macros?.calorias || 0);
+src/lib/exportar-pdf.ts:436:        const pG = Number(__macros?.proteina || 0);
+src/lib/exportar-pdf.ts:437:        const cG = Number(__macros?.carboidratos || 0);
+src/lib/exportar-pdf.ts:438:        const gG = Number(__macros?.gorduras || 0);
+src/components/steps/Step4Nutricao.tsx:21: * - baseKcal vem do metabolismo calculado (GET/TDEE preferencial; fallback: metaDiaria)
+src/components/steps/Step4Nutricao.tsx:23: * - clamp opcional pela faixa segura (quando disponível), preservando guardrails
+src/components/steps/Step4Nutricao.tsx:89:        // Mantemos genérico: Step4 costuma consolidar dados de dieta/macros/calorias
+src/components/steps/Step4Nutricao.tsx:91:        metabolismo: (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? undefined,
+src/components/steps/Step4Nutricao.tsx:93:        macros: (state as any)?.macros ?? undefined };
+src/components/steps/Step4Nutricao.tsx:168:    const calorias = state.metabolismo?.caloriasAlvo || 2000
+src/components/steps/Step4Nutricao.tsx:177:    const proteina = Math.round(peso * 2) // 2g/kg
+src/components/steps/Step4Nutricao.tsx:178:    const gorduras = Math.round(peso * 1) // 1g/kg
+src/components/steps/Step4Nutricao.tsx:179:    const caloriasRestantes = caloriasFinais - (proteina * 4 + gorduras * 9)
+src/components/steps/Step4Nutricao.tsx:180:    let carboidratos = Math.round(caloriasRestantes / 4);
+src/components/steps/Step4Nutricao.tsx:182:    // MF_BLOCO4_GUARDRAILS_V2: consistência kcal ↔ macros (ajusta carboidratos mantendo proteína/gordura)
+src/components/steps/Step4Nutricao.tsx:183:    const kcalFixas = (proteina * 4) + (gorduras * 9);
+src/components/steps/Step4Nutricao.tsx:188:    carboidratos = mfClampSSOT(carboFix, 0, 900);
+src/components/steps/Step4Nutricao.tsx:190:    const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
+src/components/steps/Step4Nutricao.tsx:218:        // Café da manhã: carboidrato + fruta + proteína + gordura
+src/components/steps/Step4Nutricao.tsx:258:        // Almoço/Jantar: carboidrato + proteína + legume + folhoso + gordura
+src/components/steps/Step4Nutricao.tsx:260:        const proteina = isVegano
+src/components/steps/Step4Nutricao.tsx:265:        const gordura = alimentosPermitidos.find(a => a.id === 'azeite')!
+src/components/steps/Step4Nutricao.tsx:281:            ...calcularMacros(proteina.id, gramasProteina)!,
+src/components/steps/Step4Nutricao.tsx:282:            alimentoId: proteina.id,
+src/components/steps/Step4Nutricao.tsx:283:            nome: proteina.nome,
+src/components/steps/Step4Nutricao.tsx:299:            ...calcularMacros(gordura.id, gramasGordura)!,
+src/components/steps/Step4Nutricao.tsx:300:            alimentoId: gordura.id,
+src/components/steps/Step4Nutricao.tsx:301:            nome: gordura.nome,
+src/components/steps/Step4Nutricao.tsx:306:        // Lanche: fruta + proteína + gordura
+src/components/steps/Step4Nutricao.tsx:308:        const proteina = isVegano
+src/components/steps/Step4Nutricao.tsx:311:        const gordura = alimentosPermitidos.find(a => a.id === 'castanhas')!
+src/components/steps/Step4Nutricao.tsx:325:            ...calcularMacros(proteina.id, gramasProteina)!,
+src/components/steps/Step4Nutricao.tsx:326:            alimentoId: proteina.id,
+src/components/steps/Step4Nutricao.tsx:327:            nome: proteina.nome,
+src/components/steps/Step4Nutricao.tsx:331:            ...calcularMacros(gordura.id, gramasGordura)!,
+src/components/steps/Step4Nutricao.tsx:332:            alimentoId: gordura.id,
+src/components/steps/Step4Nutricao.tsx:333:            nome: gordura.nome,
+src/components/steps/Step4Nutricao.tsx:338:        // Ceia: proteína leve + gordura
+src/components/steps/Step4Nutricao.tsx:339:        const proteina = isVegano
+src/components/steps/Step4Nutricao.tsx:349:            ...calcularMacros(proteina.id, gramasProteina)!,
+src/components/steps/Step4Nutricao.tsx:350:            alimentoId: proteina.id,
+src/components/steps/Step4Nutricao.tsx:351:            nome: proteina.nome,
+src/components/steps/Step4Nutricao.tsx:374:      kcalAlvo: __mfKcalAlvo,
+src/components/steps/Step4Nutricao.tsx:376:      macros: {
+src/components/steps/Step4Nutricao.tsx:377:        proteina,

@@ -1,0 +1,130 @@
+     1 | import { useMemo } from "react";
+     2 | 
+     3 | type AnyObj = Record<string, any>;
+     4 | 
+     5 | export type TreinoAtivoViewProps = {
+     6 |   treinoAtivo: AnyObj;
+     7 | };
+     8 | 
+     9 | function fmtDate(v: any, locale = "pt-BR") {
+    10 |   if (!v) return "—";
+    11 |   try {
+    12 |     const d = typeof v === "string" || typeof v === "number" ? new Date(v) : v;
+    13 |     if (d instanceof Date && !Number.isNaN(d.getTime())) {
+    14 |       return d.toLocaleDateString(locale);
+    15 |     }
+    16 |   } catch {}
+    17 |   return String(v);
+    18 | }
+    19 | 
+    20 | function safeArray(v: any): any[] {
+    21 |   return Array.isArray(v) ? v : [];
+    22 | }
+    23 | 
+    24 | export function TreinoAtivoView({ treinoAtivo }: TreinoAtivoViewProps) {
+    25 |   const view = useMemo(() => {
+    26 |     const t = (treinoAtivo || {}) as AnyObj;
+    27 | 
+    28 |     const treino = (t.treino || t.plan || t.programa || {}) as AnyObj;
+    29 |     const estrategia = (t.estrategia || treino.estrategia || "Treino individualizado") as string;
+    30 | 
+    31 |     const dataInicio = t.dataInicio ?? t.inicio ?? treino.dataInicio;
+    32 |     const dataFim = t.dataFim ?? t.fim ?? treino.dataFim;
+    33 |     const duracaoSemanas = Number.isFinite(t.duracaoSemanas) ? t.duracaoSemanas : (Number.isFinite(t.semanas) ? t.semanas : 4);
+    34 | 
+    35 |     // tentativas comuns de estrutura:
+    36 |     // treino.treinos[] => [{ dia: "A", exercicios: [...] }]
+    37 |     // treino.dias[]    => [{ nome: "Seg", exercicios: [...] }]
+    38 |     // weekPlan[]       => [{ dayLabel, exercises: [...] }]
+    39 |     const dias =
+    40 |       safeArray(treino.treinos).length ? safeArray(treino.treinos) :
+    41 |       safeArray(treino.dias).length ? safeArray(treino.dias) :
+    42 |       safeArray(treino.weekPlan).length ? safeArray(treino.weekPlan) :
+    43 |       [];
+    44 | 
+    45 |     const diasFmt = dias.map((d: AnyObj, idx: number) => {
+    46 |       const label =
+    47 |         d?.dia ?? d?.nome ?? d?.dayLabel ?? d?.day ?? `Dia ${idx + 1}`;
+    48 | 
+    49 |       const exercicios =
+    50 |         safeArray(d?.exercicios).length ? safeArray(d.exercicios) :
+    51 |         safeArray(d?.exercises).length ? safeArray(d.exercises) :
+    52 |         [];
+    53 | 
+    54 |       const exFmt = exercicios.map((ex: AnyObj, j: number) => {
+    55 |         const nome = ex?.nome ?? ex?.name ?? ex?.titulo ?? `Exercício ${j + 1}`;
+    56 |         const series = ex?.series ?? ex?.sets;
+    57 |         const reps = ex?.reps ?? ex?.repeticoes;
+    58 |         const obs = ex?.observacao ?? ex?.nota ?? ex?.note ?? "";
+    59 |         return { nome: String(nome), series, reps, obs: String(obs || "") };
+    60 |       });
+    61 | 
+    62 |       return { label: String(label), exercicios: exFmt };
+    63 |     });
+    64 | 
+    65 |     return {
+    66 |       estrategia,
+    67 |       dataInicio,
+    68 |       dataFim,
+    69 |       duracaoSemanas,
+    70 |       dias: diasFmt,
+    71 |     };
+    72 |   }, [treinoAtivo]);
+    73 | 
+    74 |   return (
+    75 |     <div className="w-full">
+    76 |       <div className="rounded-2xl border border-white/10 bg-black/40 p-4 shadow-xl">
+    77 |         <div className="flex items-start justify-between gap-4">
+    78 |           <div className="min-w-0">
+    79 |             <div className="text-sm font-semibold text-white/90">Treino Ativo</div>
+    80 |             <div className="mt-1 text-xs text-white/60">
+    81 |               Estratégia: <span className="text-white/80">{view.estrategia}</span>
+    82 |             </div>
+    83 |             <div className="mt-1 text-xs text-white/60">
+    84 |               Período: <span className="text-white/80">{fmtDate(view.dataInicio)} → {fmtDate(view.dataFim)}</span>
+    85 |               {" • "}
+    86 |               Semanas: <span className="text-white/80">{view.duracaoSemanas}</span>
+    87 |             </div>
+    88 |           </div>
+    89 | 
+    90 |           <div className="shrink-0 rounded-xl bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/80">
+    91 |             {view.dias.length ? `${view.dias.length} dias` : "estrutura básica"}
+    92 |           </div>
+    93 |         </div>
+    94 | 
+    95 |         <div className="mt-4 space-y-3">
+    96 |           {view.dias.length ? (
+    97 |             view.dias.map((d, idx) => (
+    98 |               <div key={`${d.label}-${idx}`} className="rounded-2xl border border-white/10 bg-black/30 p-3">
+    99 |                 <div className="text-xs font-semibold text-white/85">{d.label}</div>
+   100 | 
+   101 |                 {d.exercicios.length ? (
+   102 |                   <ul className="mt-2 space-y-1">
+   103 |                     {d.exercicios.map((ex, j) => (
+   104 |                       <li key={`${ex.nome}-${j}`} className="text-[12px] text-white/70">
+   105 |                         <span className="text-white/85">{ex.nome}</span>
+   106 |                         {ex.series != null || ex.reps != null ? (
+   107 |                           <span className="text-white/55">
+   108 |                             {" "}
+   109 |                             • {ex.series ?? "—"}x{ex.reps ?? "—"}
+   110 |                           </span>
+   111 |                         ) : null}
+   112 |                         {ex.obs ? <span className="text-white/45"> • {ex.obs}</span> : null}
+   113 |                       </li>
+   114 |                     ))}
+   115 |                   </ul>
+   116 |                 ) : (
+   117 |                   <div className="mt-2 text-[12px] text-white/45">Exercícios não informados nessa estrutura.</div>
+   118 |                 )}
+   119 |               </div>
+   120 |             ))
+   121 |           ) : (
+   122 |             <div className="rounded-2xl border border-white/10 bg-black/30 p-3 text-[12px] text-white/55">
+   123 |               Não encontrei uma lista de dias/exercícios no objeto atual. (Tudo certo: isso não quebra o app.)
+   124 |             </div>
+   125 |           )}
+   126 |         </div>
+   127 |       </div>
+   128 |     </div>
+   129 |   );
+   130 | }

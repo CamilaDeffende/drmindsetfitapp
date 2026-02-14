@@ -1,0 +1,241 @@
+   213 |               <span className="font-semibold text-white">Impacto (Δ GET − TMB)</span>: {__delta} kcal/dia
+   214 |             </div>
+   215 |           </div>
+   216 |           <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
+   217 |             Esse delta representa o efeito do seu fator de atividade semanal sobre o gasto energético total (GET).
+   218 |             Não é “chute”: é a diferença matemática entre GET e TMB no seu cálculo atual.
+   219 |           </p>
+   220 |         </div>
+   221 | </h3>
+   222 |           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+   223 |             Prévia objetiva da sua semana. O plano respeita seu nível e suas modalidades selecionadas.
+   224 |           </p>
+   225 |         </div>
+   226 |         <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">
+   227 |           {(__mfModalities.length || 1)} modalidade(s)
+   228 |         </span>
+   229 |       </div>
+   230 | 
+   231 |       <div className="mt-4 grid gap-2">
+   232 |         {__mfSessions.slice(0, 7).map((x, i) => (
+   233 |           <div key={x?.day ?? i} className="rounded-xl border border-white/10 bg-black/10 px-3 py-2 flex items-center justify-between">
+   234 |             <div className="text-sm font-semibold">{String(x?.day ?? "Dia")}</div>
+   235 |             <div className="text-xs text-muted-foreground">{String(x?.title ?? x?.modalityKey ?? "")}</div>
+   236 |           </div>
+   237 |         ))}
+   238 |       </div>
+   239 | 
+   240 |       <div className="mt-3 text-[11px] text-muted-foreground">
+   241 |         Você pode ajustar detalhes do treino nas próximas etapas, se necessário.
+   242 |       </div>
+   243 |     </div>
+   244 |   ) : null;
+   245 | 
+   246 |   useEffect(() => {
+   247 |     if (state.perfil && state.avaliacao && !state.metabolismo) {
+   248 |       const calc = calcularMetabolismo(state.perfil, state.avaliacao)
+   249 | 
+   250 |       // GET by activity level (iniciante/intermediario/avancado)
+   251 |       const nivel = inferNivelTreinoFromState(state as any)
+   252 |       const fator = getActivityFactor(nivel)
+   253 |       const get = computeGET((calc as any).tmb, fator)
+   254 | 
+   255 |       ;(calc as any).nivelAtividade = nivel
+   256 |       ;(calc as any).fatorAtividade = fator
+   257 |       ;(calc as any).get = get
+   258 |     mfQueueCalc();
+   259 |       updateState({
+   260 | metabolismo: calc
+   261 |   ,
+   262 |   // MF_BLOCK14_CANONICALIZE_V1: espelha Step3 -> avaliacao (fonte da verdade do app)
+   263 |   avaliacao: {
+   264 |     ...((state as any)?.avaliacao ?? {}),
+   265 |     frequenciaAtividadeSemanal: mfPALKey,
+   266 |     biotipo: mfBioKey } } as any);} else if (state.metabolismo) {
+   267 |     mfQueueCalc();
+   268 |     }
+   269 |   }, [state.perfil, state.avaliacao, state.metabolismo, updateState])
+   270 | 
+   271 |   if (!resultado) {
+   272 |   return (
+   273 |       <div className="max-w-4xl mx-auto px-4 py-8">
+   274 | 
+   275 | <Card className="mt-4 border-white/10 bg-white/5">
+   276 |   <CardHeader className="pb-3">
+   277 |     <div className="flex items-center justify-between gap-3">
+   278 |       <div>
+   279 |         <CardTitle className="text-base sm:text-lg">Prévia do seu treino</CardTitle>
+   280 |         <p className="text-xs sm:text-sm text-muted-foreground">
+   281 |           Um resumo objetivo do protocolo semanal, baseado no seu metabolismo e perfil.
+   282 |         </p>
+   283 |       </div>
+   284 |       <Badge variant="secondary" className="border-white/10 bg-black/20">inteligente</Badge>
+   285 |     </div>
+   286 |   </CardHeader>
+   287 |   <CardContent className="pt-0">
+   288 |         {/* BEGIN_MF_UI_PAL_BIOTIPO_RENDER_V1 */}
+   289 |         <div className="mt-6 grid gap-4">
+   290 |           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+   291 |             <div className="flex items-center justify-between gap-3">
+   292 |               <div>
+   293 |                 <p className="text-sm font-semibold text-white">Frequência semanal</p>
+   294 |                 <p className="text-xs text-muted-foreground mt-1">Define o fator de atividade (PAL) usado no cálculo do GET.</p>
+   295 |               </div>
+   296 |               <Badge className="bg-white/10 text-white border-white/10">PAL</Badge>
+   297 |             </div>
+   298 | 
+   299 |             <div className="mt-3 grid gap-2">
+   300 |               {MF_AF_OPTIONS.map((opt) => {
+   301 |                 const active = mfPALKey === opt.key;
+   302 |                 return (
+   303 |                   <button
+   304 |                     key={opt.key}
+   305 |                     type="button"
+   306 |                     onClick={() => setMfPALKey(opt.key)}
+   307 |                     className={[
+   308 |                       "w-full text-left rounded-xl border px-3 py-3 transition",
+   309 |                       active ? "border-white/30 bg-white/10" : "border-white/10 bg-black/10 hover:bg-white/5"
+   310 |                     ].join(" ")}
+   311 |                   >
+   312 |                     <div className="flex items-center justify-between gap-3">
+   313 |                       <div>
+   314 |                         <div className="text-sm font-semibold text-white">{opt.label}</div>
+   315 |                         <div className="text-[11px] text-muted-foreground mt-1">{opt.desc}</div>
+   316 |                       </div>
+   317 |                       <span className="text-[11px] px-2 py-1 rounded-full border border-white/10 bg-white/5 text-muted-foreground">
+   318 |                         PAL {opt.pal}
+   319 |                       </span>
+   320 |                     </div>
+   321 |                   </button>
+   322 |                 );
+   323 |               })}
+   324 |             </div>
+   325 |           </div>
+   326 | 
+   327 |           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+   328 |             <div className="flex items-center justify-between gap-3">
+   329 |               <div>
+   330 |                 <p className="text-sm font-semibold text-white">Biotipo (tendência prática)</p>
+   331 |                 <p className="text-xs text-muted-foreground mt-1">Não é diagnóstico. Serve para ajustar estratégia do plano.</p>
+   332 |               </div>
+   333 |               <Badge className="bg-white/10 text-white border-white/10">Estratégia</Badge>
+   334 |             </div>
+   335 | 
+   336 |             <div className="mt-3 grid gap-2">
+   337 |               {MF_BIOTIPO_OPTIONS.map((opt) => {
+   338 |                 const active = mfBioKey === opt.key;
+   339 |                 return (
+   340 |                   <button
+   341 |                     key={opt.key}
+   342 |                     type="button"
+   343 |                     onClick={() => setMfBioKey(opt.key)}
+   344 |                     className={[
+   345 |                       "w-full text-left rounded-xl border px-3 py-3 transition",
+   346 |                       active ? "border-white/30 bg-white/10" : "border-white/10 bg-black/10 hover:bg-white/5"
+   347 |                     ].join(" ")}
+   348 |                   >
+   349 |                     <div className="text-sm font-semibold text-white">{opt.label}</div>
+   350 |                     <div className="text-[11px] text-muted-foreground mt-1">{opt.desc}</div>
+   351 |                   </button>
+   352 |                 );
+   353 |               })}
+   354 |             </div>
+   355 |           </div>
+   356 |         </div>
+   357 |         {/* END_MF_UI_PAL_BIOTIPO_RENDER_V1 */}
+   358 | 
+   359 |     <div className="text-sm text-muted-foreground">
+   360 |       Conclua as próximas etapas para gerar o protocolo completo com dias, modalidades e progressão.
+   361 |     </div>
+   362 |   </CardContent>
+   363 | </Card>
+   364 | 
+   365 |       {__mfTreinoPreview}
+   366 | 
+   367 |         
+   368 |         
+   369 |         <div className="space-y-2">
+   370 |           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Metabolismo e energia diária</h1>
+   371 |           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+   372 |             Aqui estimamos seu gasto energético (TMB e gasto total diário) com base no seu perfil.
+   373 |             Esse número vira a referência para calorias e macros — deixando o plano mais consistente e sustentável.
+   374 |           </p>
+   375 |         </div>
+   376 | 
+   377 |         <Card>
+   378 |           <CardContent className="py-12 text-center">
+   379 |             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E6BFF] mx-auto mb-4"></div>
+   380 |             <p className="text-muted-foreground">Calculando seu gasto diário…</p>
+   381 |           </CardContent>
+   382 |         </Card>
+   383 |       </div>
+   384 |     )
+   385 |   }
+   386 | 
+   387 |   const nomeEquacoes: Record<string, string> = {
+   388 |     cunningham: 'Cunningham',
+   389 |     'fao-who': 'FAO/WHO',
+   390 |     'harris-benedict': 'Harris-Benedict',
+   391 |     mifflin: 'Mifflin-St Jeor',
+   392 |     tinsley: 'Tinsley'
+   393 |   }
+   394 | 
+   395 |   return (
+   396 |     <div className="max-w-4xl mx-auto px-4 py-8">
+   397 |       <div className="mb-8 text-center">
+   398 |         <div className="mb-4 flex items-center justify-center">
+   399 |           <BrandIcon size={64} />
+   400 |         </div>
+   401 |         <h2 className="text-3xl font-bold mb-2">Metabolismo calibrado</h2>
+   402 |         <p className="text-muted-foreground">Base científica para definir calorias e macros com segurança.</p>
+   403 |       </div>
+   404 | 
+   405 |       {/* Equação Escolhida */}
+   406 |       <Alert className="mb-6 border-[#1E6BFF]/40 bg-[#1E6BFF]/10">
+   407 |         <CheckCircle2 className="h-5 w-5 text-[#00B7FF]" />
+   408 |         <AlertTitle className="text-white font-bold">
+   409 |           Equação escolhida: {nomeEquacoes[resultado.equacaoUtilizada]}
+   410 |         </AlertTitle>
+   411 |         <AlertDescription className="text-white/80">
+   412 |           {resultado.justificativa}
+   413 |         </AlertDescription>
+   414 |       </Alert>
+   415 | 
+   416 |       {/* Resultados Principais */}
+   417 |       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+   418 |         <Card>
+   419 |           <CardHeader className="pb-3">
+   420 |             <CardDescription>TMB (repouso)</CardDescription>
+   421 | 
+   422 |           
+   423 |           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+   424 |             <div className="flex items-center justify-between gap-3">
+   425 |               <div>
+   426 |                 <div className="text-[11px] uppercase tracking-wider text-gray-400">Seu protocolo semanal</div>
+   427 |                 <div className="text-base sm:text-lg font-semibold text-white">Semana completa • por modalidade • sem mistura</div>
+   428 |               </div>
+   429 |               <div className="text-[11px] text-gray-400 text-right">
+   430 |                 Visual premium • leitura rápida
+   431 |               </div>
+   432 |             </div>
+   433 | 
+   434 |             
+   435 | 
+   436 |             <div className="mt-3 text-xs text-gray-400">
+   437 |               Dica: cada dia respeita a modalidade escolhida. Musculação mostra grupamentos; corrida/bike/crossfit/funcional mostram sessão completa.
+   438 |             </div>
+   439 |           </div>
+   440 |   
+   441 |             <CardTitle className="text-3xl font-bold text-[#1E6BFF]">
+   442 |               {resultado.tmb}
+   443 |               <span className="text-lg font-normal text-muted-foreground ml-1">kcal</span>
+   444 |             </CardTitle>
+   445 |           </CardHeader>
+   446 |           <CardContent>
+   447 |             <p className="text-xs text-muted-foreground">Energia mínima para manter funções vitais.</p>
+   448 |           </CardContent>
+   449 |         </Card>
+   450 | 
+   451 |         <Card>
+   452 |           <CardHeader className="pb-3">
+   453 |             <CardDescription>GET (dia todo)</CardDescription>

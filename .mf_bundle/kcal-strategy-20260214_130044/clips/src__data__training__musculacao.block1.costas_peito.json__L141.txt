@@ -1,0 +1,200 @@
+    21 |             "Encurtar a amplitude.",
+    22 |             "Perder alinhamento da coluna."
+    23 |           ],
+    24 |           "variations": [
+    25 |             "Remada unilateral com halter apoiado",
+    26 |             "Remada curvada com barra",
+    27 |             "Remada em banco inclinado com halteres"
+    28 |           ]
+    29 |         },
+    30 |         {
+    31 |           "name": "Pullover com halter",
+    32 |           "goal": "Aumentar a ativação dos dorsais com padrão de extensão de ombro.",
+    33 |           "execution": [
+    34 |             "Deite em banco segurando o halter com os braços estendidos.",
+    35 |             "Leve o halter atrás da cabeça com controle.",
+    36 |             "Retorne à posição inicial ativando as costas."
+    37 |           ],
+    38 |           "focus": "Dorsais e serrátil.",
+    39 |           "cues": [
+    40 |             "Braços semi-estendidos.",
+    41 |             "Movimento amplo e controlado.",
+    42 |             "Estabilidade do tronco."
+    43 |           ],
+    44 |           "common_errors": [
+    45 |             "Flexionar excessivamente os cotovelos.",
+    46 |             "Perder controle na fase excêntrica.",
+    47 |             "Amplitude reduzida."
+    48 |           ],
+    49 |           "variations": [
+    50 |             "Pullover com barra",
+    51 |             "Pullover no cabo",
+    52 |             "Pullover em máquina"
+    53 |           ]
+    54 |         }
+    55 |       ],
+    56 |       "maquinas": [
+    57 |         {
+    58 |           "name": "Puxada frontal na máquina",
+    59 |           "goal": "Desenvolver largura e controle dos dorsais.",
+    60 |           "execution": [
+    61 |             "Ajuste o assento e segure a barra.",
+    62 |             "Puxe a barra em direção ao peito.",
+    63 |             "Retorne lentamente mantendo tensão."
+    64 |           ],
+    65 |           "focus": "Dorsais e redondo maior.",
+    66 |           "cues": [
+    67 |             "Escápulas ativas.",
+    68 |             "Cotovelos para baixo e para trás.",
+    69 |             "Movimento fluido."
+    70 |           ],
+    71 |           "common_errors": [
+    72 |             "Usar impulso excessivo.",
+    73 |             "Descer a barra em trajetória incorreta.",
+    74 |             "Relaxar na subida."
+    75 |           ],
+    76 |           "variations": [
+    77 |             "Puxada neutra na máquina",
+    78 |             "Puxada aberta na máquina",
+    79 |             "Puxada unilateral na máquina"
+    80 |           ]
+    81 |         }
+    82 |       ],
+    83 |       "cabos": [
+    84 |         {
+    85 |           "name": "Remada baixa no cabo",
+    86 |           "goal": "Aumentar espessura e controle das costas.",
+    87 |           "execution": [
+    88 |             "Sente-se e segure o pegador.",
+    89 |             "Puxe o cabo em direção ao abdômen.",
+    90 |             "Retorne de forma controlada."
+    91 |           ],
+    92 |           "focus": "Dorsais e romboides.",
+    93 |           "cues": [
+    94 |             "Peito projetado.",
+    95 |             "Cotovelos próximos ao corpo.",
+    96 |             "Controle da fase final."
+    97 |           ],
+    98 |           "common_errors": [
+    99 |             "Arredondar a coluna.",
+   100 |             "Puxar apenas com os braços.",
+   101 |             "Perder tensão no retorno."
+   102 |           ],
+   103 |           "variations": [
+   104 |             "Remada unilateral no cabo",
+   105 |             "Remada alta no cabo",
+   106 |             "Remada com corda no cabo"
+   107 |           ]
+   108 |         }
+   109 |       ]
+   110 |     },
+   111 |     "peito": {
+   112 |       "halteres": [
+   113 |         {
+   114 |           "name": "Supino reto com halteres",
+   115 |           "goal": "Desenvolver força e volume do peitoral.",
+   116 |           "execution": [
+   117 |             "Deite no banco segurando os halteres.",
+   118 |             "Desça os halteres até a linha do peito.",
+   119 |             "Empurre para cima mantendo controle."
+   120 |           ],
+   121 |           "focus": "Peitoral maior.",
+   122 |           "cues": [
+   123 |             "Escápulas estabilizadas.",
+   124 |             "Amplitude completa.",
+   125 |             "Movimento simétrico."
+   126 |           ],
+   127 |           "common_errors": [
+   128 |             "Descer pouco os halteres.",
+   129 |             "Perder estabilidade dos ombros.",
+   130 |             "Bater os halteres no topo."
+   131 |           ],
+   132 |           "variations": [
+   133 |             "Supino reto com barra",
+   134 |             "Supino reto na máquina",
+   135 |             "Supino reto no cabo"
+   136 |           ]
+   137 |         },
+   138 |         {
+   139 |           "name": "Crucifixo com halteres",
+   140 |           "goal": "Aumentar a ativação e controle do peitoral.",
+   141 |           "execution": [
+   142 |             "Deite no banco com braços semi-flexionados.",
+   143 |             "Abra os braços de forma controlada.",
+   144 |             "Feche retornando à posição inicial."
+   145 |           ],
+   146 |           "focus": "Peitoral maior.",
+   147 |           "cues": [
+   148 |             "Cotovelos levemente flexionados.",
+   149 |             "Movimento em arco.",
+   150 |             "Controle na descida."
+   151 |           ],
+   152 |           "common_errors": [
+   153 |             "Flexionar demais os cotovelos.",
+   154 |             "Amplitude excessiva.",
+   155 |             "Perder tensão no topo."
+   156 |           ],
+   157 |           "variations": [
+   158 |             "Crucifixo no banco inclinado",
+   159 |             "Crucifixo no cabo",
+   160 |             "Crucifixo na máquina"
+   161 |           ]
+   162 |         }
+   163 |       ],
+   164 |       "maquinas": [
+   165 |         {
+   166 |           "name": "Supino na máquina",
+   167 |           "goal": "Desenvolver peitoral com trajetória guiada.",
+   168 |           "execution": [
+   169 |             "Ajuste o banco e pegue as alças.",
+   170 |             "Empurre as alças à frente.",
+   171 |             "Retorne de forma controlada."
+   172 |           ],
+   173 |           "focus": "Peitoral maior.",
+   174 |           "cues": [
+   175 |             "Movimento contínuo.",
+   176 |             "Escápulas estáveis.",
+   177 |             "Controle da resistência."
+   178 |           ],
+   179 |           "common_errors": [
+   180 |             "Ajuste incorreto do banco.",
+   181 |             "Empurrar com os ombros.",
+   182 |             "Relaxar no retorno."
+   183 |           ],
+   184 |           "variations": [
+   185 |             "Supino inclinado na máquina",
+   186 |             "Supino declinado na máquina",
+   187 |             "Supino unilateral na máquina"
+   188 |           ]
+   189 |         }
+   190 |       ],
+   191 |       "cabos": [
+   192 |         {
+   193 |           "name": "Crossover no cabo",
+   194 |           "goal": "Isolar e controlar o peitoral em amplitude contínua.",
+   195 |           "execution": [
+   196 |             "Segure os pegadores com braços abertos.",
+   197 |             "Feche os braços à frente do corpo.",
+   198 |             "Retorne lentamente."
+   199 |           ],
+   200 |           "focus": "Peitoral maior.",
+   201 |           "cues": [
+   202 |             "Trajetória em arco.",
+   203 |             "Tensão constante.",
+   204 |             "Controle no fechamento."
+   205 |           ],
+   206 |           "common_errors": [
+   207 |             "Usar carga excessiva.",
+   208 |             "Perder alinhamento dos braços.",
+   209 |             "Movimento curto."
+   210 |           ],
+   211 |           "variations": [
+   212 |             "Crossover alto",
+   213 |             "Crossover médio",
+   214 |             "Crossover baixo"
+   215 |           ]
+   216 |         }
+   217 |       ]
+   218 |     }
+   219 |   }
+   220 | }

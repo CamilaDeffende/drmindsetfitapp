@@ -1,0 +1,196 @@
+     1 | import { useEffect, useState } from "react";
+     2 | import { ensureTrainingPlanInActivePlan } from "../services/training/trainingPlan.ssot";
+     3 | import { getActiveTrainingSummaries } from "../services/training/activeTraining.bridge";
+     4 | import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+     5 | import { Card, CardContent } from '@/components/ui/card'
+     6 | import { Button } from '@/components/ui/button'
+     7 | import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+     8 | import { Home, Calendar, Download } from 'lucide-react'
+     9 | import { useNavigate } from 'react-router-dom'
+    10 | import { DietaAtivaView } from '@/components/planos/DietaAtivaView'
+    11 | import { TreinoAtivoView } from '@/components/planos/TreinoAtivoView'
+    12 | import type { DietaAtiva, TreinoAtivo } from '@/types'
+    13 | import { buildWeeklyPlan } from "@/features/fitness-suite/workouts/library";
+    14 | import { MODALITIES } from "@/features/fitness-suite/workouts/library";
+    15 | import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
+    16 | import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+    17 | import { getActivePlanNormalized } from "@/services/ssot/getActivePlanNormalized";
+    18 | 
+    19 | const HIDE_ADVANCED_MODALITY_UI = true;
+    20 | 
+    21 | export function PlanosAtivos() {
+    22 |   const __mfTrainingSummaries = getActiveTrainingSummaries();
+    23 | 
+    24 |   // MF_TRAINING_WORKOUTS_V2
+    25 |   const __mfActivePlanRaw = (typeof window !== "undefined") ? localStorage.getItem("mf:activePlan:v1") : null;
+    26 |   let __mfWorkouts: any[] = [];
+    27 |   try {
+    28 |     const ap = __mfActivePlanRaw ? JSON.parse(__mfActivePlanRaw) : {};
+    29 |     const ap2 = ensureTrainingPlanInActivePlan(ap);
+    30 |     __mfWorkouts = Array.isArray(ap2?.training?.workouts) ? ap2.training.workouts : [];
+    31 |   } catch {}
+    32 |   // BLOCO G1 (fonte única): PlanosAtivos apenas LÊ ActivePlan e renderiza (não calcula aqui).
+    33 |   const [activePlan, setActivePlan] = useState<any>(null);
+    34 |   const [planLoaded, setPlanLoaded] = useState(false);
+    35 | 
+    36 |   useEffect(() => {
+    37 |     try {
+    38 |       const p = getActivePlanNormalized();
+    39 |       setActivePlan(p);
+    40 |     } finally {
+    41 |       setPlanLoaded(true);
+    42 |     }
+    43 |   }, []);
+    44 | 
+    45 |   const kcal = activePlan?.nutrition?.kcalTarget ?? activePlan?.nutrition?.kcal ?? null;
+    46 |   const macros = activePlan?.nutrition?.macros ?? null;
+    47 |   const meals = activePlan?.nutrition?.meals ?? [];
+    48 |   
+    49 |   // __MF_NUTRITION_ADAPTER_V1__
+    50 |   const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
+    51 | const week = activePlan?.workout?.week ?? activePlan?.workout?.days ?? [];
+    52 | 
+    53 |   const { state, updateState } = useDrMindSetfit()
+    54 |   
+    55 | 
+    56 |   // Fonte da verdade do treino ativo (gerado no Step5)
+    57 |   const treinoPlan = (state as any)?.treino ?? (state as any)?.workoutProtocolWeekly?.treinoPlan ?? null;
+    58 | const navigate = useNavigate()
+    59 | 
+    60 |   const exportarPDF = async () => {
+    61 |     try {
+    62 |       const { exportarPDFCompleto } = await import('@/lib/exportar-pdf')
+    63 |       await exportarPDFCompleto(state, 0, 0, 0)
+    64 |     } catch (error) {
+    65 |       console.error('Erro ao exportar PDF:', error)
+    66 |       alert('Erro ao gerar PDF. Tente novamente.')
+    67 |     }
+    68 |   }
+    69 | 
+    70 |   // Inicializar planos ativos na primeira renderização (se ainda não existirem)
+    71 |   useEffect(() => {
+    72 |     // __MF_NUTRITION_ADAPTER_APPLY_V1__
+    73 |     // Se houver plano ativo com meals/macros e nutricao ainda nao estiver hidratada, popula no formato do app.
+    74 |     try {
+    75 |       const hasRef = !!(state as any)?.nutricao?.refeicoes?.length;
+    76 |       const hasMacros = !!(state as any)?.nutricao?.macros;
+    77 |       if ((!hasRef || !hasMacros) && adapted) {
+    78 |         updateState({
+    79 |           nutricao: {
+    80 |             ...(state as any).nutricao,
+    81 |             macros: adapted.macros,
+    82 |             refeicoes: adapted.refeicoes,
+    83 |           },
+    84 |         });
+    85 |       }
+    86 |     } catch {}
+    87 | 
+    88 |     // Criar dieta ativa se ainda não existir
+    89 |     if (state.nutricao && !state.dietaAtiva) {
+    90 |       const hoje = new Date()
+    91 |       const dataInicio = hoje.toISOString().split('T')[0]
+    92 |       const dataFim = new Date(hoje.getTime() + 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // +4 semanas
+    93 | 
+    94 |       const dietaAtiva: DietaAtiva = {
+    95 |         dataInicio,
+    96 |         dataFim,
+    97 |         duracaoSemanas: 4,
+    98 |         estrategia: 'Dieta 4 semanas',
+    99 |         nutricao: state.nutricao
+   100 |       }
+   101 | 
+   102 |       updateState({ dietaAtiva })
+   103 |     }
+   104 | 
+   105 |     // Criar treino ativo se ainda não existir
+   106 |     if (state.treino && !state.treinoAtivo) {
+   107 |       const hoje = new Date()
+   108 |       const dataInicio = hoje.toISOString().split('T')[0]
+   109 |       const dataFim = new Date(hoje.getTime() + 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // +4 semanas
+   110 | 
+   111 |       const treinoAtivo: TreinoAtivo = {
+   112 |         dataInicio,
+   113 |         dataFim,
+   114 |         duracaoSemanas: 4,
+   115 |         estrategia: 'Treino 4 semanas',
+   116 |         treino: state.treino,
+   117 |         cargasPorSerie: []
+   118 |       }
+   119 | 
+   120 |       updateState({ treinoAtivo })
+   121 |     }
+   122 |   }, [state.nutricao, state.treino, state.dietaAtiva, state.treinoAtivo, updateState])
+   123 | 
+   124 |   if (!state.concluido) {
+   125 |     
+   126 |   const __mfWeeklyPlan = (typeof buildDeterministicWeeklyPlan === "function")
+   127 |     ? buildDeterministicWeeklyPlan(state as any)
+   128 |     : ((typeof mfBuildWeeklyPlanFromState === "function") ? mfBuildWeeklyPlanFromState(state as any) : null);
+   129 |   const __mfSessions = Array.isArray((__mfWeeklyPlan as any)?.sessions) ? (__mfWeeklyPlan as any).sessions : [];
+   130 |   const __mfModalities = Array.from(new Set(__mfSessions.map((x: any) => String(x?.modality ?? ""))).values()).filter(Boolean);
+   131 |   const __mfPlanLevel = (__mfModalities.length <= 1) ? "foco" : "misto";
+   132 | 
+   133 |   const __mfHasMulti = Array.isArray((state as any)?.workoutModalities) && ((state as any).workoutModalities.length > 0);
+   134 | 
+   135 |   const __mfLevelByModality = ((state as any)?.workoutLevelByModality ?? null) as any;
+   136 | 
+   137 |   
+   138 |   const getModalityLevelLabel = (key: string | null) => {
+   139 |     if (!key) return null;
+   140 |     const label =
+   141 |       (typeof MODALITIES !== "undefined"
+   142 |         ? MODALITIES.find((m) => m.key === key)?.label
+   143 |         : null) || key;
+   144 |     const level = __mfLevelByModality ? __mfLevelByModality[key] : null;
+   145 |     return level ? `${label} • ${level}` : label;
+   146 |   };
+   147 | 
+   148 | return (
+   149 |       <div className="min-h-screen flex items-center justify-center bg-black">
+   150 | 
+   151 |         {/* MF_TRAINING_HUB_V1 */}
+   152 |         <section style={{ marginTop: 16 }}>
+   153 |           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+   154 |             <h2 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 0.2 }}>Atividades físicas ativas</h2>
+   155 |             <span style={{ opacity: 0.75, fontSize: 12 }}>Modalidades • Dias • Intensidade</span>
+   156 |           </div>
+   157 | 
+   158 |           {(!__mfTrainingSummaries || __mfTrainingSummaries.length === 0) ? (
+   159 |             <div style={{ marginTop: 10, opacity: 0.85 }}>
+   160 |               Nenhuma modalidade ativa encontrada ainda. Conclua o onboarding para gerar seus treinos.
+   161 |             </div>
+   162 |           ) : (
+   163 |             <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+   164 |               {__mfTrainingSummaries.map((t) => (
+   165 |                 <div key={t.id} style={{
+   166 |                   border: "1px solid rgba(255,255,255,0.08)",
+   167 |                   borderRadius: 14,
+   168 |                   padding: 14,
+   169 |                   background: "rgba(255,255,255,0.03)"
+   170 |                 }}>
+   171 |                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+   172 |                     <div style={{ fontWeight: 900, fontSize: 16 }}>{t.modality}</div>
+   173 |                     <div style={{ fontSize: 12, opacity: 0.8 }}>
+   174 |                       {t.intensity ? t.intensity : "Intensidade: auto"}
+   175 |                     </div>
+   176 |                   </div>
+   177 | 
+   178 |                   <div style={{ marginTop: 6, fontSize: 13, opacity: 0.85 }}>
+   179 |                     {t.level ? <>Nível: {t.level}</> : "Nível: auto"}
+   180 |                     {" • "}
+   181 |                     {t.days && t.days.length ? <>Dias: {t.days.join(", ")}</> : "Dias: auto"}
+   182 |                   </div>
+   183 | 
+   184 |                   {t.note ? (
+   185 |                     <div style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
+   186 |                       {t.note}
+   187 |                     </div>
+   188 |                   ) : null}
+   189 |                 </div>
+   190 |               ))}
+   191 |             </div>
+   192 |           )}
+   193 |         
+   194 |           {/* MF_TRAINING_HUB_V2_UI */}
+   195 |           {__mfWorkouts && __mfWorkouts.length ? (
+   196 |             <div style={{ marginTop: 14 }}>

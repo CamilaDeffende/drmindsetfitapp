@@ -1,0 +1,186 @@
+     1 | {
+     2 |   "modality": "cycling_bike_indoor",
+     3 |   "version": "1.0.0",
+     4 |   "workouts": [
+     5 |     {
+     6 |       "id": "CYC-INIC-01",
+     7 |       "level": "iniciante",
+     8 |       "name": "Endurance Contínuo Base",
+     9 |       "goal": "Desenvolver resistência cardiovascular básica e adaptação à pedalada indoor",
+    10 |       "duration_minutes": 30,
+    11 |       "intensity": { "perceived_exertion": "4-5", "cadence_rpm": "70-85" },
+    12 |       "execution": [
+    13 |         "Ajuste banco e guidão para posição estável",
+    14 |         "Inicie em cadência confortável e contínua",
+    15 |         "Mantenha respiração controlada e ritmo constante",
+    16 |         "Sustente o esforço sem picos até o final"
+    17 |       ],
+    18 |       "focus": "Consistência aeróbia e controle de ritmo",
+    19 |       "cues": ["Pedalada redonda", "Tronco estável", "Respiração fluida"],
+    20 |       "common_errors": ["Oscilar cadência", "Aumentar carga cedo demais", "Relaxar postura ao longo do tempo"],
+    21 |       "variations": ["Bike ergométrica vertical", "Bike ergométrica horizontal", "Outdoor plano em ritmo constante"]
+    22 |     },
+    23 |     {
+    24 |       "id": "CYC-INIC-02",
+    25 |       "level": "iniciante",
+    26 |       "name": "Intervalado Leve Adaptativo",
+    27 |       "goal": "Introduzir variação de intensidade com controle e recuperação fácil",
+    28 |       "duration_minutes": 35,
+    29 |       "intensity": { "perceived_exertion": "5-6", "cadence_rpm": "75-90" },
+    30 |       "execution": [
+    31 |         "Pedale 3 minutos em ritmo confortável",
+    32 |         "Aumente levemente a cadência por 1 minuto",
+    33 |         "Retorne ao ritmo confortável por 2 minutos",
+    34 |         "Repita o ciclo ao longo do treino"
+    35 |       ],
+    36 |       "focus": "Adaptação ao estímulo intervalado",
+    37 |       "cues": ["Acelere com controle", "Recupere pedalando", "Cadência estável"],
+    38 |       "common_errors": ["Exagerar nos blocos fortes", "Perder cadência nos blocos leves", "Respiração desorganizada"],
+    39 |       "variations": ["Intervalos por música (BPM)", "Intervalos por cronômetro", "Outdoor com variação leve de ritmo"]
+    40 |     },
+    41 |     {
+    42 |       "id": "CYC-INIC-03",
+    43 |       "level": "iniciante",
+    44 |       "name": "Cadência Técnica Estável",
+    45 |       "goal": "Melhorar coordenação e suavidade de pedalada em cadência controlada",
+    46 |       "duration_minutes": 28,
+    47 |       "intensity": { "perceived_exertion": "4-5", "cadence_rpm": "80-95" },
+    48 |       "execution": [
+    49 |         "Inicie com carga leve e cadência moderada",
+    50 |         "Suba até a cadência alvo em 3 minutos",
+    51 |         "Sustente a cadência alvo mantendo controle do tronco",
+    52 |         "Finalize reduzindo gradualmente a cadência"
+    53 |       ],
+    54 |       "focus": "Economia de movimento e suavidade",
+    55 |       "cues": ["Movimento contínuo", "Ombros soltos", "Core firme"],
+    56 |       "common_errors": ["Saltar no banco", "Tensionar ombros", "Oscilar ritmo sem perceber"],
+    57 |       "variations": ["Metrônomo", "Música BPM", "Bike ergométrica com cadência guiada"]
+    58 |     },
+    59 |     {
+    60 |       "id": "CYC-INIC-04",
+    61 |       "level": "iniciante",
+    62 |       "name": "Progressivo Leve de Ritmo",
+    63 |       "goal": "Construir base com progressão suave de intensidade",
+    64 |       "duration_minutes": 32,
+    65 |       "intensity": { "perceived_exertion": "4-6", "cadence_rpm": "75-90" },
+    66 |       "execution": [
+    67 |         "Comece em PSE 4 por 8 minutos",
+    68 |         "Aumente para PSE 5 por 12 minutos mantendo cadência",
+    69 |         "Finalize em PSE 6 por 8 minutos com controle",
+    70 |         "Desacelere por 4 minutos"
+    71 |       ],
+    72 |       "focus": "Controle de progressão",
+    73 |       "cues": ["Suba um degrau por vez", "Cadência consistente", "Respiração estável"],
+    74 |       "common_errors": ["Acelerar demais no começo", "Variar carga a todo momento", "Perder postura no final"],
+    75 |       "variations": ["Progressivo por música", "Progressivo por tempo", "Outdoor plano com aumento gradual"]
+    76 |     },
+    77 |     {
+    78 |       "id": "CYC-INIC-05",
+    79 |       "level": "iniciante",
+    80 |       "name": "Regenerativo Ativo Premium",
+    81 |       "goal": "Facilitar recuperação mantendo fluxo de movimento e controle",
+    82 |       "duration_minutes": 25,
+    83 |       "intensity": { "perceived_exertion": "3-4", "cadence_rpm": "80-95" },
+    84 |       "execution": [
+    85 |         "Use carga leve e cadência confortável",
+    86 |         "Mantenha pedalada contínua sem picos",
+    87 |         "Priorize respiração e relaxamento técnico",
+    88 |         "Finalize reduzindo gradualmente o ritmo"
+    89 |       ],
+    90 |       "focus": "Recuperação ativa e técnica limpa",
+    91 |       "cues": ["Leve e solto", "Pedalada suave", "Tronco estável"],
+    92 |       "common_errors": ["Transformar em treino forte", "Cadência muito baixa", "Ficar travado no selim"],
+    93 |       "variations": ["Bike ergométrica leve", "Outdoor muito leve", "Cadência guiada por música lenta"]
+    94 |     },
+    95 | 
+    96 |     {
+    97 |       "id": "CYC-INIC-06",
+    98 |       "level": "iniciante",
+    99 |       "name": "Subida Simulada Leve",
+   100 |       "goal": "Introduzir torque moderado com controle técnico",
+   101 |       "duration_minutes": 30,
+   102 |       "intensity": { "perceived_exertion": "5-6", "cadence_rpm": "60-75" },
+   103 |       "execution": [
+   104 |         "Aumente a carga levemente e reduza a cadência",
+   105 |         "Sustente blocos de 3 minutos em ritmo firme",
+   106 |         "Recupere 2 minutos com carga leve e cadência mais alta",
+   107 |         "Repita o ciclo até completar o treino"
+   108 |       ],
+   109 |       "focus": "Controle de carga e estabilidade do tronco",
+   110 |       "cues": ["Empurre com controle", "Core firme", "Sem trancos"],
+   111 |       "common_errors": ["Carga alta demais", "Travamento da pedalada", "Perder estabilidade do tronco"],
+   112 |       "variations": ["Subida simulada por inclinação", "Outdoor em leve aclive", "Torque leve com cadência controlada"]
+   113 |     },
+   114 | 
+   115 |     {
+   116 |       "id": "CYC-INIC-07",
+   117 |       "level": "iniciante",
+   118 |       "name": "Ritmo Sustentado Confortável",
+   119 |       "goal": "Sustentar um ritmo moderado contínuo com boa técnica",
+   120 |       "duration_minutes": 34,
+   121 |       "intensity": { "perceived_exertion": "5", "cadence_rpm": "75-90" },
+   122 |       "execution": [
+   123 |         "Encontre um ritmo firme, porém confortável",
+   124 |         "Mantenha a cadência estável por blocos longos",
+   125 |         "Evite mudanças frequentes de carga",
+   126 |         "Finalize desacelerando progressivamente"
+   127 |       ],
+   128 |       "focus": "Constância do ritmo",
+   129 |       "cues": ["Firme e estável", "Respiração controlada", "Pedalada redonda"],
+   130 |       "common_errors": ["Oscilar ritmo sem motivo", "Subir carga por impulso", "Postura relaxada demais"],
+   131 |       "variations": ["Bike ergométrica", "Outdoor plano", "Ritmo guiado por música"]
+   132 |     },
+   133 | 
+   134 |     {
+   135 |       "id": "CYC-INIC-08",
+   136 |       "level": "iniciante",
+   137 |       "name": "Piramidal Leve de Cadência",
+   138 |       "goal": "Variar cadência mantendo esforço controlado",
+   139 |       "duration_minutes": 30,
+   140 |       "intensity": { "perceived_exertion": "4-6", "cadence_rpm": "70-100" },
+   141 |       "execution": [
+   142 |         "Suba a cadência em pequenos degraus a cada 2 minutos",
+   143 |         "Mantenha carga leve a moderada",
+   144 |         "Atinja o pico e retorne reduzindo a cadência",
+   145 |         "Finalize em ritmo confortável"
+   146 |       ],
+   147 |       "focus": "Controle neuromuscular de cadência",
+   148 |       "cues": ["Suba suave", "Sem perder controle", "Tronco firme"],
+   149 |       "common_errors": ["Acelerar com carga alta", "Saltar no banco", "Perder ritmo no retorno"],
+   150 |       "variations": ["Música BPM", "Metrônomo", "Outdoor com variação leve"]
+   151 |     },
+   152 | 
+   153 |     {
+   154 |       "id": "CYC-INIC-09",
+   155 |       "level": "iniciante",
+   156 |       "name": "Metabólico Leve com Recuperação Fácil",
+   157 |       "goal": "Elevar gasto energético com picos moderados e retorno rápido",
+   158 |       "duration_minutes": 36,
+   159 |       "intensity": { "perceived_exertion": "5-6", "cadence_rpm": "80-95" },
+   160 |       "execution": [
+   161 |         "Pedale 4 minutos em PSE 5",
+   162 |         "Faça 30 segundos em PSE 6 com cadência um pouco maior",
+   163 |         "Retorne 2 minutos em PSE 4-5",
+   164 |         "Repita o padrão até completar"
+   165 |       ],
+   166 |       "focus": "Eficiência metabólica com controle",
+   167 |       "cues": ["Pico curto", "Recupera rápido", "Cadência estável"],
+   168 |       "common_errors": ["Picos longos demais", "Quebrar ritmo nos leves", "Perder técnica sob fadiga"],
+   169 |       "variations": ["Picos por música", "Picos por cronômetro", "Outdoor com acelerações curtas"]
+   170 |     },
+   171 | 
+   172 |     {
+   173 |       "id": "CYC-INIC-10",
+   174 |       "level": "iniciante",
+   175 |       "name": "Base + Técnica de Finalização",
+   176 |       "goal": "Consolidar base aeróbia e encerrar com cadência técnica",
+   177 |       "duration_minutes": 35,
+   178 |       "intensity": { "perceived_exertion": "4-6", "cadence_rpm": "75-95" },
+   179 |       "execution": [
+   180 |         "Faça 20 minutos em PSE 4-5 com ritmo contínuo",
+   181 |         "Aumente para cadência mais alta por 8 minutos mantendo carga controlada",
+   182 |         "Finalize em ritmo confortável por 7 minutos",
+   183 |         "Mantenha técnica limpa até o fim"
+   184 |       ],
+   185 |       "focus": "Base aeróbia + controle técnico no final",
+   186 |       "cues": ["Final forte com controle", "Cadência suave", "Respiração estável"],

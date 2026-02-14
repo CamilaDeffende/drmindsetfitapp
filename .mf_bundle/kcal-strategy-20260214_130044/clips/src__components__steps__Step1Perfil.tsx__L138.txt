@@ -1,0 +1,241 @@
+    18 | 
+    19 | type OnboardingStepProps = {
+    20 |   value?: any;
+    21 |   onChange?: (v: any) => void;
+    22 |   onNext?: () => void;
+    23 |   onBack?: () => void;
+    24 | };
+    25 | 
+    26 | const perfilSchema = z.object({
+    27 |   nomeCompleto: z.string().min(3, 'Nome completo é obrigatório'),
+    28 |   sexo: z.enum(['masculino', 'feminino']),
+    29 |   idade: z.coerce.number().min(10, 'Idade mínima: 10 anos').max(120, 'Idade máxima: 120 anos'),
+    30 |   altura: z.coerce.number().min(100, 'Altura mínima: 100cm').max(250, 'Altura máxima: 250cm'),
+    31 |   pesoAtual: z.coerce.number().min(30, 'Peso mínimo: 30kg').max(300, 'Peso máximo: 300kg'),
+    32 |   historicoPeso: z.string().optional(),
+    33 |   nivelTreino: z.enum(['sedentario', 'iniciante', 'intermediario', 'avancado', 'atleta']),
+    34 |   modalidadePrincipal: z.enum(['musculacao','funcional','corrida','crossfit','spinning']),
+    35 |   frequenciaSemanal: z.coerce.number().min(1, 'Mínimo 1 vez').max(7, 'Máximo 7 vezes'),
+    36 |   duracaoTreino: z.coerce.number().min(15, 'Mínimo 15 min').max(240, 'Máximo 240 min'),
+    37 |   objetivo: z.enum(['emagrecimento', 'reposicao', 'hipertrofia', 'performance', 'longevidade'])
+    38 | })
+    39 | 
+    40 | export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
+    41 |   const navigate = useNavigate();
+    42 |   // BLOCK2A: UNLOCK Step1 -> Step2 (persist progress + draft + goNext)
+    43 |   const __goNextSafe = (data: PerfilUsuario) => {
+    44 |     // HARD GUARANTEE: força URL step-2 (sem perder dados)
+    45 |     try { navigate("/onboarding/step-2", { replace: true }); } catch (e) {}
+    46 |     try { saveOnboardingProgress({ step: 2, data: { step1: data } }); } catch (e) {}
+    47 |     try { if (typeof onChange === "function") onChange(data); } catch (e) {}
+    48 |     try { if (typeof onNext === "function") onNext(); } catch (e) {}
+    49 |   };
+    50 |   const { state, updateState, nextStep } = useDrMindSetfit()
+    51 | 
+    52 |   /* MF_STEP1_DRAFT_SEED
+    53 |      Fonte de verdade do Step-1: draft vindo do OnboardingFlow (value/onChange).
+    54 |      Isso impede o "preenche e some" em remount/re-render.
+    55 |   */
+    56 |   const draftSeed = (value && typeof value === "object" ? value : {}) as Partial<PerfilUsuario>;
+    57 | 
+    58 |   // MF_STEP1_SSOT_DRAFT_V1: persist progressivo (SSOT local)
+    59 |   const draftSSOT = useOnboardingStore((st) => st.draft) as Record<string, any>;
+    60 | 
+    61 |   const form = useForm<PerfilUsuario>({
+    62 |     resolver: (zodResolver(perfilSchema) as any),
+    63 |     defaultValues: {
+    64 |       ...(draftSSOT as any),
+    65 |       ...(draftSeed as any),
+    66 |       nomeCompleto: (draftSeed.nomeCompleto ?? state.perfil?.nomeCompleto ?? "") as any,
+    67 |       sexo: (draftSeed.sexo ?? state.perfil?.sexo ?? "masculino") as any,
+    68 |       idade: (draftSeed.idade ?? state.perfil?.idade ?? 30) as any,
+    69 |       altura: (draftSeed.altura ?? state.perfil?.altura ?? 170) as any,
+    70 |       pesoAtual: (draftSeed.pesoAtual ?? state.perfil?.pesoAtual ?? 70) as any,
+    71 |       historicoPeso: (draftSeed.historicoPeso ?? state.perfil?.historicoPeso ?? "") as any,
+    72 |       nivelTreino: (draftSeed.nivelTreino ?? state.perfil?.nivelTreino ?? "iniciante") as any,
+    73 |       modalidadePrincipal: (draftSeed.modalidadePrincipal ?? state.perfil?.modalidadePrincipal ?? "musculacao") as any,
+    74 |       frequenciaSemanal: (draftSeed.frequenciaSemanal ?? state.perfil?.frequenciaSemanal ?? 3) as any,
+    75 |       duracaoTreino: (draftSeed.duracaoTreino ?? state.perfil?.duracaoTreino ?? 60) as any,
+    76 |       objetivo: (draftSeed.objetivo ?? state.perfil?.objetivo ?? "hipertrofia") as any
+    77 |     }
+    78 |   })
+    79 | 
+    80 |   // MF_STEP1_AUTOSAVE_WATCH_V1: salva conforme digita (debounced) p/ Motor Inteligente
+    81 |   const _watchAll = form.watch();
+    82 |   useOnboardingDraftSaver(
+    83 |     {
+    84 |       // chaves do Step1 (pt)
+    85 |       nomeCompleto: (_watchAll as any).nomeCompleto ?? "",
+    86 |       sexo: (_watchAll as any).sexo ?? "",
+    87 |       idade: (_watchAll as any).idade ?? "",
+    88 |       altura: (_watchAll as any).altura ?? "",
+    89 |       pesoAtual: (_watchAll as any).pesoAtual ?? "",
+    90 | 
+    91 |       historicoPeso: (_watchAll as any).historicoPeso ?? "",
+    92 |       nivelTreino: (_watchAll as any).nivelTreino ?? "",
+    93 |       modalidadePrincipal: (_watchAll as any).modalidadePrincipal ?? "",
+    94 |       frequenciaSemanal: (_watchAll as any).frequenciaSemanal ?? "",
+    95 |       duracaoTreino: (_watchAll as any).duracaoTreino ?? "",
+    96 |       objetivo: (_watchAll as any).objetivo ?? "",
+    97 | 
+    98 |       // aliases EN p/ SSOT futura
+    99 |       name: (_watchAll as any).nomeCompleto ?? "",
+   100 |       sex: (_watchAll as any).sexo ?? "",
+   101 |       age: (_watchAll as any).idade ?? "",
+   102 |       heightCm: (_watchAll as any).altura ?? "",
+   103 |       weightKg: (_watchAll as any).pesoAtual ?? "",
+   104 |     },
+   105 |     400
+   106 |   );
+   107 | const onSubmit = (data: PerfilUsuario) => {
+   108 |     updateState({ perfil: data })
+   109 |     nextStep()
+   110 |     // avanço oficial do funil (OnboardingFlow)
+   111 |     __goNextSafe(data);
+   112 | 
+   113 |   }
+   114 | 
+   115 |   return (
+   116 |     <div className="max-w-4xl mx-auto px-4 py-8">
+   117 |         
+   118 |         
+   119 |         <div className="space-y-2">
+   120 |           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Base do seu plano</h1>
+   121 |           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+   122 |             Esses dados calibram as estimativas iniciais (metabolismo, gasto diário e distribuição de macros).
+   123 |             Preencha o essencial com precisão — isso aumenta a qualidade do treino, da dieta e do relatório final.
+   124 |           </p>
+   125 |         </div>
+   126 | 
+   127 |       <div className="mb-8 text-center">
+   128 |         <div className="mb-4 flex items-center justify-center">
+   129 |           <BrandIcon size={64} />
+   130 |         </div>
+   131 |         <h2 className="text-3xl font-bold mb-2">Vamos calibrar seu protocolo</h2>
+   132 |         <p className="text-muted-foreground">Leva ~2 minutos. Quanto mais fiel, mais assertivo o seu plano.</p>
+   133 |       </div>
+   134 | 
+   135 |       <Card>
+   136 |         <CardHeader>
+   137 |           <CardTitle>Dados para calibração</CardTitle>
+   138 |           <CardDescription>Usamos isso para estimar metabolismo, definir metas e personalizar treino + nutrição nas próximas etapas.</CardDescription>
+   139 |         </CardHeader>
+   140 |         <CardContent>
+   141 |           <Form {...form}>
+   142 |             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
+   143 |               {/* Dados Pessoais Essenciais */}
+   144 |               <div className="space-y-4">
+   145 |                 <h3 className="font-semibold text-lg">Essenciais</h3>
+   146 | 
+   147 |                 <FormField
+   148 |                   control={form.control}
+   149 |                   name="nomeCompleto"
+   150 |                   render={({ field }) => (
+   151 |                     <FormItem>
+   152 |                       <FormLabel>Nome Completo</FormLabel>
+   153 |                       <FormControl>
+   154 |                         <Input placeholder="Digite seu nome completo" {...field}
+   155 |                           /* MF_STEP1_BIND_NOME */
+   156 |                           onChange={(e) => {
+   157 |                             field.onChange(e);
+   158 |                             try {
+   159 |                               if (typeof onChange === "function") {
+   160 |                                 const next = { ...form.getValues(), nomeCompleto: (e.target as any).value };
+   161 |                                 onChange(next);
+   162 |                               }
+   163 |                             } catch (e) {}
+   164 |                           }}
+   165 |                         />
+   166 |                       </FormControl>
+   167 |                       <FormMessage />
+   168 |                     </FormItem>
+   169 |                   )}
+   170 |                 />
+   171 | 
+   172 |                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   173 |                   <FormField
+   174 |                     control={form.control}
+   175 |                     name="sexo"
+   176 |                     render={({ field }) => (
+   177 |                       <FormItem>
+   178 |                         <FormLabel>Sexo biológico (para cálculos)</FormLabel>
+   179 |                         <Select onValueChange={field.onChange} defaultValue={field.value}>
+   180 |                           <FormControl>
+   181 |                             <SelectTrigger>
+   182 |                               <SelectValue />
+   183 |                             </SelectTrigger>
+   184 |                           </FormControl>
+   185 |                           <SelectContent>
+   186 |                             <SelectItem value="masculino">Masculino</SelectItem>
+   187 |                             <SelectItem value="feminino">Feminino</SelectItem>
+   188 |                           </SelectContent>
+   189 |                         </Select>
+   190 |                         <FormMessage />
+   191 |                       </FormItem>
+   192 |                     )}
+   193 |                   />
+   194 | 
+   195 |                   <FormField
+   196 |                     control={form.control}
+   197 |                     name="idade"
+   198 |                     render={({ field }) => (
+   199 |                       <FormItem>
+   200 |                         <FormLabel>Idade (anos)</FormLabel>
+   201 |                         <FormControl>
+   202 |                           <Input type="number" placeholder="30" {...field} />
+   203 |                         </FormControl>
+   204 |                         <FormMessage />
+   205 |                       </FormItem>
+   206 |                     )}
+   207 |                   />
+   208 |                 </div>
+   209 | 
+   210 |                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   211 |                   <FormField
+   212 |                     control={form.control}
+   213 |                     name="altura"
+   214 |                     render={({ field }) => (
+   215 |                       <FormItem>
+   216 |                         <FormLabel>Altura (cm)</FormLabel>
+   217 |                         <FormControl>
+   218 |                           <Input type="number" placeholder="170" {...field} />
+   219 |                         </FormControl>
+   220 |                         <FormMessage />
+   221 |                       </FormItem>
+   222 |                     )}
+   223 |                   />
+   224 | 
+   225 |                   <FormField
+   226 |                     control={form.control}
+   227 |                     name="pesoAtual"
+   228 |                     render={({ field }) => (
+   229 |                       <FormItem>
+   230 |                         <FormLabel>Peso Atual (kg)</FormLabel>
+   231 |                         <FormControl>
+   232 |                           <Input type="number" step="0.1" placeholder="70" {...field} />
+   233 |                         </FormControl>
+   234 |                         <FormMessage />
+   235 |                       </FormItem>
+   236 |                     )}
+   237 |                   />
+   238 |                 </div>
+   239 | 
+   240 |                 <FormField
+   241 |                   control={form.control}
+   242 |                   name="historicoPeso"
+   243 |                   render={({ field }) => (
+   244 |                     <FormItem>
+   245 |                       <FormLabel>Histórico de peso (opcional)</FormLabel>
+   246 |                       <FormControl>
+   247 |                         <Textarea
+   248 |                           placeholder="Ex: Já pesei 90kg, emagreci para 75kg em 2020..."
+   249 |                           className="resize-none"
+   250 |                           {...field}
+   251 |                         />
+   252 |                       </FormControl>
+   253 |                       <FormMessage />
+   254 |                     </FormItem>
+   255 |                   )}
+   256 |                 />
+   257 |               </div>
+   258 | 

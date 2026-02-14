@@ -1,0 +1,129 @@
+     1 | // Tipos do DrMindSetfit - Sistema Inteligente de Saúde e Performance
+     2 | 
+     3 | export type SexoBiologico = 'masculino' | 'feminino'
+     4 | export type NivelTreino = 'sedentario' | 'iniciante' | 'intermediario' | 'avancado' | 'atleta'
+     5 | export type Modalidade = 'musculacao' | 'funcional' | 'corrida' | 'crossfit' | 'spinning'
+     6 | export type Objetivo = 'emagrecimento' | 'reposicao' | 'hipertrofia' | 'performance' | 'longevidade'
+     7 | export type MetodoComposicao = 'bioimpedancia' | 'pollock7' | 'nenhum'
+     8 | export type EquacaoMetabolica = 'cunningham' | 'fao-who' | 'harris-benedict' | 'mifflin' | 'tinsley'
+     9 | export type EstrategiaNutricional = 'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'
+    10 | 
+    11 | // Etapa 1 - Perfil do Usuário
+    12 | export interface PerfilUsuario {
+    13 |   nomeCompleto: string
+    14 |   sexo: SexoBiologico
+    15 |   idade: number
+    16 |   altura: number // cm
+    17 |   pesoAtual: number // kg
+    18 |   historicoPeso?: string
+    19 |   nivelTreino: NivelTreino
+    20 |   modalidadePrincipal: Modalidade
+    21 |   frequenciaSemanal: number
+    22 |   duracaoTreino: number // minutos
+    23 |   objetivo: Objetivo
+    24 | }
+    25 | 
+    26 | // Etapa 2 - Avaliação Física
+    27 | export interface Circunferencias {
+    28 |   cintura?: number
+    29 |   quadril?: number
+    30 |   abdomen?: number
+    31 |   torax?: number
+    32 |   gluteo?: number
+    33 |   coxaDireitaRelax?: number
+    34 |   coxaDireitaContra?: number
+    35 |   coxaEsquerdaRelax?: number
+    36 |   coxaEsquerdaContra?: number
+    37 |   panturrilha?: number
+    38 |   bracoDireitoRelax?: number
+    39 |   bracoDireitoContra?: number
+    40 |   bracoEsquerdoRelax?: number
+    41 |   bracoEsquerdoContra?: number
+    42 | }
+    43 | 
+    44 | export interface Pollock7Dobras {
+    45 |   peitoral: number
+    46 |   axilarMedia: number
+    47 |   triceps: number
+    48 |   subescapular: number
+    49 |   abdominal: number
+    50 |   supraIliaca: number
+    51 |   coxa: number
+    52 | }
+    53 | 
+    54 | export interface Bioimpedancia {
+    55 |   percentualGordura: number
+    56 |   percentualMassaMagra: number
+    57 |   aguaCorporal: number
+    58 |   idadeMetabolica: number
+    59 | }
+    60 | 
+    61 | export interface ComposicaoCorporal {
+    62 |   metodo: MetodoComposicao
+    63 |   pollock7?: Pollock7Dobras
+    64 |   bioimpedancia?: Bioimpedancia
+    65 |   densidadeCorporal?: number
+    66 |   percentualGordura?: number
+    67 |   percentualMassaMagra?: number
+    68 | }
+    69 | 
+    70 | export type Biotipo = 'ectomorfo' | 'mesomorfo' | 'endomorfo'
+    71 | 
+    72 | export interface AvaliacaoFisica {
+    73 |   peso: number
+    74 |   altura: number
+    75 |   imc: number
+    76 |   circunferencias: Circunferencias
+    77 |   composicao: ComposicaoCorporal
+    78 |   // Biotipo (Step 2)
+    79 |   biotipo?: Biotipo
+    80 | 
+    81 |   // Atividade semanal (premium)
+    82 |   frequenciaAtividadeSemanal?: 'sedentario' | 'moderadamente_ativo' | 'ativo' | 'muito_ativo';
+    83 | }
+    84 | 
+    85 | // Etapa 3 - Metabolismo
+    86 | export interface ResultadoMetabolico {
+    87 |   
+    88 |   /** BLOCO 5A — frequência semanal de atividade para calibrar GET/TDEE */
+    89 |   nivelAtividadeSemanal?: "sedentario" | "moderadamente_ativo" | "ativo" | "muito_ativo";
+    90 | equacaoUtilizada: EquacaoMetabolica
+    91 |   justificativa: string
+    92 |   tmb: number // Taxa Metabólica Basal
+    93 |   get: number // Gasto Energético Total
+    94 |   caloriasAlvo: number
+    95 |   faixaSegura: {
+    96 |     minimo: number
+    97 |     ideal: number
+    98 |     maximo: number
+    99 |   }
+   100 |   comparativo: {
+   101 |     cunningham?: number
+   102 |     faoWho?: number
+   103 |     harrisBenedict?: number
+   104 |     mifflin?: number
+   105 |     tinsley?: number
+   106 |   }
+   107 |   // Ajustes opcionais (biotipo)
+   108 |   biotipo?: Biotipo
+   109 |   ajusteBiotipoKcal?: number
+   110 | 
+   111 |   ajusteBiotipoMotivo?: string;
+   112 |   // Auditoria premium do FAF (atividade semanal)
+   113 |   fafBase?: number;
+   114 |   fafMult?: number;
+   115 |   fafFinal?: number;
+   116 | }
+   117 | 
+   118 | // Etapa 4 - Planejamento Nutricional
+   119 | export type Restricao = 'lactose' | 'gluten' | 'ovo' | 'acucar' | 'oleaginosas' | 'vegetariano' | 'vegano' | 'low-sodium' | 'diabetes'
+   120 | 
+   121 | export interface Macronutrientes {
+   122 |   proteina: number // gramas
+   123 |   gorduras: number // gramas
+   124 |   carboidratos: number // gramas
+   125 |   calorias: number
+   126 | }
+   127 | 
+   128 | export interface AlimentoRefeicao {
+   129 |   alimentoId: string

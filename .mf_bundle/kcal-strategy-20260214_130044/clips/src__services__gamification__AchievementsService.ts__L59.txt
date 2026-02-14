@@ -1,0 +1,124 @@
+     1 | import { historyService } from "@/services/history/HistoryService";
+     2 | 
+     3 | export type AchievementType =
+     4 |   | "first_workout"
+     5 |   | "five_workouts"
+     6 |   | "ten_workouts"
+     7 |   | "first_run_5k"
+     8 |   | "streak_3"
+     9 |   | "streak_7";
+    10 | 
+    11 | export type Achievement = {
+    12 |   id: AchievementType;
+    13 |   title: string;
+    14 |   description: string;
+    15 |   xp: number;
+    16 |   unlocked: boolean;
+    17 |   unlockedAtIso?: string;
+    18 | };
+    19 | 
+    20 | type Store = {
+    21 |   xp: number;
+    22 |   unlocked: Record<string, string>; // id -> dateIso
+    23 | };
+    24 | 
+    25 | const LS_KEY = "mf:gamification:v1";
+    26 | 
+    27 | function load(): Store {
+    28 |   try {
+    29 |     const raw = localStorage.getItem(LS_KEY);
+    30 |     if (!raw) return { xp: 0, unlocked: {} };
+    31 |     const j = JSON.parse(raw) as Store;
+    32 |     return { xp: Number(j.xp || 0), unlocked: j.unlocked || {} };
+    33 |   } catch {
+    34 |     return { xp: 0, unlocked: {} };
+    35 |   }
+    36 | }
+    37 | 
+    38 | function save(s: Store) {
+    39 |   localStorage.setItem(LS_KEY, JSON.stringify(s));
+    40 | }
+    41 | 
+    42 | function nowIso() {
+    43 |   return new Date().toISOString();
+    44 | }
+    45 | 
+    46 | export class AchievementsService {
+    47 |   getTotalXp(): number {
+    48 |     return load().xp;
+    49 |   }
+    50 | 
+    51 |   getAll(): Achievement[] {
+    52 |     const st = load();
+    53 | 
+    54 |     const workouts = historyService.getWorkouts?.(9999) ?? [];
+    55 |     const workoutsCount = Array.isArray(workouts) ? workouts.length : 0;
+    56 | 
+    57 |     const run5k = workouts.some((w: any) => (w.type === "corrida" || w.modality === "corrida") && (w.distanceMeters || 0) >= 5000);
+    58 | 
+    59 |     // streak simples por dias consecutivos (últimos N dias com treino)
+    60 |     const days = new Set(
+    61 |       workouts
+    62 |         .map((w: any) => String(w.dateIso || "").slice(0, 10))
+    63 |         .filter(Boolean)
+    64 |     );
+    65 |     const hasDay = (d: Date) => days.has(d.toISOString().slice(0, 10));
+    66 |     const streakLen = (() => {
+    67 |       let n = 0;
+    68 |       const d = new Date();
+    69 |       for (;;) {
+    70 |         if (!hasDay(d)) break;
+    71 |         n += 1;
+    72 |         d.setDate(d.getDate() - 1);
+    73 |       }
+    74 |       return n;
+    75 |     })();
+    76 | 
+    77 |     const defs: Omit<Achievement, "unlocked" | "unlockedAtIso">[] = [
+    78 |       { id: "first_workout", title: "Primeiro treino", description: "Registre seu primeiro treino.", xp: 50 },
+    79 |       { id: "five_workouts", title: "5 treinos", description: "Complete 5 treinos registrados.", xp: 80 },
+    80 |       { id: "ten_workouts", title: "10 treinos", description: "Complete 10 treinos registrados.", xp: 140 },
+    81 |       { id: "first_run_5k", title: "Corrida 5K", description: "Registre uma corrida de 5 km ou mais.", xp: 120 },
+    82 |       { id: "streak_3", title: "Sequência 3 dias", description: "Treine 3 dias seguidos.", xp: 90 },
+    83 |       { id: "streak_7", title: "Sequência 7 dias", description: "Treine 7 dias seguidos.", xp: 200 },
+    84 |     ];
+    85 | 
+    86 |     const evalUnlock = (id: AchievementType) => {
+    87 |       if (id == "first_workout") return workoutsCount >= 1;
+    88 |       if (id == "five_workouts") return workoutsCount >= 5;
+    89 |       if (id == "ten_workouts") return workoutsCount >= 10;
+    90 |       if (id == "first_run_5k") return run5k;
+    91 |       if (id == "streak_3") return streakLen >= 3;
+    92 |       if (id == "streak_7") return streakLen >= 7;
+    93 |       return false;
+    94 |     };
+    95 | 
+    96 |     return defs.map((d) => {
+    97 |       const unlockedAt = st.unlocked[d.id];
+    98 |       const unlocked = Boolean(unlockedAt) || Boolean(evalUnlock(d.id as AchievementType));
+    99 |       return { ...d, unlocked, unlockedAtIso: unlockedAt };
+   100 |     });
+   101 |   }
+   102 | 
+   103 |   syncFromHistory(): { gainedXp: number; unlocked: AchievementType[] } {
+   104 |     const st = load();
+   105 |     const all = this.getAll();
+   106 | 
+   107 |     const newly: AchievementType[] = [];
+   108 |     let gained = 0;
+   109 | 
+   110 |     for (const a of all) {
+   111 |       if (a.unlocked && !st.unlocked[a.id]) {
+   112 |         st.unlocked[a.id] = nowIso();
+   113 |         st.xp += a.xp;
+   114 |         gained += a.xp;
+   115 |         newly.push(a.id);
+   116 |       }
+   117 |     }
+   118 | 
+   119 |     save(st);
+   120 |     return { gainedXp: gained, unlocked: newly };
+   121 |   }
+   122 | }
+   123 | 
+   124 | export const achievementsService = new AchievementsService();

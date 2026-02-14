@@ -1,0 +1,280 @@
+src/services/nutrition/engine/nutritionEngine.ts:6:export type Goal = "emagrecimento" | "manutencao" | "ganho";
+src/services/nutrition/engine/nutritionEngine.ts:100:  if (goal === "manutencao") return 0;
+src/services/nutrition/engine/nutritionEngine.demo.ts:26:  { objetivo: "manutencao", biotipo: "ectomorfo", atividade: "leve" }
+src/services/plan.service.ts:96:  const goal = goalRaw.includes("emag") || goalRaw.includes("cut") ? "cut"
+src/services/plan.service.ts:97:    : goalRaw.includes("gan") || goalRaw.includes("bulk") ? "bulk"
+src/services/training/trainingEngine.ts:6:  execution: [string, string, string];
+src/services/gamification/AchievementsService.ts:59:    // streak simples por dias consecutivos (últimos N dias com treino)
+src/services/gamification/GamificationBridge.ts:42:  const consecutiveDays = Math.min(days.size, 30);
+src/services/gamification/GamificationBridge.ts:49:    consecutiveDays,
+src/engine/nutrition/NutritionEngine.ts:3:  goal: "cut" | "maintain" | "bulk";
+src/engine/nutrition/NutritionEngine.ts:18: * - proteína: 2.0g/kg (cut), 1.8g/kg (maintain), 1.8g/kg (bulk)
+src/engine/nutrition/NutritionEngine.ts:26:  const p = goal === "cut" ? 2.0 : 1.8;
+src/engine/periodization/weeklyPeriodization.engine.ts:23:  // - nunca em dias consecutivos
+src/engine/ssot/SSOTEngine.ts:48:  if (g === "cut" || g === "maintain" || g === "bulk") return g;
+src/engine/ssot/selectors.ts:20:  if (s.includes("cut") || s.includes("deficit") || s.includes("déficit")) return "cut";
+src/engine/ssot/selectors.ts:21:  if (s.includes("bulk") || s.includes("superavit") || s.includes("superávit") || s.includes("hipertrof")) return "bulk";
+src/engine/ssot/types.ts:2:export type Goal = "cut" | "maintain" | "bulk";
+src/lib/exportar-pdf.ts:124:    doc.text(`Estratégia: ${state.dietaAtiva.estrategia}`, 25, yPos)
+src/lib/exportar-pdf.ts:206:    doc.text(`Estratégia: ${state.treinoAtivo.estrategia}`, 25, yPos)
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:12:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:30:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:48:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:66:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:84:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:103:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:122:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:141:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:160:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:179:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:198:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:217:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:236:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:254:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:272:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:290:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:309:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:327:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:345:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:363:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:382:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:400:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:418:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:436:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:454:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:472:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:490:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:509:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:527:      "execution": [
+src/engine/training_library/cycling/cycling_bike_indoor.v1.json:545:      "execution": [
+src/modules/pdf/PremiumReport.tsx:12:        <h2>Resumo Executivo</h2>
+src/lib/mfreset.ts:143: * Lê ?reset=soft|hard e executa reset.
+src/engine/metabolic/MetabolicEngine.ts:15:  goal: "cut" | "maintain" | "bulk";
+src/engine/metabolic/MetabolicEngine.ts:58:  if (input.goal === "cut") target = tdee - 400;
+src/engine/metabolic/MetabolicEngine.ts:59:  if (input.goal === "bulk") target = tdee + 250;
+src/lib/resetApp.ts:114: * Executa reset se detectar query param "reset".
+src/lib/metabolismo.ts:16:  const obj = params.objetivo ?? "manutencao";
+src/lib/metabolismo.ts:28:  else if (obj === "manutencao") base = 150 + scoreMagro * 100; // 150–450
+src/lib/metabolismo.ts:36:      : obj === "manutencao"
+src/data/training/musculacao.block1.costas_peito.json:8:          "execution": [
+src/data/training/musculacao.block1.costas_peito.json:33:          "execution": [
+src/data/training/musculacao.block1.costas_peito.json:60:          "execution": [
+src/data/training/musculacao.block1.costas_peito.json:87:          "execution": [
+src/data/training/musculacao.block1.costas_peito.json:116:          "execution": [
+src/data/training/musculacao.block1.costas_peito.json:141:          "execution": [
+src/data/training/musculacao.block1.costas_peito.json:168:          "execution": [
+src/data/training/musculacao.block1.costas_peito.json:195:          "execution": [
+src/pages/HiitPlan.tsx:42:    summary: "A cada minuto, executa um bloco. Progressão por tempo total.",
+src/pages/EditDiet.tsx:1:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/pages/EditDiet.tsx:187:  const { state, updateState } = useDrMindSetfit()
+src/pages/TreinoAtivo.tsx:3:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/pages/TreinoAtivo.tsx:65:  const { state, updateState } = useDrMindSetfit()
+src/components/treino/WeeklyProtocolActive.tsx:4:import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+src/components/treino/WeeklyProtocolActive.tsx:90:  const { state } = useDrMindSetfit();
+src/pages/NutritionPlan.tsx:2:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/pages/NutritionPlan.tsx:41:  const { state } = useDrMindSetfit()
+src/pages/Report.tsx:2:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/pages/Report.tsx:125:  const { state } = useDrMindSetfit()
+src/pages/Report.tsx:297:      estrategia: (activePlan?.nutrition?.strategy ?? activePlan?.nutrition?.estrategia ?? "Plano personalizado"),
+src/pages/DashboardPremium.tsx:2:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/pages/DashboardPremium.tsx:52:const { state } = useDrMindSetfit()
+src/pages/DashboardPremium.tsx:178:                <div className="text-lg font-semibold">Hoje você só precisa executar o próximo passo</div>
+src/pages/PlanosAtivos.tsx:4:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/pages/PlanosAtivos.tsx:53:  const { state, updateState } = useDrMindSetfit()
+src/pages/PlanosAtivos.tsx:98:        estrategia: 'Dieta 4 semanas',
+src/pages/PlanosAtivos.tsx:115:        estrategia: 'Treino 4 semanas',
+src/pages/PlanosAtivos.tsx:310:              Selecione em quais dias você quer executar cada modalidade. Se você não marcar nada, a distribuição automática continua valendo.
+src/pages/CardioPlan.tsx:5:import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+src/pages/CardioPlan.tsx:19:  const { state } = useDrMindSetfit();
+src/features/fitness-suite/engine/strength/strengthGenerator.ts:23:  executionType: StrengthExercise["executionType"];
+src/features/fitness-suite/engine/strength/strengthGenerator.ts:237:      executionType: ex.executionType,
+src/data/training/musculacao/musculacao.block1.costas_peito.json:8:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:33:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:60:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:85:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:112:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:137:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:166:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:191:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:218:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:243:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:270:          "execution": [
+src/data/training/musculacao/musculacao.block1.costas_peito.json:295:          "execution": [
+src/pages/Profile.tsx:1:import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+src/pages/Profile.tsx:8:  const { state } = useDrMindSetfit();
+src/data/training/musculacao/musculacao.block4.posterior_panturrilhas.json:8:          "execution": [
+src/data/training/musculacao/musculacao.block4.posterior_panturrilhas.json:35:          "execution": [
+src/data/training/musculacao/musculacao.block4.posterior_panturrilhas.json:62:          "execution": [
+src/data/training/musculacao/musculacao.block4.posterior_panturrilhas.json:75:            "Executar rápido sem controle.",
+src/data/training/musculacao/musculacao.block4.posterior_panturrilhas.json:91:          "execution": [
+src/data/training/musculacao/musculacao.block4.posterior_panturrilhas.json:118:          "execution": [
+src/data/training/musculacao/musculacao.block4.posterior_panturrilhas.json:145:          "execution": [
+src/pages/Dashboard.tsx:1:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/pages/Dashboard.tsx:11:  const { state } = useDrMindSetfit()
+src/data/training/musculacao/_merge_and_validate.mjs:66:  const keys = ["name","goal","execution","focus","cues","common_errors","variations"];
+src/data/training/musculacao/_merge_and_validate.mjs:72:  for (const arrKey of ["execution","cues","common_errors","variations"]) {
+src/pages/HistoryReports.tsx:132:  const cutoff = days > 0 ? (now - days * 24 * 60 * 60 * 1000) : -Infinity;
+src/pages/HistoryReports.tsx:137:      return Number.isFinite(t) ? t >= cutoff : true;
+src/pages/HistoryReports.tsx:169:    const cutoff = now - Number(daysN) * 24 * 60 * 60 * 1000;
+src/pages/HistoryReports.tsx:170:    return sorted.filter((it) => toTime(it?.createdAtISO) >= cutoff);
+src/engine/planner/trainingPlanner.engine.ts:26:  execution: string[];
+src/engine/planner/trainingPlanner.engine.ts:139:      // regra: máximo 2 hard (pse>=8) e não consecutivo
+src/engine/planner/trainingPlanner.engine.ts:204:      // regra: hardCount max 2 e não consecutivo
+src/components/steps/Step4Nutricao.tsx:10:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/components/steps/Step4Nutricao.tsx:54:  const objetivo = (anyForm?.objetivo ?? anyState?.objetivo ?? anyState?.meta ?? "manutencao") as any;
+src/components/steps/Step4Nutricao.tsx:76:  const { state, updateState, nextStep } = useDrMindSetfit()/* MF_BLOCK2_1_STEP4_AUTOSAVE */
+src/components/steps/Step4Nutricao.tsx:109:const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')
+src/components/steps/Step4Nutricao.tsx:114:    case "deficit-leve":
+src/components/steps/Step4Nutricao.tsx:116:    case "deficit-moderado":
+src/components/steps/Step4Nutricao.tsx:118:    case "deficit-agressivo":
+src/components/steps/Step4Nutricao.tsx:120:    case "superavit":
+src/components/steps/Step4Nutricao.tsx:122:    case "manutencao":
+src/components/steps/Step4Nutricao.tsx:174:  const __mfPctStrategy = mfStrategyPercent(estrategia);
+src/components/steps/Step4Nutricao.tsx:372:      estrategia,
+src/components/steps/Step4Nutricao.tsx:373:      percentualEstrategia: mfStrategyPercent(estrategia),
+src/components/steps/Step4Nutricao.tsx:413:  const __mfPercentFromStrategy = mfStrategyPercent(estrategia);
+src/components/steps/Step4Nutricao.tsx:486:          <Label className="text-sm sm:text-base">Escolha a abordagem</Label>
+src/components/steps/Step4Nutricao.tsx:487:          <Select value={estrategia} onValueChange={(v: string) => setEstrategia(v as typeof estrategia)}>
+src/components/steps/Step4Nutricao.tsx:492:              <SelectItem value="deficit-agressivo">Déficit Agressivo (-25%)</SelectItem>
+src/components/steps/Step4Nutricao.tsx:493:              <SelectItem value="deficit-moderado">Déficit Moderado (-20%)</SelectItem>
+src/components/steps/Step4Nutricao.tsx:494:              <SelectItem value="deficit-leve">Déficit Leve (-10%)</SelectItem>
+src/components/steps/Step4Nutricao.tsx:495:              <SelectItem value="manutencao">Manutenção (0%)</SelectItem>
+src/components/steps/Step4Nutricao.tsx:496:              <SelectItem value="superavit">Superávit (+15%)</SelectItem>
+src/data/training/musculacao/musculacao.full.json:8:          "execution": [
+src/data/training/musculacao/musculacao.full.json:33:          "execution": [
+src/data/training/musculacao/musculacao.full.json:60:          "execution": [
+src/data/training/musculacao/musculacao.full.json:85:          "execution": [
+src/data/training/musculacao/musculacao.full.json:112:          "execution": [
+src/data/training/musculacao/musculacao.full.json:137:          "execution": [
+src/data/training/musculacao/musculacao.full.json:166:          "execution": [
+src/data/training/musculacao/musculacao.full.json:191:          "execution": [
+src/data/training/musculacao/musculacao.full.json:218:          "execution": [
+src/data/training/musculacao/musculacao.full.json:243:          "execution": [
+src/data/training/musculacao/musculacao.full.json:270:          "execution": [
+src/data/training/musculacao/musculacao.full.json:295:          "execution": [
+src/data/training/musculacao/musculacao.full.json:324:          "execution": [
+src/data/training/musculacao/musculacao.full.json:351:          "execution": [
+src/data/training/musculacao/musculacao.full.json:378:          "execution": [
+src/data/training/musculacao/musculacao.full.json:392:            "Executar rápido e sem controle."
+src/data/training/musculacao/musculacao.full.json:407:          "execution": [
+src/data/training/musculacao/musculacao.full.json:434:          "execution": [
+src/data/training/musculacao/musculacao.full.json:461:          "execution": [
+src/data/training/musculacao/musculacao.full.json:490:          "execution": [
+src/data/training/musculacao/musculacao.full.json:504:            "Executar rápido e sem controle."
+src/data/training/musculacao/musculacao.full.json:517:          "execution": [
+src/data/training/musculacao/musculacao.full.json:544:          "execution": [
+src/data/training/musculacao/musculacao.full.json:557:            "Executar rápido sem controle.",
+src/data/training/musculacao/musculacao.full.json:573:          "execution": [
+src/data/training/musculacao/musculacao.full.json:600:          "execution": [
+src/data/training/musculacao/musculacao.full.json:627:          "execution": [
+src/data/training/musculacao/musculacao.full.json:641:            "Executar curto e sem controle."
+src/data/training/musculacao/musculacao.full.json:656:          "execution": [
+src/data/training/musculacao/musculacao.full.json:683:          "execution": [
+src/data/training/musculacao/musculacao.full.json:710:          "execution": [
+src/data/training/musculacao/musculacao.full.json:739:          "execution": [
+src/data/training/musculacao/musculacao.full.json:766:          "execution": [
+src/data/training/musculacao/musculacao.full.json:793:          "execution": [
+src/data/training/musculacao/musculacao.full.json:806:            "Executar rápido sem controle.",
+src/data/training/musculacao/musculacao.full.json:822:          "execution": [
+src/data/training/musculacao/musculacao.full.json:849:          "execution": [
+src/data/training/musculacao/musculacao.full.json:876:          "execution": [
+src/features/fitness-suite/engine/metabolismoActivity.ts:6: * - Mantém abordagem conservadora e fácil de ajustar.
+src/data/training/musculacao/index.ts:6:  execution: [string, string, string];
+src/data/training/musculacao/musculacao.block3.gluteos_quadriceps.json:8:          "execution": [
+src/data/training/musculacao/musculacao.block3.gluteos_quadriceps.json:35:          "execution": [
+src/data/training/musculacao/musculacao.block3.gluteos_quadriceps.json:62:          "execution": [
+src/data/training/musculacao/musculacao.block3.gluteos_quadriceps.json:76:            "Executar curto e sem controle."
+src/data/training/musculacao/musculacao.block3.gluteos_quadriceps.json:91:          "execution": [
+src/data/training/musculacao/musculacao.block3.gluteos_quadriceps.json:118:          "execution": [
+src/data/training/musculacao/musculacao.block3.gluteos_quadriceps.json:145:          "execution": [
+src/components/planos/DietaAtivaView.tsx:106:                {(dietaAtiva as any)?.estrategia ? String((dietaAtiva as any).estrategia) : "Plano personalizado"}
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:8:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:35:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:62:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:76:            "Executar rápido e sem controle."
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:91:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:118:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:145:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:174:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:188:            "Executar rápido e sem controle."
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:201:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:228:          "execution": [
+src/data/training/musculacao/musculacao.block2.ombros_biceps_triceps.json:241:            "Executar rápido sem controle.",
+src/App-antigo.tsx:2:import { DrMindSetfitProvider, useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/App-antigo.tsx:17:  const { state } = useDrMindSetfit()
+src/components/steps/Step7Acompanhamento.tsx:4:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/components/steps/Step7Acompanhamento.tsx:8:  const { state } = useDrMindSetfit();
+src/features/fitness-suite/data/strength/strengthLibrary.ts:20:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:34:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:46:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:58:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:69:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:79:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:94:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:107:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:120:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:132:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:144:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:160:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:172:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:183:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:194:    executionType: "guiado",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:210:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:221:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:233:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:244:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:258:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:268:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:278:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:294:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:307:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:319:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:331:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:345:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:357:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:367:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:383:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:395:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:405:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:422:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:432:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:442:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:457:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:468:    executionType: "maquina",
+src/features/fitness-suite/data/strength/strengthLibrary.ts:478:    executionType: "peso_livre",
+src/features/fitness-suite/data/strength/strengthTypes.ts:13:export type ExecutionType = "peso_livre" | "maquina" | "guiado";
+src/features/fitness-suite/data/strength/strengthTypes.ts:35:  executionType: ExecutionType;
+src/components/steps/Step5Treino.tsx:6:import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+src/components/steps/Step5Treino.tsx:82:  if (k.includes("emag") || k.includes("cut")) return "emagrecimento";
+src/components/steps/Step5Treino.tsx:100:  const { state, updateState } = useDrMindSetfit();
+src/components/steps/Step2Avaliacao.tsx:13:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/components/steps/Step2Avaliacao.tsx:120:  const draftSSOT = useOnboardingStore((st) => st.draft) as Record<string, any>;
+src/components/steps/Step2Avaliacao.tsx:123:  const { state, updateState, nextStep } = useDrMindSetfit();
+src/components/steps/Step3Metabolismo.tsx:9:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/components/steps/Step3Metabolismo.tsx:38:  const { state, updateState } = useDrMindSetfit();
+src/components/planos/TreinoAtivoView.tsx:29:    const estrategia = (t.estrategia || treino.estrategia || "Treino individualizado") as string;
+src/components/planos/TreinoAtivoView.tsx:66:      estrategia,
+src/components/planos/TreinoAtivoView.tsx:81:              Estratégia: <span className="text-white/80">{view.estrategia}</span>
+src/components/ui/context-menu.tsx:166:const ContextMenuShortcut = ({
+src/components/ui/context-menu.tsx:180:ContextMenuShortcut.displayName = "ContextMenuShortcut"
+src/components/ui/context-menu.tsx:191:  ContextMenuShortcut,
+src/components/steps/Step1Perfil.tsx:11:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/components/steps/Step1Perfil.tsx:50:  const { state, updateState, nextStep } = useDrMindSetfit()
+src/components/steps/Step1Perfil.tsx:59:  const draftSSOT = useOnboardingStore((st) => st.draft) as Record<string, any>;
+src/utils/geradorDieta.ts:8:  estrategia: EstrategiaNutricional
+src/utils/geradorDieta.ts:46:  if (dados.estrategia === 'deficit-leve') calorias = dados.caloriasAlvo * 0.9
+src/utils/geradorDieta.ts:47:  if (dados.estrategia === 'deficit-moderado') calorias = dados.caloriasAlvo * 0.8
+src/utils/geradorDieta.ts:48:  if (dados.estrategia === 'deficit-agressivo') calorias = dados.caloriasAlvo * 0.75
+src/utils/geradorDieta.ts:49:  if (dados.estrategia === 'superavit') calorias = dados.caloriasAlvo * 1.15
+src/utils/geradorDieta.ts:227:    estrategia: dados.estrategia,
+src/components/steps/Step8Relatorio.tsx:5:import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+src/components/steps/Step8Relatorio.tsx:14:  const { state } = useDrMindSetfit();
+src/components/steps/Step8Relatorio.tsx:30:            Aqui você vê um resumo executivo do seu plano (treino, nutrição e recomendações) com base no seu perfil,
+src/components/steps/Step8Relatorio.tsx:134:          <CardDescription>Estratégia: {state.nutricao?.estrategia} (ajuste sustentável)</CardDescription>
+src/components/steps/Step8Relatorio.tsx:253:              <span>Execute o plano por 4–6 semanas antes de ajustar (consistência primeiro)</span>
+src/types/index.ts:9:export type EstrategiaNutricional = 'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'
+src/types/index.ts:148:  estrategia: EstrategiaNutricional
+src/types/index.ts:302:  estrategia: string // ex: "4 semanas", "8 semanas"
+src/features/fitness-suite/modules/exercises/ExerciseDetails.tsx:37:          <div style={{ fontWeight: 950, marginBottom: 6 }}>Como executar</div>
+src/contexts/AuthContext.tsx:97:    // Escutar mudanças de autenticação
+src/contexts/DrMindSetfitContext.tsx:93:export function useDrMindSetfit() {

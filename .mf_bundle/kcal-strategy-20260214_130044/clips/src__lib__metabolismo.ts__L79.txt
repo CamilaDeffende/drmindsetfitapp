@@ -1,0 +1,199 @@
+     1 | 
+     2 | function clamp(n: number, min: number, max: number) {
+     3 |   return Math.max(min, Math.min(max, n));
+     4 | }
+     5 | 
+     6 | function calcAjusteBiotipoKcal(params: {
+     7 |   biotipo?: string;
+     8 |   objetivo?: string;
+     9 |   imc?: number;
+    10 |   bfPct?: number | null;
+    11 | }) {
+    12 |   const biotipo = params.biotipo;
+    13 |   if (biotipo !== "ectomorfo") return {
+    14 | kcal: 0, motivo: "Sem ajuste de biotipo." };
+    15 | 
+    16 |   const obj = params.objetivo ?? "manutencao";
+    17 |   const imc = Number.isFinite(params.imc as any) ? (params.imc as number) : undefined;
+    18 |   const bf = Number.isFinite(params.bfPct as any) ? (params.bfPct as number) : undefined;
+    19 | 
+    20 |   // indicador simples de "magração"
+    21 |   const baixoIMC = imc !== undefined ? imc < 21.0 : false;
+    22 |   const muitoBaixoIMC = imc !== undefined ? imc < 19.5 : false;
+    23 |   const bfBaixo = bf !== undefined ? bf < 12 : false; // neutro (não depende de sexo aqui)
+    24 |   const scoreMagro = (baixoIMC ? 1 : 0) + (muitoBaixoIMC ? 1 : 0) + (bfBaixo ? 1 : 0);
+    25 | 
+    26 |   let base = 0;
+    27 |   if (obj === "hipertrofia") base = 300 + scoreMagro * 150;   // 300–750
+    28 |   else if (obj === "manutencao") base = 150 + scoreMagro * 100; // 150–450
+    29 |   else if (obj === "emagrecimento") base = 0 + scoreMagro * 50; // 0–150
+    30 | 
+    31 |   const kcal = clamp(Math.round(base), 0, 650);
+    32 | 
+    33 |   const motivo =
+    34 |     obj === "hipertrofia"
+    35 |       ? "Ectomorfo + objetivo de hipertrofia: ajuste fino para melhorar aderência e reduzir risco de déficit involuntário."
+    36 |       : obj === "manutencao"
+    37 |       ? "Ectomorfo: ajuste leve para estabilidade calórica e sustentabilidade do plano."
+    38 |       : "Ectomorfo + emagrecimento: ajuste mínimo para preservar o déficit planejado.";
+    39 | 
+    40 |   return { kcal, motivo };
+    41 | }
+    42 | 
+    43 | 
+    44 | 
+    45 | 
+    46 | // Motor de Decisão Metabólica - DrMindSetfit
+    47 | import type { PerfilUsuario, AvaliacaoFisica, EquacaoMetabolica, ResultadoMetabolico } from '@/types'
+    48 | 
+    49 | 
+    50 | // BLOCO 1 (Premium): multiplicador por frequência semanal (atividade real)
+    51 | const getWeeklyActivityMultiplier = (freq?: string): number => {
+    52 |   switch (String(freq || "").toLowerCase()) {
+    53 |     case "sedentario": return 1.20;
+    54 |     case "moderadamente_ativo": return 1.375;
+    55 |     case "ativo": return 1.55;
+    56 |     case "muito_ativo": return 1.725;
+    57 |     default: return 1.375;
+    58 |   }
+    59 | };
+    60 | 
+    61 | // Fator de Atividade Física (FAF)
+    62 | const getFAF = (nivelTreino: string): number => {
+    63 |   const faf: Record<string, number> = {
+    64 |     sedentario: 1.2,
+    65 |     iniciante: 1.375,
+    66 |     intermediario: 1.55,
+    67 |     avancado: 1.725,
+    68 |     atleta: 1.9
+    69 |   }
+    70 |   return faf[nivelTreino] || 1.55
+    71 | }
+    72 | 
+    73 | // Cunningham (baseado em massa magra)
+    74 | export const calcularCunningham = (massaMagra: number): number => {
+    75 |   return 500 + (22 * massaMagra)
+    76 | }
+    77 | 
+    78 | // Harris-Benedict
+    79 | export const calcularHarrisBenedict = (peso: number, altura: number, idade: number, sexo: string): number => {
+    80 |   if (sexo === 'masculino') {
+    81 |     return 88.362 + (13.397 * peso) + (4.799 * altura) - (5.677 * idade)
+    82 |   }
+    83 |   return 447.593 + (9.247 * peso) + (3.098 * altura) - (4.330 * idade)
+    84 | }
+    85 | 
+    86 | // Mifflin-St Jeor
+    87 | export const calcularMifflin = (peso: number, altura: number, idade: number, sexo: string): number => {
+    88 |   if (sexo === 'masculino') {
+    89 |     return (10 * peso) + (6.25 * altura) - (5 * idade) + 5
+    90 |   }
+    91 |   return (10 * peso) + (6.25 * altura) - (5 * idade) - 161
+    92 | }
+    93 | 
+    94 | // FAO/WHO
+    95 | export const calcularFaoWho = (peso: number, idade: number, sexo: string): number => {
+    96 |   if (sexo === 'masculino') {
+    97 |     if (idade < 30) return (15.3 * peso) + 679
+    98 |     if (idade < 60) return (11.6 * peso) + 879
+    99 |     return (13.5 * peso) + 487
+   100 |   } else {
+   101 |     if (idade < 30) return (14.7 * peso) + 496
+   102 |     if (idade < 60) return (8.7 * peso) + 829
+   103 |     return (10.5 * peso) + 596
+   104 |   }
+   105 | }
+   106 | 
+   107 | // Tinsley (para atletas)
+   108 | export const calcularTinsley = (massaMagra: number): number => {
+   109 |   return 25.9 * massaMagra + 284
+   110 | }
+   111 | 
+   112 | // MOTOR DE DECISÃO INTELIGENTE
+   113 | export const decidirEquacaoMetabolica = (
+   114 |   perfil: PerfilUsuario,
+   115 |   avaliacao: AvaliacaoFisica
+   116 | ): EquacaoMetabolica => {
+   117 |   const temComposicao = avaliacao.composicao.percentualMassaMagra !== undefined
+   118 |   const { nivelTreino, objetivo } = perfil
+   119 | 
+   120 |   // Atleta + composição corporal → Tinsley
+   121 |   if (nivelTreino === 'atleta' && temComposicao) {
+   122 |     return 'tinsley'
+   123 |   }
+   124 | 
+   125 |   // Avançado/Intermediário + composição → Cunningham
+   126 |   if ((nivelTreino === 'avancado' || nivelTreino === 'intermediario') && temComposicao) {
+   127 |     return 'cunningham'
+   128 |   }
+   129 | 
+   130 |   // Performance/Hipertrofia → Mifflin
+   131 |   if (objetivo === 'performance' || objetivo === 'hipertrofia') {
+   132 |     return 'mifflin'
+   133 |   }
+   134 | 
+   135 |   // Longevidade/Sedentário → FAO/WHO
+   136 |   if (objetivo === 'longevidade' || nivelTreino === 'sedentario') {
+   137 |     return 'fao-who'
+   138 |   }
+   139 | 
+   140 |   // Default: Mifflin (mais moderno e preciso)
+   141 |   return 'mifflin'
+   142 | }
+   143 | 
+   144 | // Justificativa da escolha
+   145 | export const gerarJustificativa = (equacao: EquacaoMetabolica, perfil: PerfilUsuario): string => {
+   146 |   const justificativas: Record<EquacaoMetabolica, string> = {
+   147 |     cunningham: `Escolhida por você ${perfil.nivelTreino === 'avancado' ? 'treinar de forma avançada' : 'ter nível intermediário'} e possuir dados de composição corporal. A equação de Cunningham é mais precisa quando temos a massa magra real.`,
+   148 | 
+   149 |     'fao-who': `Recomendada pela Organização Mundial da Saúde para ${perfil.objetivo === 'longevidade' ? 'objetivos de saúde e longevidade' : 'iniciantes'}. É uma fórmula validada internacionalmente e considerada segura.`,
+   150 | 
+   151 |     'harris-benedict': `Equação clássica e amplamente utilizada. Apropriada para seu perfil atual.`,
+   152 | 
+   153 |     mifflin: `A equação de Mifflin-St Jeor é considerada a mais precisa para a população geral, especialmente para ${perfil.objetivo === 'hipertrofia' ? 'ganho de massa muscular' : 'melhoria de performance'}.`,
+   154 | 
+   155 |     tinsley: `Como você é atleta e temos seus dados de composição corporal, utilizamos a equação de Tinsley, desenvolvida especificamente para atletas de alto rendimento.`
+   156 |   }
+   157 | 
+   158 |   return justificativas[equacao]
+   159 | }
+   160 | 
+   161 | // Calcular metabolismo completo
+   162 | export const calcularMetabolismo = (
+   163 |   perfil: PerfilUsuario,
+   164 |   avaliacao: AvaliacaoFisica
+   165 | ): ResultadoMetabolico => {
+   166 |   const { peso, altura } = avaliacao
+   167 |   const { idade, sexo, nivelTreino } = perfil
+   168 | 
+   169 |   const massaMagra = avaliacao.composicao.percentualMassaMagra
+   170 |     ? peso * (avaliacao.composicao.percentualMassaMagra / 100)
+   171 |     : peso * 0.75 // Estimativa conservadora
+   172 | 
+   173 |   // Decidir equação automaticamente
+   174 |   const equacaoEscolhida = decidirEquacaoMetabolica(perfil, avaliacao)
+   175 | 
+   176 |   // Calcular TMB com a equação escolhida
+   177 |   let tmb = 0
+   178 |   switch (equacaoEscolhida) {
+   179 |     case 'cunningham':
+   180 |       tmb = calcularCunningham(massaMagra)
+   181 |       break
+   182 |     case 'fao-who':
+   183 |       tmb = calcularFaoWho(peso, idade, sexo)
+   184 |       break
+   185 |     case 'harris-benedict':
+   186 |       tmb = calcularHarrisBenedict(peso, altura, idade, sexo)
+   187 |       break
+   188 |     case 'mifflin':
+   189 |       tmb = calcularMifflin(peso, altura, idade, sexo)
+   190 |       break
+   191 |     case 'tinsley':
+   192 |       tmb = calcularTinsley(massaMagra)
+   193 |       break
+   194 |   }
+   195 | 
+   196 |   // GET = TMB × FAF
+   197 |   const fafBase = getFAF(nivelTreino)
+   198 |   const freqSemanal = (avaliacao as any)?.frequenciaAtividadeSemanal as (string | undefined);
+   199 |   const fafMult = getWeeklyActivityMultiplier(freqSemanal);

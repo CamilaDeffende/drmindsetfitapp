@@ -1,0 +1,36 @@
+     1 | import "./report.styles.css";
+     2 | 
+     3 | export default function PremiumReport() {
+     4 |   return (
+     5 |     <div id="premium-report" className="report">
+     6 |       <section className="cover">
+     7 |         <h1>DrMindSetFit</h1>
+     8 |         <p>Saúde · Performance · Estética</p>
+     9 |       </section>
+    10 | 
+    11 |       <section>
+    12 |         <h2>Resumo Executivo</h2>
+    13 |         <p>Plano personalizado baseado em ciência e dados.</p>
+    14 |       </section>
+    15 | 
+    16 |       <section>
+    17 |         <h2>Avaliação Física</h2>
+    18 |         <p>Composição corporal e indicadores estratégicos.</p>
+    19 |       </section>
+    20 | 
+    21 |       <section>
+    22 |         <h2>Metabolismo & Estratégia</h2>
+    23 |         <p>Equações metabólicas e plano calórico.</p>
+    24 |       </section>
+    25 | 
+    26 |       <section>
+    27 |         <h2>Treino & Nutrição</h2>
+    28 |         <p>Estratégia aplicada conforme objetivo.</p>
+    29 |       </section>
+    30 | 
+    31 |       <footer>
+    32 |         <p>DrMindSetFit · Relatório Profissional</p>
+    33 |       </footer>
+    34 |     </div>
+    35 |   );
+    36 | }

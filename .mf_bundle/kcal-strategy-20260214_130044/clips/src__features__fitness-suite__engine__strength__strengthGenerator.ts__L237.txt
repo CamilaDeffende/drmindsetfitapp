@@ -1,0 +1,157 @@
+   117 |       return { baseSets: 3, baseReps: { min: 8, max: 12 }, baseRestSec: 90 };
+   118 |   }
+   119 | }
+   120 | 
+   121 | function volumeByLevel(level: UserLevel): { compounds: number; accessories: number } {
+   122 |   if (level === "iniciante") return { compounds: 2, accessories: 2 };
+   123 |   if (level === "intermediario") return { compounds: 3, accessories: 2 };
+   124 |   return { compounds: 3, accessories: 3 };
+   125 | }
+   126 | 
+   127 | function candidatesByGroup(all: StrengthExercise[], group: MuscleGroup): StrengthExercise[] {
+   128 |   return all.filter((e) => e.group === group);
+   129 | }
+   130 | 
+   131 | /**
+   132 |  * Escolhe exercícios APENAS dentro dos grupamentos do dia (focus).
+   133 |  * Sem “preencher” com grupos fora do foco: soberania total do usuário.
+   134 |  */
+   135 | function chooseExercisesForDay(userLevel: UserLevel, focus: MuscleGroup[], seed: string): StrengthExercise[] {
+   136 |   const allowedGroups = new Set(focus);
+   137 |   const safePool = filterStrengthByUserLevel(userLevel, STRENGTH_LIBRARY).filter((e) => allowedGroups.has(e.group));
+   138 | 
+   139 |   const { compounds, accessories } = volumeByLevel(userLevel);
+   140 |   const chosen: StrengthExercise[] = [];
+   141 | 
+   142 |   const bigGroups: MuscleGroup[] = ["peito", "costas", "quadriceps", "posterior", "gluteos", "ombros"];
+   143 |   const compoundFocus = focus.filter((g) => bigGroups.includes(g));
+   144 |   const compoundGroups = compoundFocus.length ? compoundFocus : focus;
+   145 | 
+   146 |   const compoundPool = safePool.filter((e) => e.compound);
+   147 |   const compCandidates = compoundGroups.flatMap((g) => candidatesByGroup(compoundPool, g));
+   148 |   chosen.push(...pickManyDeterministic(compCandidates, compounds, seed + "|comp"));
+   149 | 
+   150 |   const accessoryGroups: MuscleGroup[] = focus;
+   151 |   const accPool = safePool.filter((e) => !e.compound || e.group === "core" || e.group === "panturrilhas");
+   152 |   const accCandidates = accessoryGroups.flatMap((g) => candidatesByGroup(accPool, g));
+   153 | 
+   154 |   const acc = pickManyDeterministic(
+   155 |     accCandidates.filter((e) => !chosen.some((c) => c.id === e.id)),
+   156 |     accessories,
+   157 |     seed + "|acc"
+   158 |   );
+   159 |   chosen.push(...acc);
+   160 | 
+   161 |   // fallback seguro: ainda dentro do foco
+   162 |   const target = compounds + accessories;
+   163 |   if (chosen.length < target) {
+   164 |     const remaining = safePool.filter((e) => !chosen.some((c) => c.id === e.id));
+   165 |     chosen.push(...pickManyDeterministic(remaining, target - chosen.length, seed + "|fill"));
+   166 |   }
+   167 | 
+   168 |   return chosen;
+   169 | }
+   170 | 
+   171 | function defaultStrategyKind(userLevel: UserLevel, goal: StrengthGoal): StrengthStrategyKind {
+   172 |   if (userLevel === "iniciante") return "straight_sets";
+   173 |   if (goal === "forca") return userLevel === "avancado" ? "back_off_set" : "piramidal_crescente";
+   174 |   if (goal === "hipertrofia") return userLevel === "avancado" ? "back_off_set" : "piramidal_crescente";
+   175 |   return "tut";
+   176 | }
+   177 | 
+   178 | export function gerarTreinoMusculacao(params: {
+   179 |   frequencyPerWeek: number;
+   180 |   userLevel: UserLevel;
+   181 |   goal: StrengthGoal;
+   182 |   dayIndexWithinStrengthWeek: number;
+   183 |   seed: string;
+   184 |   /** grupamentos soberanos do dia (quando informado, sobrepõe template) */
+   185 |   dayMuscleGroups?: MuscleGroup[];
+   186 |   dominantModality?: "musculacao" | "mixed";
+   187 | }): StrengthWorkout {
+   188 |   const {
+   189 |     frequencyPerWeek,
+   190 |     userLevel,
+   191 |     goal,
+   192 |     dayIndexWithinStrengthWeek,
+   193 |     seed,
+   194 |     dayMuscleGroups,
+   195 |     dominantModality = "musculacao",
+   196 |   } = params;
+   197 | 
+   198 |   const split = resolveSplit(Math.max(1, frequencyPerWeek), dominantModality);
+   199 |   const templates = templatesForSplit(split);
+   200 |   const template = templates[dayIndexWithinStrengthWeek % templates.length] ?? templates[0]!;
+   201 |   const dayFocus = dayMuscleGroups && dayMuscleGroups.length ? dayMuscleGroups : template.focus;
+   202 | 
+   203 |   const base = baseParams(goal);
+   204 |   const daySeed = `${seed}|${split}|${template.label}|d${dayIndexWithinStrengthWeek}`;
+   205 | 
+   206 |   const exercises = chooseExercisesForDay(userLevel, dayFocus, daySeed);
+   207 | 
+   208 |   const preferredKind = defaultStrategyKind(userLevel, goal);
+   209 | 
+   210 |   const workoutExercises: StrengthWorkoutExercise[] = exercises.map((ex) => {
+   211 |     const kind = clampForSafety(ex, userLevel, goal, preferredKind);
+   212 |     const finalDef = STRATEGIES[kind];
+   213 | 
+   214 |     const { sets } = buildStrengthPrescription({
+   215 |       userLevel,
+   216 |       goal,
+   217 |       exercise: ex,
+   218 |       baseSets: base.baseSets,
+   219 |       baseReps: base.baseReps,
+   220 |       baseRestSec: base.baseRestSec,
+   221 |     });
+   222 | 
+   223 |     // se buildStrengthPrescription escolheu outro tipo, garantimos coerência pelo clamp
+   224 |     const finalSets = finalDef.kind === kind ? sets : finalDef.build({
+   225 |       userLevel,
+   226 |       goal,
+   227 |       exercise: ex,
+   228 |       baseSets: base.baseSets,
+   229 |       baseReps: base.baseReps,
+   230 |       baseRestSec: base.baseRestSec,
+   231 |     });
+   232 | 
+   233 |     return {
+   234 |       exerciseId: ex.id,
+   235 |       name: ex.name,
+   236 |       group: ex.group,
+   237 |       executionType: ex.executionType,
+   238 |       biomechLevel: ex.biomechLevel,
+   239 |       equipment: ex.equipment,
+   240 |       strategy: { kind: finalDef.kind, title: finalDef.title, objective: finalDef.objective },
+   241 |       sets: finalSets,
+   242 |     };
+   243 |   });
+   244 | 
+   245 |   // Guard interno: iniciante nunca pode ter exercicio avançado
+   246 |   if (userLevel === "iniciante") {
+   247 |     const bad = workoutExercises.find((e) => e.biomechLevel === "avancado");
+   248 |     if (bad) throw new Error(`Guard: iniciante recebeu exercício avançado: ${bad.exerciseId}`);
+   249 |   }
+   250 | 
+   251 |   // Guard soberano: se dayMuscleGroups foi informado, nada pode sair fora
+   252 |   if (dayMuscleGroups && dayMuscleGroups.length) {
+   253 |     const allowed = new Set(dayMuscleGroups);
+   254 |     const bad = workoutExercises.find((e) => !allowed.has(e.group));
+   255 |     if (bad) throw new Error(`Guard: exercício fora dos grupamentos do dia: ${bad.exerciseId} (${bad.group})`);
+   256 |   }
+   257 | 
+   258 |   return {
+   259 |     modality: "musculacao",
+   260 |     split,
+   261 |     goal,
+   262 |     userLevel,
+   263 |     dayLabel: template.label,
+   264 |     exercises: workoutExercises,
+   265 |     notes: [
+   266 |       "Treino gerado de forma determinística (mesmos inputs → mesmo output).",
+   267 |       "Respeita biomecânica por nível (iniciante não recebe avançado).",
+   268 |       dayMuscleGroups && dayMuscleGroups.length
+   269 |         ? "Respeita grupamentos soberanos do dia (somente os selecionados)."
+   270 |         : "Sem grupamentos por dia informados: usando template do split.",
+   271 |     ],
+   272 |   };
+   273 | }

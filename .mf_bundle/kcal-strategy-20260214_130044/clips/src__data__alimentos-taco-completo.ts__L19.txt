@@ -1,0 +1,139 @@
+     1 | /**
+     2 |  * Base de Dados Nutricional - Tabela TACO (Versão Completa)
+     3 |  *
+     4 |  * Fonte: Tabela Brasileira de Composição de Alimentos (TACO)
+     5 |  * UNICAMP/NEPA - 4ª edição revisada e ampliada
+     6 |  *
+     7 |  * ⚠️ IMPORTANTE:
+     8 |  * - Todos os valores são EXATOS da tabela oficial
+     9 |  * - Valores ausentes na tabela = NaN ou Tr (traços)
+    10 |  * - Nunca inferir, estimar ou completar dados
+    11 |  * - Todos os macros são por 100g do alimento
+    12 |  */
+    13 | 
+    14 | export interface AlimentoTACO {
+    15 |   id: string
+    16 |   codigo: number // Número oficial da tabela TACO
+    17 |   nome: string
+    18 |   categoria: string
+    19 |   energia_kcal: number | 'NA'
+    20 |   proteina_g: number | 'NA' | 'Tr'
+    21 |   lipideos_g: number | 'NA' | 'Tr'
+    22 |   colesterol_mg: number | 'NA' | 'Tr'
+    23 |   carboidrato_g: number | 'NA' | 'Tr'
+    24 |   fibra_g: number | 'NA' | 'Tr' | '*'
+    25 |   grupoSubstituicao: string // Para permitir substituições inteligentes
+    26 | }
+    27 | 
+    28 | export const TABELA_TACO_COMPLETA: AlimentoTACO[] = [
+    29 |   // ===== CEREAIS E DERIVADOS =====
+    30 |   { id: 'arroz_integral_cozido', codigo: 1, nome: 'Arroz, integral, cozido', categoria: 'Cereais e derivados', energia_kcal: 124, proteina_g: 2.6, lipideos_g: 1.0, colesterol_mg: 'NA', carboidrato_g: 25.8, fibra_g: 2.7, grupoSubstituicao: 'carboidrato_integral' },
+    31 |   { id: 'arroz_integral_cru', codigo: 2, nome: 'Arroz, integral, cru', categoria: 'Cereais e derivados', energia_kcal: 360, proteina_g: 7.3, lipideos_g: 1.9, colesterol_mg: 'NA', carboidrato_g: 77.5, fibra_g: 4.8, grupoSubstituicao: 'carboidrato_integral' },
+    32 |   { id: 'arroz_tipo1_cozido', codigo: 3, nome: 'Arroz, tipo 1, cozido', categoria: 'Cereais e derivados', energia_kcal: 128, proteina_g: 2.5, lipideos_g: 0.2, colesterol_mg: 'NA', carboidrato_g: 28.1, fibra_g: 1.6, grupoSubstituicao: 'carboidrato_refinado' },
+    33 |   { id: 'arroz_tipo1_cru', codigo: 4, nome: 'Arroz, tipo 1, cru', categoria: 'Cereais e derivados', energia_kcal: 358, proteina_g: 7.2, lipideos_g: 0.3, colesterol_mg: 'NA', carboidrato_g: 78.8, fibra_g: 1.6, grupoSubstituicao: 'carboidrato_refinado' },
+    34 |   { id: 'arroz_tipo2_cozido', codigo: 5, nome: 'Arroz, tipo 2, cozido', categoria: 'Cereais e derivados', energia_kcal: 130, proteina_g: 2.6, lipideos_g: 0.4, colesterol_mg: 'NA', carboidrato_g: 28.2, fibra_g: 1.1, grupoSubstituicao: 'carboidrato_refinado' },
+    35 |   { id: 'arroz_tipo2_cru', codigo: 6, nome: 'Arroz, tipo 2, cru', categoria: 'Cereais e derivados', energia_kcal: 358, proteina_g: 7.2, lipideos_g: 0.3, colesterol_mg: 'NA', carboidrato_g: 78.9, fibra_g: 1.7, grupoSubstituicao: 'carboidrato_refinado' },
+    36 |   { id: 'aveia_flocos_crua', codigo: 7, nome: 'Aveia, flocos, crua', categoria: 'Cereais e derivados', energia_kcal: 394, proteina_g: 13.9, lipideos_g: 8.5, colesterol_mg: 'NA', carboidrato_g: 66.6, fibra_g: 9.1, grupoSubstituicao: 'cereal_integral' },
+    37 |   { id: 'macarrao_trigo_cru', codigo: 40, nome: 'Macarrão, trigo, cru', categoria: 'Cereais e derivados', energia_kcal: 371, proteina_g: 10.0, lipideos_g: 1.3, colesterol_mg: 'NA', carboidrato_g: 77.9, fibra_g: 2.9, grupoSubstituicao: 'massa' },
+    38 |   { id: 'macarrao_trigo_ovos_cru', codigo: 41, nome: 'Macarrão, trigo, cru, com ovos', categoria: 'Cereais e derivados', energia_kcal: 371, proteina_g: 10.3, lipideos_g: 2.0, colesterol_mg: 18, carboidrato_g: 76.6, fibra_g: 2.3, grupoSubstituicao: 'massa' },
+    39 |   { id: 'pao_integral_forma', codigo: 52, nome: 'Pão, trigo, forma, integral', categoria: 'Cereais e derivados', energia_kcal: 253, proteina_g: 9.4, lipideos_g: 3.7, colesterol_mg: 'NA', carboidrato_g: 49.9, fibra_g: 6.9, grupoSubstituicao: 'pao_integral' },
+    40 |   { id: 'pao_frances', codigo: 53, nome: 'Pão, trigo, francês', categoria: 'Cereais e derivados', energia_kcal: 300, proteina_g: 8.0, lipideos_g: 3.1, colesterol_mg: 'NA', carboidrato_g: 58.6, fibra_g: 2.3, grupoSubstituicao: 'pao_refinado' },
+    41 | 
+    42 |   // ===== VERDURAS E HORTALIÇAS =====
+    43 |   { id: 'abobora_cabotian_cozida', codigo: 64, nome: 'Abóbora, cabotian, cozida', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 48, proteina_g: 1.4, lipideos_g: 0.7, colesterol_mg: 'NA', carboidrato_g: 10.8, fibra_g: 2.5, grupoSubstituicao: 'vegetal_cozido' },
+    44 |   { id: 'abobora_cabotian_crua', codigo: 65, nome: 'Abóbora, cabotian, crua', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 39, proteina_g: 1.7, lipideos_g: 0.5, colesterol_mg: 'NA', carboidrato_g: 8.4, fibra_g: 2.2, grupoSubstituicao: 'vegetal_cru' },
+    45 |   { id: 'abobrinha_italiana_cozida', codigo: 70, nome: 'Abobrinha, italiana, cozida', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 15, proteina_g: 1.1, lipideos_g: 0.2, colesterol_mg: 'NA', carboidrato_g: 3.0, fibra_g: 1.6, grupoSubstituicao: 'vegetal_baixo_carb' },
+    46 |   { id: 'abobrinha_italiana_crua', codigo: 71, nome: 'Abobrinha, italiana, crua', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 19, proteina_g: 1.1, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 4.3, fibra_g: 1.4, grupoSubstituicao: 'vegetal_baixo_carb' },
+    47 |   { id: 'alface_americana_crua', codigo: 77, nome: 'Alface, americana, crua', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 9, proteina_g: 0.6, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 1.7, fibra_g: 1.0, grupoSubstituicao: 'folha_verde' },
+    48 |   { id: 'alface_crespa_crua', codigo: 78, nome: 'Alface, crespa, crua', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 11, proteina_g: 1.3, lipideos_g: 0.2, colesterol_mg: 'NA', carboidrato_g: 1.7, fibra_g: 1.8, grupoSubstituicao: 'folha_verde' },
+    49 |   { id: 'alface_roxa_crua', codigo: 80, nome: 'Alface, roxa, crua', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 13, proteina_g: 0.9, lipideos_g: 0.2, colesterol_mg: 'NA', carboidrato_g: 2.5, fibra_g: 2.0, grupoSubstituicao: 'folha_verde' },
+    50 |   { id: 'brocolis_cozido', codigo: 100, nome: 'Brócolis, cozido', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 25, proteina_g: 2.1, lipideos_g: 0.5, colesterol_mg: 'NA', carboidrato_g: 4.4, fibra_g: 3.4, grupoSubstituicao: 'vegetal_crucifero' },
+    51 |   { id: 'brocolis_cru', codigo: 101, nome: 'Brócolis, cru', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 25, proteina_g: 3.6, lipideos_g: 0.3, colesterol_mg: 'NA', carboidrato_g: 4.0, fibra_g: 2.9, grupoSubstituicao: 'vegetal_crucifero' },
+    52 |   { id: 'batata_doce_cozida', codigo: 88, nome: 'Batata, doce, cozida', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 77, proteina_g: 0.6, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 18.4, fibra_g: 2.2, grupoSubstituicao: 'tuberculo' },
+    53 |   { id: 'batata_doce_crua', codigo: 89, nome: 'Batata, doce, crua', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 118, proteina_g: 1.3, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 28.2, fibra_g: 2.6, grupoSubstituicao: 'tuberculo' },
+    54 |   { id: 'batata_inglesa_cozida', codigo: 91, nome: 'Batata, inglesa, cozida', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 52, proteina_g: 1.2, lipideos_g: 'Tr', colesterol_mg: 'NA', carboidrato_g: 11.9, fibra_g: 1.3, grupoSubstituicao: 'tuberculo' },
+    55 |   { id: 'batata_inglesa_crua', codigo: 92, nome: 'Batata, inglesa, crua', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 64, proteina_g: 1.8, lipideos_g: 'Tr', colesterol_mg: 'NA', carboidrato_g: 14.7, fibra_g: 1.2, grupoSubstituicao: 'tuberculo' },
+    56 |   { id: 'berinjela_cozida', codigo: 95, nome: 'Berinjela, cozida', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 19, proteina_g: 0.7, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 4.5, fibra_g: 2.5, grupoSubstituicao: 'vegetal_baixo_carb' },
+    57 |   { id: 'cenoura_cozida', codigo: 109, nome: 'Cenoura, cozida', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 30, proteina_g: 0.8, lipideos_g: 0.2, colesterol_mg: 'NA', carboidrato_g: 6.7, fibra_g: 2.6, grupoSubstituicao: 'vegetal_raiz' },
+    58 |   { id: 'cenoura_crua', codigo: 110, nome: 'Cenoura, crua', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 34, proteina_g: 1.3, lipideos_g: 0.2, colesterol_mg: 'NA', carboidrato_g: 7.7, fibra_g: 3.2, grupoSubstituicao: 'vegetal_raiz' },
+    59 |   { id: 'chuchu_cozido', codigo: 112, nome: 'Chuchu, cozido', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 19, proteina_g: 0.4, lipideos_g: 'Tr', colesterol_mg: 'NA', carboidrato_g: 4.8, fibra_g: 1.0, grupoSubstituicao: 'vegetal_baixo_carb' },
+    60 |   { id: 'couve_flor_cozida', codigo: 118, nome: 'Couve-flor, cozida', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 19, proteina_g: 1.2, lipideos_g: 0.3, colesterol_mg: 'NA', carboidrato_g: 3.9, fibra_g: 2.1, grupoSubstituicao: 'vegetal_crucifero' },
+    61 |   { id: 'espinafre_nova_zelandia_cru', codigo: 119, nome: 'Espinafre, Nova Zelândia, cru', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 16, proteina_g: 2.0, lipideos_g: 0.2, colesterol_mg: 'NA', carboidrato_g: 2.6, fibra_g: 2.1, grupoSubstituicao: 'folha_verde_escura' },
+    62 |   { id: 'mandioca_cozida', codigo: 129, nome: 'Mandioca, cozida', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 125, proteina_g: 0.6, lipideos_g: 0.3, colesterol_mg: 'NA', carboidrato_g: 30.1, fibra_g: 1.6, grupoSubstituicao: 'tuberculo' },
+    63 |   { id: 'tomate_com_semente_cru', codigo: 157, nome: 'Tomate, com semente, cru', categoria: 'Verduras, hortaliças e derivados', energia_kcal: 15, proteina_g: 1.1, lipideos_g: 0.2, colesterol_mg: 'NA', carboidrato_g: 3.1, fibra_g: 1.2, grupoSubstituicao: 'vegetal_fruto' },
+    64 | 
+    65 |   // ===== FRUTAS =====
+    66 |   { id: 'abacate_cru', codigo: 163, nome: 'Abacate, cru', categoria: 'Frutas e derivados', energia_kcal: 96, proteina_g: 1.2, lipideos_g: 8.4, colesterol_mg: 'NA', carboidrato_g: 6.0, fibra_g: 6.3, grupoSubstituicao: 'fruta_gordura' },
+    67 |   { id: 'abacaxi_cru', codigo: 164, nome: 'Abacaxi, cru', categoria: 'Frutas e derivados', energia_kcal: 48, proteina_g: 0.9, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 12.3, fibra_g: 1.0, grupoSubstituicao: 'fruta_tropical' },
+    68 |   { id: 'banana_nanica_crua', codigo: 179, nome: 'Banana, nanica, crua', categoria: 'Frutas e derivados', energia_kcal: 92, proteina_g: 1.4, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 23.8, fibra_g: 1.9, grupoSubstituicao: 'fruta_energetica' },
+    69 |   { id: 'banana_prata_crua', codigo: 182, nome: 'Banana, prata, crua', categoria: 'Frutas e derivados', energia_kcal: 98, proteina_g: 1.3, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 26.0, fibra_g: 2.0, grupoSubstituicao: 'fruta_energetica' },
+    70 |   { id: 'laranja_baia_crua', codigo: 208, nome: 'Laranja, baía, crua', categoria: 'Frutas e derivados', energia_kcal: 45, proteina_g: 1.0, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 11.5, fibra_g: 1.1, grupoSubstituicao: 'fruta_citrica' },
+    71 |   { id: 'maca_fuji_com_casca', codigo: 222, nome: 'Maçã, Fuji, com casca, crua', categoria: 'Frutas e derivados', energia_kcal: 56, proteina_g: 0.3, lipideos_g: 'Tr', colesterol_mg: 'NA', carboidrato_g: 15.2, fibra_g: 1.3, grupoSubstituicao: 'fruta_temperada' },
+    72 |   { id: 'mamao_papaia_cru', codigo: 226, nome: 'Mamão, Papaia, cru', categoria: 'Frutas e derivados', energia_kcal: 40, proteina_g: 0.5, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 10.4, fibra_g: 1.0, grupoSubstituicao: 'fruta_tropical' },
+    73 |   { id: 'melancia_crua', codigo: 235, nome: 'Melancia, crua', categoria: 'Frutas e derivados', energia_kcal: 33, proteina_g: 0.9, lipideos_g: 'Tr', colesterol_mg: 'NA', carboidrato_g: 8.1, fibra_g: 0.1, grupoSubstituicao: 'fruta_baixo_cal' },
+    74 |   { id: 'morango_cru', codigo: 239, nome: 'Morango, cru', categoria: 'Frutas e derivados', energia_kcal: 30, proteina_g: 0.9, lipideos_g: 0.3, colesterol_mg: 'NA', carboidrato_g: 6.8, fibra_g: 1.7, grupoSubstituicao: 'fruta_vermelha' },
+    75 | 
+    76 |   // ===== CARNES E DERIVADOS =====
+    77 |   { id: 'frango_peito_sem_pele_cozido', codigo: 408, nome: 'Frango, peito, sem pele, cozido', categoria: 'Carnes e derivados', energia_kcal: 163, proteina_g: 31.5, lipideos_g: 3.2, colesterol_mg: 89, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'proteina_magra' },
+    78 |   { id: 'frango_peito_sem_pele_cru', codigo: 409, nome: 'Frango, peito, sem pele, cru', categoria: 'Carnes e derivados', energia_kcal: 119, proteina_g: 21.5, lipideos_g: 3.0, colesterol_mg: 59, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'proteina_magra' },
+    79 |   { id: 'frango_peito_sem_pele_grelhado', codigo: 410, nome: 'Frango, peito, sem pele, grelhado', categoria: 'Carnes e derivados', energia_kcal: 159, proteina_g: 32.0, lipideos_g: 2.5, colesterol_mg: 89, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'proteina_magra' },
+    80 |   { id: 'frango_coxa_sem_pele_cozida', codigo: 398, nome: 'Frango, coxa, sem pele, cozida', categoria: 'Carnes e derivados', energia_kcal: 167, proteina_g: 26.9, lipideos_g: 5.8, colesterol_mg: 133, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'proteina_moderada' },
+    81 |   { id: 'carne_bovina_patinho_cru', codigo: 376, nome: 'Carne, bovina, patinho, sem gordura, cru', categoria: 'Carnes e derivados', energia_kcal: 133, proteina_g: 21.7, lipideos_g: 4.5, colesterol_mg: 56, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'carne_vermelha_magra' },
+    82 |   { id: 'carne_bovina_patinho_grelhado', codigo: 377, nome: 'Carne, bovina, patinho, sem gordura, grelhado', categoria: 'Carnes e derivados', energia_kcal: 219, proteina_g: 35.9, lipideos_g: 7.3, colesterol_mg: 126, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'carne_vermelha_magra' },
+    83 |   { id: 'carne_bovina_alcatra_cru', codigo: 369, nome: 'Carne, bovina, miolo de alcatra, sem gordura, cru', categoria: 'Carnes e derivados', energia_kcal: 163, proteina_g: 21.6, lipideos_g: 7.8, colesterol_mg: 60, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'carne_vermelha_magra' },
+    84 |   { id: 'carne_bovina_file_mignon_cru', codigo: 357, nome: 'Carne, bovina, filé mingnon, sem gordura, cru', categoria: 'Carnes e derivados', energia_kcal: 143, proteina_g: 21.6, lipideos_g: 5.6, colesterol_mg: 55, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'carne_vermelha_magra' },
+    85 |   { id: 'peru_congelado_assado', codigo: 425, nome: 'Peru, congelado, assado', categoria: 'Carnes e derivados', energia_kcal: 163, proteina_g: 26.2, lipideos_g: 5.7, colesterol_mg: 91, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'proteina_magra' },
+    86 |   { id: 'peru_congelado_cru', codigo: 426, nome: 'Peru, congelado, cru', categoria: 'Carnes e derivados', energia_kcal: 94, proteina_g: 18.1, lipideos_g: 1.8, colesterol_mg: 68, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'proteina_magra' },
+    87 | 
+    88 |   // ===== PESCADOS =====
+    89 |   { id: 'tilapia_file_cru', codigo: 322, nome: 'Tilápia, filé, congelado, cru', categoria: 'Pescados e frutos do mar', energia_kcal: 88, proteina_g: 18.0, lipideos_g: 1.2, colesterol_mg: 47, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'peixe_magro' },
+    90 |   { id: 'salmao_sem_pele_cru', codigo: 316, nome: 'Salmão, sem pele, fresco, cru', categoria: 'Pescados e frutos do mar', energia_kcal: 170, proteina_g: 19.3, lipideos_g: 9.7, colesterol_mg: 53, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'peixe_gorduroso' },
+    91 |   { id: 'salmao_sem_pele_grelhado', codigo: 317, nome: 'Salmão, sem pele, fresco, grelhado', categoria: 'Pescados e frutos do mar', energia_kcal: 243, proteina_g: 26.1, lipideos_g: 14.5, colesterol_mg: 73, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'peixe_gorduroso' },
+    92 |   { id: 'atum_conserva_oleo', codigo: 277, nome: 'Atum, conserva em óleo', categoria: 'Pescados e frutos do mar', energia_kcal: 166, proteina_g: 26.2, lipideos_g: 6.0, colesterol_mg: 53, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'peixe_conserva' },
+    93 |   { id: 'atum_fresco_cru', codigo: 278, nome: 'Atum, fresco, cru', categoria: 'Pescados e frutos do mar', energia_kcal: 118, proteina_g: 25.7, lipideos_g: 0.9, colesterol_mg: 48, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'peixe_magro' },
+    94 |   { id: 'sardinha_conserva_oleo', codigo: 319, nome: 'Sardinha, conserva em óleo', categoria: 'Pescados e frutos do mar', energia_kcal: 285, proteina_g: 15.9, lipideos_g: 24.0, colesterol_mg: 73, carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'peixe_conserva' },
+    95 | 
+    96 |   // ===== OVOS =====
+    97 |   { id: 'ovo_galinha_inteiro_cozido', codigo: 488, nome: 'Ovo, de galinha, inteiro, cozido/10minutos', categoria: 'Ovos e derivados', energia_kcal: 146, proteina_g: 13.3, lipideos_g: 9.5, colesterol_mg: 397, carboidrato_g: 0.6, fibra_g: 'NA', grupoSubstituicao: 'ovo' },
+    98 |   { id: 'ovo_galinha_inteiro_cru', codigo: 489, nome: 'Ovo, de galinha, inteiro, cru', categoria: 'Ovos e derivados', energia_kcal: 143, proteina_g: 13.0, lipideos_g: 8.9, colesterol_mg: 356, carboidrato_g: 1.6, fibra_g: 'NA', grupoSubstituicao: 'ovo' },
+    99 |   { id: 'ovo_galinha_clara_cozida', codigo: 486, nome: 'Ovo, de galinha, clara, cozida/10minutos', categoria: 'Ovos e derivados', energia_kcal: 59, proteina_g: 13.4, lipideos_g: 0.1, colesterol_mg: 'NA', carboidrato_g: 0.0, fibra_g: 'NA', grupoSubstituicao: 'proteina_pura' },
+   100 |   { id: 'ovo_codorna_inteiro_cru', codigo: 485, nome: 'Ovo, de codorna, inteiro, cru', categoria: 'Ovos e derivados', energia_kcal: 177, proteina_g: 13.7, lipideos_g: 12.7, colesterol_mg: 568, carboidrato_g: 0.8, fibra_g: 'NA', grupoSubstituicao: 'ovo' },
+   101 | 
+   102 |   // ===== LEGUMINOSAS =====
+   103 |   { id: 'feijao_carioca_cozido', codigo: 561, nome: 'Feijão, carioca, cozido', categoria: 'Leguminosas e derivados', energia_kcal: 76, proteina_g: 4.8, lipideos_g: 0.5, colesterol_mg: 'NA', carboidrato_g: 13.6, fibra_g: 8.5, grupoSubstituicao: 'leguminosa' },
+   104 |   { id: 'feijao_preto_cozido', codigo: 567, nome: 'Feijão, preto, cozido', categoria: 'Leguminosas e derivados', energia_kcal: 77, proteina_g: 4.5, lipideos_g: 0.5, colesterol_mg: 'NA', carboidrato_g: 14.0, fibra_g: 8.4, grupoSubstituicao: 'leguminosa' },
+   105 |   { id: 'lentilha_cozida', codigo: 577, nome: 'Lentilha, cozida', categoria: 'Leguminosas e derivados', energia_kcal: 93, proteina_g: 6.3, lipideos_g: 0.5, colesterol_mg: 'NA', carboidrato_g: 16.3, fibra_g: 7.9, grupoSubstituicao: 'leguminosa' },
+   106 |   { id: 'grao_bico_cru', codigo: 575, nome: 'Grão-de-bico, cru', categoria: 'Leguminosas e derivados', energia_kcal: 355, proteina_g: 21.2, lipideos_g: 5.4, colesterol_mg: 'NA', carboidrato_g: 57.9, fibra_g: 12.4, grupoSubstituicao: 'leguminosa' },
+   107 |   { id: 'ervilha_em_vagem', codigo: 559, nome: 'Ervilha, em vagem', categoria: 'Leguminosas e derivados', energia_kcal: 88, proteina_g: 7.5, lipideos_g: 0.5, colesterol_mg: 'NA', carboidrato_g: 14.2, fibra_g: 9.7, grupoSubstituicao: 'leguminosa' },
+   108 |   { id: 'amendoim_grao_cru', codigo: 557, nome: 'Amendoim, grão, cru', categoria: 'Leguminosas e derivados', energia_kcal: 544, proteina_g: 27.2, lipideos_g: 43.9, colesterol_mg: 'NA', carboidrato_g: 20.3, fibra_g: 8.0, grupoSubstituicao: 'oleaginosa' },
+   109 | 
+   110 |   // ===== LATICÍNIOS =====
+   111 |   { id: 'queijo_minas_frescal', codigo: 461, nome: 'Queijo, minas, frescal', categoria: 'Leite e derivados', energia_kcal: 264, proteina_g: 17.4, lipideos_g: 20.2, colesterol_mg: 62, carboidrato_g: 3.2, fibra_g: 'NA', grupoSubstituicao: 'queijo' },
+   112 |   { id: 'queijo_ricota', codigo: 469, nome: 'Queijo, ricota', categoria: 'Leite e derivados', energia_kcal: 140, proteina_g: 12.6, lipideos_g: 8.1, colesterol_mg: 49, carboidrato_g: 3.8, fibra_g: 'NA', grupoSubstituicao: 'queijo_light' },
+   113 |   { id: 'iogurte_natural', codigo: 448, nome: 'Iogurte, natural', categoria: 'Leite e derivados', energia_kcal: 51, proteina_g: 4.1, lipideos_g: 3.0, colesterol_mg: 14, carboidrato_g: 1.9, fibra_g: 'NA', grupoSubstituicao: 'iogurte' },
+   114 |   { id: 'iogurte_natural_desnatado', codigo: 449, nome: 'Iogurte, natural, desnatado', categoria: 'Leite e derivados', energia_kcal: 41, proteina_g: 3.8, lipideos_g: 0.3, colesterol_mg: 3, carboidrato_g: 5.8, fibra_g: 'NA', grupoSubstituicao: 'iogurte_light' },
+   115 | ]
+   116 | 
+   117 | /**
+   118 |  * Busca substituições nutricionalmente equivalentes para um alimento
+   119 |  *
+   120 |  * Critérios de equivalência:
+   121 |  * 1. Mesmo grupo de substituição (proteina_magra, carboidrato_integral, etc)
+   122 |  * 2. Diferença calórica máxima de ±20%
+   123 |  * 3. Perfil de macronutrientes similar
+   124 |  */
+   125 | export function buscarSubstituicoesEquivalentes(alimentoId: string): AlimentoTACO[] {
+   126 |   const alimento = TABELA_TACO_COMPLETA.find(a => a.id === alimentoId)
+   127 |   if (!alimento || alimento.energia_kcal === 'NA') return []
+   128 | 
+   129 |   const caloriaAlimento = alimento.energia_kcal as number
+   130 |   const margem = caloriaAlimento * 0.2 // 20% de margem
+   131 | 
+   132 |   return TABELA_TACO_COMPLETA.filter(candidato => {
+   133 |     if (candidato.id === alimentoId) return false
+   134 |     if (candidato.grupoSubstituicao !== alimento.grupoSubstituicao) return false
+   135 |     if (candidato.energia_kcal === 'NA') return false
+   136 | 
+   137 |     const caloriaCandidato = candidato.energia_kcal as number
+   138 |     const diferenca = Math.abs(caloriaCandidato - caloriaAlimento)
+   139 | 

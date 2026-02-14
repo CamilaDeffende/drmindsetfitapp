@@ -1,0 +1,144 @@
+    23 | 
+    24 |   // Plan bridge
+    25 |   "mf:activePlan:v1",
+    26 | 
+    27 |   // Strength module
+    28 |   "mf_strength_selected_groups",
+    29 |   "mf_strength_week_plan",
+    30 | 
+    31 |   // HIIT module
+    32 |   "drmindsetfit.hiit.v3",
+    33 | 
+    34 |   // Subscription quick flags (pages/Assinatura.tsx)
+    35 |   "mindsetfit:isSubscribed",
+    36 |   "mindsetfit:subscription:v1",
+    37 | ]);
+    38 | 
+    39 | // No soft, preserva theme e histórico/relatórios.
+    40 | // (hard vai limpar também)
+    41 | const SOFT_ALLOWLIST_PREDICATES: Array<(k: string) => boolean> = [
+    42 |   // tema (theme-provider costuma usar storageKey tipo "vite-ui-theme" / "theme" etc)
+    43 |   (k) => /theme/i.test(k),
+    44 |   // se você quiser preservar preferências de UI no soft (adicione aqui futuramente)
+    45 | ];
+    46 | 
+    47 | // Prefixos do app (hard limpa tudo que bater)
+    48 | const HARD_PREFIXES = [
+    49 |   "mf:",
+    50 |   "mindsetfit:",
+    51 |   "drmindsetfit",
+    52 |   "mf_",
+    53 | ];
+    54 | 
+    55 | // Alguns módulos guardam keys genéricas (ex: "history" em fitness-suite)
+    56 | const HARD_KEYS_EXTRA = new Set<string>([
+    57 |   "history",
+    58 | ]);
+    59 | 
+    60 | function safeKeys(storage: Storage): string[] {
+    61 |   try {
+    62 |     const keys: string[] = [];
+    63 |     for (let i = 0; i < storage.length; i++) {
+    64 |       const k = storage.key(i);
+    65 |       if (k) keys.push(k);
+    66 |     }
+    67 |     return keys;
+    68 |   } catch {
+    69 |     return [];
+    70 |   }
+    71 | }
+    72 | 
+    73 | function shouldPreserveSoft(key: string): boolean {
+    74 |   return SOFT_ALLOWLIST_PREDICATES.some((fn) => {
+    75 |     try { return fn(key); } catch { return false; }
+    76 |   });
+    77 | }
+    78 | 
+    79 | function removeKeys(storage: Storage, keys: string[]): { removed: string[] } {
+    80 |   const removed: string[] = [];
+    81 |   for (const k of keys) {
+    82 |     try {
+    83 |       storage.removeItem(k);
+    84 |       removed.push(k);
+    85 |     } catch {
+    86 |       // noop
+    87 |     }
+    88 |   }
+    89 |   return { removed };
+    90 | }
+    91 | 
+    92 | export function mfReset(mode: ResetMode): { mode: ResetMode; removed: string[] } {
+    93 |   const removedAll: string[] = [];
+    94 | 
+    95 |   const storages: Storage[] = [];
+    96 |   try { storages.push(window.localStorage); } catch {}
+    97 |   try { storages.push(window.sessionStorage); } catch {}
+    98 | 
+    99 |   for (const st of storages) {
+   100 |     const keys = safeKeys(st);
+   101 | 
+   102 |     if (mode === "soft") {
+   103 |       const toRemove: string[] = [];
+   104 |       for (const k of keys) {
+   105 |         if (shouldPreserveSoft(k)) continue;
+   106 | 
+   107 |         // remove exatos canônicos
+   108 |         if (SOFT_KEYS_EXACT.has(k)) { toRemove.push(k); continue; }
+   109 | 
+   110 |         // soft remove também por prefixos que claramente pertencem ao funil
+   111 |         // (mantendo histórico/relatórios se estiverem em mindsetfit:report... etc)
+   112 |         // => regra: se for onboarding/activePlan/subscription/strength/hiit
+   113 |         if (
+   114 |           k.startsWith("mf:onboarding:") ||
+   115 |           k.startsWith("mindsetfit:onboarding") ||
+   116 |           k.startsWith("mf:activePlan") ||
+   117 |           k.startsWith("mindsetfit:subscription") ||
+   118 |           k.startsWith("mindsetfit:isSubscribed") ||
+   119 |           k.startsWith("mf_strength_") ||
+   120 |           k.startsWith("drmindsetfit.hiit")
+   121 |         ) {
+   122 |           toRemove.push(k);
+   123 |           continue;
+   124 |         }
+   125 |       }
+   126 | 
+   127 |       removedAll.push(...removeKeys(st, Array.from(new Set(toRemove))).removed);
+   128 |     } else {
+   129 |       // hard
+   130 |       const toRemove: string[] = [];
+   131 |       for (const k of keys) {
+   132 |         if (HARD_KEYS_EXTRA.has(k)) { toRemove.push(k); continue; }
+   133 |         if (HARD_PREFIXES.some((p) => k.startsWith(p))) { toRemove.push(k); continue; }
+   134 |       }
+   135 |       removedAll.push(...removeKeys(st, Array.from(new Set(toRemove))).removed);
+   136 |     }
+   137 |   }
+   138 | 
+   139 |   return { mode, removed: removedAll };
+   140 | }
+   141 | 
+   142 | /**
+   143 |  * Lê ?reset=soft|hard e executa reset.
+   144 |  * Retorna true se resetou algo.
+   145 |  */
+   146 | export function mfResetFromQuery(): boolean {
+   147 |   try {
+   148 |     const sp = new URLSearchParams(window.location.search);
+   149 |     const mode = sp.get("reset");
+   150 |     if (mode !== "soft" && mode !== "hard") return false;
+   151 | 
+   152 |     const res = mfReset(mode);
+   153 |     // limpa o query param da URL para não ficar resetando em loop em refresh
+   154 |     try {
+   155 |       sp.delete("reset");
+   156 |       const next = window.location.pathname + (sp.toString() ? `?${sp.toString()}` : "") + window.location.hash;
+   157 |       window.history.replaceState({}, "", next);
+   158 |     } catch { /* noop */ }
+   159 | 
+   160 |     // log leve (não quebra UX)
+   161 |     try { console.log("[mfreset]", res.mode, "removed:", res.removed.length); } catch {}
+   162 |     return res.removed.length > 0;
+   163 |   } catch {
+   164 |     return false;
+   165 |   }
+   166 | }

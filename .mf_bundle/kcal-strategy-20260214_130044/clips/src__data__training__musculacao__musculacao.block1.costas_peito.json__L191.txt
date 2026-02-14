@@ -1,0 +1,241 @@
+    71 |           "common_errors": [
+    72 |             "Usar impulso com o tronco para completar reps.",
+    73 |             "Trajetória muito atrás ou muito à frente do corpo.",
+    74 |             "Relaxar no topo e soltar a resistência."
+    75 |           ],
+    76 |           "variations": [
+    77 |             "Puxada neutra na máquina",
+    78 |             "Puxada aberta na máquina",
+    79 |             "Puxada unilateral na máquina"
+    80 |           ]
+    81 |         },
+    82 |         {
+    83 |           "name": "Remada na máquina com apoio no peito",
+    84 |           "goal": "Aumentar espessura com estabilidade e trajetória guiada.",
+    85 |           "execution": [
+    86 |             "Ajuste o apoio no peito e a altura das alças.",
+    87 |             "Puxe as alças em direção ao tronco retraindo as escápulas.",
+    88 |             "Retorne devagar mantendo o peito apoiado."
+    89 |           ],
+    90 |           "focus": "Romboides e trapézio médio com dorsais.",
+    91 |           "cues": [
+    92 |             "Pense em trazer cotovelos para trás.",
+    93 |             "Retração escapular antes do pico.",
+    94 |             "Sem tirar o peito do apoio."
+    95 |           ],
+    96 |           "common_errors": [
+    97 |             "Encolher ombros e perder o foco nas costas.",
+    98 |             "Puxar curto sem amplitude útil.",
+    99 |             "Acelerar a volta e perder controle."
+   100 |           ],
+   101 |           "variations": [
+   102 |             "Remada baixa na máquina",
+   103 |             "Remada baixa no cabo",
+   104 |             "Remada em banco inclinado com halteres"
+   105 |           ]
+   106 |         }
+   107 |       ],
+   108 |       "cabos": [
+   109 |         {
+   110 |           "name": "Remada baixa no cabo",
+   111 |           "goal": "Aumentar espessura e controle com tensão contínua.",
+   112 |           "execution": [
+   113 |             "Sente-se estável e segure o pegador; tronco firme.",
+   114 |             "Puxe o cabo em direção ao abdômen mantendo cotovelos próximos.",
+   115 |             "Retorne devagar mantendo tensão e postura."
+   116 |           ],
+   117 |           "focus": "Dorsais e romboides.",
+   118 |           "cues": [
+   119 |             "Peito alto; ombros para baixo.",
+   120 |             "Cotovelos seguem a linha do corpo.",
+   121 |             "Volta lenta e ativa."
+   122 |           ],
+   123 |           "common_errors": [
+   124 |             "Arredondar a coluna e perder estabilidade.",
+   125 |             "Puxar com bíceps e esquecer escápulas.",
+   126 |             "Bater a carga e perder tensão."
+   127 |           ],
+   128 |           "variations": [
+   129 |             "Remada unilateral no cabo",
+   130 |             "Remada baixa na máquina",
+   131 |             "Remada curvada com halteres"
+   132 |           ]
+   133 |         },
+   134 |         {
+   135 |           "name": "Pulldown unilateral no cabo (ajoelhado)",
+   136 |           "goal": "Construir controle unilateral e trajetória precisa para dorsais.",
+   137 |           "execution": [
+   138 |             "Ajoelhe e segure a alça alta; tronco firme.",
+   139 |             "Puxe a alça para baixo e levemente para o quadril.",
+   140 |             "Retorne lentamente mantendo escápula ativa."
+   141 |           ],
+   142 |           "focus": "Dorsal (ênfase unilateral) e redondo maior.",
+   143 |           "cues": [
+   144 |             "Puxe para o quadril, não para o peito.",
+   145 |             "Ombro baixo e estável.",
+   146 |             "Controle a subida sem perder tensão."
+   147 |           ],
+   148 |           "common_errors": [
+   149 |             "Rodar o tronco para facilitar o movimento.",
+   150 |             "Elevar ombros no topo.",
+   151 |             "Fazer trajetória curta e sem controle."
+   152 |           ],
+   153 |           "variations": [
+   154 |             "Puxada unilateral na máquina",
+   155 |             "Puxada frontal na máquina com pegada neutra",
+   156 |             "Pulldown com corda no cabo"
+   157 |           ]
+   158 |         }
+   159 |       ]
+   160 |     },
+   161 |     "peito": {
+   162 |       "halteres": [
+   163 |         {
+   164 |           "name": "Supino reto com halteres",
+   165 |           "goal": "Desenvolver força e volume do peitoral com controle de amplitude.",
+   166 |           "execution": [
+   167 |             "Deite no banco, halteres alinhados à linha do peito.",
+   168 |             "Desça controlando até amplitude estável.",
+   169 |             "Empurre para cima mantendo trajetória consistente."
+   170 |           ],
+   171 |           "focus": "Peitoral maior (porção esternal).",
+   172 |           "cues": [
+   173 |             "Escápulas firmes e peito alto.",
+   174 |             "Punhos neutros e estáveis.",
+   175 |             "Subida forte sem perder controle."
+   176 |           ],
+   177 |           "common_errors": [
+   178 |             "Descer pouco e perder amplitude útil.",
+   179 |             "Deixar halteres desalinhados e instáveis.",
+   180 |             "Bater halteres no topo e perder tensão."
+   181 |           ],
+   182 |           "variations": [
+   183 |             "Supino reto com barra",
+   184 |             "Supino reto na máquina",
+   185 |             "Supino reto no cabo (press)"
+   186 |           ]
+   187 |         },
+   188 |         {
+   189 |           "name": "Supino inclinado com halteres",
+   190 |           "goal": "Aumentar ênfase na porção superior do peitoral.",
+   191 |           "execution": [
+   192 |             "Ajuste o banco em inclinação moderada e posicione halteres.",
+   193 |             "Desça os halteres com controle até a linha superior do peito.",
+   194 |             "Empurre mantendo escápulas estáveis e trajetória firme."
+   195 |           ],
+   196 |           "focus": "Peitoral maior (porção clavicular).",
+   197 |           "cues": [
+   198 |             "Inclinação estável, sem exagero.",
+   199 |             "Cotovelos em ângulo consistente.",
+   200 |             "Controle total na descida."
+   201 |           ],
+   202 |           "common_errors": [
+   203 |             "Inclinar demais e transferir foco para deltoide.",
+   204 |             "Perder escápulas e estabilidade do ombro.",
+   205 |             "Fazer rep curta e sem tensão."
+   206 |           ],
+   207 |           "variations": [
+   208 |             "Supino inclinado com barra",
+   209 |             "Supino inclinado na máquina",
+   210 |             "Press inclinado no cabo"
+   211 |           ]
+   212 |         }
+   213 |       ],
+   214 |       "maquinas": [
+   215 |         {
+   216 |           "name": "Supino na máquina",
+   217 |           "goal": "Desenvolver peitoral com trajetória guiada e alta consistência.",
+   218 |           "execution": [
+   219 |             "Ajuste assento para alinhar alças à linha do peito.",
+   220 |             "Empurre as alças à frente mantendo controle de velocidade.",
+   221 |             "Retorne lentamente até amplitude completa e estável."
+   222 |           ],
+   223 |           "focus": "Peitoral maior com estabilidade.",
+   224 |           "cues": [
+   225 |             "Peito alto e escápulas firmes.",
+   226 |             "Empurre em linha, sem desviar.",
+   227 |             "Retorno controlado e ativo."
+   228 |           ],
+   229 |           "common_errors": [
+   230 |             "Ajuste ruim e alças fora da linha do peito.",
+   231 |             "Empurrar rápido e perder controle.",
+   232 |             "Relaxar no final e perder tensão."
+   233 |           ],
+   234 |           "variations": [
+   235 |             "Supino reto com halteres",
+   236 |             "Supino reto com barra",
+   237 |             "Press reto no cabo"
+   238 |           ]
+   239 |         },
+   240 |         {
+   241 |           "name": "Crucifixo na máquina (peck deck)",
+   242 |           "goal": "Isolar o peitoral com tensão constante e controle de amplitude.",
+   243 |           "execution": [
+   244 |             "Ajuste o banco para alinhar cotovelos ao centro do peito.",
+   245 |             "Feche as alças em arco controlado até o centro.",
+   246 |             "Retorne lentamente mantendo tensão contínua."
+   247 |           ],
+   248 |           "focus": "Peitoral maior (adução horizontal).",
+   249 |           "cues": [
+   250 |             "Movimento em arco, não em empurrão.",
+   251 |             "Controle no pico sem colapsar ombros.",
+   252 |             "Volta lenta mantendo amplitude útil."
+   253 |           ],
+   254 |           "common_errors": [
+   255 |             "Encostar as alças e relaxar no centro.",
+   256 |             "Amplitude excessiva e perder controle.",
+   257 |             "Subir ombros e perder escápulas."
+   258 |           ],
+   259 |           "variations": [
+   260 |             "Crucifixo com halteres",
+   261 |             "Crossover no cabo (médio)",
+   262 |             "Crucifixo no cabo unilateral"
+   263 |           ]
+   264 |         }
+   265 |       ],
+   266 |       "cabos": [
+   267 |         {
+   268 |           "name": "Crossover no cabo (médio)",
+   269 |           "goal": "Isolar o peitoral em tensão contínua com controle de trajetória.",
+   270 |           "execution": [
+   271 |             "Segure as alças com braços abertos e postura firme.",
+   272 |             "Feche os braços em arco até o centro do corpo.",
+   273 |             "Retorne lentamente mantendo tensão e alinhamento."
+   274 |           ],
+   275 |           "focus": "Peitoral maior (adução horizontal).",
+   276 |           "cues": [
+   277 |             "Arco controlado; cotovelos semi-flexionados.",
+   278 |             "Peito alto e ombros baixos.",
+   279 |             "Sem perder tensão no topo."
+   280 |           ],
+   281 |           "common_errors": [
+   282 |             "Cargar demais e perder controle do arco.",
+   283 |             "Trajetória irregular e assimétrica.",
+   284 |             "Encostar e relaxar no centro."
+   285 |           ],
+   286 |           "variations": [
+   287 |             "Crossover alto",
+   288 |             "Crossover baixo",
+   289 |             "Crucifixo na máquina"
+   290 |           ]
+   291 |         },
+   292 |         {
+   293 |           "name": "Press reto no cabo (em pé)",
+   294 |           "goal": "Desenvolver peitoral com padrão de empurrar e tensão constante.",
+   295 |           "execution": [
+   296 |             "Posicione-se entre os cabos, uma perna à frente para estabilidade.",
+   297 |             "Empurre as alças à frente mantendo o tronco firme.",
+   298 |             "Retorne controlando a fase excêntrica sem perder tensão."
+   299 |           ],
+   300 |           "focus": "Peitoral maior e estabilização de tronco.",
+   301 |           "cues": [
+   302 |             "Pressão contínua no cabo, sem trancos.",
+   303 |             "Escápulas firmes e ombros baixos.",
+   304 |             "Retorno lento com controle."
+   305 |           ],
+   306 |           "common_errors": [
+   307 |             "Deixar o tronco balançar para completar reps.",
+   308 |             "Perder punho e alinhar mal as mãos.",
+   309 |             "Retorno rápido e sem controle."
+   310 |           ],
+   311 |           "variations": [

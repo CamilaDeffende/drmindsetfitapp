@@ -1,0 +1,158 @@
+   280 |               <p className="text-xs text-gray-400">Check científico</p>
+   281 |               <p className="text-sm text-gray-200 font-medium">{science.message}</p>
+   282 |               {pesoKg ? (
+   283 |                 <p className="text-xs text-gray-400 mt-2">Peso inferido: {pesoKg.toFixed(1)} kg (para contexto metabólico)</p>
+   284 |               ) : (
+   285 |                 <p className="text-xs text-gray-500 mt-2">Peso não disponível para contexto metabólico.</p>
+   286 |               )}
+   287 |             </div>
+   288 |           </CardContent>
+   289 |         </Card>
+   290 | 
+   291 |         {/* Refeições */}
+   292 |         <div className="space-y-4">
+   293 |           {nutricaoSafe.refeicoes.map((refeicao: any, index: number) => {
+   294 | 
+   295 |               const totals = sumAlimentosTotals(refeicao.alimentos);
+   296 | 
+   297 |             return (
+   298 |               <Card key={index} className="glass-effect border-white/10">
+   299 |                 <CardHeader className="pb-3">
+   300 |                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+   301 |                     <div>
+   302 |                       <CardTitle className="text-xl text-gray-100">{refeicao.nome}</CardTitle>
+   303 |                       <CardDescription className="text-sm text-gray-400">
+   304 |                         {refeicao.horario} • {totals.calorias} kcal
+   305 |                       </CardDescription>
+   306 |                     </div>
+   307 |                     <div className="flex gap-2 text-xs">
+   308 |                       <Badge variant="outline" className="bg-[#1E6BFF]/20 border-[#1E6BFF]/30 text-[#1E6BFF]">
+   309 |                         P: {totals.proteinas.toFixed(1)}g
+   310 |                       </Badge>
+   311 |                       <Badge variant="outline" className="bg-green-500/20 border-green-500/30 text-green-400">
+   312 |                         C: {totals.carboidratos.toFixed(1)}g
+   313 |                       </Badge>
+   314 |                       <Badge variant="outline" className="bg-yellow-500/20 border-yellow-500/30 text-yellow-400">
+   315 |                         G: {totals.gorduras.toFixed(1)}g
+   316 |                       </Badge>
+   317 |                     </div>
+   318 |                   </div>
+   319 |                 </CardHeader>
+   320 |                 <CardContent>
+   321 |                   <div className="space-y-3">
+   322 |                     {refeicao.alimentos.map((alimento: any, idx: number) => {
+   323 |                       const substituicoes = buscarSubstituicoes(alimento.alimentoId)
+   324 | 
+   325 |                       return (
+   326 |                         <div
+   327 |                           key={idx}
+   328 |                           className="p-4 border border-white/10 rounded-xl bg-black/20 hover:bg-black/40 transition-all"
+   329 |                         >
+   330 |                           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+   331 |                             <div className="flex-1">
+   332 |                               <div className="flex items-start justify-between mb-2">
+   333 |                                 <div>
+   334 |                                   <h4 className="font-semibold text-base text-gray-100">{alimento.nome}</h4>
+   335 |                                   <p className="text-sm text-[#1E6BFF] font-medium">
+   336 |                                     {alimento.gramas}g
+   337 |                                   </p>
+   338 |                                 </div>
+   339 |                                 <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
+   340 |                                   {alimento.calorias} kcal
+   341 |                                 </Badge>
+   342 |                               </div>
+   343 | 
+   344 |                               <div className="grid grid-cols-3 gap-2 text-xs">
+   345 |                                 <div className="flex items-center gap-1">
+   346 |                                   <span className="w-2 h-2 rounded-full bg-[#1E6BFF]"></span>
+   347 |                                   <span className="text-muted-foreground">P:</span>
+   348 |                                   <span className="font-medium">{alimento.proteinas.toFixed(1)}g</span>
+   349 |                                 </div>
+   350 |                                 <div className="flex items-center gap-1">
+   351 |                                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
+   352 |                                   <span className="text-muted-foreground">C:</span>
+   353 |                                   <span className="font-medium">{alimento.carboidratos.toFixed(1)}g</span>
+   354 |                                 </div>
+   355 |                                 <div className="flex items-center gap-1">
+   356 |                                   <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+   357 |                                   <span className="text-muted-foreground">G:</span>
+   358 |                                   <span className="font-medium">{alimento.gorduras.toFixed(1)}g</span>
+   359 |                                 </div>
+   360 |                               </div>
+   361 |                             </div>
+   362 | 
+   363 |                             {substituicoes.length > 0 && (
+   364 |                               <Dialog>
+   365 |                                 <DialogTrigger asChild>
+   366 |                                   <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs bg-[#1E6BFF]/20 border-[#1E6BFF]/30 text-[#1E6BFF] hover:bg-[#1E6BFF]/30">
+   367 |                                     <RefreshCw className="w-3 h-3 mr-1" />
+   368 |                                     Ver Substituições ({substituicoes.length})
+   369 |                                   </Button>
+   370 |                                 </DialogTrigger>
+   371 |                                 <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto glass-effect border-white/20">
+   372 |                                   <DialogHeader>
+   373 |                                     <DialogTitle className="text-lg text-neon">Substituições para {alimento.nome}</DialogTitle>
+   374 |                                     <DialogDescription className="text-sm text-gray-400">
+   375 |                                       Você pode substituir por qualquer um destes alimentos
+   376 |                                     </DialogDescription>
+   377 |                                   </DialogHeader>
+   378 |                                   <div className="space-y-3 mt-4">
+   379 |                                     {substituicoes.map((sub: any) => {
+   380 |                                       const macrosSub = {
+   381 |                                         calorias: Math.round((sub.macrosPor100g.calorias * alimento.gramas) / 100),
+   382 |                                         proteinas: ((sub.macrosPor100g.proteinas * alimento.gramas) / 100).toFixed(1),
+   383 |                                         carboidratos: ((sub.macrosPor100g.carboidratos * alimento.gramas) / 100).toFixed(1),
+   384 |                                         gorduras: ((sub.macrosPor100g.gorduras * alimento.gramas) / 100).toFixed(1)
+   385 |                                       }
+   386 | 
+   387 |                                       return (
+   388 |                                         <div
+   389 |                                           key={sub.id}
+   390 |                                           className="p-3 border border-white/10 rounded-lg bg-black/30 hover:bg-black/50 transition-colors"
+   391 |                                         >
+   392 |                                           <div className="flex items-start justify-between mb-2">
+   393 |                                             <div>
+   394 |                                               <p className="font-semibold text-sm text-gray-100">{sub.nome}</p>
+   395 |                                               <p className="text-xs text-[#1E6BFF]">
+   396 |                                                 {alimento.gramas}g
+   397 |                                               </p>
+   398 |                                             </div>
+   399 |                                             <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400">
+   400 |                                               {macrosSub.calorias} kcal
+   401 |                                             </Badge>
+   402 |                                           </div>
+   403 |                                           <div className="grid grid-cols-3 gap-2 text-xs">
+   404 |                                             <div>
+   405 |                                               <span className="text-gray-400">P:</span>
+   406 |                                               <span className="ml-1 font-medium text-[#1E6BFF]">{macrosSub.proteinas}g</span>
+   407 |                                             </div>
+   408 |                                             <div>
+   409 |                                               <span className="text-gray-400">C:</span>
+   410 |                                               <span className="ml-1 font-medium text-green-400">{macrosSub.carboidratos}g</span>
+   411 |                                             </div>
+   412 |                                             <div>
+   413 |                                               <span className="text-gray-400">G:</span>
+   414 |                                               <span className="ml-1 font-medium text-yellow-400">{macrosSub.gorduras}g</span>
+   415 |                                             </div>
+   416 |                                           </div>
+   417 |                                         </div>
+   418 |                                       )
+   419 |                                     })}
+   420 |                                   </div>
+   421 |                                 </DialogContent>
+   422 |                               </Dialog>
+   423 |                             )}
+   424 |                           </div>
+   425 |                         </div>
+   426 |                       )
+   427 |                     })}
+   428 |                   </div>
+   429 |                 </CardContent>
+   430 |               </Card>
+   431 |             )
+   432 |           })}
+   433 |         </div>
+   434 |       </main>
+   435 | </div>
+   436 |   )
+   437 | }

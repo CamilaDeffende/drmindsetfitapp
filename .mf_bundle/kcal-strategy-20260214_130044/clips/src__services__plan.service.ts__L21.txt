@@ -1,0 +1,141 @@
+     1 | import { computeMetabolic } from "@/engine/metabolic/MetabolicEngine";
+     2 | import { computeMacros, buildMealPlan } from "@/engine/nutrition/NutritionEngine";
+     3 | import { buildWorkoutWeek, Modality } from "@/engine/workout/WorkoutEngine";
+     4 | 
+     5 | import { persistTrainingPlanToActivePlan } from "./training/activePlan.trainingWriter";
+     6 | 
+     7 | export type ActivePlanV1 = {
+     8 |   version: "v1";
+     9 |   /** ISO string (preferido). Mantemos createdAtISO opcional para compatibilidade. */
+    10 |   createdAt: string;
+    11 |   createdAtISO?: string;
+    12 | 
+    13 |   /** Metabolismo calculado (tipagem flexível para não quebrar enquanto evolui o engine). */
+    14 |   metabolic?: {
+    15 |     bmrKcal?: number;
+    16 |     tdeeKcal?: number;
+    17 |     targetKcal?: number;
+    18 |     [k: string]: any;
+    19 |   };
+    20 | 
+    21 |   macros?: {
+    22 |     proteinG?: number;
+    23 |     carbG?: number;
+    24 |     fatG?: number;
+    25 |     targetKcal?: number;
+    26 |     [k: string]: any;
+    27 |   };
+    28 | 
+    29 |   /** Plano alimentar gerado (shape depende do NutritionEngine). */
+    30 |   meals?: any;
+    31 | 
+    32 |   /** Semana de treino gerada (shape depende do WorkoutEngine). */
+    33 |   workout?: any;
+    34 | 
+    35 |   /** Snapshot do questionário (draft) usado para gerar o plano. */
+    36 |   draft?: PlanDraft;
+    37 | };
+    38 | 
+    39 | export type PlanDraft = {
+    40 |   step1?: any;
+    41 |   step2?: any;
+    42 |   step3?: any;
+    43 |   step4?: any;
+    44 |   step5?: any;
+    45 |   step6?: any;
+    46 |   step7?: any;
+    47 | };
+    48 | 
+    49 | const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
+    50 | 
+    51 | export function saveActivePlan(plan: ActivePlanV1) {
+    52 |   try { localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(plan));
+    53 |   // MF_PERSIST_TRAININGPLAN_V3
+    54 |   try { persistTrainingPlanToActivePlan(); } catch {} } catch {}
+    55 | }
+    56 | 
+    57 | export function loadActivePlan(): ActivePlanV1 | null {
+    58 |   try {
+    59 |     const r = localStorage.getItem(ACTIVE_PLAN_KEY);
+    60 |     return r ? (JSON.parse(r) as ActivePlanV1) : null;
+    61 |   } catch { return null; }
+    62 | }
+    63 | 
+    64 | function normGender(g: any): "male" | "female" | "other" {
+    65 |   const v = String(g || "").toLowerCase();
+    66 |   if (v === "male" || v.includes("masc")) return "male";
+    67 |   if (v === "female" || v.includes("fem")) return "female";
+    68 |   return "other";
+    69 | }
+    70 | 
+    71 | export function activityFactorFromWeeklyFrequency(freq: any): number {
+    72 |   const v = String(freq || "").toLowerCase();
+    73 | 
+    74 |   if (v.includes("sed")) return 1.2;
+    75 |   if (v.includes("1") || v.includes("2") || v.includes("3")) return 1.375;
+    76 |   if (v.includes("4") || v.includes("5")) return 1.55;
+    77 |   if (v.includes("+") || v.includes("muito") || v.includes("6") || v.includes("7")) return 1.725;
+    78 | 
+    79 |   return 1.375;
+    80 | }
+    81 | 
+    82 | export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
+    83 |   const step1 = draft.step1 || {};
+    84 |   const step2 = draft.step2 || {};
+    85 |   const step3 = draft.step3 || {};
+    86 |   const step5 = draft.step5 || {};
+    87 |   const step6 = draft.step6 || {};
+    88 |   const step7 = draft.step7 || {};
+    89 | 
+    90 |   const weightKg = Number(step2?.peso || step2?.weight || 80);
+    91 |   const heightCm = Number(step2?.altura || step2?.height || 175);
+    92 |   const ageYears = Number(step1?.idade || step1?.age || 28);
+    93 |   const gender = normGender(step1?.sexo || step1?.gender);
+    94 | 
+    95 |   const goalRaw = String(step1?.objetivo || step1?.goal || "maintain").toLowerCase();
+    96 |   const goal = goalRaw.includes("emag") || goalRaw.includes("cut") ? "cut"
+    97 |     : goalRaw.includes("gan") || goalRaw.includes("bulk") ? "bulk"
+    98 |     : "maintain";
+    99 | 
+   100 |   const activityFactor = activityFactorFromWeeklyFrequency(step3?.frequenciaSemanal || step3?.frequencia || step3?.atividade);
+   101 | 
+   102 |   const metabolic = computeMetabolic({
+   103 |     weightKg, heightCm, ageYears, gender,
+   104 | 
+   105 |     // MF_AUTO_REE_INPUTS_V1 (precisão científica)
+   106 |     bodyFatPercent: Number(step2?.percentualGordura ?? step2?.bodyFatPercent ?? step2?.bf ?? step2?.gorduraCorporal ?? step2?.["%gordura"] ?? undefined) || undefined,
+   107 |     fatFreeMassKg: Number(step2?.massaMagra ?? step2?.fatFreeMassKg ?? step2?.ffm ?? step2?.magraKg ?? undefined) || undefined,
+   108 |     // activityLevel/isAthlete: vem do Step3 (nivel/frequencia). Mantém opcional e seguro.
+   109 |     activityLevel: (String(step3?.nivelAtividade ?? step3?.activityLevel ?? "").toLowerCase() || undefined) as any,
+   110 |     isAthlete: Boolean(String(step3?.nivelAtividade ?? step3?.activityLevel ?? "").toLowerCase().includes("athlete") || String(step3?.nivel ?? "").toLowerCase().includes("avanc")),
+   111 |     activityFactor,
+   112 |     goal,
+   113 |   });
+   114 | 
+   115 |   const pref = (String(step7?.dieta || step7?.preference || "flexivel").toLowerCase() as any);
+   116 |   const preference = (pref.includes("low") ? "lowcarb" : pref.includes("veg") ? "vegetariana" : "flexivel") as "flexivel"|"lowcarb"|"vegetariana";
+   117 | 
+   118 |   const macros = computeMacros({
+   119 |     targetKcal: metabolic.targetKcal,
+   120 |     goal,
+   121 |     weightKg,
+   122 |     preference,
+   123 |   });
+   124 | 
+   125 |   const meals = buildMealPlan(metabolic.targetKcal, macros);
+   126 | 
+   127 |   const modalities = (step5?.modalidades || step5?.modalities || ["musculacao"]) as Modality[];
+   128 |   const levelRaw = String(step3?.nivel || step3?.level || "iniciante").toLowerCase();
+   129 |   const level = (levelRaw.includes("avan") ? "avancado" : levelRaw.includes("inter") ? "intermediario" : "iniciante") as "iniciante"|"intermediario"|"avancado";
+   130 | 
+   131 |   const daysByModality = (step6?.diasPorModalidade || step6?.daysByModality || {}) as Record<Modality, string[]>;
+   132 | 
+   133 |   const workout = buildWorkoutWeek({ modalities, level, daysByModality });
+   134 | 
+   135 |   return {
+   136 |     version: "v1",
+   137 |     createdAt: new Date().toISOString(),
+   138 |     metabolic,
+   139 |     macros,
+   140 |     meals,
+   141 |     workout,

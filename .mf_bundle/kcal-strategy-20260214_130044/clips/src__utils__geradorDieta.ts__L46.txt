@@ -1,0 +1,166 @@
+     1 |  
+     2 | import { ALIMENTOS_TACO, type Alimento } from '@/data/alimentos-taco'
+     3 | import type { PlanejamentoNutricional, Macronutrientes, Refeicao, AlimentoRefeicao, EstrategiaNutricional, Restricao, TipoRefeicao } from '@/types'
+     4 | 
+     5 | interface DadosUsuario {
+     6 |   peso: number
+     7 |   caloriasAlvo: number
+     8 |   estrategia: EstrategiaNutricional
+     9 |   restricoes: Restricao[]
+    10 |   numeroRefeicoes: number
+    11 | }
+    12 | 
+    13 | // Planos de refeições por número de refeições
+    14 | const HORARIOS_REFEICOES: Record<number, Array<{ hora: string; nome: string }>> = {
+    15 |   3: [
+    16 |     { hora: '08:00', nome: 'Café da Manhã' },
+    17 |     { hora: '13:00', nome: 'Almoço' },
+    18 |     { hora: '20:00', nome: 'Jantar' }
+    19 |   ],
+    20 |   4: [
+    21 |     { hora: '08:00', nome: 'Café da Manhã' },
+    22 |     { hora: '12:30', nome: 'Almoço' },
+    23 |     { hora: '16:00', nome: 'Lanche da Tarde' },
+    24 |     { hora: '20:00', nome: 'Jantar' }
+    25 |   ],
+    26 |   5: [
+    27 |     { hora: '07:00', nome: 'Café da Manhã' },
+    28 |     { hora: '10:00', nome: 'Lanche da Manhã' },
+    29 |     { hora: '13:00', nome: 'Almoço' },
+    30 |     { hora: '16:30', nome: 'Lanche da Tarde' },
+    31 |     { hora: '20:00', nome: 'Jantar' }
+    32 |   ],
+    33 |   6: [
+    34 |     { hora: '07:00', nome: 'Café da Manhã' },
+    35 |     { hora: '10:00', nome: 'Lanche da Manhã' },
+    36 |     { hora: '13:00', nome: 'Almoço' },
+    37 |     { hora: '16:00', nome: 'Lanche da Tarde' },
+    38 |     { hora: '19:30', nome: 'Jantar' },
+    39 |     { hora: '22:00', nome: 'Ceia' }
+    40 |   ]
+    41 | }
+    42 | 
+    43 | function calcularMacros(dados: DadosUsuario): Macronutrientes {
+    44 |   // Ajuste calórico baseado na estratégia
+    45 |   let calorias = dados.caloriasAlvo
+    46 |   if (dados.estrategia === 'deficit-leve') calorias = dados.caloriasAlvo * 0.9
+    47 |   if (dados.estrategia === 'deficit-moderado') calorias = dados.caloriasAlvo * 0.8
+    48 |   if (dados.estrategia === 'deficit-agressivo') calorias = dados.caloriasAlvo * 0.75
+    49 |   if (dados.estrategia === 'superavit') calorias = dados.caloriasAlvo * 1.15
+    50 | 
+    51 |   // Macronutrientes
+    52 |   const proteina = Math.round(dados.peso * 2.2) // 2.2g/kg
+    53 |   const gorduras = Math.round(dados.peso * 1) // 1g/kg
+    54 |   const caloriasRestantes = calorias - (proteina * 4 + gorduras * 9)
+    55 |   const carboidratos = Math.round(caloriasRestantes / 4)
+    56 | 
+    57 |   return {
+    58 |     proteina,
+    59 |     gorduras,
+    60 |     carboidratos,
+    61 |     calorias: Math.round(calorias)
+    62 |   }
+    63 | }
+    64 | 
+    65 | function filtrarAlimentosPorRestricoes(restricoes: Restricao[]): Alimento[] {
+    66 |   let alimentosFiltrados = [...ALIMENTOS_TACO]
+    67 | 
+    68 |   if (restricoes.includes('lactose')) {
+    69 |     alimentosFiltrados = alimentosFiltrados.filter(a =>
+    70 |       !['iogurte_grego', 'iogurte_desnatado', 'queijo_cottage', 'queijo_minas', 'leite_desnatado', 'requeijao_light'].includes(a.id)
+    71 |     )
+    72 |   }
+    73 | 
+    74 |   if (restricoes.includes('gluten')) {
+    75 |     alimentosFiltrados = alimentosFiltrados.filter(a =>
+    76 |       !['pao_integral', 'macarrao_integral'].includes(a.id)
+    77 |     )
+    78 |   }
+    79 | 
+    80 |   if (restricoes.includes('ovo')) {
+    81 |     alimentosFiltrados = alimentosFiltrados.filter(a =>
+    82 |       !['ovo_inteiro', 'clara_ovo'].includes(a.id)
+    83 |     )
+    84 |   }
+    85 | 
+    86 |   if (restricoes.includes('oleaginosas')) {
+    87 |     alimentosFiltrados = alimentosFiltrados.filter(a =>
+    88 |       !['castanha_caju', 'castanha_para', 'amendoim', 'pasta_amendoim', 'nozes', 'amêndoas'].includes(a.id)
+    89 |     )
+    90 |   }
+    91 | 
+    92 |   if (restricoes.includes('vegetariano') || restricoes.includes('vegano')) {
+    93 |     alimentosFiltrados = alimentosFiltrados.filter(a =>
+    94 |       !['frango_peito', 'frango_coxa', 'carne_patinho', 'carne_alcatra', 'carne_file_mignon',
+    95 |         'tilapia', 'salmao', 'atum_conserva', 'sardinha', 'peito_peru', 'ovo_inteiro'].includes(a.id)
+    96 |     )
+    97 |   }
+    98 | 
+    99 |   if (restricoes.includes('vegano')) {
+   100 |     alimentosFiltrados = alimentosFiltrados.filter(a => a.categoria !== 'proteina' || a.id.startsWith('whey') === false)
+   101 |     alimentosFiltrados = alimentosFiltrados.filter(a =>
+   102 |       !['iogurte_grego', 'iogurte_desnatado', 'queijo_cottage', 'queijo_minas', 'leite_desnatado', 'requeijao_light'].includes(a.id)
+   103 |     )
+   104 |   }
+   105 | 
+   106 |   return alimentosFiltrados
+   107 | }
+   108 | 
+   109 | function criarAlimentoRefeicao(alimento: Alimento, gramas: number): AlimentoRefeicao {
+   110 |   const fator = gramas / 100
+   111 |   return {
+   112 |     alimentoId: alimento.id,
+   113 |     nome: alimento.nome,
+   114 |     gramas,
+   115 |     calorias: Math.round(alimento.calorias * fator),
+   116 |     proteinas: Math.round(alimento.proteinas * fator * 10) / 10,
+   117 |     carboidratos: Math.round(alimento.carboidratos * fator * 10) / 10,
+   118 |     gorduras: Math.round(alimento.gorduras * fator * 10) / 10
+   119 |   }
+   120 | }
+   121 | 
+   122 | export function gerarDietaPersonalizada(dados: DadosUsuario): PlanejamentoNutricional {
+   123 |   const macros = calcularMacros(dados)
+   124 |   const alimentosDisponiveis = filtrarAlimentosPorRestricoes(dados.restricoes)
+   125 |   const horas = HORARIOS_REFEICOES[dados.numeroRefeicoes]
+   126 | 
+   127 |   const refeicoes: Refeicao[] = []
+   128 | 
+   129 |   horas.forEach((horario) => {
+   130 |     const alimentos: AlimentoRefeicao[] = []
+   131 | 
+   132 |     // Lógica para cada tipo de refeição
+   133 |     if (horario.nome.includes('Café')) {
+   134 |       // Café da manhã
+   135 |       const aveia = alimentosDisponiveis.find(a => a.id === 'aveia')
+   136 |       const banana = alimentosDisponiveis.find(a => a.id === 'banana')
+   137 |       const whey = alimentosDisponiveis.find(a => a.id === 'whey_protein')
+   138 |       const pasta = alimentosDisponiveis.find(a => a.id === 'pasta_amendoim')
+   139 | 
+   140 |       if (aveia) {
+   141 |         const gramasAveia = 50
+   142 |         alimentos.push(criarAlimentoRefeicao(aveia, gramasAveia))
+   143 |       }
+   144 | 
+   145 |       if (banana) {
+   146 |         const gramasBanana = 100
+   147 |         alimentos.push(criarAlimentoRefeicao(banana, gramasBanana))
+   148 |       }
+   149 | 
+   150 |       if (whey) {
+   151 |         const gramasWhey = 30
+   152 |         alimentos.push(criarAlimentoRefeicao(whey, gramasWhey))
+   153 |       }
+   154 | 
+   155 |       if (pasta) {
+   156 |         const gramasPasta = 15
+   157 |         alimentos.push(criarAlimentoRefeicao(pasta, gramasPasta))
+   158 |       }
+   159 | 
+   160 |     } else if (horario.nome.includes('Almoço') || horario.nome.includes('Jantar')) {
+   161 |       // Refeições principais
+   162 |       const arroz = alimentosDisponiveis.find(a => a.id === 'arroz_integral')
+   163 |       const feijao = alimentosDisponiveis.find(a => a.id === 'feijao_carioca')
+   164 |       const frango = alimentosDisponiveis.find(a => a.id === 'frango_peito')
+   165 |       const brocolis = alimentosDisponiveis.find(a => a.id === 'brocolis')
+   166 |       const azeite = alimentosDisponiveis.find(a => a.id === 'azeite')

@@ -1,0 +1,238 @@
+     1 | // MF_STEP4_KCAL_SSOT_V1
+     2 | // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
+     3 | // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
+     4 | import { useState } from 'react'
+     5 | import { Button } from '@/components/ui/button'
+     6 | import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+     7 | import { Checkbox } from '@/components/ui/checkbox'
+     8 | import { Label } from '@/components/ui/label'
+     9 | import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    10 | import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+    11 | import { ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
+    12 | import type { PlanejamentoNutricional, Restricao, TipoRefeicao, AlimentoRefeicao } from '@/types'
+    13 | import { ALIMENTOS_DATABASE, calcularMacros } from '@/types/alimentos'
+    14 | import { saveOnboardingProgress } from "@/lib/onboardingProgress";
+    15 | 
+    16 | // MF_STEP4_KCAL_SSOT_HELPERS_V1
+    17 | const mfClampSSOT = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+    18 | 
+    19 | /**
+    20 |  * SSOT de kcal do Step4:
+    21 |  * - baseKcal vem do metabolismo calculado (GET/TDEE preferencial; fallback: metaDiaria)
+    22 |  * - estratégia aplica percent (+/-) automaticamente
+    23 |  * - clamp opcional pela faixa segura (quando disponível), preservando guardrails
+    24 |  */
+    25 | const mfComputeKcalAlvo = (opts: {
+    26 |   baseKcal: number;
+    27 |   percent: number; // ex: -15, 0, +10
+    28 |   faixa?: { minimo?: number; maximo?: number } | null;
+    29 | }) => {
+    30 |   const base = Number.isFinite(opts.baseKcal) ? opts.baseKcal : 0;
+    31 |   const pct = Number.isFinite(opts.percent) ? opts.percent : 0;
+    32 |   const raw = base * (1 + pct / 100);
+    33 |   const rounded = Math.round(raw);
+    34 | 
+    35 |   const min = opts.faixa?.minimo;
+    36 |   const max = opts.faixa?.maximo;
+    37 | 
+    38 |   if (Number.isFinite(min) && Number.isFinite(max) && (max as number) >= (min as number)) {
+    39 |     return mfClampSSOT(rounded, min as number, max as number);
+    40 |   }
+    41 |   return rounded;
+    42 | };
+    43 | import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
+    44 | import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+    45 | // MF_NUTRITION_WIRE_V1
+    46 | function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
+    47 |   // tenta pegar do form primeiro, depois do state
+    48 |   const sexo = (anyForm?.sexo ?? anyState?.perfil?.sexo ?? anyState?.sexo ?? "masculino") as any;
+    49 |   const idade = Number(anyForm?.idade ?? anyState?.perfil?.idade ?? anyState?.idade ?? 30);
+    50 |   const pesoKg = Number(anyForm?.peso ?? anyForm?.pesoKg ?? anyState?.perfil?.peso ?? anyState?.peso ?? 70);
+    51 |   const alturaCm = Number(anyForm?.altura ?? anyForm?.alturaCm ?? anyState?.perfil?.altura ?? anyState?.altura ?? 170);
+    52 |   const massaMagraKg = anyForm?.massaMagraKg ?? anyState?.bioimpedancia?.massaMagraKg ?? anyState?.massaMagraKg ?? null;
+    53 | 
+    54 |   const objetivo = (anyForm?.objetivo ?? anyState?.objetivo ?? anyState?.meta ?? "manutencao") as any;
+    55 |   const biotipo = (anyForm?.biotipo ?? anyState?.biotipo ?? null) as any;
+    56 |   const atividade = (anyForm?.atividade ?? anyState?.atividade ?? anyState?.nivelAtividade ?? "moderado") as any;
+    57 | 
+    58 |   return {
+    59 |     body: { sexo, idade, pesoKg, alturaCm, massaMagraKg },
+    60 |     opts: { objetivo, biotipo, atividade } };
+    61 | }
+    62 | 
+    63 | type OnboardingStepProps = {
+    64 |   value?: any;
+    65 | 
+    66 |   onChange?: (v: any) => void;
+    67 |   onNext?: () => void;
+    68 |   onBack?: () => void;
+    69 | };
+    70 | 
+    71 | // MF_BLOCO4_GUARDRAILS_V2: helpers locais (escopo seguro no Step4)
+    72 | const mfKcalFromMacros = (p: number, c: number, g: number) => (p * 4) + (c * 4) + (g * 9);
+    73 | 
+    74 | export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
+    75 |   void value; void onChange; void onNext; void onBack;
+    76 |   const { state, updateState, nextStep } = useDrMindSetfit()/* MF_BLOCK2_1_STEP4_AUTOSAVE */
+    77 |   const __mf_step4_payload = {
+    78 |     step4: (state as any).nutricao ?? (state as any).nutrition ?? {},
+    79 |     nutricao: (state as any).nutricao };
+    80 |   useOnboardingDraftSaver(__mf_step4_payload as any, 400);
+    81 | 
+    82 |   // BEGIN_MF_BLOCK8_STEP4_PERSIST_V1
+    83 |   // Persistência Step4 (Nutrição) — step 4 (number), sem quebrar fluxo.
+    84 |   // Não inventa dados: salva apenas o que já estiver no state/draft local.
+    85 |   function mfPersistStep4(){
+    86 |     // 1) salvar snapshot leve do que estiver disponível
+    87 |     try {
+    88 |       const payload = {
+    89 |         // Mantemos genérico: Step4 costuma consolidar dados de dieta/macros/calorias
+    90 |         // Se existir no state, persistimos sem alterar schema.
+    91 |         metabolismo: (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? undefined,
+    92 |         dieta: (state as any)?.dieta ?? (state as any)?.planoDieta ?? undefined,
+    93 |         macros: (state as any)?.macros ?? undefined };
+    94 |       saveOnboardingProgress({ step: 4, data: payload } as any);
+    95 |     } catch {}
+    96 |   }
+    97 | 
+    98 |   function mfOnContinue(){
+    99 |     try { mfPersistStep4(); } catch {}
+   100 |     /* MF_SAVE_ACTIVEPLAN_NUTRITION_V1 */
+   101 |     try {
+   102 |       const inputs = __mfBuildNutritionInputs(state, undefined);
+   103 |       saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
+   104 |     } catch {}
+   105 |     if (typeof nextStep === "function") nextStep();
+   106 |     else if (typeof onNext === "function") onNext();
+   107 |   }
+   108 |   // END_MF_BLOCK8_STEP4_PERSIST_V1
+   109 | const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')
+   110 | 
+   111 | // MF_STEP4_STRATEGY_PERCENT_SSOT_V2
+   112 | const mfStrategyPercent = (e: string) => {
+   113 |   switch (e) {
+   114 |     case "deficit-leve":
+   115 |       return -10;
+   116 |     case "deficit-moderado":
+   117 |       return -20;
+   118 |     case "deficit-agressivo":
+   119 |       return -25;
+   120 |     case "superavit":
+   121 |       return +15;
+   122 |     case "manutencao":
+   123 |     default:
+   124 |       return 0;
+   125 |   }
+   126 | };
+   127 |   const [restricoes, setRestricoes] = useState<Restricao[]>([])
+   128 |   const [refeicoesSelecionadas, setRefeicoesSelecionadas] = useState<TipoRefeicao[]>(['cafe-da-manha', 'almoco', 'lanche-tarde', 'jantar'])
+   129 | 
+   130 |   const refeicoesDiponiveis: { value: TipoRefeicao; label: string; horarioPadrao: string }[] = [
+   131 |     { value: 'desjejum', label: 'Desjejum', horarioPadrao: '06:00' },
+   132 |     { value: 'cafe-da-manha', label: 'Café da Manhã', horarioPadrao: '08:00' },
+   133 |     { value: 'almoco', label: 'Almoço', horarioPadrao: '12:00' },
+   134 |     { value: 'lanche-tarde', label: 'Lanche da Tarde', horarioPadrao: '16:00' },
+   135 |     { value: 'jantar', label: 'Jantar', horarioPadrao: '20:00' },
+   136 |     { value: 'ceia', label: 'Ceia', horarioPadrao: '22:00' }
+   137 |   ]
+   138 | 
+   139 |   const restricoesDisponiveis: { value: Restricao; label: string }[] = [
+   140 |     { value: 'lactose', label: 'Lactose' },
+   141 |     { value: 'gluten', label: 'Glúten' },
+   142 |     { value: 'ovo', label: 'Ovo' },
+   143 |     { value: 'acucar', label: 'Açúcar' },
+   144 |     { value: 'oleaginosas', label: 'Oleaginosas' },
+   145 |     { value: 'vegetariano', label: 'Vegetariano' },
+   146 |     { value: 'vegano', label: 'Vegano' },
+   147 |     { value: 'low-sodium', label: 'Baixo Sódio' },
+   148 |     { value: 'diabetes', label: 'Diabetes' }
+   149 |   ]
+   150 | 
+   151 |   const toggleRefeicao = (refeicao: TipoRefeicao) => {
+   152 |     if (refeicoesSelecionadas.includes(refeicao)) {
+   153 |       setRefeicoesSelecionadas(refeicoesSelecionadas.filter(r => r !== refeicao))
+   154 |     } else {
+   155 |       setRefeicoesSelecionadas([...refeicoesSelecionadas, refeicao])
+   156 |     }
+   157 |   }
+   158 | 
+   159 |   const toggleRestricao = (restricao: Restricao) => {
+   160 |     if (restricoes.includes(restricao)) {
+   161 |       setRestricoes(restricoes.filter(r => r !== restricao))
+   162 |     } else {
+   163 |       setRestricoes([...restricoes, restricao])
+   164 |     }
+   165 |   }
+   166 | 
+   167 |   const gerarPlanejamento = () => {
+   168 |     const calorias = state.metabolismo?.caloriasAlvo || 2000
+   169 |     const peso = state.avaliacao?.peso || 70
+   170 | 
+   171 |     // Ajuste calórico baseado na estratégia
+   172 |     let caloriasFinais = calorias
+   173 |   // MF_STEP4_CALC_KCAL_BY_PERCENT_V2
+   174 |   const __mfPctStrategy = mfStrategyPercent(estrategia);
+   175 |   caloriasFinais = calorias * (1 + __mfPctStrategy / 100);
+   176 |     // Macronutrientes
+   177 |     const proteina = Math.round(peso * 2) // 2g/kg
+   178 |     const gorduras = Math.round(peso * 1) // 1g/kg
+   179 |     const caloriasRestantes = caloriasFinais - (proteina * 4 + gorduras * 9)
+   180 |     let carboidratos = Math.round(caloriasRestantes / 4);
+   181 | 
+   182 |     // MF_BLOCO4_GUARDRAILS_V2: consistência kcal ↔ macros (ajusta carboidratos mantendo proteína/gordura)
+   183 |     const kcalFixas = (proteina * 4) + (gorduras * 9);
+   184 |     const kcalTarget = Math.round(caloriasFinais);
+   185 |     const kcalRest = Math.max(0, kcalTarget - kcalFixas);
+   186 |     const carboFix = Math.max(0, Math.round(kcalRest / 4));
+   187 |     // clamp de carbo para evitar valores absurdos em cenários extremos
+   188 |     carboidratos = mfClampSSOT(carboFix, 0, 900);
+   189 |     // recalcula kcal final para exibição coerente (diferenças por arredondamento)
+   190 |     const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
+   191 |     caloriasFinais = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
+   192 | 
+   193 |     /* MF_SAVE_ACTIVEPLAN_NUTRITION_ON_GENERATE_V1 */
+   194 |     try {
+   195 |       const inputs = __mfBuildNutritionInputs(state, undefined);
+   196 |       saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
+   197 |     } catch {}
+   198 | 
+   199 | // Filtrar alimentos baseado nas restrições
+   200 |     const isVegano = restricoes.includes('vegano')
+   201 |     const isVegetariano = restricoes.includes('vegetariano')
+   202 | 
+   203 |     let alimentosPermitidos = ALIMENTOS_DATABASE
+   204 |     if (isVegano) {
+   205 |       alimentosPermitidos = alimentosPermitidos.filter(a => a.vegano)
+   206 |     } else if (isVegetariano) {
+   207 |       alimentosPermitidos = alimentosPermitidos.filter(a => a.vegetariano)
+   208 |     }
+   209 | 
+   210 |     // Gerar refeições baseado na seleção do usuário
+   211 |     const refeicoes = refeicoesSelecionadas.map(tipoRefeicao => {
+   212 |       const infoRefeicao = refeicoesDiponiveis.find(r => r.value === tipoRefeicao)!
+   213 | 
+   214 |       let alimentos: AlimentoRefeicao[] = []
+   215 | 
+   216 |       // Lógica de montagem de refeições
+   217 |       if (tipoRefeicao === 'desjejum' || tipoRefeicao === 'cafe-da-manha') {
+   218 |         // Café da manhã: carboidrato + fruta + proteína + gordura
+   219 |         const aveia = alimentosPermitidos.find(a => a.id === 'aveia')!
+   220 |         const banana = alimentosPermitidos.find(a => a.id === 'banana')!
+   221 |         const iogurte = isVegano
+   222 |           ? alimentosPermitidos.find(a => a.id === 'tofu')!
+   223 |           : alimentosPermitidos.find(a => a.id === 'iogurte-grego')!
+   224 |         const castanhas = alimentosPermitidos.find(a => a.id === 'castanhas')!
+   225 | 
+   226 |         const gramasAveia = 50
+   227 |         const gramasBanana = 100
+   228 |         const gramasIogurte = isVegano ? 100 : 150
+   229 |         const gramasCastanhas = 20
+   230 | 
+   231 |         alimentos = [
+   232 |           {
+   233 |             ...calcularMacros(aveia.id, gramasAveia)!,
+   234 |             alimentoId: aveia.id,
+   235 |             nome: aveia.nome,
+   236 |             gramas: gramasAveia
+   237 |           },
+   238 |           {

@@ -1,0 +1,143 @@
+     1 | /**
+     2 |  * Adapter único (SSOT) para normalizar nutrição do ActivePlan (meals[])
+     3 |  * para o formato usado no estado/UI do app (refeicoes[] + macros pt-BR).
+     4 |  *
+     5 |  * Regra: seguro, idempotente, sem quebrar build mesmo com payload parcial.
+     6 |  */
+     7 | 
+     8 | export type MfMacros = {
+     9 |   calorias: number;
+    10 |   proteina: number;
+    11 |   carboidratos: number;
+    12 |   gorduras: number;
+    13 | };
+    14 | 
+    15 | export type MfRefeicao = {
+    16 |   tipo?: string;
+    17 |   nome?: string;
+    18 |   horario?: string;
+    19 |   alimentos: Array<{
+    20 |     nome: string;
+    21 |     porcao?: string;
+    22 |     calorias: number;
+    23 |     proteina?: number;
+    24 |     carboidratos?: number;
+    25 |     gorduras?: number;
+    26 |     substituicoes?: Array<{ nome: string; porcao?: string }>;
+    27 |   }>;
+    28 | };
+    29 | 
+    30 | export type MfAdaptedNutrition = {
+    31 |   macros: MfMacros;
+    32 |   refeicoes: MfRefeicao[];
+    33 |   kcalTarget: number | null;
+    34 |   meals: any[];
+    35 | };
+    36 | 
+    37 | function n(v: any, d = 0): number {
+    38 |   const x = typeof v === "number" ? v : Number(v);
+    39 |   return Number.isFinite(x) ? x : d;
+    40 | }
+    41 | 
+    42 | function str(v: any, d = ""): string {
+    43 |   return typeof v === "string" ? v : d;
+    44 | }
+    45 | 
+    46 | function normMealType(name: string): string {
+    47 |   const s = (name || "").toLowerCase();
+    48 |   if (s.includes("café") || s.includes("cafe")) return "cafe-da-manha";
+    49 |   if (s.includes("almoço") || s.includes("almoco")) return "almoco";
+    50 |   if (s.includes("lanche")) return "lanche-tarde";
+    51 |   if (s.includes("jantar")) return "jantar";
+    52 |   if (s.includes("ceia")) return "ceia";
+    53 |   return "refeicao";
+    54 | }
+    55 | 
+    56 | /**
+    57 |  * Converte meals[] do NutritionEngine (ou similares) em refeicoes[].
+    58 |  * Esperado: Meal = { name, time, items:[{ name, grams, kcal, proteinG, carbsG, fatG, substitutions? }] }
+    59 |  * Mas aceita variações (items/alimentos/list).
+    60 |  */
+    61 | export function adaptMealsToRefeicoes(meals: any): MfRefeicao[] {
+    62 |   if (!Array.isArray(meals)) return [];
+    63 |   const out: MfRefeicao[] = [];
+    64 | 
+    65 |   for (const m of meals) {
+    66 |     const nome = str(m?.name ?? m?.nome ?? m?.title ?? "Refeição");
+    67 |     const horario = str(m?.time ?? m?.horario ?? "");
+    68 |     const tipo = normMealType(nome);
+    69 | 
+    70 |     const items = (Array.isArray(m?.items) ? m.items
+    71 |       : Array.isArray(m?.alimentos) ? m.alimentos
+    72 |       : Array.isArray(m?.list) ? m.list
+    73 |       : []) as any[];
+    74 | 
+    75 |     const alimentos = items.map((it: any) => {
+    76 |       const subs = Array.isArray(it?.substitutions) ? it.substitutions
+    77 |         : Array.isArray(it?.substituicoes) ? it.substituicoes
+    78 |         : [];
+    79 |       return {
+    80 |         nome: str(it?.name ?? it?.nome ?? "Alimento"),
+    81 |         porcao: str(it?.grams ? `${it.grams}g` : (it?.porcao ?? it?.portion ?? "")),
+    82 |         calorias: n(it?.kcal ?? it?.calorias ?? it?.cal ?? 0),
+    83 |         proteina: n(it?.proteinG ?? it?.protein ?? it?.proteina ?? 0),
+    84 |         carboidratos: n(it?.carbsG ?? it?.carbs ?? it?.carboidratos ?? 0),
+    85 |         gorduras: n(it?.fatG ?? it?.fat ?? it?.gorduras ?? 0),
+    86 |         substituicoes: subs.map((s: any) => ({
+    87 |           nome: str(s?.name ?? s?.nome ?? "Substituição"),
+    88 |           porcao: str(s?.grams ? `${s.grams}g` : (s?.porcao ?? s?.portion ?? "")),
+    89 |         })),
+    90 |       };
+    91 |     });
+    92 | 
+    93 |     out.push({ tipo, nome, horario, alimentos });
+    94 |   }
+    95 | 
+    96 |   return out;
+    97 | }
+    98 | 
+    99 | /**
+   100 |  * Normaliza macros vindos do ActivePlan (podem ser proteinG/carbsG/fatG ou protein/carbs/fat)
+   101 |  * para o formato do app (proteina/carboidratos/gorduras/calorias).
+   102 |  */
+   103 | export function adaptMacrosToPtBR(macros: any, kcalFallback = 0): MfMacros {
+   104 |   const calorias =
+   105 |     n(macros?.calorias ?? macros?.kcal ?? macros?.kcalTarget ?? macros?.calories ?? kcalFallback, kcalFallback);
+   106 | 
+   107 |   const proteina = n(macros?.proteina ?? macros?.proteinG ?? macros?.protein ?? 0);
+   108 |   const carboidratos = n(macros?.carboidratos ?? macros?.carbsG ?? macros?.carbs ?? 0);
+   109 |   const gorduras = n(macros?.gorduras ?? macros?.fatG ?? macros?.fat ?? 0);
+   110 | 
+   111 |   return { calorias, proteina, carboidratos, gorduras };
+   112 | }
+   113 | 
+   114 | /**
+   115 |  * Helper final: dado activePlan.nutrition, retorna nutricao no formato do app
+   116 |  * + pass-through seguro de kcalTarget e meals (para DashboardPremium/PlanosAtivos/Report).
+   117 |  */
+   118 | export function adaptActivePlanNutrition(nutrition: any): MfAdaptedNutrition | null {
+   119 |   if (!nutrition) return null;
+   120 | 
+   121 |   const mealsRaw =
+   122 |     (nutrition?.meals ??
+   123 |       nutrition?.mealPlan ??
+   124 |       nutrition?.refeicoes ??
+   125 |       nutrition?.refeições ??
+   126 |       []) as any;
+   127 | 
+   128 |   const mealsArr = Array.isArray(mealsRaw) ? mealsRaw : [];
+   129 |   const refeicoes = adaptMealsToRefeicoes(mealsArr);
+   130 | 
+   131 |   const kcalTargetNum = n(
+   132 |     nutrition?.kcalTarget ??
+   133 |       nutrition?.targetKcal ??
+   134 |       nutrition?.caloriasAlvo ??
+   135 |       nutrition?.kcal ??
+   136 |       nutrition?.calories ??
+   137 |       0,
+   138 |     0
+   139 |   );
+   140 |   const kcalTarget = kcalTargetNum > 0 ? kcalTargetNum : null;
+   141 | 
+   142 |   const macros = adaptMacrosToPtBR(nutrition?.macros ?? nutrition, kcalTargetNum);
+   143 | 

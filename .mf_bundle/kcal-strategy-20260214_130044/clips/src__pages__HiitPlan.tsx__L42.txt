@@ -1,0 +1,162 @@
+     1 | import { useEffect, useMemo, useState } from "react";
+     2 | import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+     3 | import { mindsetfitSignatureLines } from "@/assets/branding/signature";
+     4 | type ProtocolKey = "TABATA" | "EMOM" | "AMRAP" | "SPRINT";
+     5 | type GoalKey = "FAT_LOSS" | "PERFORMANCE" | "CONDITIONING";
+     6 | type ModalityKey = "RUN" | "BIKE" | "ROPE" | "ROW";
+     7 | 
+     8 | type Protocol = {
+     9 |   key: ProtocolKey;
+    10 |   name: string;
+    11 |   summary: string;
+    12 |   defaultTotalMinutes: number;
+    13 |   defaults: {
+    14 |     rounds?: number;
+    15 |     workSec?: number;
+    16 |     restSec?: number;
+    17 |     intensityLabel: string;
+    18 |   };
+    19 | };
+    20 | 
+    21 | type ProgressionRow = {
+    22 |   week: number;
+    23 |   sessions: number;
+    24 |   totalMin: number;
+    25 |   rounds?: number;
+    26 |   workSec?: number;
+    27 |   restSec?: number;
+    28 |   notes: string;
+    29 | };
+    30 | 
+    31 | const PROTOCOLS: Protocol[] = [
+    32 |   {
+    33 |     key: "TABATA",
+    34 |     name: "Tabata",
+    35 |     summary: "20s forte / 10s leve, rounds progressivos.",
+    36 |     defaultTotalMinutes: 8,
+    37 |     defaults: { rounds: 8, workSec: 20, restSec: 10, intensityLabel: "RPE 9–10" },
+    38 |   },
+    39 |   {
+    40 |     key: "EMOM",
+    41 |     name: "EMOM",
+    42 |     summary: "A cada minuto, executa um bloco. Progressão por tempo total.",
+    43 |     defaultTotalMinutes: 12,
+    44 |     defaults: { intensityLabel: "RPE 8–9" },
+    45 |   },
+    46 |   {
+    47 |     key: "AMRAP",
+    48 |     name: "AMRAP",
+    49 |     summary: "Máximo de rounds em X minutos. Progressão por tempo total.",
+    50 |     defaultTotalMinutes: 10,
+    51 |     defaults: { intensityLabel: "RPE 8–9" },
+    52 |   },
+    53 |   {
+    54 |     key: "SPRINT",
+    55 |     name: "Sprint Intervals",
+    56 |     summary: "Sprints curtos com descanso maior. Progressão por rounds.",
+    57 |     defaultTotalMinutes: 10,
+    58 |     defaults: { rounds: 6, workSec: 15, restSec: 75, intensityLabel: "RPE 9–10" },
+    59 |   },
+    60 | ];
+    61 | 
+    62 | const GOALS: { key: GoalKey; name: string; note: string }[] = [
+    63 |   { key: "FAT_LOSS", name: "Emagrecimento", note: "Maior consistência semanal e volume moderado." },
+    64 |   { key: "PERFORMANCE", name: "Performance", note: "Alta intensidade com controle de volume." },
+    65 |   { key: "CONDITIONING", name: "Condicionamento", note: "Progressão gradual e sustentável." },
+    66 | ];
+    67 | 
+    68 | const MODALITIES: { key: ModalityKey; name: string; note: string }[] = [
+    69 |   { key: "RUN", name: "Corrida", note: "Impacto maior: ajuste de recuperação e técnica." },
+    70 |   { key: "BIKE", name: "Bike", note: "Menor impacto: tolera um pouco mais de volume." },
+    71 |   { key: "ROPE", name: "Corda", note: "Coordenação/panturrilha: volume moderado." },
+    72 |   { key: "ROW", name: "Remo", note: "Full-body: atenção na postura e fadiga do tronco." },
+    73 | ];
+    74 | 
+    75 | const STORAGE_KEY = "drmindsetfit.hiit.v3";
+    76 | 
+    77 | function clamp(n: number, min: number, max: number) {
+    78 |   return Math.max(min, Math.min(max, n));
+    79 | }
+    80 | 
+    81 | function safeParse(raw: string | null) {
+    82 |   if (!raw) return null;
+    83 |   try {
+    84 |     return JSON.parse(raw);
+    85 |   } catch {
+    86 |     return null;
+    87 |   }
+    88 | }
+    89 | 
+    90 | function getPreset(goal: GoalKey) {
+    91 |   if (goal === "FAT_LOSS") {
+    92 |     return {
+    93 |       goal,
+    94 |       protocolKey: "EMOM" as ProtocolKey,
+    95 |       weeks: 6,
+    96 |       sessionsPerWeek: 4,
+    97 |       totalMinutes: 14,
+    98 |       rounds: 10,
+    99 |       workSec: 20,
+   100 |       restSec: 40,
+   101 |     };
+   102 |   }
+   103 |   if (goal === "PERFORMANCE") {
+   104 |     return {
+   105 |       goal,
+   106 |       protocolKey: "TABATA" as ProtocolKey,
+   107 |       weeks: 4,
+   108 |       sessionsPerWeek: 3,
+   109 |       totalMinutes: 8,
+   110 |       rounds: 10,
+   111 |       workSec: 20,
+   112 |       restSec: 10,
+   113 |     };
+   114 |   }
+   115 |   return {
+   116 |     goal,
+   117 |     protocolKey: "AMRAP" as ProtocolKey,
+   118 |     weeks: 6,
+   119 |     sessionsPerWeek: 3,
+   120 |     totalMinutes: 12,
+   121 |     rounds: 8,
+   122 |     workSec: 15,
+   123 |     restSec: 75,
+   124 |   };
+   125 | }
+   126 | 
+   127 | function applyModalityTuning(modality: ModalityKey, current: {
+   128 |   weeks: number;
+   129 |   sessionsPerWeek: number;
+   130 |   totalMinutes: number;
+   131 |   rounds: number;
+   132 |   workSec: number;
+   133 |   restSec: number;
+   134 | }) {
+   135 |   const out = { ...current };
+   136 | 
+   137 |   if (modality === "RUN") {
+   138 |     out.restSec = clamp(out.restSec + 10, 5, 180);
+   139 |     out.sessionsPerWeek = clamp(out.sessionsPerWeek, 1, 5);
+   140 |   } else if (modality === "BIKE") {
+   141 |     out.totalMinutes = clamp(out.totalMinutes + 2, 6, 30);
+   142 |   } else if (modality === "ROPE") {
+   143 |     out.restSec = clamp(out.restSec + 5, 5, 180);
+   144 |     out.totalMinutes = clamp(out.totalMinutes, 6, 20);
+   145 |   } else if (modality === "ROW") {
+   146 |     out.workSec = clamp(out.workSec, 10, 40);
+   147 |     out.restSec = clamp(out.restSec + 5, 5, 180);
+   148 |   }
+   149 | 
+   150 |   return out;
+   151 | }
+   152 | 
+   153 | function buildProgression(params: {
+   154 |   protocol: Protocol;
+   155 |   weeks: number;
+   156 |   sessionsPerWeek: number;
+   157 |   totalMinutes: number;
+   158 |   workSec: number;
+   159 |   restSec: number;
+   160 |   rounds: number;
+   161 |   modality: ModalityKey;
+   162 | }): ProgressionRow[] {

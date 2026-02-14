@@ -1,0 +1,84 @@
+     1 | import { useMemo } from "react";
+     2 | import type { WorkoutRecord } from "@/services/history/HistoryService";
+     3 | import { filterByDays, summarizeWorkouts, pickTs } from "@/components/analytics/analytics-utils";
+     4 | import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5 | import { Badge } from "@/components/ui/badge";
+     6 | 
+     7 | function formatK(n: number) {
+     8 |   if (!Number.isFinite(n)) return "-";
+     9 |   if (n >= 1000) return (n / 1000).toFixed(1) + "k";
+    10 |   return String(Math.round(n));
+    11 | }
+    12 | 
+    13 | function consistencyLabel(sessions: number, days: number) {
+    14 |   const d = Math.max(1, days);
+    15 |   const perWeek = (sessions / d) * 7;
+    16 |   if (perWeek >= 5) return { label: "Consistência alta", tone: "bg-green-600" };
+    17 |   if (perWeek >= 3) return { label: "Consistência média", tone: "bg-yellow-600" };
+    18 |   return { label: "Consistência baixa", tone: "bg-white/10" };
+    19 | }
+    20 | 
+    21 | export default function StatsOverview({
+    22 |   workouts,
+    23 |   days = 14,
+    24 | }: {
+    25 |   workouts: WorkoutRecord[];
+    26 |   days?: number;
+    27 | }) {
+    28 |   const ws = useMemo(() => filterByDays(workouts ?? [], Math.max(1, days)), [workouts, days]);
+    29 | 
+    30 |   const summary = useMemo(() => summarizeWorkouts(ws as any, days), [ws, days]);
+    31 | 
+    32 |   const lastTs = useMemo(() => {
+    33 |     let t = 0;
+    34 |     for (const w of (ws as any[])) {
+    35 |       const x = Number(pickTs(w));
+    36 |       if (Number.isFinite(x) && x > t) t = x;
+    37 |     }
+    38 |     return t || 0;
+    39 |   }, [ws, days]);
+    40 | 
+    41 |   const badge = consistencyLabel(summary.count, days);
+    42 | 
+    43 |   return (
+    44 |     <Card className="border-white/10 bg-white/5">
+    45 |       <CardHeader className="pb-3">
+    46 |         <div className="flex items-center justify-between gap-3">
+    47 |           <CardTitle className="text-base sm:text-lg">Resumo ({days} dias)</CardTitle>
+    48 |           <Badge className={badge.tone + " text-white border-white/10"}>{badge.label}</Badge>
+    49 |         </div>
+    50 |       </CardHeader>
+    51 | 
+    52 |       <CardContent className="pt-0">
+    53 |         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    54 |           <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+    55 |             <div className="text-[11px] text-muted-foreground">Sessões</div>
+    56 |             <div className="text-white font-semibold text-lg">{summary.count}</div>
+    57 |           </div>
+    58 | 
+    59 |           <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+    60 |             <div className="text-[11px] text-muted-foreground">Duração</div>
+    61 |             <div className="text-white font-semibold text-lg">{Math.round((summary.totalDurationS / 60))} min</div>
+    62 |           </div>
+    63 | 
+    64 |           <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+    65 |             <div className="text-[11px] text-muted-foreground">Distância</div>
+    66 |             <div className="text-white font-semibold text-lg">{(summary.totalDistanceM / 1000).toFixed(1)} km</div>
+    67 |           </div>
+    68 | 
+    69 |           <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+    70 |             <div className="text-[11px] text-muted-foreground">Calorias</div>
+    71 |             <div className="text-white font-semibold text-lg">{formatK(summary.totalCaloriesKcal)} kcal</div>
+    72 |           </div>
+    73 |         </div>
+    74 | 
+    75 |         <div className="mt-3 text-[11px] text-muted-foreground">
+    76 |           Última sessão:{" "}
+    77 |           <span className="text-white/90">
+    78 |             {lastTs ? new Date(lastTs).toLocaleString() : "—"}
+    79 |           </span>
+    80 |         </div>
+    81 |       </CardContent>
+    82 |     </Card>
+    83 |   );
+    84 | }

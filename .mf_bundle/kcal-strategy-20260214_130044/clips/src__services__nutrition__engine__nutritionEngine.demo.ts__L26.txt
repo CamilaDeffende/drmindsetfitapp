@@ -1,0 +1,32 @@
+     1 | // MF_NUTRITION_ENGINE_DEMO_V1
+     2 | import { buildNutritionPlan } from "./nutritionEngine";
+     3 | 
+     4 | function demo(label: string, body: any, opts: any) {
+     5 |   const plan = buildNutritionPlan(body, opts);
+     6 |   // saída determinística e curta
+     7 |   console.log("\n==>", label);
+     8 |   console.log({
+     9 |     ree: plan.ree_kcal,
+    10 |     tdee: plan.tdee_kcal,
+    11 |     alvo: plan.alvo_kcal,
+    12 |     metodo: plan.metodo_ree,
+    13 |     atividade: plan.fator_atividade,
+    14 |     delta: plan.delta_objetivo_kcal,
+    15 |     macros: plan.macros,
+    16 |   });
+    17 | }
+    18 | 
+    19 | demo("MASC | 30y | 80kg | 180cm | moderado | emag | meso", 
+    20 |   { sexo: "masculino", idade: 30, pesoKg: 80, alturaCm: 180 }, 
+    21 |   { objetivo: "emagrecimento", biotipo: "mesomorfo", atividade: "moderado" }
+    22 | );
+    23 | 
+    24 | demo("FEM | 28y | 62kg | 165cm | leve | manut | ecto", 
+    25 |   { sexo: "feminino", idade: 28, pesoKg: 62, alturaCm: 165 }, 
+    26 |   { objetivo: "manutencao", biotipo: "ectomorfo", atividade: "leve" }
+    27 | );
+    28 | 
+    29 | demo("MASC | 40y | 92kg | 175cm | alto | ganho | endo | MM 72kg",
+    30 |   { sexo: "masculino", idade: 40, pesoKg: 92, alturaCm: 175, massaMagraKg: 72 },
+    31 |   { objetivo: "ganho", biotipo: "endomorfo", atividade: "alto" }
+    32 | );

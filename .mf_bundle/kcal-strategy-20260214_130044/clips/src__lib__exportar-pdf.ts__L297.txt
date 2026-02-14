@@ -1,0 +1,241 @@
+   177 |           doc.setFontSize(9)
+   178 |           doc.setTextColor(100, 100, 100)
+   179 |           doc.text(`• ${alimento.nome} - ${alimento.gramas}g (${alimento.calorias} kcal)`, 40, yPos)
+   180 |           yPos += 5
+   181 |         })
+   182 |         yPos += 5
+   183 |       })
+   184 |     }
+   185 |   }
+   186 | 
+   187 |   // ===== PLANO ATIVO - TREINO =====
+   188 |   if (state.treinoAtivo && state.treinoAtivo.treino) {
+   189 |     checkPageBreak(100)
+   190 |     doc.addPage()
+   191 |     yPos = 20
+   192 | 
+   193 |     doc.setFontSize(18)
+   194 |     doc.setTextColor(34, 197, 94) // Verde
+   195 |     doc.text('💪 Plano Ativo - Treino', 20, yPos)
+   196 |     yPos += 10
+   197 | 
+   198 |     const { semanaAtual, totalSemanas, status } = calcularSemanaAtual(
+   199 |       state.treinoAtivo.dataInicio,
+   200 |       state.treinoAtivo.dataFim,
+   201 |       state.treinoAtivo.duracaoSemanas
+   202 |     )
+   203 | 
+   204 |     doc.setFontSize(11)
+   205 |     doc.setTextColor(60, 60, 60)
+   206 |     doc.text(`Estratégia: ${state.treinoAtivo.estrategia}`, 25, yPos)
+   207 |     yPos += 7
+   208 |     doc.text(`Período: ${formatarPeriodo(state.treinoAtivo.dataInicio, state.treinoAtivo.dataFim)}`, 25, yPos)
+   209 |     yPos += 7
+   210 |     doc.text(`Semana Atual: ${semanaAtual} de ${totalSemanas}`, 25, yPos)
+   211 |     yPos += 7
+   212 |     doc.text(`Status: ${status === 'ativo' ? 'Em andamento' : status === 'finalizado' ? 'Finalizado' : 'Aguardando'}`, 25, yPos)
+   213 |     yPos += 7
+   214 |     doc.text(`Divisão: ${state.treinoAtivo.treino.divisao.tipo}`, 25, yPos)
+   215 |     yPos += 7
+   216 |     doc.text(`Frequência: ${state.treinoAtivo.treino.frequencia}x por semana`, 25, yPos)
+   217 |     yPos += 7
+   218 |     doc.text(`Intensidade: ${state.treinoAtivo.treino.divisao.intensidade}`, 25, yPos)
+   219 |     yPos += 12
+   220 | 
+   221 |     // Carregar cargas salvas
+   222 |     const cargasSalvas = obterTodasCargas()
+   223 | 
+   224 |     // Treinos por dia
+   225 |     state.treinoAtivo.treino.treinos.forEach((treinoDia) => {
+   226 |       checkPageBreak(80)
+   227 | 
+   228 |       doc.setFontSize(14)
+   229 |       doc.setTextColor(0, 0, 0)
+   230 |       doc.text(`${treinoDia.dia} - ${treinoDia.grupamentos.join(', ')}`, 25, yPos)
+   231 |       yPos += 8
+   232 | 
+   233 |       treinoDia.exercicios.forEach((exercicioTreino, indexEx) => {
+   234 |         checkPageBreak(30)
+   235 | 
+   236 |         doc.setFontSize(11)
+   237 |         doc.setTextColor(60, 60, 60)
+   238 |         doc.text(`${indexEx + 1}. ${exercicioTreino.exercicio.nome}`, 30, yPos)
+   239 |         yPos += 6
+   240 | 
+   241 |         doc.setFontSize(9)
+   242 |         doc.setTextColor(100, 100, 100)
+   243 |         doc.text(`${exercicioTreino.series} séries x ${exercicioTreino.repeticoes} reps • ${exercicioTreino.descanso}s descanso`, 35, yPos)
+   244 |         yPos += 5
+   245 | 
+   246 |         // Cargas registradas por série
+   247 |         const cargasExercicio = cargasSalvas.filter(
+   248 |           c => c.exercicioId === exercicioTreino.exercicio.id && c.dia === treinoDia.dia
+   249 |         )
+   250 | 
+   251 |         if (cargasExercicio.length > 0) {
+   252 |           cargasExercicio.sort((a, b) => a.serie - b.serie)
+   253 |           const cargasTexto = cargasExercicio.map(c => `S${c.serie}: ${c.carga}kg`).join(' | ')
+   254 |           doc.setTextColor(34, 197, 94)
+   255 |           doc.text(`Cargas: ${cargasTexto}`, 35, yPos)
+   256 |           yPos += 5
+   257 |         }
+   258 | 
+   259 |         yPos += 3
+   260 |       })
+   261 | 
+   262 |       yPos += 5
+   263 |     })
+   264 |   }
+   265 | 
+   266 |   // ===== HISTÓRICO DE CORRIDAS =====
+   267 |   if (state.corridas && state.corridas.length > 0) {
+   268 |     checkPageBreak(100)
+   269 |     doc.addPage()
+   270 |     yPos = 20
+   271 | 
+   272 |     doc.setFontSize(18)
+   273 |     doc.setTextColor(34, 197, 94)
+   274 |     doc.text('🏃 Histórico de Corridas', 20, yPos)
+   275 |     yPos += 10
+   276 | 
+   277 |     const ultimasCorridas = state.corridas.slice(-10).reverse()
+   278 | 
+   279 |     ultimasCorridas.forEach((corrida) => {
+   280 |       checkPageBreak(25)
+   281 | 
+   282 |       const dataCorrida = new Date(corrida.dataTimestamp)
+   283 | 
+   284 |       doc.setFontSize(12)
+   285 |       doc.setTextColor(60, 60, 60)
+   286 |       doc.text(`${format(dataCorrida, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, 25, yPos)
+   287 |       yPos += 6
+   288 | 
+   289 |       doc.setFontSize(10)
+   290 |       doc.setTextColor(100, 100, 100)
+   291 |       doc.text(`Distância: ${corrida.distancia.toFixed(2)} km`, 30, yPos)
+   292 |       yPos += 5
+   293 |       doc.text(`Pace: ${corrida.pace} min/km`, 30, yPos)
+   294 |       yPos += 5
+   295 |       doc.text(`Duração: ${Math.floor(corrida.duracao / 60)} min`, 30, yPos)
+   296 |       yPos += 5
+   297 |       doc.text(`Calorias: ${corrida.calorias} kcal`, 30, yPos)
+   298 |       yPos += 8
+   299 |     })
+   300 |   }
+   301 | 
+   302 |   // ===== RODAPÉ FINAL =====
+   303 |   doc.addPage()
+   304 |   yPos = 20
+   305 | 
+   306 |   doc.setFontSize(16)
+   307 |   doc.setTextColor(34, 197, 94)
+   308 |   doc.text('Informações do Relatório', 20, yPos)
+   309 |   yPos += 15
+   310 | 
+   311 |   doc.setFontSize(11)
+   312 |   doc.setTextColor(60, 60, 60)
+   313 |   doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, 25, yPos)
+   314 |   yPos += 10
+   315 |   doc.text('Sistema: Dr. MindSetFit - Saúde e Performance', 25, yPos)
+   316 |   yPos += 10
+   317 |   doc.text('Este relatório contém dados sensíveis. Mantenha em sigilo.', 25, yPos)
+   318 | 
+   319 |   
+   320 |   // MF_PDF_DIAG_V1
+   321 |   const __mfPdfDiagEnabled =
+   322 |     (typeof window !== "undefined") &&
+   323 |     (String(localStorage.getItem("mf:pdf:diag") || "") === "1");
+   324 | 
+   325 |   const __mfPdfDiag = (msg: string, extra?: any) => {
+   326 |     try {
+   327 |       if (!__mfPdfDiagEnabled) return;
+   328 |       console.log("MF_PDF_DIAG:", msg, extra ?? "");
+   329 |     } catch {}
+   330 |   };
+   331 | 
+   332 |   try {
+   333 |     __mfPdfDiag("start", { ua: typeof navigator !== "undefined" ? navigator.userAgent : "na" });
+   334 |   } catch {}
+   335 | 
+   336 | // Salvar PDF
+   337 | 
+   338 |   // MF_PDF_TRAINING_V3 (Treinos da semana via SSOT)
+   339 |   try {
+   340 |     const __mfRaw = (typeof window !== "undefined") ? localStorage.getItem("mf:activePlan:v1") : null;
+   341 |     const __mfAp = __mfRaw ? JSON.parse(__mfRaw) : null;
+   342 |     const __mfW = (__mfAp && __mfAp.training && Array.isArray(__mfAp.training.workouts)) ? __mfAp.training.workouts : [];
+   343 | 
+   344 |     if (__mfW.length) {
+   345 |       const __doc: any = doc; // jsPDF instance (template uses 'doc')
+   346 |       let yPdf = 20;          // cursor local (não depende do template)
+   347 |       const xPdf = 14;
+   348 | 
+   349 |       // título
+   350 |       __doc.setFontSize(14);
+   351 |       __doc.text("Treinos da semana", xPdf, yPdf);
+   352 |       yPdf += 8;
+   353 | 
+   354 |       __doc.setFontSize(10);
+   355 | 
+   356 |       for (let i = 0; i < __mfW.length; i++) {
+   357 |         const w = __mfW[i] || {};
+   358 |         const line =
+   359 |           `${w.day || "DIA"} • ${w.modality || "Atividade"} — ${w.title || "Treino do dia"}` +
+   360 |           (w.durationMin ? ` (${w.durationMin} min)` : "");
+   361 | 
+   362 |         // quebra de página simples (A4 mm ~ 297; margem segura)
+   363 |         if (yPdf > 285) {
+   364 |           __doc.addPage();
+   365 |           yPdf = 20;
+   366 |           __doc.setFontSize(14);
+   367 |           __doc.text("Treinos da semana (cont.)", xPdf, yPdf);
+   368 |           yPdf += 8;
+   369 |           __doc.setFontSize(10);
+   370 |         }
+   371 | 
+   372 |         yPdf += 6;
+   373 |         __doc.text(line, xPdf, yPdf);
+   374 |       }
+   375 | 
+   376 |       yPdf += 8;
+   377 |     }
+   378 |   
+   379 |   } catch(_e) {
+   380 |     __mfPdfDiag('MF_PDF_TRAINING_V3 error', String(_e));
+   381 |   }
+   382 | 
+   383 |   // MF_PDF_NUTRITION_SSOT_V1 (Dieta do dia via SSOT / localStorage)
+   384 |   // Motivo: no export, state.dietaAtiva pode não estar populado. Fonte da verdade: mf:activePlan:v1.
+   385 |   try {
+   386 |     const __mfRawN = (typeof window !== "undefined") ? localStorage.getItem("mf:activePlan:v1") : null;
+   387 |     const __mfApN = __mfRawN ? JSON.parse(__mfRawN) : null;
+   388 | 
+   389 |     const __adapted: any = adaptActivePlanNutrition(__mfApN?.nutrition);
+   390 |     const __kcal = (__adapted?.kcalTarget ?? null);
+   391 |     const __macros = (__adapted?.macros ?? null);
+   392 |     const __meals = Array.isArray(__adapted?.meals) ? __adapted.meals : [];
+   393 | 
+   394 |     const __hasMacros =
+   395 |       !!(__macros && (
+   396 |         Number(__macros?.proteina || 0) > 0 ||
+   397 |         Number(__macros?.carboidratos || 0) > 0 ||
+   398 |         Number(__macros?.gorduras || 0) > 0 ||
+   399 |         Number(__macros?.calorias || 0) > 0
+   400 |       ));
+   401 | 
+   402 |     const __hasMeals = __meals.length > 0;
+   403 |     const __hasKcal = Number(__kcal || 0) > 0;
+   404 | 
+   405 |     // Renderiza se houver evidência real de dieta (kcal+macros ou refeições)
+   406 |     if (__hasMeals || __hasMacros || __hasKcal) {
+   407 |       const __docN: any = doc;
+   408 | 
+   409 |       // Página nova: evita colidir com rodapé/template
+   410 |       __docN.addPage();
+   411 |       let yN = 20;
+   412 |       const xN = 14;
+   413 | 
+   414 |       const __ensure = (need: number) => {
+   415 |         if (yN + need > 285) {
+   416 |           __docN.addPage();
+   417 |           yN = 20;

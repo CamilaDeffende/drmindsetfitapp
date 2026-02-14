@@ -1,0 +1,185 @@
+     1 | /* eslint-disable react-hooks/rules-of-hooks */
+     2 | import { useState, useEffect } from 'react'
+     3 | import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
+     4 | import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+     5 | import { Button } from '@/components/ui/button'
+     6 | import { Input } from '@/components/ui/input'
+     7 | import { Label } from '@/components/ui/label'
+     8 | import { Badge } from '@/components/ui/badge'
+     9 | import { Home, Check, ArrowLeft, ArrowRight, Timer, Dumbbell } from 'lucide-react'
+    10 | import { useNavigate } from 'react-router-dom'
+    11 | import { Progress } from '@/components/ui/progress'
+    12 | import { useToast } from '@/hooks/use-toast'
+    13 | import ProgressaoCargaHint from '@/components/ProgressaoCargaHint'
+    14 | import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
+    15 | import { mindsetfitSignatureLines } from "@/assets/branding/signature";
+    16 | 
+    17 | function buildWorkoutExportText() {
+    18 |   const lines = [
+    19 |     "DRMINDSETFIT — TREINO (RELATÓRIO)",
+    20 |     "",
+    21 |     "Template: MindSetFit Premium (PDF)",
+    22 |     "",
+    23 |     "Conteúdo recomendado:",
+    24 |     "- Divisão (A/B/C...)",
+    25 |     "- Exercícios, séries, reps, descanso",
+    26 |     "- Observações técnicas",
+    27 |     "- Progressão",
+    28 |     ""
+    29 |   ];
+    30 |   return lines.join("\n");
+    31 | }
+    32 | 
+    33 | async function downloadPdfPremiumWorkout() {
+    34 |   await generateMindsetFitPremiumPdf({
+    35 |     signatureLines: mindsetfitSignatureLines,
+    36 |     wordmarkText: "MindSetFit",
+    37 |     reportLabel: "RELATÓRIO TREINO",
+    38 |     metaLines: [
+    39 |       "Módulo: Treino",
+    40 |       "Template: MindSetFit Premium (PDF)",
+    41 |     ],
+    42 |     bodyText: buildWorkoutExportText(),
+    43 |     layout: {
+    44 |       logoW: 220,
+    45 |       logoH: 150,
+    46 |       logoY: 78,
+    47 |       wordmarkSize: 38,
+    48 |       wordmarkGap: 92,
+    49 |       headerGap: 32,
+    50 |       margin: 60,
+    51 |       lineHeight: 13,
+    52 |       drawFrame: true,
+    53 |     },
+    54 |   });
+    55 | }
+    56 | 
+    57 | interface SerieDados {
+    58 |   numero: number
+    59 |   carga: number
+    60 |   tempoDescanso: number // em segundos
+    61 |   completa: boolean
+    62 | }
+    63 | 
+    64 | export function TreinoAtivo() {
+    65 |   const { state, updateState } = useDrMindSetfit()
+    66 |   const navigate = useNavigate()
+    67 |   const { toast } = useToast()
+    68 | 
+    69 |   const [treinoSelecionado, setTreinoSelecionado] = useState(0)
+    70 |   const [exercicioAtual, setExercicioAtual] = useState(0)
+    71 |   const [series, setSeries] = useState<SerieDados[]>([])
+    72 |   const [tempoDecorrido, setTempoDecorrido] = useState(0)
+    73 |   const [timerAtivo, setTimerAtivo] = useState(false)
+    74 | 
+    75 |   if (!state.treino) {
+    76 |     
+    77 |   
+    78 |   
+    79 | return (
+    80 |       <div className="min-h-screen flex items-center justify-center p-4">
+    81 | {/* PROGRESSAO_CARGA_UI */}
+    82 | <ProgressaoCargaHint historico={(Array.isArray((state as any)?.treino?.historicoCargas) ? (state as any).treino.historicoCargas : [])}  />
+    83 | 
+    84 |         <Card className="w-full max-w-md">
+    85 |           <CardHeader>
+    86 |             <CardTitle>Nenhum Treino Configurado</CardTitle>
+    87 |             <CardDescription>Configure seu treino antes de iniciar</CardDescription>
+    88 |           </CardHeader>
+    89 |           <CardContent>
+    90 |             <Button onClick={() => navigate('/dashboard')} className="w-full">
+    91 |               Voltar ao Dashboard
+    92 |             </Button>
+    93 |           </CardContent>
+    94 |         </Card>
+    95 |       </div>
+    96 |     )
+    97 |   }
+    98 | 
+    99 |   const treino = state.treino.treinos[treinoSelecionado]
+   100 |   const exercicio = treino.exercicios[exercicioAtual]
+   101 |   const progressoTreino = Math.round(((exercicioAtual + 1) / treino.exercicios.length) * 100)
+   102 |   const seriesCompletas = series.filter(s => s.completa).length
+   103 |   const progressoSeries = Math.round((seriesCompletas / exercicio.series) * 100)
+   104 | 
+   105 |   // Inicializar séries ao mudar de exercício
+   106 |   useEffect(() => {
+   107 |     const novasSeries: SerieDados[] = Array.from({ length: exercicio.series }, (_, i) => ({
+   108 |       numero: i + 1,
+   109 |       carga: 0,
+   110 |       tempoDescanso: exercicio.descanso,
+   111 |       completa: false
+   112 |     }))
+   113 |     setSeries(novasSeries)
+   114 |     setTempoDecorrido(0)
+   115 |     setTimerAtivo(false)
+   116 |   }, [exercicioAtual, exercicio.series, exercicio.descanso])
+   117 | 
+   118 |   // Timer de descanso
+   119 |   useEffect(() => {
+   120 |     let interval: NodeJS.Timeout
+   121 |     if (timerAtivo && tempoDecorrido > 0) {
+   122 |       interval = setInterval(() => {
+   123 |         setTempoDecorrido(prev => {
+   124 |           if (prev <= 1) {
+   125 |             setTimerAtivo(false)
+   126 |             toast({
+   127 |               title: "Descanso concluído!",
+   128 |               description: "Hora da próxima série",
+   129 |             })
+   130 |             return 0
+   131 |           }
+   132 |           return prev - 1
+   133 |         })
+   134 |       }, 1000)
+   135 |     }
+   136 |     return () => clearInterval(interval)
+   137 |   }, [timerAtivo, tempoDecorrido, toast])
+   138 | 
+   139 |   const atualizarSerie = (indice: number, campo: 'carga' | 'tempoDescanso', valor: number) => {
+   140 |     const novasSeries = [...series]
+   141 |     novasSeries[indice][campo] = valor
+   142 |     setSeries(novasSeries)
+   143 |   }
+   144 | 
+   145 |   const marcarSerieCompleta = (indice: number) => {
+   146 |     const novasSeries = [...series]
+   147 |     novasSeries[indice].completa = !novasSeries[indice].completa
+   148 | 
+   149 |     // Se marcou como completa e não é a última série, iniciar timer
+   150 |     if (novasSeries[indice].completa && indice < series.length - 1) {
+   151 |       setTempoDecorrido(novasSeries[indice].tempoDescanso)
+   152 |       setTimerAtivo(true)
+   153 |     }
+   154 | 
+   155 |     setSeries(novasSeries)
+   156 | 
+   157 |     if (novasSeries[indice].completa) {
+   158 |       toast({
+   159 |         title: `Série ${indice + 1} concluída!`,
+   160 |         description: indice < series.length - 1 ? 'Timer de descanso iniciado' : 'Todas as séries completas!',
+   161 |       })
+   162 |     }
+   163 |   }
+   164 | 
+   165 |   const proximoExercicio = () => {
+   166 |     if (exercicioAtual < treino.exercicios.length - 1) {
+   167 |       setExercicioAtual(exercicioAtual + 1)
+   168 |     } else {
+   169 |       finalizarTreino()
+   170 |     }
+   171 |   }
+   172 | 
+   173 |   const finalizarTreino = () => {
+   174 |     const dataHoje = new Date().toISOString().split('T')[0]
+   175 |     const historicoCargas = state.treino?.historicoCargas || []
+   176 | 
+   177 |     // Salvar dados de todas as séries de todos os exercícios
+   178 |     treino.exercicios.forEach((ex) => {
+   179 |       // Aqui pegamos os dados reais que o usuário registrou
+   180 |       const cargaTotal = series.reduce((acc, s) => acc + s.carga, 0)
+   181 | 
+   182 |       if (cargaTotal > 0) {
+   183 |         historicoCargas.push({
+   184 |           data: dataHoje,
+   185 |           exercicioId: ex.exercicio.id,

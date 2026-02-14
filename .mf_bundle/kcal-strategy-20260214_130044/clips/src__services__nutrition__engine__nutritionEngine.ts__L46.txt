@@ -1,0 +1,166 @@
+     1 | // MF_NUTRITION_ENGINE_V1
+     2 | // Motor nutricional puro: REE/TDEE/macros + heurística de biotipo (sem pseudociência).
+     3 | // Regras: funções puras, sem side-effects, sem depender de store/UI.
+     4 | 
+     5 | export type Sex = "masculino" | "feminino";
+     6 | export type Goal = "emagrecimento" | "manutencao" | "ganho";
+     7 | export type Biotype = "ectomorfo" | "mesomorfo" | "endomorfo";
+     8 | 
+     9 | export type BodyInput = {
+    10 |   sexo: Sex;
+    11 |   idade: number;      // anos
+    12 |   pesoKg: number;     // kg
+    13 |   alturaCm: number;   // cm
+    14 |   massaMagraKg?: number | null; // opcional (bioimpedância / dobras)
+    15 | };
+    16 | 
+    17 | export type ActivityLevel =
+    18 |   | "sedentario"
+    19 |   | "leve"
+    20 |   | "moderado"
+    21 |   | "alto"
+    22 |   | "muito_alto";
+    23 | 
+    24 | export type EngineOptions = {
+    25 |   objetivo: Goal;
+    26 |   biotipo?: Biotype | null;
+    27 |   atividade: ActivityLevel;
+    28 |   // para precisão: permite override do déficit/superávit (kcal)
+    29 |   deltaKcalOverride?: number | null;
+    30 | };
+    31 | 
+    32 | export type Macros = {
+    33 |   kcal: number;
+    34 |   proteina_g: number;
+    35 |   carbo_g: number;
+    36 |   gordura_g: number;
+    37 |   fibras_g: number;
+    38 | };
+    39 | 
+    40 | export type NutritionPlan = {
+    41 |   ree_kcal: number;
+    42 |   tdee_kcal: number;
+    43 |   alvo_kcal: number;
+    44 |   metodo_ree: "mifflin" | "cunningham";
+    45 |   fator_atividade: number;
+    46 |   delta_objetivo_kcal: number;
+    47 |   macros: Macros;
+    48 |   notas: string[];
+    49 | };
+    50 | 
+    51 | // ---------- helpers ----------
+    52 | function clamp(n: number, a: number, b: number) {
+    53 |   return Math.min(b, Math.max(a, n));
+    54 | }
+    55 | function round(n: number) {
+    56 |   return Math.round(n);
+    57 | }
+    58 | 
+    59 | export function activityFactor(level: ActivityLevel): number {
+    60 |   // faixas típicas em apps; suficiente p/ produção (ajustável depois)
+    61 |   switch (level) {
+    62 |     case "sedentario": return 1.20;
+    63 |     case "leve": return 1.35;
+    64 |     case "moderado": return 1.55;
+    65 |     case "alto": return 1.75;
+    66 |     case "muito_alto": return 1.90;
+    67 |     default: return 1.55;
+    68 |   }
+    69 | }
+    70 | 
+    71 | export function reeMifflin(input: BodyInput): number {
+    72 |   const { sexo, pesoKg, alturaCm, idade } = input;
+    73 |   const s = sexo === "masculino" ? 5 : -161;
+    74 |   // Mifflin-St Jeor (kcal/d)
+    75 |   return (10 * pesoKg) + (6.25 * alturaCm) - (5 * idade) + s;
+    76 | }
+    77 | 
+    78 | export function reeCunningham(massaMagraKg: number): number {
+    79 |   // Cunningham (kcal/d)
+    80 |   return 500 + (22 * massaMagraKg);
+    81 | }
+    82 | 
+    83 | export function computeREE(input: BodyInput): { ree: number; metodo: "mifflin" | "cunningham"; notas: string[] } {
+    84 |   const notas: string[] = [];
+    85 |   const mm = input.massaMagraKg ?? null;
+    86 | 
+    87 |   // Só usa Cunningham se massa magra for plausível
+    88 |   if (typeof mm === "number" && isFinite(mm) && mm > 20 && mm < 120) {
+    89 |     notas.push("REE por Cunningham (massa magra informada).");
+    90 |     return { ree: reeCunningham(mm), metodo: "cunningham", notas };
+    91 |   }
+    92 |   notas.push("REE por Mifflin-St Jeor (default).");
+    93 |   return { ree: reeMifflin(input), metodo: "mifflin", notas };
+    94 | }
+    95 | 
+    96 | export function objectiveDeltaKcal(goal: Goal, tdee: number): number {
+    97 |   // deltas conservadores e seguros para app (ajustáveis por protocolo)
+    98 |   // emagrecimento: ~15–25% (limitado)
+    99 |   // ganho: ~5–12% (limitado)
+   100 |   if (goal === "manutencao") return 0;
+   101 | 
+   102 |   if (goal === "emagrecimento") {
+   103 |     const delta = -0.20 * tdee;
+   104 |     return clamp(delta, -750, -250);
+   105 |   }
+   106 | 
+   107 |   // ganho
+   108 |   const delta = 0.08 * tdee;
+   109 |   return clamp(delta, 150, 450);
+   110 | }
+   111 | 
+   112 | export function proteinTargetG(goal: Goal, pesoKg: number): number {
+   113 |   // Faixas práticas: emag 1.8–2.2; manutenção 1.6–2.0; ganho 1.6–2.0
+   114 |   const perKg =
+   115 |     goal === "emagrecimento" ? 2.0 :
+   116 |     goal === "ganho" ? 1.8 :
+   117 |     1.7;
+   118 |   return perKg * pesoKg;
+   119 | }
+   120 | 
+   121 | export function fatTargetG(biotype: Biotype | null | undefined, alvoKcal: number): number {
+   122 |   // Gordura mínima para adesão/hormonal: 0.7g/kg seria melhor com peso, mas aqui
+   123 |   // usamos % kcal + ajuste heurístico por biotipo.
+   124 |   // Base: 25% kcal; Endo: 28%; Ecto: 22%; Meso: 25%
+   125 |   const pct =
+   126 |     biotype === "endomorfo" ? 0.28 :
+   127 |     biotype === "ectomorfo" ? 0.22 :
+   128 |     0.25;
+   129 |   const g = (pct * alvoKcal) / 9;
+   130 |   return g;
+   131 | }
+   132 | 
+   133 | export function carbTargetG(
+   134 |   biotype: Biotype | null | undefined,
+   135 |   alvoKcal: number,
+   136 |   proteinG: number,
+   137 |   fatG: number
+   138 | ): number {
+   139 |   const kcalRest = alvoKcal - (proteinG * 4) - (fatG * 9);
+   140 |   const baseCarb = Math.max(0, kcalRest) / 4;
+   141 | 
+   142 |   // heurística suave (não “biologia mágica”): muda só a distribuição, não o total
+   143 |   // Endo: levemente menos carbo, ecto: levemente mais carbo, meso: neutro
+   144 |   const mult =
+   145 |     biotype === "endomorfo" ? 0.92 :
+   146 |     biotype === "ectomorfo" ? 1.06 :
+   147 |     1.00;
+   148 | 
+   149 |   return baseCarb * mult;
+   150 | }
+   151 | 
+   152 | export function fiberTargetG(alvoKcal: number): number {
+   153 |   // regra simples: 14g/1000 kcal, com teto/piso razoáveis
+   154 |   return clamp((alvoKcal / 1000) * 14, 25, 45);
+   155 | }
+   156 | 
+   157 | export function buildNutritionPlan(input: BodyInput, opts: EngineOptions): NutritionPlan {
+   158 |   const notas: string[] = [];
+   159 | 
+   160 |   const { ree, metodo, notas: n0 } = computeREE(input);
+   161 |   notas.push(...n0);
+   162 | 
+   163 |   const fator = activityFactor(opts.atividade);
+   164 |   const tdee = ree * fator;
+   165 | 
+   166 |   const delta = (typeof opts.deltaKcalOverride === "number" && isFinite(opts.deltaKcalOverride))

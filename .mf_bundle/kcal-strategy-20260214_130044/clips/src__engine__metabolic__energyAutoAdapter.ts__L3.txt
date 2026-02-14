@@ -1,0 +1,25 @@
+     1 | /**
+     2 |  * MindsetFit Engine Adapter
+     3 |  * - Integra o cálculo científico de REE/TMB (auto-equation) ao layer de engine.
+     4 |  * - NÃO altera engines existentes: apenas fornece uma função segura para consumo.
+     5 |  *
+     6 |  * Retorno:
+     7 |  * - reeKcalAuto: number | null
+     8 |  * - energyEquationUsed: string | null
+     9 |  */
+    10 | import { mfGetREEFromOnboarding } from "@/services/nutrition/energyBridge";
+    11 | 
+    12 | export type MFEnergyAutoResult = {
+    13 |   reeKcalAuto: number | null;
+    14 |   energyEquationUsed: string | null;
+    15 | };
+    16 | 
+    17 | export function mfEnergyAutoFromProfile(profile: any): MFEnergyAutoResult {
+    18 |   try {
+    19 |     const r = mfGetREEFromOnboarding(profile);
+    20 |     if (!r) return { reeKcalAuto: null, energyEquationUsed: null };
+    21 |     return { reeKcalAuto: r.reeKcal, energyEquationUsed: r.equation };
+    22 |   } catch {
+    23 |     return { reeKcalAuto: null, energyEquationUsed: null };
+    24 |   }
+    25 | }

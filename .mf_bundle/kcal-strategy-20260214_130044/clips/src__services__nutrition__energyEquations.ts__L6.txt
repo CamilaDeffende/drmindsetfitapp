@@ -1,0 +1,109 @@
+     1 | /**
+     2 |  * MindsetFit Scientific Energy Engine (v2)
+     3 |  * Seleção automática fidedigna de equações metabólicas.
+     4 |  *
+     5 |  * Equações:
+     6 |  * - Mifflin-St Jeor (1990)   -> clínica padrão ouro
+     7 |  * - Cunningham (1980)       -> atleta + massa magra alta
+     8 |  * - Katch-McArdle (1996)    -> composição corporal (% gordura)
+     9 |  * - FAO/WHO/UNU (2004)      -> fallback populacional
+    10 |  */
+    11 | 
+    12 | export type Sex = "male" | "female";
+    13 | 
+    14 | export type ActivityLevel =
+    15 |   | "sedentary"
+    16 |   | "light"
+    17 |   | "moderate"
+    18 |   | "high"
+    19 |   | "athlete";
+    20 | 
+    21 | export type EnergyEquationId =
+    22 |   | "CUNNINGHAM_1980"
+    23 |   | "KATCH_MCARDLE_1996"
+    24 |   | "MIFFLIN_ST_JEOR_1990"
+    25 |   | "FAO_WHO_UNU_2004";
+    26 | 
+    27 | export type UserEnergyInputs = {
+    28 |   sex: Sex;
+    29 |   age: number;
+    30 |   weightKg: number;
+    31 |   heightCm: number;
+    32 | 
+    33 |   bodyFatPercent?: number;
+    34 |   fatFreeMassKg?: number;
+    35 | 
+    36 |   activityLevel?: ActivityLevel;
+    37 |   isAthlete?: boolean;
+    38 | };
+    39 | 
+    40 | export function computeIMC(weightKg: number, heightCm: number) {
+    41 |   const h = heightCm / 100;
+    42 |   return weightKg / (h * h);
+    43 | }
+    44 | 
+    45 | export function deriveFFM(weightKg: number, bodyFatPercent: number) {
+    46 |   return weightKg * (1 - bodyFatPercent / 100);
+    47 | }
+    48 | 
+    49 | /**
+    50 |  * ✅ Seleção MindsetFit:
+    51 |  * 1) Atleta + FFM → Cunningham
+    52 |  * 2) Tem composição corporal → Katch
+    53 |  * 3) Sobrepeso/obesidade → Mifflin
+    54 |  * 4) Sem dados → FAO fallback
+    55 |  */
+    56 | export function selectBestEquation(input: UserEnergyInputs): EnergyEquationId {
+    57 |   const imc = computeIMC(input.weightKg, input.heightCm);
+    58 | 
+    59 |   const athlete =
+    60 |     input.isAthlete === true || input.activityLevel === "athlete";
+    61 | 
+    62 |   const hasFFM = typeof input.fatFreeMassKg === "number";
+    63 |   const hasBF = typeof input.bodyFatPercent === "number";
+    64 | 
+    65 |   if (athlete && hasFFM) return "CUNNINGHAM_1980";
+    66 |   if (hasFFM || hasBF) return "KATCH_MCARDLE_1996";
+    67 |   if (imc >= 25) return "MIFFLIN_ST_JEOR_1990";
+    68 | 
+    69 |   return "FAO_WHO_UNU_2004";
+    70 | }
+    71 | 
+    72 | export function calculateREEAuto(input: UserEnergyInputs) {
+    73 |   const eq = selectBestEquation(input);
+    74 | 
+    75 |   const ffm = input.fatFreeMassKg ??
+    76 |     (input.bodyFatPercent != null
+    77 |       ? deriveFFM(input.weightKg, input.bodyFatPercent)
+    78 |       : null);
+    79 | 
+    80 |   let ree = 0;
+    81 | 
+    82 |   switch (eq) {
+    83 |     case "CUNNINGHAM_1980":
+    84 |       ree = 500 + 22 * (ffm || 0);
+    85 |       break;
+    86 | 
+    87 |     case "KATCH_MCARDLE_1996":
+    88 |       ree = 370 + 21.6 * (ffm || 0);
+    89 |       break;
+    90 | 
+    91 |     case "MIFFLIN_ST_JEOR_1990": {
+    92 |       const s = input.sex === "male" ? 5 : -161;
+    93 |       ree =
+    94 |         10 * input.weightKg +
+    95 |         6.25 * input.heightCm -
+    96 |         5 * input.age +
+    97 |         s;
+    98 |       break;
+    99 | }
+   100 |     case "FAO_WHO_UNU_2004":
+   101 |       ree = 24 * input.weightKg;
+   102 |       break;
+   103 |   }
+   104 | 
+   105 |   return {
+   106 |     reeKcal: Math.round(ree),
+   107 |     equation: eq,
+   108 |   };
+   109 | }
