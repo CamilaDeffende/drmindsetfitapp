@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { ArrowLeft, ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
+import { ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
 import type { PlanejamentoNutricional, Restricao, TipoRefeicao, AlimentoRefeicao } from '@/types'
 import { ALIMENTOS_DATABASE, calcularMacros } from '@/types/alimentos'
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
@@ -40,7 +40,6 @@ const mfComputeKcalAlvo = (opts: {
   }
   return rounded;
 };
-
 import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 // MF_NUTRITION_WIRE_V1
@@ -58,8 +57,7 @@ function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
 
   return {
     body: { sexo, idade, pesoKg, alturaCm, massaMagraKg },
-    opts: { objetivo, biotipo, atividade },
-  };
+    opts: { objetivo, biotipo, atividade } };
 }
 
 type OnboardingStepProps = {
@@ -75,15 +73,10 @@ const mfKcalFromMacros = (p: number, c: number, g: number) => (p * 4) + (c * 4) 
 
 export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
   void value; void onChange; void onNext; void onBack;
-  const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
-
-  
-
-/* MF_BLOCK2_1_STEP4_AUTOSAVE */
+  const { state, updateState, nextStep } = useDrMindSetfit()/* MF_BLOCK2_1_STEP4_AUTOSAVE */
   const __mf_step4_payload = {
     step4: (state as any).nutricao ?? (state as any).nutrition ?? {},
-    nutricao: (state as any).nutricao,
-  };
+    nutricao: (state as any).nutricao };
   useOnboardingDraftSaver(__mf_step4_payload as any, 400);
 
   // BEGIN_MF_BLOCK8_STEP4_PERSIST_V1
@@ -97,8 +90,7 @@ export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingSte
         // Se existir no state, persistimos sem alterar schema.
         metabolismo: (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? undefined,
         dieta: (state as any)?.dieta ?? (state as any)?.planoDieta ?? undefined,
-        macros: (state as any)?.macros ?? undefined,
-      };
+        macros: (state as any)?.macros ?? undefined };
       saveOnboardingProgress({ step: 4, data: payload } as any);
     } catch {}
   }
@@ -402,8 +394,7 @@ const mfStrategyPercent = (e: string) => {
         updateState?.({
           ...(typeof state === "object" ? state : {}),
           dieta: (state as any)?.dieta ?? _plano,
-          planoDieta: (state as any)?.planoDieta ?? _plano,
-        } as any);
+          planoDieta: (state as any)?.planoDieta ?? _plano } as any);
       }
     } catch {}
 // MF_BLOCK12V2: após gerar o plano, persistir Step4 e avançar
@@ -595,17 +586,7 @@ const mfStrategyPercent = (e: string) => {
 
       {/* Botões */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={prevStep}
-          className="w-full sm:w-auto"
-        >
-          <ArrowLeft className="mr-2 w-4 h-4" />
-          Voltar
-        </Button>
-        <Button
+<Button
           type="button"
           size="lg"
           onClick={gerarPlanejamento}

@@ -3,12 +3,10 @@ import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { buildWeeklyProtocol } from "@/features/fitness-suite/engine/weeklyProtocol";
 import { planWeek, type PlannerInput } from "@/engine/planner/trainingPlanner.engine";
 import { plannerWeekToTreinoPlan } from "@/engine/planner/plannerWeekToTreino.adapter";
-
 import { buildStrengthWeekPlan } from "@/features/fitness-suite/engine/strength/strengthWeekPlanner";
 import { toWeekdayKey } from "@/utils/strength/weekdayMap";
 import { loadSelectedGroups, saveWeekPlan } from "@/utils/strength/strengthWeekStorage";
@@ -16,6 +14,7 @@ import { StrengthMuscleGroupsPicker } from "@/components/strength/StrengthMuscle
 import type { WeekdayKey } from "@/utils/strength/strengthWeekStorage";
 import { computeFinalTargetCalories } from "@/features/fitness-suite/engine/goalEnergy";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+import { ArrowRight } from "lucide-react";
 const __mfAllowedModalities = ["musculacao","funcional","corrida","bike_indoor","crossfit"] as const;
 type __MfModality = typeof __mfAllowedModalities[number];
 
@@ -89,14 +88,16 @@ export type Step5TreinoProps = {
   onNext?: () => void;
   onBack?: () => void;
 };
-export function Step5Treino({ onNext, onBack }: Step5TreinoProps) {
+export function Step5Treino() {
   
   // MF_STEP5_FLOW_V2: avanço/volta via props (OnboardingFlow) com fallback no context
-  const __onNext = typeof onNext === "function" ? onNext : () => { try { nextStep?.(); } catch {} };
-  const __onBack = typeof onBack === "function" ? onBack : () => { try { prevStep?.(); } catch {} };
+  
+    // MF_STEP5_NO_INTERNAL_NAV_V1
+
+  
 
 const [strengthGroupsError, setStrengthGroupsError] = useState<string | null>(null);
-  const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+  const { state, updateState } = useDrMindSetfit();
 
 /* MF_BLOCK2_1_STEP5TREINO_AUTOSAVE */
   const __mf_step5treino_payload = {
@@ -328,13 +329,6 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
     set__mfGenerated(true);
 
   };
-
-  const handleContinuar = () => {
-    if (!__mfGenerated) return;
-    // já gerado e persistido — apenas avança no fluxo
-    __onNext();
-  };
-
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between gap-3">
@@ -560,13 +554,10 @@ updateState({ workoutProtocolWeekly: __protocol } as any);
       ) : null}
 
       <div className="mt-6 flex items-center justify-between gap-3">
-        <Button type="button" variant="outline" onClick={__onBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
-        <Button
+<Button
           type="button"
           size="lg"
-          onClick={__mfGenerated ? handleContinuar : handleGerarTreino}
+          onClick={handleGerarTreino}
           disabled={!canContinue}
           className="gap-2 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
         >

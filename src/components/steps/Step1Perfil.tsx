@@ -3,14 +3,13 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { ArrowRight } from "lucide-react";import type { PerfilUsuario } from '@/types'
+import type { PerfilUsuario } from '@/types'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { useNavigate } from "react-router-dom";
@@ -291,11 +290,7 @@ const onSubmit = (data: PerfilUsuario) => {
               </div>
 
               <div className="flex justify-end pt-6">
-                <Button type="submit" size="lg" className="bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
-                  Próxima Etapa
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
+</div>
             </form>
           </Form>
         </CardContent>

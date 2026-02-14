@@ -4,19 +4,16 @@
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { useEffect, useRef, useState } from 'react'
 import { BrandIcon } from "@/components/branding/BrandIcon";
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
-import { ArrowLeft, ArrowRight, Zap, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { Zap, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { calcularMetabolismo } from '@/lib/metabolismo'
 import type { ResultadoMetabolico } from '@/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/features/fitness-suite/engine/metabolismoActivity";
-
 import { mfActivityWeeklyLabel } from "@/types";
-
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 export type Step3MetabolismoProps = {
 
@@ -27,7 +24,7 @@ export type Step3MetabolismoProps = {
 };
 
 export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
-  const { value = {}, onChange = () => {}, onNext = () => {}, onBack = () => {} } = props;
+  const { value = {}, onChange = () => {}, onBack = () => {} } = props;
   // MF_STEP3_UNUSED_PROPS_SILENCE_V1
   void value; void onChange; void onBack;
 
@@ -38,27 +35,16 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   // BEGIN_MF_PAL_BIOTIPO_V1
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
   // =========================
-  const { state, updateState, nextStep, prevStep } = useDrMindSetfit();
+  const { state, updateState } = useDrMindSetfit();
 /* MF_BLOCK2_1_STEP3_AUTOSAVE */
   const __mf_step3_fromValue = (value && typeof value === "object" ? (value as any) : {});
   const __mf_step3_payload = {
     step3: (__mf_step3_fromValue.step3 ?? (state as any).metabolismo ?? (state as any).metabolism ?? __mf_step3_fromValue ?? {}),
-    metabolismo: (state as any).metabolismo,
-  };
+    metabolismo: (state as any).metabolismo };
   useOnboardingDraftSaver(__mf_step3_payload as any, 400);
+// MF_STEP3_BACK_HANDLER_V1
 
-  // MF_STEP3_BACK_HANDLER_V1
-  function mfOnBack() {
-    try {
-      if (typeof onBack === "function") {
-        onBack();
-        return;
-      }
-    } catch {}
-    try { if (typeof prevStep === "function") prevStep(); } catch {}
-  }
-
-  // MF_STEP3_GUARD_REF_V1
+// MF_STEP3_GUARD_REF_V1
   // MF_STEP3_RESULTADO_EFFECT_V2
   // Fix definitivo: evita spinner infinito e evita setState durante render.
   // Regra: 1) se já existe metabolismo salvo no state -> usa e pronto
@@ -111,51 +97,33 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     (state as any)?.perfil?.biotipo ??
     "mesomorfo"
 ));
-
-  const mfCanAdvance = Boolean(mfPALKey && mfBioKey);
-
-function mfPersistStep3(){
-    try {
-      updateState?.({
-        perfil: {
-          ...(state as any)?.perfil,
-          nivelAtividadeSemanal: mfPALKey,
-          biotipoTendencia: mfBioKey,
-        }
-      } as any);
-    } catch {}
-    try {
-      saveOnboardingProgress({ step: 3, data: {
+function mfPersistStep3() {
+  // MF_STEP3_PERSIST_V11: somente persistência (sem navegação interna; fluxo via Shell)
+  try {
+    updateState?.({
+      perfil: {
+        ...(state as any)?.perfil,
         nivelAtividadeSemanal: mfPALKey,
-        biotipoTendencia: mfBioKey,
-      } });
-    } catch {}
-  
-    // MF_STEP3_SSV3_ONCHANGE_V1
-    try {
-      const prev = (value as any) ?? {};
-      const step3 = { ...(prev.step3 ?? {}), nivelAtividadeSemanal: mfPALKey, biotipoTendencia: mfBioKey };
-      onChange({ ...prev, step3 });
-    } catch {}
+        biotipoTendencia: mfBioKey } } as any);
+  } catch {}
+
+  try {
+    saveOnboardingProgress({
+      step: 3,
+      data: {
+        nivelAtividadeSemanal: mfPALKey,
+        biotipoTendencia: mfBioKey } });
+  } catch {}
+
+  // MF_STEP3_SSV3_ONCHANGE_V11
+  try {
+    const prev = (value as any) ?? {};
+    const step3 = { ...(prev.step3 ?? {}), nivelAtividadeSemanal: mfPALKey, biotipoTendencia: mfBioKey };
+    onChange({ ...prev, step3 });
+  } catch {}
 }
 
-  function mfOnContinue(){
-    if (!mfCanAdvance) return;
-    mfPersistStep3();
-
-    // MF_STEP3_NEXT_HANDLER_V1
-    try {
-      if (typeof onNext === "function") {
-        onNext();
-        return;
-      }
-    } catch {}
-    try { if (typeof nextStep === "function") nextStep(); } catch {}
-    if (typeof onNext === "function") onNext();
-    // MF_FIX_NO_NEXTSTEP_IN_RENDER_V1 (evita setState durante render)
-    else if (typeof nextStep === "function") { /* noop */ }
-  }
-  // END_MF_BLOCK5_UI_PAL_BIOTIPO_V1
+// END_MF_BLOCK5_UI_PAL_BIOTIPO_V1
 
     // MF_STEP3_AUTOSAVE_GUARD_V2
   const __mfAutoSavedRef = useRef(false);
@@ -295,9 +263,7 @@ metabolismo: calc
   avaliacao: {
     ...((state as any)?.avaliacao ?? {}),
     frequenciaAtividadeSemanal: mfPALKey,
-    biotipo: mfBioKey,
-  },
-} as any);} else if (state.metabolismo) {
+    biotipo: mfBioKey } } as any);} else if (state.metabolismo) {
     mfQueueCalc();
     }
   }, [state.perfil, state.avaliacao, state.metabolismo, updateState])
@@ -630,16 +596,6 @@ metabolismo: calc
         </CardContent>
       </Card>
 
-      <div className="flex justify-between pt-6">
-        <Button type="button" variant="outline" size="lg" onClick={mfOnBack}>
-          <ArrowLeft className="mr-2 w-4 h-4" />
-          Voltar
-        </Button>
-        <Button type="button" size="lg" onClick={mfOnContinue} className="bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0" data-testid="mf-onb-primary">
-          Próxima Etapa
-          <ArrowRight className="ml-2 w-4 h-4" />
-        </Button>
-      </div>
     </div>
   )
 }
