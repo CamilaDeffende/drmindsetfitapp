@@ -54,7 +54,7 @@ if ($ARGV eq "src/components/steps/Step2Avaliacao.tsx") {
               <div className="mt-3 grid gap-2">
                 {[
                   { v: "sedentario", label: "Sedentário" },
-                  { v: "moderadamente", label: "Moderadamente ativo (1 a 3x/semana)" },
+                  { v: "moderadamente_ativo", label: "Moderadamente ativo (1 a 3x/semana)" },
                   { v: "ativo", label: "Ativo (3 a 5x/semana)" },
                   { v: "muito_ativo", label: "Muito ativo (+5x/semana)" },
                 ].map((opt) => {

@@ -10,8 +10,12 @@ export default defineConfig({
   plugins: [
       ANALYZE_BUNDLE ? visualizer({ filename: "dist/bundle-report.html", template: "treemap", gzipSize: true, brotliSize: true }) : undefined,
 react(),
-    VitePWA({
+        VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectRegister: "auto",
       includeAssets: ["pwa-192.png", "pwa-512.png"],
       manifest: {
         name: "MindsetFit",
@@ -26,22 +30,11 @@ react(),
           { src: "/pwa-512.png", sizes: "512x512", type: "image/png" },
         ],
       },
-      workbox: {
-        runtimeCaching: [
-          {
-            urlPattern: ({ request, url }) =>
-              request.destination === "image" || url.pathname.startsWith("/brand/"),
-            handler: "CacheFirst",
-            options: {
-              cacheName: "images-runtime",
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
-            },
-          },
-        ],
-        globIgnores: ["**/brand/mindsetfit-wordmark.png"],
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        navigateFallback: "/index.html",
+      devOptions: { enabled: false },
+      injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globIgnores: ["**/*.zip", "**/*backup*.*", "**/*.backup-*.png"],
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       },
     }),
   ],

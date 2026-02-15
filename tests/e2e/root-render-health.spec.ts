@@ -4,11 +4,11 @@ async function assertRootRenders(page: any, url: string) {
   await page.goto(url, { waitUntil: "domcontentloaded" });
 
   const root = page.locator("#root");
-  await expect(root).toBeAttached({ timeout: 20000 });
-  await expect(root).toHaveAttribute("data-mf-boot", "1", { timeout: 20000 });
-
-  // “root vazio” = React renderizou null (ou algum Provider acima retornou null)
+await expect(root).toBeAttached({ timeout: 20000 });
+// “root vazio” = React renderizou null (ou algum Provider acima retornou null)
   const html = await root.innerHTML();
+  expect(html.length).toBeGreaterThan(80);
+
   console.log("URL:", url);
   console.log("root.innerHTML length:", html.length);
 

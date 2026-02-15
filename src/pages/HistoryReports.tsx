@@ -231,7 +231,6 @@ const ensureDefaultPatient = () => {
 
 useEffect(() => {
   ensureDefaultPatient();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
 const createPatient = (name: string) => {
@@ -346,7 +345,6 @@ const [items, setItems] = useState<ReportHistoryItem[]>([]);
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const bytes = useMemo(() => {

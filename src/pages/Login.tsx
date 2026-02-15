@@ -11,12 +11,11 @@ export function Login() {
       <div className="w-full max-w-sm text-center space-y-6">
         
         {/* LOGO */}
-        <img
-          src="/brand/mindsetfit-wordmark.png"
-          alt="MindsetFit"
-          className="mx-auto w-40 drop-shadow-lg select-none"
-          draggable={false}
-        />
+        <picture>
+  <source srcSet="/brand/optimized/mindsetfit-wordmark.avif" type="image/avif" />
+  <source srcSet="/brand/optimized/mindsetfit-wordmark.webp" type="image/webp" />
+  <img src="/brand/mindsetfit-logo.svg" className="mx-auto w-40 drop-shadow-lg select-none" alt="MindsetFit" />
+</picture>
 
         {/* USER INFO */}
         <div className="space-y-1">

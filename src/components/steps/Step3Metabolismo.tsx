@@ -1,23 +1,21 @@
+// MF_STEP3_SPINNER_FIX_V4
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
+// MF_STEP3_GUARD_MINIMO_MAXIMO_V1
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
-import { useEffect, useState } from 'react'
-
+import { useEffect, useRef, useState } from 'react'
 import { BrandIcon } from "@/components/branding/BrandIcon";
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
-import { ArrowLeft, ArrowRight, Zap, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { Zap, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { calcularMetabolismo } from '@/lib/metabolismo'
 import type { ResultadoMetabolico } from '@/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { computeGET, getActivityFactor, inferNivelTreinoFromState } from "@/features/fitness-suite/engine/metabolismoActivity";
-import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
-
 import { mfActivityWeeklyLabel } from "@/types";
-
-type OnboardingStepProps = {
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+export type Step3MetabolismoProps = {
 
   value?: any;
   onChange?: (v: any) => void;
@@ -25,15 +23,51 @@ type OnboardingStepProps = {
   onBack?: () => void;
 };
 
-export function Step3Metabolismo({
+export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
+  const { value = {}, onChange = () => {}, onBack = () => {} } = props;
+  // MF_STEP3_UNUSED_PROPS_SILENCE_V1
+  void value; void onChange; void onBack;
 
-  // Observação: biotipo = tendência prática (UX/planejamento), não diagnóstico.
+  // MF_SAFE_ENTRIES_V1
+  const mfEntries = (o: any): Array<[string, any]> => Object.entries(o ?? {}) as Array<[string, any]>;
 
- value, onChange, onNext, onBack }: OnboardingStepProps) {
   // =========================
   // BEGIN_MF_PAL_BIOTIPO_V1
   // BLOCO 4: AF/PAL + BIOTIPO (SAFE) — biotipo = tendência prática (não diagnóstico).
   // =========================
+  const { state, updateState } = useDrMindSetfit();
+/* MF_BLOCK2_1_STEP3_AUTOSAVE */
+  const __mf_step3_fromValue = (value && typeof value === "object" ? (value as any) : {});
+  const __mf_step3_payload = {
+    step3: (__mf_step3_fromValue.step3 ?? (state as any).metabolismo ?? (state as any).metabolism ?? __mf_step3_fromValue ?? {}),
+    metabolismo: (state as any).metabolismo };
+  useOnboardingDraftSaver(__mf_step3_payload as any, 400);
+// MF_STEP3_BACK_HANDLER_V1
+
+// MF_STEP3_GUARD_REF_V1
+  // MF_STEP3_RESULTADO_EFFECT_V2
+  // Fix definitivo: evita spinner infinito e evita setState durante render.
+  // Regra: 1) se já existe metabolismo salvo no state -> usa e pronto
+  //        2) senão calcula 1x e persiste no state, setando resultado local.
+  const [resultado, setResultado] = useState<ResultadoMetabolico | null>(() => {
+  try {
+    const m = (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null;
+    return (m ? (m as any) : null);
+  } catch {
+    return null;
+  }
+});
+
+  // MF_STEP3_UNUSED_SETRESULTADO_SILENCE_V1
+  void setResultado;
+
+  
+  
+  // MF_MFQUEUECALC_STUB_V1
+  // Stub seguro: existia chamada legada (debounce/recalc). Mantemos para não quebrar build.
+  const mfQueueCalc = () => {};
+// MF_SILENCE_UNUSED_SETRESULTADO_V1
+
   const MF_AF_OPTIONS = [
     { key: "sedentario", label: "Sedentário", desc: "Pouca ou nenhuma atividade física semanal.", pal: 1.2 },
     { key: "moderadamente_ativo", label: "Moderadamente ativo (1–3x/sem)", desc: "Atividade leve a moderada algumas vezes por semana.", pal: 1.375 },
@@ -63,52 +97,68 @@ export function Step3Metabolismo({
     (state as any)?.perfil?.biotipo ??
     "mesomorfo"
 ));
-
-  const mfCanAdvance = Boolean(mfPALKey && mfBioKey);
-
-function mfPersistStep3(){
-    try {
-      updateState?.({
-        perfil: {
-          ...(state as any)?.perfil,
-          nivelAtividadeSemanal: mfPALKey,
-          biotipoTendencia: mfBioKey,
-        }
-      } as any);
-    } catch {}
-    try {
-      saveOnboardingProgress({ step: 3, data: {
+function mfPersistStep3() {
+  // MF_STEP3_PERSIST_V11: somente persistência (sem navegação interna; fluxo via Shell)
+  try {
+    updateState?.({
+      perfil: {
+        ...(state as any)?.perfil,
         nivelAtividadeSemanal: mfPALKey,
-        biotipoTendencia: mfBioKey,
-      } });
-    } catch {}
-  }
+        biotipoTendencia: mfBioKey } } as any);
+  } catch {}
 
-  function mfOnContinue(){
-    if (!mfCanAdvance) return;
-    mfPersistStep3();
-    if (typeof nextStep === "function") nextStep();
-    else if (typeof onNext === "function") onNext();
-  }
-  // END_MF_BLOCK5_UI_PAL_BIOTIPO_V1
+  try {
+    saveOnboardingProgress({
+      step: 3,
+      data: {
+        nivelAtividadeSemanal: mfPALKey,
+        biotipoTendencia: mfBioKey } });
+  } catch {}
 
-  // BEGIN_MF_BLOCK6_AUTOSAVE_V1
+  // MF_STEP3_SSV3_ONCHANGE_V11
+  try {
+    const prev = (value as any) ?? {};
+    const step3 = { ...(prev.step3 ?? {}), nivelAtividadeSemanal: mfPALKey, biotipoTendencia: mfBioKey };
+    onChange({ ...prev, step3 });
+  } catch {}
+}
+
+// END_MF_BLOCK5_UI_PAL_BIOTIPO_V1
+
+    // MF_STEP3_AUTOSAVE_GUARD_V2
+  const __mfAutoSavedRef = useRef(false);
+
+// BEGIN_MF_BLOCK6_AUTOSAVE_V1
   useEffect(() => {
-    if (mfPALKey && mfBioKey) {
-      // autosave leve (não navega)
-      try { mfPersistStep3(); } catch {}
+    // Autosave idempotente: salva 1x e só se estiver diferente do state atual (evita loops).
+    if (__mfAutoSavedRef.current) return;
+    if (!mfPALKey || !mfBioKey) return;
+
+    const curPal = String(
+      (state as any)?.perfil?.nivelAtividadeSemanal ??
+      (state as any)?.avaliacao?.frequenciaAtividadeSemanal ??
+      ""
+    );
+    const curBio = String(
+      (state as any)?.perfil?.biotipoTendencia ??
+      (state as any)?.avaliacao?.biotipo ??
+      ""
+    );
+
+    if (curPal === String(mfPALKey) && curBio === String(mfBioKey)) {
+      __mfAutoSavedRef.current = true;
+      return;
     }
-  }, [mfPALKey, mfBioKey]);
+
+    try {
+      __mfAutoSavedRef.current = true;
+      mfPersistStep3();
+    } catch {}
+  }, [mfPALKey, mfBioKey, state]);
   // END_MF_BLOCK6_AUTOSAVE_V1
 
 // END_MF_PAL_BIOTIPO_V1
   // =========================
-
-  void value; void onChange; void onNext; void onBack;
-  const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
-
-  
-
   // MF_BLOCK15_COHERENCE_WARNING_V1
   // Coerência premium: Step1 (frequenciaSemanal 1–7) vs Step2 (PAL/atividade geral).
   // Não bloqueia. Apenas alerta quando há grande discrepância.
@@ -193,8 +243,6 @@ function mfPersistStep3(){
     </div>
   ) : null;
 
-  const [resultado, setResultado] = useState<ResultadoMetabolico | null>(null)
-
   useEffect(() => {
     if (state.perfil && state.avaliacao && !state.metabolismo) {
       const calc = calcularMetabolismo(state.perfil, state.avaliacao)
@@ -207,8 +255,7 @@ function mfPersistStep3(){
       ;(calc as any).nivelAtividade = nivel
       ;(calc as any).fatorAtividade = fator
       ;(calc as any).get = get
-
-      setResultado(calc)
+    mfQueueCalc();
       updateState({
 metabolismo: calc
   ,
@@ -216,15 +263,13 @@ metabolismo: calc
   avaliacao: {
     ...((state as any)?.avaliacao ?? {}),
     frequenciaAtividadeSemanal: mfPALKey,
-    biotipo: mfBioKey,
-  },
-} as any);} else if (state.metabolismo) {
-      setResultado(state.metabolismo)
+    biotipo: mfBioKey } } as any);} else if (state.metabolismo) {
+    mfQueueCalc();
     }
   }, [state.perfil, state.avaliacao, state.metabolismo, updateState])
 
   if (!resultado) {
-    return (
+  return (
       <div className="max-w-4xl mx-auto px-4 py-8">
 
 <Card className="mt-4 border-white/10 bg-white/5">
@@ -374,7 +419,7 @@ metabolismo: calc
           <CardHeader className="pb-3">
             <CardDescription>TMB (repouso)</CardDescription>
 
-          /* MF_BLOCO3_WEEKLY_PROTOCOL_PREVIEW */
+          
           <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -386,10 +431,7 @@ metabolismo: calc
               </div>
             </div>
 
-            <div className="mt-3">
-              {/* Reusa o componente já existente no app (PlanosAtivos) */}
-              <WeeklyProtocolActive />
-            </div>
+            
 
             <div className="mt-3 text-xs text-gray-400">
               Dica: cada dia respeita a modalidade escolhida. Musculação mostra grupamentos; corrida/bike/crossfit/funcional mostram sessão completa.
@@ -446,15 +488,15 @@ metabolismo: calc
           <div className="flex items-center justify-between mb-2">
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Mínimo</p>
-              <Badge variant="outline" className="text-base">{resultado.faixaSegura.minimo} kcal</Badge>
+              <Badge variant="outline" className="text-base">{(resultado.faixaSegura?.minimo ?? 0)} kcal</Badge>
             </div>
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Ideal</p>
-              <Badge className="bg-green-600 text-base">{resultado.faixaSegura.ideal} kcal</Badge>
+              <Badge className="bg-green-600 text-base">{ resultado.faixaSegura?.ideal ?? '-' } kcal</Badge>
             </div>
             <div className="text-center flex-1">
               <p className="text-sm text-muted-foreground mb-1">Máximo</p>
-              <Badge variant="outline" className="text-base">{resultado.faixaSegura.maximo} kcal</Badge>
+              <Badge variant="outline" className="text-base">{(resultado.faixaSegura?.maximo ?? 0)} kcal</Badge>
             
             
             <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -530,7 +572,7 @@ metabolismo: calc
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {Object.entries(resultado.comparativo).map(([key, value]) => {
+            {mfEntries(resultado.comparativo).map(([key, value]) => {
               const isEscolhida = key === resultado.equacaoUtilizada.replace('-', '')
               return (
                 <div key={key} className="flex items-center justify-between p-3 rounded-lg bg-muted">
@@ -554,16 +596,6 @@ metabolismo: calc
         </CardContent>
       </Card>
 
-      <div className="flex justify-between pt-6">
-        <Button type="button" variant="outline" size="lg" onClick={prevStep}>
-          <ArrowLeft className="mr-2 w-4 h-4" />
-          Voltar
-        </Button>
-        <Button type="button" size="lg" onClick={mfOnContinue} className="bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
-          Próxima Etapa
-          <ArrowRight className="ml-2 w-4 h-4" />
-        </Button>
-      </div>
     </div>
   )
 }

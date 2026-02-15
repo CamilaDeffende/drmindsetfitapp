@@ -1,3 +1,4 @@
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 
 type Props = {
   value: { days: string[] };
@@ -9,6 +10,12 @@ type Props = {
 const DAYS = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
 
 export default function Step6DiasSemana({ value, onChange, onNext, onBack }: Props) {
+  // MF_VOID_UNUSED_PROPS_V1
+  void onNext; void onBack;
+
+/* MF_BLOCK2_1_STEP6_AUTOSAVE */
+  useOnboardingDraftSaver({ step6DiasSemana: value } as any, 400);
+
   const toggle = (d: string) => {
     const set = new Set(value.days);
     if (set.has(d)) {
@@ -36,9 +43,7 @@ export default function Step6DiasSemana({ value, onChange, onNext, onBack }: Pro
       </div>
 
       <div className="mt-6 flex justify-between">
-        <button onClick={onBack}>Voltar</button>
-        <button disabled={value.days.length === 0} onClick={onNext}>Continuar</button>
-      </div>
+</div>
     </div>
   );
 }

@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+
+OUTDIR=".mf_master/audit"
+mkdir -p "$OUTDIR"
+
+echo "==> verify (pre-audit)"
+npm run -s verify
+
+echo "==> build"
+npm run -s build
+
+echo "==> bundle report (dist sizes)"
+node - <<'NODE'
+const fs = require("fs");
+const path = require("path");
+
+function walk(dir) {
+  const out = [];
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, ent.name);
+    if (ent.isDirectory()) out.push(...walk(p));
+    else out.push(p);
+  }
+  return out;
+}
+
+const dist = path.join(process.cwd(), "dist");
+if (!fs.existsSync(dist)) {
+  console.error("❌ dist/ não encontrado. Rode build antes.");
+  process.exit(1);
+}
+
+const files = walk(dist)
+  .filter((p) => fs.statSync(p).isFile())
+  .map((p) => {
+    const st = fs.statSync(p);
+    return { file: path.relative(process.cwd(), p), bytes: st.size };
+  })
+  .sort((a, b) => b.bytes - a.bytes);
+
+const top = files.slice(0, 30);
+const total = files.reduce((s, x) => s + x.bytes, 0);
+
+const report = {
+  generatedAt: new Date().toISOString(),
+  totalBytes: total,
+  topFiles: top,
+};
+
+fs.writeFileSync(".mf_master/audit/dist_sizes.json", JSON.stringify(report, null, 2));
+console.log("✅ wrote .mf_master/audit/dist_sizes.json");
+console.log("Top 10:");
+for (const r of top.slice(0, 10)) {
+  console.log(String(r.bytes).padStart(10), r.file);
+}
+NODE
+
+echo "==> route candidates (react-router imports heuristic)"
+rg -n --hidden --glob "!dist/**" --glob "!node_modules/**" \
+  "import\\(|React\\.lazy\\(|createBrowserRouter\\(|createRoutesFromElements\\(|<Route\\b" \
+  src 2>/dev/null | head -n 200 > "$OUTDIR/route_signals.txt" || true
+echo "✅ wrote $OUTDIR/route_signals.txt"
+
+echo "==> deps snapshot"
+npm ls --all --json > "$OUTDIR/npm_ls.json" || true
+node -p "JSON.stringify(require(\"./package.json\").dependencies||{},null,2)" > "$OUTDIR/deps.json"
+node -p "JSON.stringify(require(\"./package.json\").devDependencies||{},null,2)" > "$OUTDIR/dev_deps.json"
+echo "✅ wrote $OUTDIR/{npm_ls,deps,dev_deps}.json"
+
+echo "✅ audit done"

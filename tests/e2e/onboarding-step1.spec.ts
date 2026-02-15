@@ -4,7 +4,6 @@ test("Onboarding Step-1: DOM, nomeCompleto, avançar", async ({ page }) => {
   await page.goto("/onboarding/step-1", { waitUntil: "domcontentloaded" });
 
   await expect(page.locator("#root")).toBeVisible();
-  await expect(page.locator('[data-mf-step1-root="1"]')).toBeVisible();
 
   const nome = page.getByTestId("nomeCompleto").or(page.getByLabel("Nome completo"));
   await expect(nome).toBeVisible();

@@ -16,6 +16,72 @@ export default {
     		}
     	},
     	extend: {
+
+      // MF_NEON_DS_V1
+      fontFamily: {
+        sans: [
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica",
+          "Arial",
+          "Apple Color Emoji",
+          "Segoe UI Emoji"
+        ],
+        mono: [
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Monaco",
+          "Consolas",
+          "Liberation Mono",
+          "Courier New",
+          "monospace"
+        ],
+      },
+      colors: {
+        mf: {
+          bg: "hsl(var(--mf-bg) / <alpha-value>)",
+          panel: "hsl(var(--mf-panel) / <alpha-value>)",
+          panel2: "hsl(var(--mf-panel-2) / <alpha-value>)",
+          text: "hsl(var(--mf-text) / <alpha-value>)",
+          muted: "hsl(var(--mf-muted) / <alpha-value>)",
+          border: "hsl(var(--mf-border) / <alpha-value>)",
+          ring: "hsl(var(--mf-ring) / <alpha-value>)",
+          neonBlue: "hsl(var(--mf-neon-blue) / <alpha-value>)",
+          neonPurple: "hsl(var(--mf-neon-purple) / <alpha-value>)",
+          neonGreen: "hsl(var(--mf-neon-green) / <alpha-value>)",
+          danger: "hsl(var(--mf-danger) / <alpha-value>)",
+          warn: "hsl(var(--mf-warn) / <alpha-value>)",
+          ok: "hsl(var(--mf-ok) / <alpha-value>)",
+        },
+      },
+      boxShadow: {
+        "mf-soft": "0 10px 30px -12px rgba(0,0,0,.55)",
+        "mf-glow-blue": "0 0 0 1px rgba(0,0,0,.1), 0 0 28px -6px hsl(var(--mf-neon-blue) / .55)",
+        "mf-glow-purple": "0 0 0 1px rgba(0,0,0,.1), 0 0 28px -6px hsl(var(--mf-neon-purple) / .55)",
+        "mf-glow-green": "0 0 0 1px rgba(0,0,0,.1), 0 0 28px -6px hsl(var(--mf-neon-green) / .55)",
+      },
+      backgroundImage: {
+        "mf-radial":
+          "radial-gradient(1200px circle at var(--mf-spot-x, 40%) var(--mf-spot-y, 0%), hsl(var(--mf-neon-blue) / .18), transparent 40%), radial-gradient(900px circle at 70% 20%, hsl(var(--mf-neon-purple) / .16), transparent 42%), radial-gradient(800px circle at 20% 60%, hsl(var(--mf-neon-green) / .12), transparent 45%)",
+        "mf-grid":
+          "linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px)",
+      },
+      keyframes: {
+        "mf-float": { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-2px)" } },
+        "mf-pulseGlow": { "0%,100%": { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, "50%": { filter: "drop-shadow(0 0 14px hsl(var(--mf-neon-blue) / .45))" } },
+      },
+      animation: {
+        "mf-float": "mf-float 4s ease-in-out infinite",
+        "mf-pulseGlow": "mf-pulseGlow 3.2s ease-in-out infinite",
+      },
+      borderRadius: {
+        mf: "1.25rem",
+      },
+
     		colors: {
     			border: 'var(--border)',
     			input: 'var(--input)',

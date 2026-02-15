@@ -63,7 +63,6 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
       setCitySelected("");
       setOpenList(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countryCode]);
 
   useEffect(() => {
@@ -71,7 +70,6 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
     if (!isBR) return;
     const tz = resolveByCityBR(citySelected, regionCode).timeZone;
     if (tz) setProfile({ regionCode: regionCode || undefined, city: citySelected || undefined, timeZone: tz, updatedAt: Date.now() });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [citySelected, regionCode, isBR]);
 
   function onPickCity(name: string) {

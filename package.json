@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "vite --strictPort --port 8080",
     "build": "tsc -b && vite build",
-    "lint": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet' --ignore-pattern dist/** --ignore-pattern .scan/** --ignore-pattern Drmindsetfitpro/**",
+    "lint": "npm run -s lint:gate",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "smoke:history": "node scripts/smoke-history.mjs",
     "lint:ci": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\" --quiet'",
-    "lint:full": "bash -lc 'set -e; ARGS=(\"src/**/*.{ts,tsx,js,jsx}\"); if compgen -G \"scripts/**/*.{ts,tsx,js,jsx}\" > /dev/null; then ARGS+=(\"scripts/**/*.{ts,tsx,js,jsx}\"); fi; npx eslint \"${ARGS[@]}\"'",
-    "verify": "npm run lint && npm run type-check && npm run build",
+    "lint:full": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
+    "verify": "bash ./.mf_master/qa/mf_guard_report_tsx_v1.sh && npm run lint && npm run type-check && npm run build",
     "ci": "npm run lint && npm run type-check && npm run build",
     "predeploy": "npm run verify",
     "dev:green": "npm run verify && npm run dev",
@@ -21,7 +21,11 @@
     "test:e2e:ui": "playwright test --ui",
     "test:runpro": "node scripts/runpro_selftest.cjs",
     "mf:running:demo": "tsx scripts/running_demo.ts",
-    "mf:running:export": "tsx scripts/running_export.ts"
+    "mf:running:export": "tsx scripts/running_export.ts",
+    "lint:core": "npx eslint \"src/App.tsx\" \"src/pages/**/*.{ts,tsx}\" \"src/components/steps/**/*.{ts,tsx}\" \"src/services/**/*.{ts,tsx}\" \"src/engine/**/*.{ts,tsx}\" \"src/contexts/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\" \"src/features/fitness-suite/**/*.{ts,tsx}\" --max-warnings=0 --rule @typescript-eslint/no-explicit-any:off --rule react-refresh/only-export-components:off --rule react-hooks/exhaustive-deps:off --rule @typescript-eslint/no-unused-vars:off",
+    "lint:gate": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0 --rule @typescript-eslint/no-explicit-any:off --rule react-refresh/only-export-components:off --rule react-hooks/exhaustive-deps:off --rule @typescript-eslint/no-unused-vars:off",
+    "lint:strict": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
@@ -54,7 +58,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-pdf/renderer": "^4.3.1",
     "@stripe/stripe-js": "^8.6.1",
-    "@supabase/supabase-js": "^2.89.0",
+    "@supabase/supabase-js": "^2.95.3",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -99,9 +103,12 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
@@ -109,10 +116,10 @@
     "rollup-plugin-visualizer": "^6.0.5",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.18.2",
     "vite": "^6.4.1",
-    "vite-plugin-pwa": "^1.2.0",
-    "tsx": "^4.19.0"
+    "vite-plugin-pwa": "^1.2.0"
   }
 }

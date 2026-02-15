@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+// MF_STEP4_DYNAMIC_KCAL_STRATEGY_V1
+// MF_STEP4_KCAL_SSOT_V1
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { useState } from 'react'
@@ -7,10 +10,62 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { ArrowLeft, ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
+import { ArrowRight, UtensilsCrossed, Check } from 'lucide-react'
 import type { PlanejamentoNutricional, Restricao, TipoRefeicao, AlimentoRefeicao } from '@/types'
 import { ALIMENTOS_DATABASE, calcularMacros } from '@/types/alimentos'
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
+
+// MF_STEP4_KCAL_SSOT_HELPERS_V1
+const mfClampSSOT = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+/**
+ * SSOT de kcal do Step4:
+ * - baseKcal vem do metabolismo calculado (GET/TDEE preferencial; fallback: metaDiaria)
+ * - estratégia aplica percent (+/-) automaticamente
+ * - clamp opcional pela faixa segura (quando disponível), preservando guardrails
+ */
+const mfComputeKcalAlvo = (opts: {
+  baseKcal: number;
+  percent: number; // ex: -15, 0, +10
+  faixa?: { minimo?: number; maximo?: number } | null;
+}) => {
+  const base = Number.isFinite(opts.baseKcal) ? opts.baseKcal : 0;
+  const pct = Number.isFinite(opts.percent) ? opts.percent : 0;
+  const raw = base * (1 + pct / 100);
+  const rounded = Math.round(raw);
+
+  const min = opts.faixa?.minimo;
+  const max = opts.faixa?.maximo;
+
+  if (Number.isFinite(min) && Number.isFinite(max) && (max as number) >= (min as number)) {
+    return mfClampSSOT(rounded, min as number, max as number);
+  }
+  return rounded;
+};
+import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+import { applyNutritionGuardrails } from "@/services/nutrition/guardrails";
+import { mfAudit, type MFWarn } from "@/services/audit/mfAudit";
+import { useGamification } from "@/hooks/useGamification/useGamification";
+import { mfEvents } from "@/services/events/mfEvents";
+// MF_NUTRITION_WIRE_V1
+function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
+  // MF_STEP4_GAMIFICATION_BIND_V1
+  // tenta pegar do form primeiro, depois do state
+  const sexo = (anyForm?.sexo ?? anyState?.perfil?.sexo ?? anyState?.sexo ?? "masculino") as any;
+  const idade = Number(anyForm?.idade ?? anyState?.perfil?.idade ?? anyState?.idade ?? 30);
+  const pesoKg = Number(anyForm?.peso ?? anyForm?.pesoKg ?? anyState?.perfil?.peso ?? anyState?.peso ?? 70);
+  const alturaCm = Number(anyForm?.altura ?? anyForm?.alturaCm ?? anyState?.perfil?.altura ?? anyState?.altura ?? 170);
+  const massaMagraKg = anyForm?.massaMagraKg ?? anyState?.bioimpedancia?.massaMagraKg ?? anyState?.massaMagraKg ?? null;
+
+  const objetivo = (anyForm?.objetivo ?? anyState?.objetivo ?? anyState?.meta ?? "manutencao") as any;
+  const biotipo = (anyForm?.biotipo ?? anyState?.biotipo ?? null) as any;
+  const atividade = (anyForm?.atividade ?? anyState?.atividade ?? anyState?.nivelAtividade ?? "moderado") as any;
+
+  return {
+    body: { sexo, idade, pesoKg, alturaCm, massaMagraKg },
+    opts: { objetivo, biotipo, atividade } };
+}
 
 type OnboardingStepProps = {
   value?: any;
@@ -21,14 +76,51 @@ type OnboardingStepProps = {
 };
 
 // MF_BLOCO4_GUARDRAILS_V2: helpers locais (escopo seguro no Step4)
-const mfClamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 const mfKcalFromMacros = (p: number, c: number, g: number) => (p * 4) + (c * 4) + (g * 9);
 
 export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
   void value; void onChange; void onNext; void onBack;
-  const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
+  const { state, updateState, nextStep } = useDrMindSetfit()/* MF_BLOCK2_1_STEP4_AUTOSAVE */
 
-  
+  // MF_STEP4_GAMIFICATION_BIND_V6
+  const { actions: __mfGActions } = useGamification();
+
+  // MF_STEP4_GAMIFICATION_EFFECT_V6
+  useEffect(() => {
+    try {
+      const kcal = Number((state as any)?.nutricao?.kcalAlvo ?? (state as any)?.nutrition?.kcalAlvo ?? 0);
+      if (!kcal || kcal <= 0) return;
+      const hasAudit = Boolean((state as any)?.nutricao?.audit || (state as any)?.nutrition?.audit);
+      __mfGActions.onNutritionPlanSet(hasAudit);
+    } catch {}
+      // MF_STEP4_EVENTS_V1
+      try {
+      const __kcal = Number(
+        (state as any)?.nutricao?.kcalAlvo ??
+        (state as any)?.nutricao?.macros?.calorias ??
+        (state as any)?.nutrition?.kcalAlvo ??
+        (state as any)?.nutrition?.macros?.calorias ??
+        0
+      );
+      const __hasAudit = Boolean(
+        (state as any)?.nutricao?.audit ??
+        (state as any)?.nutrition?.audit ??
+        (state as any)?.macros?.audit ??
+        (state as any)?.dieta?.audit
+      );
+      if (__kcal > 0) mfEvents.emit("nutrition_plan_set", { kcal: __kcal, hasAudit: __hasAudit, ts: new Date().toISOString() });
+    } catch {}
+  }, [
+    __mfGActions,
+    (state as any)?.nutricao?.kcalAlvo,
+    (state as any)?.nutricao?.macros?.calorias,
+    (state as any)?.nutrition?.kcalAlvo,
+  ]);
+
+  const __mf_step4_payload = {
+    step4: (state as any).nutricao ?? (state as any).nutrition ?? {},
+    nutricao: (state as any).nutricao };
+  useOnboardingDraftSaver(__mf_step4_payload as any, 400);
 
   // BEGIN_MF_BLOCK8_STEP4_PERSIST_V1
   // Persistência Step4 (Nutrição) — step 4 (number), sem quebrar fluxo.
@@ -41,19 +133,133 @@ export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingSte
         // Se existir no state, persistimos sem alterar schema.
         metabolismo: (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? undefined,
         dieta: (state as any)?.dieta ?? (state as any)?.planoDieta ?? undefined,
-        macros: (state as any)?.macros ?? undefined,
-      };
+        macros: (state as any)?.macros ?? undefined };
       saveOnboardingProgress({ step: 4, data: payload } as any);
     } catch {}
   }
 
   function mfOnContinue(){
     try { mfPersistStep4(); } catch {}
+    /* MF_SAVE_ACTIVEPLAN_NUTRITION_V1 */
+    try {
+      const inputs = __mfBuildNutritionInputs(state, undefined);
+      saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
+    } catch {}
     if (typeof nextStep === "function") nextStep();
     else if (typeof onNext === "function") onNext();
   }
   // END_MF_BLOCK8_STEP4_PERSIST_V1
 const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado' | 'deficit-agressivo' | 'manutencao' | 'superavit'>('manutencao')
+
+// MF_STEP4_DYNAMIC_KCAL_STRATEGY_V1
+// SSOT: kcal exibida = resultado real do Motor Metabólico (state.metabolismo.caloriasAlvo) + estratégia (percentual).
+// Regra: muda estratégia => recalcula kcal alvo + macros + persiste no estado (updateState), mantendo guardrails.
+const __mfBaseKcalFromMetabolic = Number((state as any)?.metabolismo?.caloriasAlvo ?? (state as any)?.metabolismo?.get ?? 0) || 2000;
+
+// recalcula automaticamente ao trocar estratégia (e quando base metabólica mudar)
+useEffect(() => {
+  try {
+    const peso = Number((state as any)?.perfil?.peso ?? (state as any)?.perfil?.pesoKg ?? (state as any)?.peso ?? 0) || 70;
+    const proteina = Math.round(peso * 2); // 2g/kg
+    const gorduras = Math.round(peso * 1); // 1g/kg
+
+    const kcalFixas = (proteina * 4) + (gorduras * 9);
+    const kcalTarget = Math.round(__mfKcalAlvo);
+    const kcalRest = Math.max(0, kcalTarget - kcalFixas);
+    const carboFix = Math.max(0, Math.round(kcalRest / 4));
+    const carboidratos = mfClampSSOT(carboFix, 0, 900);
+
+    const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
+    const kcalFinalClamped = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
+
+// MF_GUARDRAILS_ENGINE_V1: rails clínicos conservadores (kcal) + mantém macros coerentes
+const __mfGoalType =
+  kcalFinalClamped < __mfBaseKcalFromMetabolic ? "cut" : kcalFinalClamped > __mfBaseKcalFromMetabolic ? "bulk" : "maintain";
+
+const __mfGuard = applyNutritionGuardrails({
+  tdeeKcal: __mfBaseKcalFromMetabolic,
+  goalKcal: kcalFinalClamped,
+  goalType: __mfGoalType,
+  sex: (state as any)?.avaliacao?.sexo ?? (state as any)?.avaliacao?.sex,
+  age: (state as any)?.avaliacao?.idade ?? (state as any)?.avaliacao?.age,
+  weightKg: (state as any)?.avaliacao?.peso,
+  heightCm: (state as any)?.avaliacao?.altura,
+});
+
+const kcalGuarded = mfClampSSOT(__mfGuard.kcalTarget, 800, 6500);
+
+// não reatribuir carboidratos (pode ser const). Criamos um "carboidratosGuarded".
+const carboidratosGuarded = (() => {
+  if (kcalGuarded === kcalFinalClamped) return carboidratos;
+  const kcalRest2 = Math.max(0, kcalGuarded - kcalFixas);
+  const carboFix2 = Math.max(0, Math.round(kcalRest2 / 4));
+  return carboFix2;
+})();
+
+// MF_STEP4_AUDIT_V2: auditoria SSOT para persistência (trace + guardrail warnings)
+const __mfWarns: MFWarn[] = [];
+try {
+  const ws = Array.isArray(__mfGuard?.warnings) ? __mfGuard.warnings : [];
+  for (const w of ws) {
+    __mfWarns.push({
+      code: String((w as any)?.code || "GUARDRAIL"),
+      message: String((w as any)?.message || "Guardrail aplicado."),
+      severity: String((w as any)?.code || "").includes("AGGRESSIVE") ? "danger" : "warn",
+    });
+  }
+} catch {}
+
+const __mfAudit: ReturnType<typeof mfAudit> = mfAudit(
+  {
+    step: "Step4Nutricao",
+    tdeeBase: __mfBaseKcalFromMetabolic,
+    kcalProposed: kcalFinalClamped,
+    kcalGuarded,
+    macros: { proteina, carboidratos: carboidratosGuarded, gorduras },
+    guardrails: (__mfGuard as any)?.trace,
+  },
+  __mfWarns
+);
+
+const kcalFinal2 = mfKcalFromMacros(proteina, carboidratosGuarded, gorduras);
+const kcalFinalGuarded = mfClampSSOT(Math.round(kcalFinal2), 800, 6500);
+updateState({
+      nutricao: {
+        ...(state as any)?.nutricao,
+        estrategia,
+        percentualEstrategia: __mfPercentFromStrategy,
+        kcalAlvo: kcalFinalGuarded,
+        audit: __mfAudit,
+        macros: {
+          proteina,
+          carboidratos,
+          gorduras,
+          calorias: kcalFinalGuarded,
+        },
+      },
+    });
+
+} catch (e) {
+    console.error("[MF] Step4 dynamic kcal strategy error:", e);
+  }
+}, [estrategia, __mfBaseKcalFromMetabolic]);
+
+// MF_STEP4_STRATEGY_PERCENT_SSOT_V2
+const mfStrategyPercent = (e: string) => {
+  switch (e) {
+    case "deficit-leve":
+      return -10;
+    case "deficit-moderado":
+      return -20;
+    case "deficit-agressivo":
+      return -25;
+    case "superavit":
+      return +15;
+    case "manutencao":
+    default:
+      return 0;
+  }
+};
   const [restricoes, setRestricoes] = useState<Restricao[]>([])
   const [refeicoesSelecionadas, setRefeicoesSelecionadas] = useState<TipoRefeicao[]>(['cafe-da-manha', 'almoco', 'lanche-tarde', 'jantar'])
 
@@ -100,11 +306,9 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
 
     // Ajuste calórico baseado na estratégia
     let caloriasFinais = calorias
-    if (estrategia === 'deficit-leve') caloriasFinais = calorias * 0.9
-    if (estrategia === 'deficit-moderado') caloriasFinais = calorias * 0.8
-    if (estrategia === 'deficit-agressivo') caloriasFinais = calorias * 0.75
-    if (estrategia === 'superavit') caloriasFinais = calorias * 1.15
-
+  // MF_STEP4_CALC_KCAL_BY_PERCENT_V2
+  const __mfPctStrategy = mfStrategyPercent(estrategia);
+  caloriasFinais = calorias * (1 + __mfPctStrategy / 100);
     // Macronutrientes
     const proteina = Math.round(peso * 2) // 2g/kg
     const gorduras = Math.round(peso * 1) // 1g/kg
@@ -117,10 +321,17 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
     const kcalRest = Math.max(0, kcalTarget - kcalFixas);
     const carboFix = Math.max(0, Math.round(kcalRest / 4));
     // clamp de carbo para evitar valores absurdos em cenários extremos
-    carboidratos = mfClamp(carboFix, 0, 900);
+    carboidratos = mfClampSSOT(carboFix, 0, 900);
     // recalcula kcal final para exibição coerente (diferenças por arredondamento)
     const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
-    caloriasFinais = mfClamp(Math.round(kcalFinal), 800, 6500);
+    caloriasFinais = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
+
+    /* MF_SAVE_ACTIVEPLAN_NUTRITION_ON_GENERATE_V1 */
+    try {
+      const inputs = __mfBuildNutritionInputs(state, undefined);
+      saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
+    } catch {}
+
 // Filtrar alimentos baseado nas restrições
     const isVegano = restricoes.includes('vegano')
     const isVegetariano = restricoes.includes('vegetariano')
@@ -295,6 +506,8 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
 
     const planejamento: PlanejamentoNutricional = {
       estrategia,
+      percentualEstrategia: mfStrategyPercent(estrategia),
+      kcalAlvo: __mfKcalAlvo,
       restricoes,
       macros: {
         proteina,
@@ -317,13 +530,29 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
         updateState?.({
           ...(typeof state === "object" ? state : {}),
           dieta: (state as any)?.dieta ?? _plano,
-          planoDieta: (state as any)?.planoDieta ?? _plano,
-        } as any);
+          planoDieta: (state as any)?.planoDieta ?? _plano } as any);
       }
     } catch {}
 // MF_BLOCK12V2: após gerar o plano, persistir Step4 e avançar
     mfOnContinue();
 }
+
+  // MF_STEP4_KCAL_SSOT_CALC_V1
+  const __mfBaseKcal =
+    Number((state as any)?.metabolismo?.get ?? (state as any)?.metabolismo?.GET ?? (state as any)?.metabolismo?.tdee ?? (state as any)?.metabolismo?.metaDiaria ?? 0);
+
+  const __mfPercentRaw =
+    (state as any)?.nutricao?.percentualEstrategia ??
+    (state as any)?.nutricao?.percentual ??
+    (state as any)?.nutricao?.strategyPercent ??
+    0;
+  const __mfPercentFromStrategy = mfStrategyPercent(estrategia);
+  const __mfPercent = (Number(__mfPercentRaw) || __mfPercentFromStrategy || 0);
+  const __mfFaixa = (state as any)?.metabolismo?.faixaSegura
+    ? { minimo: Number((state as any)?.metabolismo?.faixaSegura?.minimo), maximo: Number((state as any)?.metabolismo?.faixaSegura?.maximo) }
+    : null;
+
+  const __mfKcalAlvo = mfComputeKcalAlvo({ baseKcal: __mfBaseKcal, percent: __mfPercent, faixa: __mfFaixa });
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
@@ -352,7 +581,7 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
         </CardHeader>
         <CardContent>
           <div className="text-center py-4 sm:py-6">
-            <p className="text-4xl sm:text-5xl font-bold text-white">{state.metabolismo?.caloriasAlvo || 0}</p>
+            <p className="text-4xl sm:text-5xl font-bold text-white">{__mfKcalAlvo}</p>
             <p className="text-sm sm:text-base text-muted-foreground mt-2">calorias por dia</p>
 
             {/* MF_BLOCO4_UX: aderência + guardrails (premium) */}
@@ -493,17 +722,7 @@ const [estrategia, setEstrategia] = useState<'deficit-leve' | 'deficit-moderado'
 
       {/* Botões */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={prevStep}
-          className="w-full sm:w-auto"
-        >
-          <ArrowLeft className="mr-2 w-4 h-4" />
-          Voltar
-        </Button>
-        <Button
+<Button
           type="button"
           size="lg"
           onClick={gerarPlanejamento}

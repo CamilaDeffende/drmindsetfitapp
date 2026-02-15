@@ -2,6 +2,8 @@ import { computeMetabolic } from "@/engine/metabolic/MetabolicEngine";
 import { computeMacros, buildMealPlan } from "@/engine/nutrition/NutritionEngine";
 import { buildWorkoutWeek, Modality } from "@/engine/workout/WorkoutEngine";
 
+import { persistTrainingPlanToActivePlan } from "./training/activePlan.trainingWriter";
+
 export type ActivePlanV1 = {
   version: "v1";
   /** ISO string (preferido). Mantemos createdAtISO opcional para compatibilidade. */
@@ -47,7 +49,9 @@ export type PlanDraft = {
 const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
 
 export function saveActivePlan(plan: ActivePlanV1) {
-  try { localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(plan)); } catch {}
+  try { localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(plan));
+  // MF_PERSIST_TRAININGPLAN_V3
+  try { persistTrainingPlanToActivePlan(); } catch {} } catch {}
 }
 
 export function loadActivePlan(): ActivePlanV1 | null {
@@ -97,6 +101,13 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
 
   const metabolic = computeMetabolic({
     weightKg, heightCm, ageYears, gender,
+
+    // MF_AUTO_REE_INPUTS_V1 (precisão científica)
+    bodyFatPercent: Number(step2?.percentualGordura ?? step2?.bodyFatPercent ?? step2?.bf ?? step2?.gorduraCorporal ?? step2?.["%gordura"] ?? undefined) || undefined,
+    fatFreeMassKg: Number(step2?.massaMagra ?? step2?.fatFreeMassKg ?? step2?.ffm ?? step2?.magraKg ?? undefined) || undefined,
+    // activityLevel/isAthlete: vem do Step3 (nivel/frequencia). Mantém opcional e seguro.
+    activityLevel: (String(step3?.nivelAtividade ?? step3?.activityLevel ?? "").toLowerCase() || undefined) as any,
+    isAthlete: Boolean(String(step3?.nivelAtividade ?? step3?.activityLevel ?? "").toLowerCase().includes("athlete") || String(step3?.nivel ?? "").toLowerCase().includes("avanc")),
     activityFactor,
     goal,
   });

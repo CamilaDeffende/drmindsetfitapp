@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -6,6 +7,67 @@ import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { loadActivePlan } from "@/services/plan.service"
 import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+// DEMO-safe: hidrata Report via localStorage e evita loader infinito
+type MFAny = any;
+
+function mfSafeJsonParse(v: string | null): MFAny | null {
+  if (!v) return null;
+  try { return JSON.parse(v); } catch { return null; }
+}
+
+function mfReadFirstProfileFromLS(): MFAny | null {
+  const draft = mfSafeJsonParse(localStorage.getItem("mf:onboarding:draft:v1"));
+  if (draft) return draft;
+
+  const gp = mfSafeJsonParse(localStorage.getItem("drmindsetfit.globalProfile.v1"));
+  if (gp) return gp;
+
+  const st = mfSafeJsonParse(localStorage.getItem("drmindsetfit_state"));
+  if (st) return st;
+
+  return null;
+}
+
+function mfExtractFafLabel(profile: MFAny | null): string | null {
+  if (!profile) return null;
+  const cands = [
+    profile?.atividadeFisica?.fatorAtividade,
+    profile?.atividadeFisica?.nivelAtividade,
+    profile?.activityFactor,
+    profile?.faf,
+    profile?.fatorAtividade,
+    profile?.nivelAtividade,
+    profile?.globalProfile?.atividadeFisica?.fatorAtividade,
+    profile?.globalProfile?.atividadeFisica?.nivelAtividade,
+  ].filter(Boolean);
+
+  const raw = (cands[0] ?? null);
+  if (!raw) return null;
+
+  const v = String(raw).trim();
+  if (/sedent|leve|moder|alta|muito/i.test(v)) return v;
+
+  const num = Number(v.replace(",", "."));
+  if (!Number.isFinite(num)) return v;
+
+  if (num < 1.3) return "Sedentário";
+  if (num < 1.5) return "Levemente ativo";
+  if (num < 1.7) return "Moderadamente ativo";
+  if (num < 1.9) return "Muito ativo";
+  return "Extremamente ativo";
+}
+function __mfGetTrainingWorkouts(): any[] {
+  try {
+    if (typeof window === "undefined") return [];
+    const raw = localStorage.getItem("mf:activePlan:v1");
+    const ap = raw ? JSON.parse(raw) : null;
+    const w = ap?.training?.workouts;
+    return Array.isArray(w) ? w : [];
+  } catch {
+    return [];
+  }
+}
 
 function mfActivityWeeklyLabel(v: unknown) {
   const x = String(v || "").toLowerCase();
@@ -17,6 +79,54 @@ function mfActivityWeeklyLabel(v: unknown) {
 }
 
 export function Report() {
+  const mfProfile = useMemo(() => {
+    try { return mfReadFirstProfileFromLS(); } catch { return null; }
+  }, []);
+
+  const mfFafLabel = useMemo(() => mfExtractFafLabel(mfProfile), [mfProfile]);
+
+  const [mfForceReady, setMfForceReady] = useState(false);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setMfForceReady(true), 2800);
+
+      {/* MF_AUDIT_SUMMARY_V1 */}
+      {(() => {
+        try {
+          const a = (state as any)?.planoAtivo?.nutrition?.audit ?? (state as any)?.nutrition?.audit ?? null;
+          if (!a) return null;
+          const warn = Array.isArray(a?.warnings) ? a.warnings : [];
+          return (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="text-xs uppercase tracking-[0.22em] opacity-70">Audit (SSOT)</div>
+              <div className="mt-2 text-sm opacity-80">
+                versão: <span className="font-semibold text-white">{String(a.version || "")}</span>
+                {warn.length ? (
+                  <span className="ml-2 opacity-70">• warnings: <span className="font-semibold text-white">{warn.length}</span></span>
+                ) : (
+                  <span className="ml-2 opacity-70">• sem warnings</span>
+                )}
+              </div>
+            </div>
+          );
+        } catch {
+          return null;
+        }
+      })()}
+
+    return () => window.clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (!mfForceReady) return;
+  }, [mfForceReady, mfFafLabel]);
+  const __mfReportLogged = (globalThis as any).__mfReportLogged;
+  if (!__mfReportLogged) {
+    try {
+      (globalThis as any).__mfReportLogged = true;
+    } catch {}
+  }
+
   function safeRound(n: number | undefined, fallback: number = 0) {
     return Math.round((n ?? fallback));
   }
@@ -39,6 +149,8 @@ export function Report() {
 
   const { state } = useDrMindSetfit()
   const navigate = useNavigate()
+  const activePlan = loadActivePlan?.() as any;
+  const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
 
   if (!state.concluido) {
     
@@ -205,7 +317,18 @@ export function Report() {
       </div>
     );
   }
-  const dietaAtiva = state.dietaAtiva;
+  const dietaAtiva = (state as any).dietaAtiva ?? (
+    adapted?.macros ? {
+      estrategia: (activePlan?.nutrition?.strategy ?? activePlan?.nutrition?.estrategia ?? "Plano personalizado"),
+      dataInicio: new Date().toISOString(),
+      dataFim: new Date(Date.now() + 28*24*60*60*1000).toISOString(),
+      duracaoSemanas: 4,
+      nutricao: {
+        macros: adapted.macros,
+        refeicoes: adapted.refeicoes ?? [],
+      },
+    } : null
+  );
   const treinoAtivo = state.treinoAtivo;
   // Calcular dias do plano
   const diasDieta = dietaAtiva ? differenceInDays(new Date(dietaAtiva.dataFim), new Date(dietaAtiva.dataInicio)) : 0
@@ -538,3 +661,38 @@ export function Report() {
 }
 
 }
+        <section style={{ marginTop: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 900 }}>Treinos da semana</h2>
+            <span style={{ fontSize: 12, opacity: 0.75 }}>SSOT • Agenda</span>
+          </div>
+
+          {(() => {
+            const __mfReportWorkouts = __mfGetTrainingWorkouts();
+
+            return (!__mfReportWorkouts || __mfReportWorkouts.length === 0) ? (
+              <div style={{ marginTop: 10, opacity: 0.85 }}>
+                Nenhum treino ativo encontrado no plano atual.
+              </div>
+            ) : (
+              <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+                {__mfReportWorkouts.map((w: any, i: number) => (
+                  <div key={(w.day||"D") + "-" + (w.modality||"M") + "-" + i} style={{
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    borderRadius: 14,
+                    padding: 12,
+                    background: "rgba(255,255,255,0.02)"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ fontWeight: 900 }}>{w.day} • {w.modality}</div>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>{w.intensity || "Auto"} • {w.level || "Auto"}</div>
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 13, opacity: 0.92 }}>{w.title || "Treino do dia"}</div>
+                    {w.focus ? <div style={{ marginTop: 4, fontSize: 12, opacity: 0.75 }}>{w.focus}</div> : null}
+                    {w.durationMin ? <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>Duração: {w.durationMin} min</div> : null}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </section>

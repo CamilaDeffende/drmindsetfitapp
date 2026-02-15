@@ -1,6 +1,8 @@
+// MF_ONBOARDING_WATCHDOG_UNUSED_SILENCE_V1
+// MF_APPREADY_GATE_DEV_BYPASS_V1
+// MF_ONBOARDING_LOADER_WATCHDOG_V2
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
-
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { buildActivePlanFromDraft, saveActivePlan } from "@/services/plan.service";
 import { useApp } from "@/contexts/AppContext";
@@ -18,7 +20,24 @@ import Step5Modalidades from "@/components/steps/Step5Modalidades";
 import Step6DiasSemana from "@/components/steps/Step6DiasSemana";
 import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
-import { resetOnboardingProgress } from '@/lib/onboardingProgress';
+
+// MF_REDIRECT_LOOP_GUARD_V1
+function mfNavGuard(to: string) {
+  try {
+    const k = "mf:navguard:v1";
+    const now = Date.now();
+    const raw = sessionStorage.getItem(k);
+    const obj = raw ? JSON.parse(raw) : { t: now, n: 0 };
+    const dt = now - Number(obj.t || now);
+    const n = dt < 1500 ? Number(obj.n || 0) + 1 : 1;
+    sessionStorage.setItem(k, JSON.stringify({ t: dt < 1500 ? obj.t : now, n }));
+    if (n >= 20) {
+      console.error("MF_NAV_LOOP_GUARD: blocked navigation loop to", to);
+      return false;
+    }
+    return true;
+  } catch { return true; }
+}
 
 type Draft = {
   activeIndex?: number;
@@ -58,7 +77,71 @@ function saveDraft(d: Draft) {
 
 // ✅ Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
+
+  // MF_ONBOARDING_LOADER_WATCHDOG_V2
+  const [mfBootMs] = useState(() => Date.now());
+  const [mfStuck, setMfStuck] = useState(false);
+  const mfPath = useMemo(() => {
+    try { return (typeof window !== "undefined" && window.location) ? String(window.location.pathname || "") : ""; }
+    catch { return ""; }
+  }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setMfStuck(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+  const mfResetOnboarding = () => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const keys: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          const kl = k.toLowerCase();
+          if (kl.includes("onboarding") || kl.includes("mf:onboard") || kl.includes("mf:progress") || kl.includes("mf:draft")) keys.push(k);
+        }
+        keys.forEach((k) => { try { localStorage.removeItem(k); } catch {} });
+      }
+    } catch {}
+    try { window.location.href = "/onboarding/step-1"; }
+    catch { try { window.location.reload(); } catch {} }
+  };
+
+  
+  // MF_ONB_WATCHDOG_UNUSED_SILENCE_V1
+  void mfBootMs; void mfStuck; void mfPath; void mfResetOnboarding;
+// MF_ONBOARDING_WATCHDOG_UNUSED_SILENCE_V1
+  // Se o watchdog não estiver sendo renderizado, evitamos TS6133.
+  void mfBootMs;
+  void mfStuck;
+  void mfPath;
+  void mfResetOnboarding;
+
   // MF_SAFE_NAV_GUARD_V1
+  const navigate = useNavigate();
+  // MF_NEXT_SYNC_V1: helper único para sincronizar Step (state + URL)
+  const mfClampStep = (n: number) => Math.max(1, Math.min(8, n));
+  const mfGotoStep = (n: number) => {
+    const step = mfClampStep(n);
+    const to = `/onboarding/step-${step}`;
+    try {
+      // usa o guard existente quando possível
+      const guard = (mfNavGuard as unknown);
+      if (typeof guard === "function") {
+        try {
+          const ok = Boolean((guard as (x: string) => unknown)(to));
+          if (ok) navigate(to, { replace: true });
+          else navigate(to, { replace: true });
+        } catch {
+          navigate(to, { replace: true });
+        }
+      } else {
+        navigate(to, { replace: true });
+      }
+    } catch {
+      try { window.history.replaceState({}, "", to); } catch {}
+    }
+  };
+
   // Guard anti-loop: só navega quando o destino muda e é diferente do pathname atual.
   const location = useLocation();
   const __mfLastNavRef = useRef<string | null>(null);
@@ -68,12 +151,9 @@ export function OnboardingFlow() {
       if (location?.pathname === to) return;
       if (__mfLastNavRef.current === to) return;
       __mfLastNavRef.current = to;
-      navigate(to, (opts ?? { replace: true }));
+      if (mfNavGuard(to)) navigate(to, (opts ?? { replace: true }));
     } catch {}
   };
-
-  const navigate = useNavigate();
-
   // UNLOCK_FLOW_REDIRECT_EFFECT_V1: /onboarding deve respeitar progresso salvo (sem apagar dados)
   useEffect(() => {
     try {
@@ -85,12 +165,16 @@ export function OnboardingFlow() {
         mfSafeNavigate(redirect, { replace: true });
       }
     } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const SHOW_LEGACY_NAV: boolean = false;
 
   const { appReady } = useApp();
+
+  // MF_APPREADY_GATE_DEV_BYPASS_V1
+  // Em DEV, não travar a árvore inteira aguardando hydrate/async do AppContext.
+  // PROD mantém comportamento original.
+  const mfAppReady = Boolean(appReady) || Boolean(import.meta.env.DEV);
 
   // Hooks sempre no topo (rules-of-hooks)
   const [draft, setDraft] = useState<Draft>(() => loadDraft());
@@ -111,7 +195,6 @@ return Number.isFinite(i) ? i : 0;
   useEffect(() => {
     const target = __stepFromUrl - 1;
     setActive((cur) => (cur === target ? cur : target));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [__stepFromUrl]);
 
   useEffect(() => {
@@ -127,19 +210,30 @@ return Number.isFinite(i) ? i : 0;
       }
       try { saveOnboardingProgress({ step: active + 1 }); } catch {}
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   useEffect(() => {
     saveDraft({ ...draft, activeIndex: active });
   }, [draft, active]);
-
-  const goNext = () => setActive((x) => Math.min(x + 1, 7));
-  const goBack = () => setActive((x) => Math.max(x - 1, 0));
-
+  // MF_NEXT_SYNC_V1
+  const goNext = () => {
+    setActive((x) => {
+      const nx = Math.min(x + 1, 7);
+      mfGotoStep(nx + 1); // active 0..7 -> step 1..8
+      return nx;
+    });
+  };
+  // MF_NEXT_SYNC_V1
+  const goBack = () => {
+    setActive((x) => {
+      const nx = Math.max(x - 1, 0);
+      mfGotoStep(nx + 1);
+      return nx;
+    });
+  };
   // Gate depois dos hooks
   // __MF_APPREADY_NO_BLANK_V1__
-  if (!appReady) {
+  if (!mfAppReady) {
     return (
       <div
 data-testid="app-loading" className="min-h-screen flex items-center justify-center">
@@ -290,21 +384,7 @@ try { clearOnboardingDraft(); } catch {}
       </div>
 
       <div className="mt-6 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard", { replace: true })}
-          className="px-4 py-2 rounded-xl border border-white/10 text-sm opacity-90 hover:opacity-100"
-        >
-          Salvar e sair
-        </button>
-        <button
-          type="button"
-          onClick={() => { clearOnboardingDraft(); try { localStorage.removeItem(DONE_KEY); } catch {} ; try { resetOnboardingProgress(); } catch {} ; window.location.reload(); }}
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-        >
-          Reiniciar onboarding
-        </button>
-      </div>
+</div>
 
       {/* Navegação mínima para Steps 1–4 (legado) se eles não tiverem botões próprios */}
       
@@ -345,14 +425,7 @@ try { clearOnboardingDraft(); } catch {}
           >
             Voltar
           </button>
-          <button 
-            type="button"
-            onClick={goNext}
-            className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-          >
-            Continuar
-          </button>
-        </div>
+</div>
       )}
     </div>
   );

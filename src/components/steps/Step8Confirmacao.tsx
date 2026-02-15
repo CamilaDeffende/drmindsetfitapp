@@ -1,4 +1,3 @@
-
 type Props = {
   summary: any;
   onConfirm: () => void;
@@ -6,6 +5,9 @@ type Props = {
 };
 
 export default function Step8Confirmacao({ summary, onConfirm, onBack }: Props) {
+  // MF_VOID_UNUSED_PROPS_V1
+  void onBack;
+
   return (
     <div>
       <h2 className="text-xl font-semibold">Confirmação</h2>
@@ -15,8 +17,7 @@ export default function Step8Confirmacao({ summary, onConfirm, onBack }: Props) 
       </pre>
 
       <div className="mt-6 flex justify-between">
-        <button onClick={onBack}>Voltar</button>
-        <button onClick={onConfirm}>Confirmar</button>
+<button onClick={onConfirm}>Confirmar</button>
       </div>
     </div>
   );

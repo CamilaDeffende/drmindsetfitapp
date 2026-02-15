@@ -1,3 +1,4 @@
+import { calculateREEAuto } from "@/services/nutrition/energyEquations";
 import { computeCunningham } from "./equations/cunningham";
 import { computeHarrisBenedict } from "./equations/harris-benedict";
 import { computeFAOWHO } from "./equations/fao-who";
@@ -11,10 +12,21 @@ export type MetabolicInput = {
   heightCm: number;
   ageYears: number;
   gender: Gender;
+
+  // Compat (auto REE)
+  bodyFatPercent?: number;
+  fatFreeMassKg?: number;
+  activityLevel?: "sedentary" | "light" | "moderate" | "high" | "athlete";
+  isAthlete?: boolean;
+
   activityFactor: number; // ex.: 1.2, 1.375, 1.55, 1.725
   goal: "cut" | "maintain" | "bulk";
-  leanBodyMassKg?: number; // Opcional - usado para Cunningham
-  method?: MetabolicMethod; // Opcional - padrão "auto"
+
+  // Opcional — usado para Cunningham
+  leanBodyMassKg?: number;
+
+  // Opcional — padrão "auto"
+  method?: MetabolicMethod;
 };
 
 export type MetabolicOutput = {
@@ -22,7 +34,13 @@ export type MetabolicOutput = {
   tdeeKcal: number;
   targetKcal: number;
   activityFactor: number;
+
+  // Saída resolvida (nunca "auto")
   method: "mifflin" | "cunningham" | "harris-benedict" | "fao-who";
+
+  // Compat / auditoria
+  equationUsed?: string;
+  reeKcalAuto?: number;
 };
 
 function round(n: number) {
@@ -44,65 +62,99 @@ function computeMifflin(input: MetabolicInput): number {
   if (input.gender === "male") sexConst = 5;
   if (input.gender === "female") sexConst = -161;
 
-  return (10 * W) + (6.25 * H) - (5 * A) + sexConst;
+  return 10 * W + 6.25 * H - 5 * A + sexConst;
 }
 
 /**
  * Seleciona automaticamente o melhor método baseado em dados disponíveis
- * Prioridade: Cunningham (se tem massa magra) > Mifflin > Harris-Benedict
+ * Prioridade: Cunningham (se tem massa magra) > Mifflin
  */
-function selectMethod(input: MetabolicInput): "mifflin" | "cunningham" | "harris-benedict" | "fao-who" {
-  // Se tem massa magra, usar Cunningham (mais preciso)
-  if (input.leanBodyMassKg && input.leanBodyMassKg > 0) {
-    return "cunningham";
-  }
-
-  // Senão, usar Mifflin (padrão moderno)
+function selectMethod(input: MetabolicInput): "mifflin" | "cunningham" {
+  if (input.leanBodyMassKg && input.leanBodyMassKg > 0) return "cunningham";
   return "mifflin";
 }
 
 /**
- * Calcula metabolismo usando o método especificado ou seleção automática
+ * Calcula metabolismo usando método especificado ou auto (REE inteligente)
  */
 export function computeMetabolic(input: MetabolicInput): MetabolicOutput {
-  const method = input.method === "auto" || !input.method ? selectMethod(input) : input.method;
+  const requested = input.method ?? "auto";
+
+  // AUTO: usa calculateREEAuto (mais inteligente) quando disponível
+  if (requested === "auto") {
+    const sex: "male" | "female" = input.gender === "female" ? "female" : "male";
+    const auto = calculateREEAuto({
+      sex,
+      age: input.ageYears,
+      weightKg: input.weightKg,
+      heightCm: input.heightCm,
+      bodyFatPercent: input.bodyFatPercent,
+      fatFreeMassKg: input.fatFreeMassKg,
+      activityLevel: input.activityLevel,
+      isAthlete: Boolean(input.isAthlete),
+    });
+
+    const bmr = auto.reeKcal;
+    const tdee = bmr * input.activityFactor;
+
+    let target = tdee;
+    if (input.goal === "cut") target = tdee - 400;
+    if (input.goal === "bulk") target = tdee + 250;
+
+    if (target < 1200) target = 1200;
+
+    // map seguro para método resolvido
+    const m = String((auto as any).method || (auto as any).methodUsed || "").toLowerCase();
+    const resolved: MetabolicOutput["method"] =
+      m === "cunningham" ? "cunningham" :
+      m === "harris-benedict" ? "harris-benedict" :
+      m === "fao-who" ? "fao-who" :
+      "mifflin";
+
+    return {
+      bmrKcal: round(bmr),
+      tdeeKcal: round(tdee),
+      targetKcal: round(target),
+      activityFactor: input.activityFactor,
+      method: resolved,
+      equationUsed: (auto as any).equationUsed,
+      reeKcalAuto: (auto as any).reeKcal,
+    };
+  }
+
+  // Manual ou semi-auto: usa seleção local (equações do engine)
+  const method = requested === "mifflin" || requested === "cunningham" || requested === "harris-benedict" || requested === "fao-who"
+    ? requested
+    : selectMethod(input);
 
   let bmr: number;
 
-  // Selecionar equação baseada no método
   switch (method) {
     case "cunningham": {
       if (!input.leanBodyMassKg || input.leanBodyMassKg <= 0) {
-        // Fallback para Mifflin se não tem massa magra
         bmr = computeMifflin(input);
       } else {
-        const result = computeCunningham({ leanBodyMassKg: input.leanBodyMassKg });
-        bmr = result.bmrKcal;
+        bmr = computeCunningham({ leanBodyMassKg: input.leanBodyMassKg }).bmrKcal;
       }
       break;
     }
-
     case "harris-benedict": {
-      const hbResult = computeHarrisBenedict({
+      bmr = computeHarrisBenedict({
         weightKg: input.weightKg,
         heightCm: input.heightCm,
         ageYears: input.ageYears,
         gender: input.gender,
-      });
-      bmr = hbResult.bmrKcal;
+      }).bmrKcal;
       break;
     }
-
     case "fao-who": {
-      const faoResult = computeFAOWHO({
+      bmr = computeFAOWHO({
         weightKg: input.weightKg,
         ageYears: input.ageYears,
         gender: input.gender,
-      });
-      bmr = faoResult.bmrKcal;
+      }).bmrKcal;
       break;
     }
-
     case "mifflin":
     default: {
       bmr = computeMifflin(input);
@@ -110,18 +162,14 @@ export function computeMetabolic(input: MetabolicInput): MetabolicOutput {
     }
   }
 
-  // Calcular TDEE
   const tdee = bmr * input.activityFactor;
 
-  // Ajustar por objetivo
   let target = tdee;
   if (input.goal === "cut") target = tdee - 400;
   if (input.goal === "bulk") target = tdee + 250;
 
-  // Clamp mínimo seguro (não médico, só evita absurdo)
   if (target < 1200) target = 1200;
 
-  // method já foi resolvido no switch e nunca é "auto" aqui
   return {
     bmrKcal: round(bmr),
     tdeeKcal: round(tdee),

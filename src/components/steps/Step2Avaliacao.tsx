@@ -1,25 +1,23 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { GlobalProfilePicker } from "@/features/global-profile/ui/GlobalProfilePicker";
-import { useNavigate } from "react-router-dom";
 import { useForm } from 'react-hook-form'
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { AvaliacaoFisica, MetodoComposicao } from '@/types';
 import { useState } from 'react'
-
+import { useNavigate } from "react-router-dom";
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
-
-
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+import { useOnboardingStore } from "@/store/onboarding/onboardingStore";
 type OnboardingStepProps = {
   value?: any;
   onChange?: (v: any) => void;
@@ -56,20 +54,81 @@ const avaliacaoSchema = z.object({
   bioPercentualMassaMagra: z.coerce.number().optional().or(z.literal('')),
   bioAguaCorporal: z.coerce.number().optional().or(z.literal('')),
   bioIdadeMetabolica: z.coerce.number().optional().or(z.literal(''))
+}).superRefine((data, ctx) => {
+  // ✅ Validação condicional conforme método de composição selecionado
+  const raw =
+    (data as any).metodoComposicao ??
+    (data as any).metodo ??
+    (data as any).composicaoMetodo ??
+    (data as any).metodoComposicaoCorporal;
+
+  const metodo = String(raw ?? "").toLowerCase();
+
+  const isPollock = metodo.includes("pollock") || metodo.includes("dobr");
+  const isBio = metodo.includes("bio") || metodo.includes("imped");
+
+  const req = (key: string, label: string) => {
+    const v = (data as any)[key];
+    const bad =
+      v === undefined ||
+      v === null ||
+      v === "" ||
+      (typeof v === "number" && Number.isNaN(v));
+
+    if (bad) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: `${label} é obrigatório.`,
+      });
+    }
+  };
+
+  if (isPollock) {
+    const fields: Array<[string, string]> = [
+      ["pollockPeitoral", "Dobra Peitoral"],
+      ["pollockAxilar", "Dobra Axilar média"],
+      ["pollockTriceps", "Dobra Tríceps"],
+      ["pollockSubescapular", "Dobra Subescapular"],
+      ["pollockAbdominal", "Dobra Abdominal"],
+      ["pollockSuprailiaca", "Dobra Supra-ilíaca"],
+      ["pollockCoxa", "Dobra Coxa"],
+    ];
+
+    for (const [k, label] of fields) {
+      // Só cobra se o campo existir no schema/data
+      if (k in (data as any)) req(k, label);
+    }
+  }
+
+  if (isBio) {
+    const fields: Array<[string, string]> = [
+      ["bioPercentualGordura", "% Gordura (Bioimpedância)"],
+      ["bioPercentualMassaMagra", "% Massa magra (Bioimpedância)"],
+    ];
+    for (const [k, label] of fields) {
+      if (k in (data as any)) req(k, label);
+    }
+  }
 })
 
 type AvaliacaoFormData = z.infer<typeof avaliacaoSchema>
 
 export function Step2Avaliacao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
-  
-  const navigate = useNavigate();
+
+  // MF_STEP2_SSOT_DRAFT_V1: persist progressivo (SSOT local)
+  const draftSSOT = useOnboardingStore((st) => st.draft) as Record<string, any>;
+
 void value; void onChange; void onNext; void onBack;
-  const { state, updateState, nextStep, prevStep } = useDrMindSetfit()
+  const { state, updateState, nextStep } = useDrMindSetfit();
+  const navigate = useNavigate();
   const [metodoSelecionado, setMetodoSelecionado] = useState<MetodoComposicao>('nenhum')
 
+  const [mfInvalidMsg, setMfInvalidMsg] = useState<string | null>(null)
   const form = useForm<AvaliacaoFormData>({
     resolver: zodResolver(avaliacaoSchema),
     defaultValues: {
+      ...(draftSSOT as any),
       peso: state.perfil?.pesoAtual || 70,
       altura: state.perfil?.altura || 170,
       metodoComposicao: 'nenhum',
@@ -92,7 +151,17 @@ void value; void onChange; void onNext; void onBack;
     }
   })
 
-  const calcularIMC = (peso: number, altura: number) => {
+  
+
+  // MF_STEP2_AUTOSAVE_WATCH_V1: salva conforme digita (debounced) p/ Motor Inteligente
+  const _watchAll = form.watch();
+  useOnboardingDraftSaver(
+    {
+      step2: _watchAll as any,
+    },
+    400
+  );
+const calcularIMC = (peso: number, altura: number) => {
     return (peso / Math.pow(altura / 100, 2)).toFixed(1)
   }
 
@@ -106,7 +175,7 @@ void value; void onChange; void onNext; void onBack;
                        Number(data.subescapular) + Number(data.abdominal) + Number(data.supraIliaca) + Number(data.coxa)
 
     let densidadeCorporal: number
-    let percentualGordura: number = 0
+let percentualGordura: number = 0
     if (sexo === 'masculino') {
       densidadeCorporal = 1.112 - (0.00043499 * somaDobras) + (0.00000055 * Math.pow(somaDobras, 2)) - (0.00028826 * (state.perfil?.idade || 30))
     } else {
@@ -123,11 +192,10 @@ void value; void onChange; void onNext; void onBack;
   }
 
   const onSubmit = (data: AvaliacaoFormData) => {
-    
+    try { setMfInvalidMsg(null); } catch (e) {}
     // BLOCO 3: persist step=3 + HARD NAV (bulletproof)
-    try { saveOnboardingProgress({ step: 3, data: { step2: data } }); } catch {}
-    try { navigate("/onboarding/step-3", { replace: true }); } catch {}
-const imc = Number(calcularIMC(data.peso, data.altura))
+    try { saveOnboardingProgress({ step: 3, data: { step2: data } }); } catch (e) {}
+    const imc = Number(calcularIMC(data.peso, data.altura))
 
     const avaliacao: AvaliacaoFisica = {
       frequenciaAtividadeSemanal: data.frequenciaAtividadeSemanal,
@@ -177,7 +245,13 @@ const imc = Number(calcularIMC(data.peso, data.altura))
     }
 
     updateState({ avaliacao })
-    nextStep()
+    try {
+      if (typeof onNext === "function") { onNext(); }
+      else {
+        try { navigate("/onboarding/step-3", { replace: true }); }
+        catch { try { if (typeof nextStep === "function") nextStep(); } catch (e) {} }
+      }
+    } catch (e) {}
   }
 
   const peso = form.watch('peso')
@@ -207,9 +281,18 @@ const imc = Number(calcularIMC(data.peso, data.altura))
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-7">
+        <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+      console.warn('[Step2Avaliacao] invalid:', errors);
+    })} className="space-y-6 sm:space-y-7">
 
           
+      {mfInvalidMsg && (
+        <Alert>
+          <AlertTitle>Não foi possível avançar</AlertTitle>
+          <AlertDescription>{mfInvalidMsg}</AlertDescription>
+        </Alert>
+      )}
+
           {/* Atividade semanal + Biotipo */}
           <div className="space-y-6">
             <Card>
@@ -226,13 +309,13 @@ const imc = Number(calcularIMC(data.peso, data.altura))
                       <FormLabel>Qual a sua frequência de atividade física semanal?</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger data-testid="mf-faf-select">
                             <SelectValue placeholder="Selecione..." />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="sedentario">Sedentário</SelectItem>
-                          <SelectItem value="moderadamente_ativo">Moderadamente ativo (1 a 3x/semana)</SelectItem>
+                          <SelectItem value="moderadamente_ativo" data-testid="mf-faf-option-moderadamente-ativo">Moderadamente ativo (1 a 3x/semana)</SelectItem>
                           <SelectItem value="ativo">Ativo (3 a 5x/semana)</SelectItem>
                           <SelectItem value="muito_ativo">Muito ativo (+5x/semana)</SelectItem>
                         </SelectContent>
@@ -430,7 +513,7 @@ const imc = Number(calcularIMC(data.peso, data.altura))
                       setMetodoSelecionado(value as MetodoComposicao)
                     }} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger data-testid="mf-faf-select">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -533,63 +616,6 @@ const imc = Number(calcularIMC(data.peso, data.altura))
             </CardContent>
           </Card>
 
-          <div className="flex justify-between pt-6">
-
-            {/* BLOCO 5A — Frequência semanal (calibra GET/TDEE) */}
-            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm font-semibold text-white">Frequência de atividade física semanal</div>
-              <div className="text-xs text-white/60 mt-1">
-                Esse dado melhora a precisão do GET (gasto energético total diário).
-              </div>
-
-              <div className="mt-4 grid gap-2">
-                {[
-                  { key: "sedentario", label: "Sedentário" },
-                  { key: "moderadamente_ativo", label: "Moderadamente ativo (1–3x/semana)" },
-                  { key: "ativo", label: "Ativo (3–5x/semana)" },
-                  { key: "muito_ativo", label: "Muito ativo (+5x/semana)" },
-                ].map((opt) => {
-                  const cur = (state as any)?.metabolismo?.nivelAtividadeSemanal || "moderadamente_ativo";
-                  const selected = cur === opt.key;
-                  return (
-                    <button
-                      key={opt.key}
-                      type="button"
-                      onClick={() =>
-                        updateState({
-                          metabolismo: {
-                            ...(state as any).metabolismo,
-                            nivelAtividadeSemanal: opt.key,
-                          },
-                        } as any)
-                      }
-                      className={
-                        "w-full text-left rounded-xl px-4 py-3 border transition " +
-                        (selected
-                          ? "border-[#00B7FF]/60 bg-[#00B7FF]/10"
-                          : "border-white/10 bg-white/0 hover:bg-white/5")
-                      }
-                    >
-                      <div className="text-sm font-semibold text-white">{opt.label}</div>
-                      <div className="text-[11px] text-white/60 mt-1">
-                        {selected ? "Selecionado" : "Toque para selecionar"}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-
-            <Button type="button" variant="outline" size="lg" onClick={prevStep}>
-              <ArrowLeft className="mr-2 w-4 h-4" />
-              Voltar
-            </Button>
-            <Button type="submit" size="lg" className="bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
-              Próxima Etapa
-              <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
-          </div>
         </form>
       </Form>
     </div>
