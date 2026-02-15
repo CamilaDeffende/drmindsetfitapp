@@ -45,6 +45,7 @@ const mfComputeKcalAlvo = (opts: {
 import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { applyNutritionGuardrails } from "@/services/nutrition/guardrails";
+import { mfAudit, type MFWarn } from "@/services/audit/mfAudit";
 // MF_NUTRITION_WIRE_V1
 function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   // tenta pegar do form primeiro, depois do state
@@ -146,6 +147,8 @@ const __mfGuard = applyNutritionGuardrails({
   heightCm: (state as any)?.avaliacao?.altura,
 });
 
+
+
 const kcalGuarded = mfClampSSOT(__mfGuard.kcalTarget, 800, 6500);
 
 // não reatribuir carboidratos (pode ser const). Criamos um "carboidratosGuarded".
@@ -157,6 +160,32 @@ const carboidratosGuarded = (() => {
 })();
 
 
+
+// MF_STEP4_AUDIT_V2: auditoria SSOT para persistência (trace + guardrail warnings)
+const __mfWarns: MFWarn[] = [];
+try {
+  const ws = Array.isArray(__mfGuard?.warnings) ? __mfGuard.warnings : [];
+  for (const w of ws) {
+    __mfWarns.push({
+      code: String((w as any)?.code || "GUARDRAIL"),
+      message: String((w as any)?.message || "Guardrail aplicado."),
+      severity: String((w as any)?.code || "").includes("AGGRESSIVE") ? "danger" : "warn",
+    });
+  }
+} catch {}
+
+const __mfAudit: ReturnType<typeof mfAudit> = mfAudit(
+  {
+    step: "Step4Nutricao",
+    tdeeBase: __mfBaseKcalFromMetabolic,
+    kcalProposed: kcalFinalClamped,
+    kcalGuarded,
+    macros: { proteina, carboidratos: carboidratosGuarded, gorduras },
+    guardrails: (__mfGuard as any)?.trace,
+  },
+  __mfWarns
+);
+
 const kcalFinal2 = mfKcalFromMacros(proteina, carboidratosGuarded, gorduras);
 const kcalFinalGuarded = mfClampSSOT(Math.round(kcalFinal2), 800, 6500);
 updateState({
@@ -165,6 +194,7 @@ updateState({
         estrategia,
         percentualEstrategia: __mfPercentFromStrategy,
         kcalAlvo: kcalFinalGuarded,
+        audit: __mfAudit,
         macros: {
           proteina,
           carboidratos,
