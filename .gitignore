@@ -132,3 +132,6 @@ void
 
 # MF_NOISE
 *.bak-*
+# MF_IGNORE_LOCAL_PLAYWRIGHT
+.pw-local.config.ts
+.scripts/pw_*.sh

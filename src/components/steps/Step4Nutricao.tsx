@@ -44,6 +44,7 @@ const mfComputeKcalAlvo = (opts: {
 };
 import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+import { applyNutritionGuardrails } from "@/services/nutrition/guardrails";
 // MF_NUTRITION_WIRE_V1
 function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   // tenta pegar do form primeiro, depois do state
@@ -131,17 +132,44 @@ useEffect(() => {
     const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
     const kcalFinalClamped = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
 
-    updateState({
+// MF_GUARDRAILS_ENGINE_V1: rails clínicos conservadores (kcal) + mantém macros coerentes
+const __mfGoalType =
+  kcalFinalClamped < __mfBaseKcalFromMetabolic ? "cut" : kcalFinalClamped > __mfBaseKcalFromMetabolic ? "bulk" : "maintain";
+
+const __mfGuard = applyNutritionGuardrails({
+  tdeeKcal: __mfBaseKcalFromMetabolic,
+  goalKcal: kcalFinalClamped,
+  goalType: __mfGoalType,
+  sex: (state as any)?.avaliacao?.sexo ?? (state as any)?.avaliacao?.sex,
+  age: (state as any)?.avaliacao?.idade ?? (state as any)?.avaliacao?.age,
+  weightKg: (state as any)?.avaliacao?.peso,
+  heightCm: (state as any)?.avaliacao?.altura,
+});
+
+const kcalGuarded = mfClampSSOT(__mfGuard.kcalTarget, 800, 6500);
+
+// não reatribuir carboidratos (pode ser const). Criamos um "carboidratosGuarded".
+const carboidratosGuarded = (() => {
+  if (kcalGuarded === kcalFinalClamped) return carboidratos;
+  const kcalRest2 = Math.max(0, kcalGuarded - kcalFixas);
+  const carboFix2 = Math.max(0, Math.round(kcalRest2 / 4));
+  return carboFix2;
+})();
+
+
+const kcalFinal2 = mfKcalFromMacros(proteina, carboidratosGuarded, gorduras);
+const kcalFinalGuarded = mfClampSSOT(Math.round(kcalFinal2), 800, 6500);
+updateState({
       nutricao: {
         ...(state as any)?.nutricao,
         estrategia,
         percentualEstrategia: __mfPercentFromStrategy,
-        kcalAlvo: kcalFinalClamped,
+        kcalAlvo: kcalFinalGuarded,
         macros: {
           proteina,
           carboidratos,
           gorduras,
-          calorias: kcalFinalClamped,
+          calorias: kcalFinalGuarded,
         },
       },
     });
