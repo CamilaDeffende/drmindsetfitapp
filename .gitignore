@@ -13,13 +13,10 @@ src/**/*.bak.*
 .scan
 
 # Build / generated
-dist/
 
 # Scans / local tooling
-.scan/
 
 # Local experimental folder inside repo (must not be linted/committed)
-Drmindsetfitpro/
 
 # Local backups
 .bk_*.tgz
@@ -29,7 +26,6 @@ test-results/
 playwright-report/
 .playwright/
 
-.backups/
 .share/
 # MF MASTER (do not commit snapshots/logs)
 .mf_master/snapshots/
@@ -139,3 +135,9 @@ node_modules 2/
 # MF: arquivos acidentais
 package-lock 2.json
 .lasy/
+
+# MF_LINT_SCOPE_HARDEN_V1
+dist/
+.backups/
+.scan/
+Drmindsetfitpro/

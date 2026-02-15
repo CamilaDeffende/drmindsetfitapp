@@ -9,6 +9,17 @@ import reactRefresh from "eslint-plugin-react-refresh";
  * Objetivo: não quebrar build e manter regras essenciais.
  */
 export default [
+
+  // MF_ESLINT_IGNORES_V1
+  {
+    ignores: [
+      "dist/**",
+      ".backups/**",
+      ".scan/**",
+      "Drmindsetfitpro/**"
+    ],
+  },
+
   { ignores: ["dist/**", ".scan/**", "Drmindsetfitpro/**"] },
 {
     ignores: [
