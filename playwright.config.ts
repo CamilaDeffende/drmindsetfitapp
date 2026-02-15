@@ -1,6 +1,15 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
+  // MF_CI_TRACE_ELITE_V1
+  ...(process.env.CI ? {
+    use: {
+      trace: "retain-on-failure",
+      screenshot: "only-on-failure",
+      video: "retain-on-failure",
+    },
+  } : {}),
+
   // MF_CI_FORCE_CHROMIUM_V1
   ...(process.env.CI ? { projects: [{ name: "chromium", use: { browserName: "chromium" } }] } : {}),
 
