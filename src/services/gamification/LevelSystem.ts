@@ -1,55 +1,65 @@
-import { achievementsService } from "@/services/gamification/AchievementsService";
-export type LevelInfo = {
+export type LevelState = {
   level: number;
-  title: string;
-  xpRequired: number;
-  nextXpRequired: number;
-  progress01: number; // 0..1
-  xp: number; // alias: total XP
-  nextLevelXp: number; // alias: XP do próximo level
+  xp: number;
+  xpTotal: number;
 };
 
-const LEVELS: { level: number; title: string; xp: number }[] = [
-  { level: 1, title: "Iniciante", xp: 0 },
-  { level: 2, title: "Consistente", xp: 150 },
-  { level: 3, title: "Atleta", xp: 400 },
-  { level: 4, title: "Elite", xp: 800 },
-  { level: 5, title: "Lenda", xp: 1400 },
-];
 
-export class LevelSystem {
-  
-  getProgress() {
-    return LevelSystem.getLevelInfo(achievementsService.getTotalXp());
-  }
+export type LevelProgress = LevelState & { nextLevelXp: number };
+const KEY = "mf_level_v1";
 
-static getLevelInfo(totalXp: number): LevelInfo {
-    const xp = Math.max(0, Math.floor(totalXp || 0));
-    let cur = LEVELS[0];
-
-    for (const L of LEVELS) {
-      if (xp >= L.xp) cur = L;
-      else break;
-    }
-
-    const idx = LEVELS.findIndex((l) => l.level === cur.level);
-    const next = LEVELS[Math.min(idx + 1, LEVELS.length - 1)];
-
-    const span = Math.max(1, next.xp - cur.xp);
-    const prog = cur.level === next.level ? 1 : Math.min(1, Math.max(0, (xp - cur.xp) / span));
-
-    return {
-      level: cur.level,
-      title: cur.title,
-      xpRequired: cur.xp,
-      nextXpRequired: next.xp,
-      progress01: prog,
-      xp: xp,
-      nextLevelXp: next.xp,
-    };
+function safeParse<T>(raw: string | null, fallback: T): T {
+  try {
+    const v = raw ? JSON.parse(raw) : null;
+    return (v ?? fallback) as T;
+  } catch {
+    return fallback;
   }
 }
 
+export function loadLevel(): LevelState {
+  if (typeof localStorage === "undefined") return { level: 1, xp: 0, xpTotal: 0 };
+  return safeParse<LevelState>(localStorage.getItem(KEY), { level: 1, xp: 0, xpTotal: 0 });
+}
 
-// MF_AUTOHEAL
-export const levelSystem = new LevelSystem();
+export function saveLevel(s: LevelState) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(s));
+  } catch {}
+}
+
+export function xpForNext(level: number): number {
+  // curva suave e previsível
+  return Math.round(90 + Math.max(1, level) * 30);
+}
+
+export function addXP(delta: number): LevelState {
+  const prev = loadLevel();
+  let xp = Math.max(0, prev.xp + Math.max(0, Math.round(delta)));
+  let level = Math.max(1, prev.level);
+  const xpTotal = Math.max(0, prev.xpTotal + Math.max(0, Math.round(delta)));
+
+  while (xp >= xpForNext(level)) {
+    xp -= xpForNext(level);
+    level += 1;
+  }
+
+  const next: LevelState = { level, xp, xpTotal };
+  saveLevel(next);
+  return next;
+}
+
+/**
+ * API compat (legacy): páginas/bridges antigos podem importar levelSystem.
+ * Mantém SSOT com as mesmas funções.
+ */
+export const levelSystem = {
+  getProgress: (): LevelProgress => {
+    const s = loadLevel();
+    return { ...s, nextLevelXp: xpForNext(s.level) };
+  },
+  loadLevel,
+  saveLevel,
+  xpForNext,
+  addXP,
+};

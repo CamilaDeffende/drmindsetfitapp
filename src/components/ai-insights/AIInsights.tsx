@@ -1,5 +1,6 @@
 import { useAI } from "@/hooks/useAI/useAI";
 
+import { GamificationCard } from "@/components/gamification/GamificationCard";
 import { assessTrainingLoad } from "@/services/training/loadGuardrails";
 import { mfGetLoad7dFromHistory } from "@/services/history/HistoryService";
 function Badge({ t }: { t: string }) {
@@ -24,6 +25,10 @@ export function AIInsights() {
                 sorenessScore: l7.sorenessScore,
               });
               const label = r.risk === "high" ? "ALTA" : r.risk === "moderate" ? "MODERADA" : "BAIXA";
+
+      {/* MF_GAMIFICATION_CARD_V1 */}
+      <GamificationCard />
+
               return (
                 <span className="font-semibold text-white">
                   {label} • {l7.sessions} sessões • {Math.round(l7.minutes)} min • RPE ~{l7.avgRPE.toFixed(1)}
