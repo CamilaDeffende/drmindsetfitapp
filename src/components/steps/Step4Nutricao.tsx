@@ -46,8 +46,10 @@ import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.wri
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { applyNutritionGuardrails } from "@/services/nutrition/guardrails";
 import { mfAudit, type MFWarn } from "@/services/audit/mfAudit";
+import { useGamification } from "@/hooks/useGamification/useGamification";
 // MF_NUTRITION_WIRE_V1
 function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
+  // MF_STEP4_GAMIFICATION_BIND_V1
   // tenta pegar do form primeiro, depois do state
   const sexo = (anyForm?.sexo ?? anyState?.perfil?.sexo ?? anyState?.sexo ?? "masculino") as any;
   const idade = Number(anyForm?.idade ?? anyState?.perfil?.idade ?? anyState?.idade ?? 30);
@@ -78,6 +80,25 @@ const mfKcalFromMacros = (p: number, c: number, g: number) => (p * 4) + (c * 4) 
 export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingStepProps) {
   void value; void onChange; void onNext; void onBack;
   const { state, updateState, nextStep } = useDrMindSetfit()/* MF_BLOCK2_1_STEP4_AUTOSAVE */
+
+  // MF_STEP4_GAMIFICATION_BIND_V6
+  const { actions: __mfGActions } = useGamification();
+
+  // MF_STEP4_GAMIFICATION_EFFECT_V6
+  useEffect(() => {
+    try {
+      const kcal = Number((state as any)?.nutricao?.kcalAlvo ?? (state as any)?.nutrition?.kcalAlvo ?? 0);
+      if (!kcal || kcal <= 0) return;
+      const hasAudit = Boolean((state as any)?.nutricao?.audit || (state as any)?.nutrition?.audit);
+      __mfGActions.onNutritionPlanSet(hasAudit);
+    } catch {}
+  }, [
+    __mfGActions,
+    (state as any)?.nutricao?.kcalAlvo,
+    (state as any)?.nutricao?.macros?.calorias,
+    (state as any)?.nutrition?.kcalAlvo,
+  ]);
+
   const __mf_step4_payload = {
     step4: (state as any).nutricao ?? (state as any).nutrition ?? {},
     nutricao: (state as any).nutricao };
@@ -147,8 +168,6 @@ const __mfGuard = applyNutritionGuardrails({
   heightCm: (state as any)?.avaliacao?.altura,
 });
 
-
-
 const kcalGuarded = mfClampSSOT(__mfGuard.kcalTarget, 800, 6500);
 
 // não reatribuir carboidratos (pode ser const). Criamos um "carboidratosGuarded".
@@ -158,8 +177,6 @@ const carboidratosGuarded = (() => {
   const carboFix2 = Math.max(0, Math.round(kcalRest2 / 4));
   return carboFix2;
 })();
-
-
 
 // MF_STEP4_AUDIT_V2: auditoria SSOT para persistência (trace + guardrail warnings)
 const __mfWarns: MFWarn[] = [];
@@ -203,7 +220,8 @@ updateState({
         },
       },
     });
-  } catch (e) {
+
+} catch (e) {
     console.error("[MF] Step4 dynamic kcal strategy error:", e);
   }
 }, [estrategia, __mfBaseKcalFromMetabolic]);

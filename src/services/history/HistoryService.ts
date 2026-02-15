@@ -1,3 +1,24 @@
+
+// MF_HISTORY_EVENTS_V1: minimal local event hooks (non-breaking)
+type MFHistoryEvent = "workout_added";
+type MFHistoryListener = (payload?: any) => void;
+const __mfHistoryListeners: Record<MFHistoryEvent, MFHistoryListener[]> = { workout_added: [] };
+
+export function mfOnHistory(event: MFHistoryEvent, fn: MFHistoryListener) {
+  __mfHistoryListeners[event].push(fn);
+  return () => {
+    const arr = __mfHistoryListeners[event];
+    const i = arr.indexOf(fn);
+    if (i >= 0) arr.splice(i, 1);
+  };
+}
+
+function __mfEmitHistory(event: MFHistoryEvent, payload?: any) {
+  try {
+    for (const fn of __mfHistoryListeners[event] || []) fn(payload);
+  } catch {}
+}
+
 export type WorkoutType =
   | "gps"
   | "gym"
@@ -52,6 +73,9 @@ export class HistoryService {
 
   static write(store: StoreV1) {
     localStorage.setItem(KEY, JSON.stringify(store));
+  // MF_EMIT_WORKOUT_ADDED_V1
+  __mfEmitHistory("workout_added", null);
+
   }
 
   static addWorkout(input: Omit<WorkoutRecord, "id" | "ts"> & { id?: string; ts?: number }) {

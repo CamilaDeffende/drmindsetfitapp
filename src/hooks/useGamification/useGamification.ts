@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { mfOnHistory } from "@/services/history/HistoryService";
 import { loadStreak, recordDailyCompletion, type Streak } from "@/services/gamification/streaks";
 import { addXP, loadLevel, type LevelState } from "@/services/gamification/LevelSystem";
 import { loadAchievements, unlock, type Achievement } from "@/services/gamification/achievements";
@@ -24,6 +25,26 @@ export function useGamification() {
       setState((s) => ({ ...s, achievements: a }));
     } catch {}
   }, []);
+  // MF_GAMIFICATION_HISTORY_BIND_V1
+  useEffect(() => {
+    try {
+      const off = mfOnHistory("workout_added", () => {
+        try {
+          const level = addXP(35);
+          let achievements = unlock("FIRST_WORKOUT");
+          try {
+            const l7 = mfGetLoad7dFromHistory(new Date());
+            if (l7.sessions >= 3) achievements = unlock("THREE_WORKOUTS_WEEK");
+          } catch {}
+          setState((s) => ({ ...s, level, achievements }));
+        } catch {}
+      });
+      return () => off();
+    } catch {
+      return;
+    }
+  }, []);
+
 
   const actions = useMemo(() => {
     return {
