@@ -58,6 +58,7 @@ react(),
   },
 
   server: {
+    watch: { ignored: ['**/.backups/**'] },
     host: '0.0.0.0',  // Permite acesso externo (necessário para sandbox)
     port: 8080,        // Porta padrão para preview
     cors: true,        // Habilita CORS para permitir fetch de localhost:3000
