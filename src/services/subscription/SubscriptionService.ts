@@ -1,5 +1,4 @@
-import { supabase } from "@/services/supabase/client";
-
+import { supabase } from "@/lib/supabase";
 export type SubscriptionStatus = {
   isPremium: boolean;
   source: "dev" | "db" | "none" | "error";
