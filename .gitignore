@@ -135,3 +135,6 @@ void
 # MF_IGNORE_LOCAL_PLAYWRIGHT
 .pw-local.config.ts
 .scripts/pw_*.sh
+
+# MF_IGNORE_TEMP_KEYS
+.tmp_mf_key.txt
