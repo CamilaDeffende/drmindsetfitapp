@@ -1,8 +1,12 @@
+export type Biotype = "ectomorfo" | "mesomorfo" | "endomorfo" | "misto";
+
 export type NutritionInput = {
   targetKcal: number;
   goal: "cut" | "maintain" | "bulk";
   weightKg: number;
   preference: "flexivel" | "lowcarb" | "vegetariana";
+  biotype?: Biotype; // Opcional - ajusta macros se fornecido
+  applyBiotypeAdjustment?: boolean; // Padrão: true
 };
 
 export type Macros = {
@@ -14,14 +18,84 @@ export type Macros = {
 function round(n: number) { return Math.round(n); }
 
 /**
+ * Ajusta macros baseado no biotipo
+ * Ectomorfo: +10% carbo, -5% gordura (metabolismo rápido)
+ * Endomorfo: -10% carbo, +5% gordura (sensibilidade insulínica)
+ * Mesomorfo: sem ajuste (biotipo neutro)
+ * Misto: ajuste leve (±5%)
+ */
+export function adjustMacrosByBiotype(
+  macros: Macros,
+  targetKcal: number,
+  biotype: Biotype
+): Macros {
+  let carbAdjustPct = 0;
+  let fatAdjustPct = 0;
+
+  switch (biotype) {
+    case "ectomorfo":
+      carbAdjustPct = 0.10; // +10% carbo
+      fatAdjustPct = -0.05; // -5% gordura
+      break;
+    case "endomorfo":
+      carbAdjustPct = -0.10; // -10% carbo
+      fatAdjustPct = 0.05; // +5% gordura
+      break;
+    case "misto":
+      carbAdjustPct = 0.05; // +5% carbo leve
+      fatAdjustPct = -0.02; // -2% gordura leve
+      break;
+    case "mesomorfo":
+    default:
+      // Sem ajuste
+      return macros;
+  }
+
+  // Calcular kcal atuais de carbo e gordura
+  const currentCarbKcal = macros.carbsG * 4;
+  const currentFatKcal = macros.fatG * 9;
+
+  // Aplicar ajustes
+  const newCarbKcal = currentCarbKcal * (1 + carbAdjustPct);
+  const newFatKcal = currentFatKcal * (1 + fatAdjustPct);
+
+  // Recalcular gramas
+  const newCarbsG = newCarbKcal / 4;
+  const newFatG = newFatKcal / 9;
+
+  // Proteína permanece constante
+  // Validar que soma de kcal ainda bate (pode ter pequeno desvio)
+  const totalKcal = (macros.proteinG * 4) + newCarbKcal + newFatKcal;
+
+  // Se passou muito do target, ajustar carbo proporcionalmente
+  if (Math.abs(totalKcal - targetKcal) > 50) {
+    const diff = totalKcal - targetKcal;
+    const carbAdjust = diff / 4;
+    return {
+      proteinG: macros.proteinG,
+      carbsG: round(newCarbsG - carbAdjust),
+      fatG: round(newFatG),
+    };
+  }
+
+  return {
+    proteinG: macros.proteinG,
+    carbsG: round(newCarbsG),
+    fatG: round(newFatG),
+  };
+}
+
+/**
  * Determinístico:
  * - proteína: 2.0g/kg (cut), 1.8g/kg (maintain), 1.8g/kg (bulk)
  * - gordura: 0.8g/kg base (ajusta levemente por preferência)
  * - carbo: resto das calorias
  * kcal: P=4, C=4, F=9
+ *
+ * NOVO: Ajusta macros por biotipo se fornecido
  */
 export function computeMacros(input: NutritionInput): Macros {
-  const { targetKcal, goal, weightKg, preference } = input;
+  const { targetKcal, goal, weightKg, preference, biotype, applyBiotypeAdjustment = true } = input;
 
   const p = goal === "cut" ? 2.0 : 1.8;
   let fatPerKg = 0.8;
@@ -36,11 +110,18 @@ export function computeMacros(input: NutritionInput): Macros {
   const carbsKcal = Math.max(0, targetKcal - kcalPF);
   const carbsG = carbsKcal / 4;
 
-  return {
+  let macros: Macros = {
     proteinG: round(proteinG),
     fatG: round(fatG),
     carbsG: round(carbsG),
   };
+
+  // Aplicar ajuste por biotipo se fornecido
+  if (biotype && applyBiotypeAdjustment) {
+    macros = adjustMacrosByBiotype(macros, targetKcal, biotype);
+  }
+
+  return macros;
 }
 
 export type Meal = { name: string; kcal: number; proteinG: number; carbsG: number; fatG: number; };

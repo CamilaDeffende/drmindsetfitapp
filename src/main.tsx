@@ -17,11 +17,19 @@ function BootSplash({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {
-    const t = window.setTimeout(() => setReady(true), 850);
+    console.log('BootSplash: iniciando timer...');
+    const t = window.setTimeout(() => {
+      console.log('BootSplash: pronto!');
+      setReady(true);
+    }, 850);
     return () => window.clearTimeout(t);
   }, []);
 
-  if (!ready) return <SplashScreen />;
+  if (!ready) {
+    console.log('BootSplash: mostrando splash...');
+    return <SplashScreen />;
+  }
+  console.log('BootSplash: renderizando app...');
   return <>{children}</>;
 }
 

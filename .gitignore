@@ -1,8 +1,6 @@
 node_modules
 dist
 .vite
-.env
-.env.local
 .DS_Store
 *.log
 *.bak
@@ -10,22 +8,27 @@ dist
 
 .bak.*
 .vercel
-.env*.local
 *.bak.*
 src/**/*.bak.*
 .scan
+
 # Build / generated
 dist/
+
 # Scans / local tooling
 .scan/
+
 # Local experimental folder inside repo (must not be linted/committed)
 Drmindsetfitpro/
+
 # Local backups
 .bk_*.tgz
+
 # Playwright artifacts (do not commit)
 test-results/
 playwright-report/
 .playwright/
+
 .backups/
 .share/
 # MF MASTER (do not commit snapshots/logs)
@@ -35,6 +38,7 @@ playwright-report/
 *.tar.gz
 # --- DO NOT COMMIT BUILD/ARTIFACTS ---
 *.map
+
 ### MF_MASTER_IGNORE (generated scripts / bins)
 .mf_master/bin/
 .mf_master/*.sh
@@ -44,10 +48,19 @@ playwright-report/
 .mf_master/block*
 # mantém o sanity versionado (exceção)
 !.mf_master/sanity_useEffect_no_jsx_return.mjs
+
 # MindsetFit master tooling
 .mf_master/_quarantine/**
 .mf_master/_broken/**
+
 # Allowlist (versionados)
+!.mf_master/mf_doctor.sh
+!.mf_master/mf_master.sh
+!.mf_master/bin/**
+!.mf_master/generators/**
+!.mf_master/README.md
+.mf_master/_quarantine/**
+.mf_master/_broken/**
 !.mf_master/mf_doctor.sh
 !.mf_master/mf_master.sh
 !.mf_master/bin/**
@@ -55,86 +68,74 @@ playwright-report/
 !.mf_master/README.md
 !.mf_master/AUDIT_PHASE1_1.md
 .mf_master/_tmp/**
+.mf_master/_broken/**
+.mf_master/_quarantine/**
+!.mf_master/bin/**
+!.mf_master/generators/**
 !.mf_master/qa/**
+!.mf_master/mf_doctor.sh
+!.mf_master/mf_master.sh
+!.mf_master/README.md
+!.mf_master/AUDIT_PHASE1_1.md
+.mf_master/**
+!.mf_master/bin/**
+!.mf_master/generators/**
+!.mf_master/qa/**
+!.mf_master/mf_doctor.sh
+!.mf_master/mf_master.sh
+!.mf_master/README.md
+!.mf_master/AUDIT_PHASE1_1.md
+.mf_master/_tmp/**
+.mf_master/_broken/**
+.mf_master/_quarantine/**
+.mf_master/**
+!.mf_master/bin/**
+!.mf_master/generators/**
+!.mf_master/qa/**
+!.mf_master/mf_doctor.sh
+!.mf_master/mf_master.sh
+!.mf_master/README.md
+!.mf_master/AUDIT_PHASE1_1.md
+.mf_master/_tmp/**
+.mf_master/_broken/**
+.mf_master/_quarantine/**
 .mf_master/**
 !.mf_master/
 !.mf_master/bin/
+!.mf_master/bin/**
 !.mf_master/generators/
+!.mf_master/generators/**
 !.mf_master/qa/
+!.mf_master/qa/**
+!.mf_master/mf_doctor.sh
+!.mf_master/mf_master.sh
+!.mf_master/README.md
+!.mf_master/AUDIT_PHASE1_1.md
+.mf_master/_tmp/**
+.mf_master/_broken/**
+.mf_master/_quarantine/**
+.mf_master/**
+!.mf_master/bin/**
+!.mf_master/generators/**
+!.mf_master/qa/**
+!.mf_master/mf_doctor.sh
+!.mf_master/mf_master.sh
+!.mf_master/README.md
+!.mf_master/AUDIT_PHASE1_1.md
+.mf_master/_tmp/**
+.mf_master/_broken/**
+.mf_master/_quarantine/**
 .mf_master/qa/*.log
 .mf_master/qa/*.md
 .mf_master/qa/*.txt
 .mf_master/qa/*.json
+
 # local run artifacts
 .run/
+
 # MF: nunca versionar lixo
 node_modules 2/
+
 # MF: arquivos acidentais
 package-lock 2.json
-# MF_ALLOW_MF_UI_SMOKE_SSOT (permitir versionar 1 tool específico)
-!.mf_master/_tools/
-!.mf_master/_tools/mf_ui_smoke_ssot.sh
-# MF_ALLOW_MF_PDF_SMOKE_V1 (permitir versionar 1 tool específico)
-!.mf_master/_tools/mf_pdf_smoke_v1.sh
-# MF_PDF_SMOKE_ALLOWLIST_V1
-!/.mf_master/_tools/mf_pdf_smoke_v1_runner.js
-# MF_UNIGNORE_PDF_SMOKE_V4
-!/.mf_master/_tools/mf_pdf_smoke_v4.sh
-!/.mf_master/_tools/mf_pdf_smoke_v4_runner.js
-# MF_IGNORE_STRAY_V4
-MF_SH_V4_ARGS_V1
-# MF_ALLOW_MF_MASTER_SCRIPTS_V1
-# Mantém o padrão de ignorar artefatos temporários, mas permite versionar runners/scripts do MindsetFit
-!/.mf_master/
-!/.mf_master/bin/
-!/.mf_master/bin/mf
-!/.mf_master/phases/
-!/.mf_master/phases/*.sh
-!/.mf_master/fixes/
-!/.mf_master/fixes/*.sh
-# MF_IGNORE_PERSONAL_SCRIPTS
-.mf_master/fixes/meu_script.sh
-# MF_IGNORE_LOCAL
-dev-dist/
-# MF_IGNORE_LOCAL_ARTIFACTS
-.mf_white_screen.png
-.mf_dev_white_screen.log
-# MF_IGNORE_GENERATED_V1
-# MF_LOCAL_DEVLOG
-.mf_devlog.txt
-# MF_IGNORE_LOCAL_LOGS
-# MF_ENTERPRISE_NO_SHIP_ASSETS_V1
-/public/*.zip
-/public/**/*.zip
-/public/brand/*backup*.png
-/public/brand/*.backup-*.png
-/dist
-# MF_LOCAL_DEV_IGNORES
-.vscode/
-supabase/
-void
-.mf_master/fixes/mf_*_v1.sh
-.mf_master/fixes/mf_*_v2.sh
-.mf_master/fixes/mf_*_v3.sh
-.mf_master/fixes/mf_*_v4.sh
-# local supabase (dev only)
-
-# MF_IGNORE_BUNDLES_V1
-.mf_bundle/
-
-# MF_ALLOW_QA_GUARDS_V1
-!.mf_master/
-!.mf_master/qa/
-!.mf_master/qa/mf_guard_report_tsx_v1.sh
-
-# MF_BACKUPS
-.backups/
-
-# MF_NOISE
-*.bak-*
-# MF_IGNORE_LOCAL_PLAYWRIGHT
-.pw-local.config.ts
-.scripts/pw_*.sh
-
-# MF_IGNORE_TEMP_KEYS
-.tmp_mf_key.txt
+.lasy/

@@ -1,3 +1,4 @@
+import type { MFAudit } from "@/services/audit/mfAudit";
 /**
  * Adapter único (SSOT) para normalizar nutrição do ActivePlan (meals[])
  * para o formato usado no estado/UI do app (refeicoes[] + macros pt-BR).
@@ -32,6 +33,8 @@ export type MfAdaptedNutrition = {
   refeicoes: MfRefeicao[];
   kcalTarget: number | null;
   meals: any[];
+  audit?: MFAudit;
+
 };
 
 function n(v: any, d = 0): number {
@@ -141,5 +144,8 @@ export function adaptActivePlanNutrition(nutrition: any): MfAdaptedNutrition | n
 
   const macros = adaptMacrosToPtBR(nutrition?.macros ?? nutrition, kcalTargetNum);
 
-  return { macros, refeicoes, kcalTarget, meals: mealsArr };
+  // MF_PASS_THROUGH_AUDIT_V1
+  const audit = (nutrition as any)?.audit;
+
+  return { macros, refeicoes, kcalTarget, meals: mealsArr, audit };
 }
