@@ -89,6 +89,31 @@ export function Report() {
 
   useEffect(() => {
     const t = window.setTimeout(() => setMfForceReady(true), 2800);
+
+      {/* MF_AUDIT_SUMMARY_V1 */}
+      {(() => {
+        try {
+          const a = (state as any)?.planoAtivo?.nutrition?.audit ?? (state as any)?.nutrition?.audit ?? null;
+          if (!a) return null;
+          const warn = Array.isArray(a?.warnings) ? a.warnings : [];
+          return (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="text-xs uppercase tracking-[0.22em] opacity-70">Audit (SSOT)</div>
+              <div className="mt-2 text-sm opacity-80">
+                versão: <span className="font-semibold text-white">{String(a.version || "")}</span>
+                {warn.length ? (
+                  <span className="ml-2 opacity-70">• warnings: <span className="font-semibold text-white">{warn.length}</span></span>
+                ) : (
+                  <span className="ml-2 opacity-70">• sem warnings</span>
+                )}
+              </div>
+            </div>
+          );
+        } catch {
+          return null;
+        }
+      })()}
+
     return () => window.clearTimeout(t);
   }, []);
 

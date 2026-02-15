@@ -1,3 +1,5 @@
+import { mfAudit, type MFWarn } from "@/services/audit/mfAudit";
+import { applyNutritionGuardrails } from "@/services/nutrition/guardrails";
 // MF_NUTRITION_ENGINE_V1
 // Motor nutricional puro: REE/TDEE/macros + heurística de biotipo (sem pseudociência).
 // Regras: funções puras, sem side-effects, sem depender de store/UI.
@@ -205,3 +207,79 @@ export function buildNutritionPlan(input: BodyInput, opts: EngineOptions): Nutri
     notas,
   };
 }
+
+
+// MF_NUTRITION_ENGINE_AUDITED_V1
+export type NutritionEngineAudit = ReturnType<typeof mfAudit>;
+
+export type NutritionEngineOutputAudited<T extends Record<string, unknown> = Record<string, unknown>> =
+  T & { audit: NutritionEngineAudit };
+
+/**
+ * Wrapper SSOT: executa o motor existente e anexa audit.trace + audit.warnings.
+ * Não quebra consumidores antigos: use quando precisar rastreabilidade.
+ */
+export function runNutritionEngineAudited(input: any): NutritionEngineOutputAudited<any> {
+  // chama função existente (tentaremos detectar o nome padrão)
+  const trace: Record<string, unknown> = {
+    input,
+    engine: "nutritionEngine",
+  };
+
+  // best-effort: descobrir função principal exportada
+  const fnName =
+    (typeof (exports as any).runNutritionEngine === "function" && "runNutritionEngine") ||
+    (typeof (exports as any).nutritionEngine === "function" && "nutritionEngine") ||
+    (typeof (exports as any).computeNutritionPlan === "function" && "computeNutritionPlan") ||
+    null;
+
+  const baseOut = fnName ? (exports as any)[fnName](input) : null;
+  if (!baseOut) {
+    const warn: MFWarn = {
+      code: "NUT_ENGINE_NOT_FOUND",
+      message: "Função principal do nutritionEngine não detectada para wrapper auditável.",
+      severity: "warn",
+    };
+    return { audit: mfAudit(trace, [warn]) } as any;
+  }
+
+  // Guardrails: se houver tdee/alvo no output, aplica rails e registra warning/trace
+  const tdee = Number((baseOut as any)?.tdee_kcal ?? (baseOut as any)?.tdee ?? 0) || 0;
+  const alvo = Number((baseOut as any)?.alvo_kcal ?? (baseOut as any)?.alvo ?? (baseOut as any)?.kcal ?? 0) || 0;
+
+  const warnings: MFWarn[] = [];
+
+  try {
+    if (tdee > 0 && alvo > 0) {
+      const gr = applyNutritionGuardrails({
+        tdeeKcal: tdee,
+        goalKcal: alvo,
+        sex: input?.sex ?? input?.sexo,
+        age: input?.age ?? input?.idade,
+        weightKg: input?.weightKg ?? input?.peso,
+        heightCm: input?.heightCm ?? input?.altura,
+      });
+      trace["guardrails"] = gr.trace;
+      for (const w of gr.warnings) {
+        warnings.push({ code: w.code, message: w.message, severity: w.code.includes("AGGRESSIVE") ? "danger" : "warn" });
+      }
+      // se guardrails ajustarem, refletir no output sem quebrar macros (apenas alvo)
+      if (gr.kcalTarget && gr.kcalTarget !== alvo) {
+        (baseOut as any).alvo_kcal = gr.kcalTarget;
+        (baseOut as any).alvo = gr.kcalTarget;
+      }
+    } else {
+      warnings.push({ code: "NUT_GUARDRAILS_SKIPPED", message: "Guardrails não aplicados (tdee/alvo ausentes).", severity: "info" });
+    }
+  } catch {
+    warnings.push({ code: "NUT_GUARDRAILS_ERROR", message: "Falha ao aplicar guardrails (fail-safe).", severity: "warn" });
+  }
+
+  trace["outputKeys"] = Object.keys(baseOut || {});
+
+  return {
+    ...(baseOut as any),
+    audit: mfAudit(trace, warnings),
+  };
+}
+
