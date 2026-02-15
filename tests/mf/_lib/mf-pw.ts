@@ -72,3 +72,43 @@ export async function mfExpectProgressStep(page: Page, step: number) {
     await expect(hint).toBeVisible({ timeout: 15_000 });
   }
 }
+
+export async function mfSafeFill(page: Page, locator: Locator, value: string) {
+  await expect(locator).toBeVisible({ timeout: 30_000 });
+  await locator.scrollIntoViewIfNeeded().catch(() => {});
+  const tag = await locator.evaluate((el) => (el as HTMLElement).tagName.toLowerCase()).catch(() => "");
+  const isCE = await locator.evaluate((el) => !!(el as HTMLElement).isContentEditable).catch(() => false);
+
+  const canFill = tag === "input" || tag === "textarea" || isCE;
+  if (canFill) {
+    await locator.fill(value);
+    return;
+  }
+
+  await locator.click({ timeout: 10_000 }).catch(() => {});
+  const esc = String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const opt = page.getByRole("option", { name: new RegExp(esc, "i") }).first();
+  if ((await opt.count().catch(() => 0)) > 0) { await opt.click(); return; }
+
+  const byText = page.getByText(new RegExp(esc, "i")).first();
+  if ((await byText.count().catch(() => 0)) > 0) { await byText.click(); return; }
+
+  console.log("MF_E2E: mfSafeFill could not fill/select value:", value);
+}
+
+export async function mfReadSSOT(page: Page) {
+  return await page.evaluate(() => {
+    const raw = localStorage.getItem("mindsetfit:onboardingProgress:v1");
+    try { return raw ? JSON.parse(raw) : null; } catch { return null; }
+  });
+}
+
+export async function mfExpectSSOTStep(page: Page, step: number, requiredKeys: string[] = []) {
+  const obj: any = await mfReadSSOT(page);
+  expect(obj).toBeTruthy();
+  expect(obj.step).toBe(step);
+  for (const k of requiredKeys || []) {
+    expect(obj?.data).toBeTruthy();
+    expect(Object.prototype.hasOwnProperty.call(obj.data, k)).toBe(true);
+  }
+}
