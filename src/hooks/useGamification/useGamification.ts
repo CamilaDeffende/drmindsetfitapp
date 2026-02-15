@@ -4,6 +4,7 @@ import { loadStreak, recordDailyCompletion, type Streak } from "@/services/gamif
 import { addXP, loadLevel, type LevelState } from "@/services/gamification/LevelSystem";
 import { loadAchievements, unlock, type Achievement } from "@/services/gamification/achievements";
 import { mfGetLoad7dFromHistory } from "@/services/history/HistoryService";
+import { mfEvents } from "@/services/events/mfEvents";
 
 export type GamificationState = {
   streak: Streak;
@@ -12,7 +13,21 @@ export type GamificationState = {
 };
 
 export function useGamification() {
-  const [state, setState] = useState<GamificationState>(() => ({
+  
+  // MF_GAMIFICATION_EVENTS_V1
+  useEffect(() => {
+    const off1 = mfEvents.on("nutrition_plan_set", (p) => {
+      try {
+        const add = p.hasAudit ? 15 : 8;
+        addXP(add);
+      } catch {}
+    });
+    const off2 = mfEvents.on("workout_added", () => {
+      try { addXP(10); } catch {}
+    });
+    return () => { try { off1(); off2(); } catch {} };
+  }, []);
+const [state, setState] = useState<GamificationState>(() => ({
     streak: loadStreak(),
     level: loadLevel(),
     achievements: loadAchievements(),

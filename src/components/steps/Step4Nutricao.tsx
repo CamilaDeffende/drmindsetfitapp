@@ -47,6 +47,7 @@ import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSa
 import { applyNutritionGuardrails } from "@/services/nutrition/guardrails";
 import { mfAudit, type MFWarn } from "@/services/audit/mfAudit";
 import { useGamification } from "@/hooks/useGamification/useGamification";
+import { mfEvents } from "@/services/events/mfEvents";
 // MF_NUTRITION_WIRE_V1
 function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   // MF_STEP4_GAMIFICATION_BIND_V1
@@ -91,6 +92,23 @@ export function Step4Nutricao({ value, onChange, onNext, onBack }: OnboardingSte
       if (!kcal || kcal <= 0) return;
       const hasAudit = Boolean((state as any)?.nutricao?.audit || (state as any)?.nutrition?.audit);
       __mfGActions.onNutritionPlanSet(hasAudit);
+    } catch {}
+      // MF_STEP4_EVENTS_V1
+      try {
+      const __kcal = Number(
+        (state as any)?.nutricao?.kcalAlvo ??
+        (state as any)?.nutricao?.macros?.calorias ??
+        (state as any)?.nutrition?.kcalAlvo ??
+        (state as any)?.nutrition?.macros?.calorias ??
+        0
+      );
+      const __hasAudit = Boolean(
+        (state as any)?.nutricao?.audit ??
+        (state as any)?.nutrition?.audit ??
+        (state as any)?.macros?.audit ??
+        (state as any)?.dieta?.audit
+      );
+      if (__kcal > 0) mfEvents.emit("nutrition_plan_set", { kcal: __kcal, hasAudit: __hasAudit, ts: new Date().toISOString() });
     } catch {}
   }, [
     __mfGActions,
