@@ -12,3 +12,11 @@ export const supabase = createClient(
   anon ?? "mf-missing-supabase-anon",
   { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
 );
+
+// MF_SUPABASE_IS_CONFIGURED_V1
+// SSOT helper to avoid multiple GoTrueClient instances warnings.
+// True when the required env vars are present (Vite: import.meta.env.*).
+export const isSupabaseConfigured: boolean = Boolean(
+  (import.meta as any)?.env?.VITE_SUPABASE_URL && (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY
+);
+
