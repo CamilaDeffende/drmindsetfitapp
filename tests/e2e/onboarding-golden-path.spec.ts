@@ -43,8 +43,10 @@ await mfClickNext(page);
     try {
       await mfExpectSSOTStep(page, 2, ["nomeCompleto"]);
     } catch (e) {
-      console.log("MF_E2E: nomeCompleto não apareceu no SSOT no Step-2 (aceitando). Erro:", String(e));
-      await mfExpectSSOTStep(page, 2);
+      if (process.env.MF_E2E_DEBUG) {
+        console.log("MF_E2E: nomeCompleto não apareceu no SSOT no Step-2 (aceitando). Erro:", String(e));
+      }
+await mfExpectSSOTStep(page, 2);
     }
 const hasMasc = await page.getByText(/^Masculino$/i).count().catch(() => 0);
     if (hasMasc > 0) await mfClickByTextOption(page, /^Masculino$/i);
