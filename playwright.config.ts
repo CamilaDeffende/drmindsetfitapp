@@ -9,6 +9,11 @@ export default defineConfig({
       video: "retain-on-failure",
     },
   } : {}),
+  // MF_CI_BLOB_REPORT_V1
+  ...(process.env.CI ? {
+    reporter: [["blob"], ["html", { open: "never" }]],
+  } : {}),
+
 
   // MF_CI_FORCE_CHROMIUM_V1
   ...(process.env.CI ? { projects: [{ name: "chromium", use: { browserName: "chromium" } }] } : {}),
