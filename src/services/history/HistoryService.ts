@@ -77,3 +77,90 @@ export class HistoryService {
 }
 // MF_HISTORY_SINGLETON_V1
 export const historyService = HistoryService;
+
+
+// MF_HISTORY_AGG_7D_V1
+/**
+ * Agregadores SSOT (7 dias) para Progressão Inteligente / IA Adaptativa.
+ * Não assumem shape rígido: tentam ler campos comuns do WorkoutRecord.
+ */
+export type MFLoad7d = {
+  sessions: number;
+  minutes: number;
+  avgRPE: number;
+  sleepScore?: number;
+  sorenessScore?: number;
+  trace: Record<string, unknown>;
+};
+
+function __mf_toNum(v: any): number | null {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function __mf_daysBetween(a: Date, b: Date): number {
+  return Math.floor((a.getTime() - b.getTime()) / 86400000);
+}
+
+export function mfGetLoad7dFromHistory(now = new Date()): MFLoad7d {
+  // best-effort: historyService might be a singleton; but this file itself typically exports historyService.
+  // We'll try to use (historyService as any).getWorkouts() if exists; else localStorage fallback.
+  const trace: Record<string, unknown> = {};
+  let workouts: any[] = [];
+
+  try {
+    const hs: any = (exports as any)?.historyService ?? (globalThis as any)?.historyService;
+    if (hs && typeof hs.getWorkouts === "function") {
+      workouts = hs.getWorkouts() || [];
+      trace.source = "historyService.getWorkouts()";
+    }
+  } catch {}
+
+  if (!workouts.length) {
+    try {
+      // very conservative fallback: attempt known key
+      const raw = localStorage.getItem("mf_history_v1") || localStorage.getItem("history_v1");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        workouts = Array.isArray(parsed?.workouts) ? parsed.workouts : (Array.isArray(parsed) ? parsed : []);
+        trace.source = "localStorage(fallback)";
+      }
+    } catch {}
+  }
+
+  const last7 = workouts.filter((w) => {
+    const iso = w?.date ?? w?.iso ?? w?.createdAt ?? w?.timestamp;
+    const d = iso ? new Date(iso) : null;
+    if (!d || Number.isNaN(d.getTime())) return false;
+    return __mf_daysBetween(now, d) <= 6;
+  });
+
+  const sessions = last7.length;
+
+  let minutes = 0;
+  let rpeSum = 0;
+  let rpeCount = 0;
+
+  for (const w of last7) {
+    const mins = __mf_toNum(w?.durationMinutes ?? w?.minutes ?? w?.durationMin ?? w?.duration);
+    if (mins != null) minutes += Math.max(0, mins);
+
+    const rpe = __mf_toNum(w?.rpe ?? w?.RPE ?? w?.pse ?? w?.PSE);
+    if (rpe != null) {
+      rpeSum += Math.max(0, Math.min(10, rpe));
+      rpeCount += 1;
+    }
+  }
+
+  // Optional recovery signals (if you store them)
+  const sleepScore = __mf_toNum((workouts[workouts.length - 1] as any)?.sleepScore ?? null) ?? undefined;
+  const sorenessScore = __mf_toNum((workouts[workouts.length - 1] as any)?.sorenessScore ?? null) ?? undefined;
+
+  const avgRPE = rpeCount ? (rpeSum / rpeCount) : 0;
+  trace.sessions = sessions;
+  trace.minutes = minutes;
+  trace.avgRPE = avgRPE;
+
+  return { sessions, minutes, avgRPE, sleepScore, sorenessScore, trace };
+}
+

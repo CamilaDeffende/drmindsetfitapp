@@ -1,11 +1,41 @@
 import { useAI } from "@/hooks/useAI/useAI";
 
+import { assessTrainingLoad } from "@/services/training/loadGuardrails";
+import { mfGetLoad7dFromHistory } from "@/services/history/HistoryService";
 function Badge({ t }: { t: string }) {
   return <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80">{t}</span>;
 }
 
 export function AIInsights() {
   const { metrics, recs, weightPred } = useAI();
+
+      {/* MF_AI_LOAD_WIDGET_V1 */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="text-xs uppercase tracking-[0.22em] opacity-70">Carga (últimos 7 dias)</div>
+        <div className="mt-2 text-sm opacity-80">
+          {(() => {
+            try {
+              const l7 = mfGetLoad7dFromHistory(new Date());
+              const r = assessTrainingLoad({
+                last7dSessions: l7.sessions,
+                last7dMinutes: l7.minutes,
+                last7dAvgRPE: l7.avgRPE,
+                sleepScore: l7.sleepScore,
+                sorenessScore: l7.sorenessScore,
+              });
+              const label = r.risk === "high" ? "ALTA" : r.risk === "moderate" ? "MODERADA" : "BAIXA";
+              return (
+                <span className="font-semibold text-white">
+                  {label} • {l7.sessions} sessões • {Math.round(l7.minutes)} min • RPE ~{l7.avgRPE.toFixed(1)}
+                </span>
+              );
+            } catch {
+              return <span className="opacity-70">Dados insuficientes para calcular carga.</span>;
+            }
+          })()}
+        </div>
+      </div>
+
 
   return (
     <div className="space-y-4">

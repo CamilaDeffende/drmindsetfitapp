@@ -1,5 +1,7 @@
 import { historyService, WorkoutRecord } from "@/services/history/HistoryService";
 
+import { mfGetLoad7dFromHistory } from "@/services/history/HistoryService";
+import { assessTrainingLoad } from "@/services/training/loadGuardrails";
 export type AdaptiveRecommendation = {
   type: "warning" | "success" | "info" | "adjustment";
   title: string;
@@ -98,6 +100,44 @@ export class AdaptiveEngine {
         message: "Nenhum treino nos últimos 7 dias. Que tal iniciar com um treino leve para retomar consistência?",
         action: { label: "Abrir Progress", href: "/progress" },
       });
+
+  // MF_ADAPTIVE_LOAD_RISK_V1
+  try {
+    const load7d = mfGetLoad7dFromHistory(new Date());
+    const load = assessTrainingLoad({
+      last7dSessions: load7d.sessions,
+      last7dMinutes: load7d.minutes,
+      last7dAvgRPE: load7d.avgRPE,
+      sleepScore: load7d.sleepScore,
+      sorenessScore: load7d.sorenessScore,
+    });
+
+    if (load.risk === "high") {
+      recs.push({
+        type: "warning",
+        title: "Risco de overtraining",
+        message:
+          "Detectamos carga elevada nos últimos 7 dias. Recomendado reduzir volume/intensidade e priorizar recuperação (sono, hidratação e deload).",
+      });
+    } else if (load.risk === "moderate") {
+      recs.push({
+        type: "info",
+        title: "Carga moderada",
+        message:
+          "Sua carga recente está moderada. Mantenha consistência e monitore sinais de fadiga/sono para evitar acúmulo.",
+      });
+    } else {
+      recs.push({
+        type: "success",
+        title: "Carga sob controle",
+        message:
+          "Sua carga recente está controlada. Excelente para consistência e progressão sustentável.",
+      });
+    }
+  } catch (e) {
+    // fail-safe: nunca quebra o app por falta de dados
+  }
+
       return recs;
     }
 
