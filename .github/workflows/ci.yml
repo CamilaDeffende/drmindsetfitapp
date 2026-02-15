@@ -46,5 +46,12 @@ jobs:
       - name: Verify (tsc + lint + build)
         run: npm run verify
 
+
+      - name: List Playwright Projects (CI guardrail)
+        run: |
+          npx playwright test --list || true
+          echo CI checking chromium project
+          npx playwright test --list | grep chromium >/dev/null
+
       - name: Run E2E Tests
         run: npm run test:e2e -- --project=chromium
