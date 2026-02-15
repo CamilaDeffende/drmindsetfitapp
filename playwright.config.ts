@@ -14,10 +14,10 @@ export default defineConfig({
     reporter: [["blob"], ["html", { open: "never" }]],
   } : {}),
 
-
-  // MF_CI_FORCE_CHROMIUM_V1
-  ...(process.env.CI ? { projects: [{ name: "chromium", use: { browserName: "chromium" } }] } : {}),
-
+  // MF_PLAYWRIGHT_PROJECTS_ALWAYS_V1
+  projects: [
+    { name: "chromium", use: { browserName: "chromium" } },
+  ],
   testDir: "tests",
   timeout: 60_000,
   expect: { timeout: 10_000 },
