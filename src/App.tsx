@@ -98,7 +98,7 @@ function App() {
             <Route path="/diagnostic" element={<DiagnosticPage />} />
 
             {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
-            <Route path="/" element={<Navigate to="/diagnostic" replace />} />
+            <Route path="/" element={<Navigate to="/onboarding/step-1" replace />} />
 
             {/* Públicas */}
             <Route path="/assinatura" element={<Assinatura />} />
@@ -122,17 +122,13 @@ function App() {
             <Route
               path="/onboarding/*"
               element={
-                <ProtectedRoute requiresPremium>
-                  <OnboardingFlow />
-                </ProtectedRoute>
+                <OnboardingFlow />
               }
             />
             <Route
               path="/onboarding/step-:step"
               element={
-                <ProtectedRoute requiresPremium>
-                  <OnboardingFlow />
-                </ProtectedRoute>
+                <OnboardingFlow />
               }
             />
 
