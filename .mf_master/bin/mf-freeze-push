@@ -83,7 +83,7 @@ git tag -f freeze-latest "$TAG"
 echo
 echo "==> [F] push branch + tags"
 git push "$REMOTE" "$BRANCH"
-git push "$REMOTE" --tags
+git push "$REMOTE" "refs/tags/$TAG"
 git push --force "$REMOTE" refs/tags/freeze-latest
 
 echo
