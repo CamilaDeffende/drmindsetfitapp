@@ -1,3 +1,4 @@
+// MF_ONBOARDING_NEXTBACK_CONTRACT_V1
 // MF_ONBOARDING_WATCHDOG_UNUSED_SILENCE_V1
 // MF_APPREADY_GATE_DEV_BYPASS_V1
 // MF_ONBOARDING_LOADER_WATCHDOG_V2
@@ -391,7 +392,7 @@ try { clearOnboardingDraft(); } catch {}
       {/* MF_STEP1_NEXT_FALLBACK: garante avanço estável no Step-1 (E2E-safe) */}
       {(<div className="mt-6 flex items-center justify-end">
           <button
-            data-testid="onboarding-next"
+            data-testid="onboarding-next" data-mf="mf-next"
             type="button"
             onClick={() => { try { goNext(); } catch {}
             try {
@@ -422,7 +423,7 @@ try { clearOnboardingDraft(); } catch {}
             type="button"
             onClick={goBack}
             className="px-4 py-2 rounded-xl border border-white/10 text-sm opacity-90 hover:opacity-100"
-          >
+           data-mf="mf-back">
             Voltar
           </button>
 </div>

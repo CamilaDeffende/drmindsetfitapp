@@ -1,5 +1,16 @@
 import { test, expect } from "@playwright/test";
 
+
+// MF_ONBOARDING_CONTRACT_HELPERS_V1
+async function mfNextLocator(page: any) {
+  // prefer mf-next, fallback onboarding-next
+  return page.locator('[data-testid="mf-next"], [data-mf="mf-next"], [data-testid="onboarding-next"]');
+}
+
+async function mfBackLocator(page: any) {
+  return page.locator('[data-testid="mf-back"], [data-mf="mf-back"], [data-testid="onboarding-back"]');
+}
+
 const STEPS = [1,2,3,4,5,6,7,8];
 
 test.describe("MF › onboarding UI contract (anti-regressão)", () => {
