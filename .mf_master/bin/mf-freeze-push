@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BRANCH_DEFAULT="feat/phases-6-11"
+BRANCH_DEFAULT="$(git rev-parse --abbrev-ref HEAD)"
 BRANCH="${1:-$BRANCH_DEFAULT}"
 REMOTE="${REMOTE:-origin}"
 
@@ -25,6 +25,7 @@ if [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ] || [ -f .git/CHERRY_PICK
   exit 1
 fi
 
+# MF_REQUIRE_CLEAN_TREE_V1
 # 2) working tree clean (não congela estado sujo)
 if [ -n "$(git status --porcelain=v1)" ]; then
   echo "❌ Working tree não está limpa. Faça commit/stash antes."
@@ -72,6 +73,10 @@ echo
 echo "==> [E] tag freeze + freeze-latest"
 TS="$(date +%Y%m%d_%H%M%S)"
 TAG="freeze-verify-green-${BRANCH//\//-}-$TS"
+
+# MF_TAG_SANITIZE_V1
+TAG="$(printf \"%s\" \"$TAG\" | tr \" /\" \"--\" | tr -cd \"[:alnum:]._:-\" )"
+
 git tag -a "$TAG" -m "BUILD VERDE ($BRANCH) — freeze [$TS]"
 git tag -f freeze-latest "$TAG"
 
