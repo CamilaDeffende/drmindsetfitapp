@@ -75,7 +75,7 @@ TS="$(date +%Y%m%d_%H%M%S)"
 TAG="freeze-verify-green-${BRANCH//\//-}-$TS"
 
 # MF_TAG_SANITIZE_V1
-TAG="$(printf \"%s\" \"$TAG\" | tr \" /\" \"--\" | tr -cd \"[:alnum:]._:-\" )"
+TAG="$(printf "%s" "$TAG" | tr " /" "--" | tr -cd "[:alnum:]._:-")"
 
 git tag -a "$TAG" -m "BUILD VERDE ($BRANCH) — freeze [$TS]"
 git tag -f freeze-latest "$TAG"
