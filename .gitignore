@@ -141,3 +141,6 @@ dist/
 .backups/
 .scan/
 Drmindsetfitpro/
+
+# versioned automation scripts
+!scripts/

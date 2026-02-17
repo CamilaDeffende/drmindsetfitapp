@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BRANCH_DEFAULT="$(git rev-parse --abbrev-ref HEAD)"
+BRANCH="${1:-$BRANCH_DEFAULT}"
+REMOTE="${REMOTE:-origin}"
+
+echo "==> mf-freeze-push"
+echo "remote: $REMOTE"
+echo "branch: $BRANCH"
+echo
+
+# 0) sanity: repo + branch atual
+CUR="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$CUR" != "$BRANCH" ]; then
+  echo "==> checkout $BRANCH (was $CUR)"
+  git checkout "$BRANCH"
+fi
+
+# 1) abort safety: se houver cherry-pick/rebase pendente, falha com instrução clara
+if [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ] || [ -f .git/CHERRY_PICK_HEAD ]; then
+  echo "❌ Há operação de rebase/cherry-pick em andamento."
+  echo "   Resolva e finalize, ou rode:"
+  echo "   git rebase --abort   OR   git cherry-pick --abort"
+  exit 1
+fi
+
+# MF_REQUIRE_CLEAN_TREE_V1
+# 2) working tree clean (não congela estado sujo)
+if [ -n "$(git status --porcelain=v1)" ]; then
+  echo "❌ Working tree não está limpa. Faça commit/stash antes."
+  git status -sb
+  exit 1
+fi
+
+echo "==> [A] clean broken remote refs (defensive)"
+# remove refs quebradas do tipo "origin/main 2"
+# 1) em refs soltas
+if [ -d ".git/refs/remotes/$REMOTE" ]; then
+  while IFS= read -r path; do
+    # qualquer nome com espaço é inválido
+    if [[ "$path" == *" "* ]]; then
+      echo "  - removing broken ref file: $path"
+      rm -f "$path" || true
+    fi
+  done < <(find ".git/refs/remotes/$REMOTE" -type f 2>/dev/null || true)
+fi
+
+# 2) packed-refs: remove entradas com espaço "refs/remotes/origin/main 2"
+if [ -f ".git/packed-refs" ]; then
+  if rg -n "refs/remotes/$REMOTE/.* " .git/packed-refs >/dev/null 2>&1; then
+    BK=".git/packed-refs.bak.$(date +%Y%m%d_%H%M%S)"
+    cp -a .git/packed-refs "$BK"
+    rg -v "refs/remotes/$REMOTE/.* " .git/packed-refs > .git/packed-refs.__tmp
+    mv .git/packed-refs.__tmp .git/packed-refs
+    echo "  - cleaned packed-refs (backup: $BK)"
+  fi
+fi
+
+echo
+echo "==> [B] fetch --prune"
+git fetch --prune "$REMOTE"
+
+echo
+echo "==> [C] pull --ff-only"
+git pull --ff-only "$REMOTE" "$BRANCH"
+
+echo
+echo "==> [D] verify (BUILD VERDE)"
+npm run -s verify
+
+echo
+echo "==> [E] tag freeze + freeze-latest"
+TS="$(date +%Y%m%d_%H%M%S)"
+TAG="freeze-verify-green-${BRANCH//\//-}-$TS"
+
+# MF_TAG_SANITIZE_V1
+TAG="$(printf "%s" "$TAG" | tr " /" "--" | tr -cd "[:alnum:]._:-")"
+
+git tag -a "$TAG" -m "BUILD VERDE ($BRANCH) — freeze [$TS]"
+git tag -f freeze-latest "$TAG"
+
+echo
+echo "==> [F] push branch + tags"
+git push "$REMOTE" "$BRANCH"
+git push "$REMOTE" "refs/tags/$TAG"
+git push --force "$REMOTE" refs/tags/freeze-latest
+
+echo
+echo "✅ DONE"
+echo "branch: $(git rev-parse --abbrev-ref HEAD)"
+echo "head:   $(git rev-parse HEAD)"
+echo "tag:    $TAG"
+echo "latest: freeze-latest -> $TAG"
