@@ -84,7 +84,7 @@ echo
 echo "==> [F] push branch + tags"
 git push "$REMOTE" "$BRANCH"
 git push "$REMOTE" --tags
-git push -f "$REMOTE" freeze-latest
+git push --force "$REMOTE" refs/tags/freeze-latest
 
 echo
 echo "✅ DONE"
