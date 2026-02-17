@@ -144,3 +144,6 @@ Drmindsetfitpro/
 
 # versioned automation scripts
 !scripts/
+
+# versioned automation scripts
+!scripts/
