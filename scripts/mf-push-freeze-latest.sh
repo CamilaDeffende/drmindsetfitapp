@@ -12,5 +12,5 @@ echo "==> pushing freeze-latest (force refspec)"
 git push -f "$REMOTE" refs/tags/freeze-latest:refs/tags/freeze-latest
 
 echo "==> remote check"
-git ls-remote --tags "$REMOTE" | grep "refs/tags/freeze-latest$"
+git ls-remote --tags "$REMOTE" | awk '{print $2}' | grep -Fxq "refs/tags/freeze-latest"
 echo "✅ OK"
