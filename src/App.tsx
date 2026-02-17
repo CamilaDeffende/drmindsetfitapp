@@ -4,6 +4,7 @@ import * as React from "react";
 import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import Assinatura from "@/pages/Assinatura";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+// MF_ROUTER_FUTURE_FLAGS_V3
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
 import { DrMindSetfitProvider } from "@/contexts/DrMindSetfitContext";
 import { ThemeProvider } from "next-themes";
@@ -80,7 +81,7 @@ function App() {
   ) : (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <DrMindSetfitProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} data-testid="mf-router">
           <RouteGuard />
           <OfflineIndicator />
           <LiveLocationPill />
