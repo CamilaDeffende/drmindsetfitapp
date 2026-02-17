@@ -32,6 +32,14 @@ export default defineConfig({
   },
   // MF_PW_WEBSERVER_V1 — Playwright sobe o Vite automaticamente (porta 8080)
   webServer: {
+
+    // MF_PW_WEBSERVER_ENV_SUPABASE_V1
+    env: {
+      ...process.env,
+      VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || "https://example.supabase.co",
+      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || "test-anon-key",
+    },
+
     command: "npm run dev -- --strictPort --port 8080",
     url: "http://127.0.0.1:8080",
     reuseExistingServer: !process.env.CI,

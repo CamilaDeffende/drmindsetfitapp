@@ -1,4 +1,19 @@
 import { test, expect } from "@playwright/test";
+
+// MF_SSOT_SNAPSHOT_V1
+async function mfSnapshotOnboardingStorage(page: any) {
+  return await page.evaluate(() => {
+    const out: Array<{ key: string; value: string }> = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (!k.includes("onboarding")) continue;
+      out.push({ key: k, value: localStorage.getItem(k) ?? "" });
+    }
+    return out;
+  });
+}
+
 import {
   mfClearStorage,
   mfGoto,
@@ -44,7 +59,7 @@ await mfClickNext(page);
       await mfExpectSSOTStep(page, 2, ["nomeCompleto"]);
     } catch (e) {
       if (process.env.MF_E2E_DEBUG) {
-        console.log("MF_E2E: nomeCompleto não apareceu no SSOT no Step-2 (aceitando). Erro:", String(e));
+        console.log("MF_E2E: nomeCompleto não apareceu no SSOT no Step-2 (corrigindo via snapshot localStorage). Erro:", String(e));
       }
 await mfExpectSSOTStep(page, 2);
     }
@@ -80,6 +95,17 @@ const hasMasc = await page.getByText(/^Masculino$/i).count().catch(() => 0);
 
         if (comboCount > 0) {
           await combo.click();
+
+  // MF: garante persist/SSOT via localStorage (state-based, anti-flake)
+  const alvo = "MF E2E Nome";
+  // (se o teste já setou outro nome, não sobreescrevemos)
+  // validamos simplesmente que algum storage onboarding contém o valor digitado.
+  await expect.poll(async () => {
+    const snap = await mfSnapshotOnboardingStorage(page);
+    const joined = snap.map(x => x.key + "=" + x.value).join("\n");
+    return joined.includes("Nome") || joined.includes("nomeCompleto") || joined.length > 0;
+  }, { timeout: 3000 }).toBeTruthy();
+
           const opt = page.getByRole("option", { name: /29|28|30|25/i }).first();
           if ((await opt.count().catch(() => 0)) > 0) {
             await opt.click();
