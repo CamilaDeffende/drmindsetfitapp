@@ -1,3 +1,4 @@
+// MF_ONBOARDING_CONTRACT_V1
 type Props = {
   summary: any;
   onConfirm: () => void;
@@ -9,7 +10,7 @@ export default function Step8Confirmacao({ summary, onConfirm, onBack }: Props) 
   void onBack;
 
   return (
-    <div>
+    <div data-testid="mf-step-root">
       <h2 className="text-xl font-semibold">Confirmação</h2>
 
       <pre className="mt-4 p-3 rounded-lg bg-white/5 text-xs overflow-auto">

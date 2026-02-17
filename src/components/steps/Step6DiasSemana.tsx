@@ -1,3 +1,4 @@
+// MF_ONBOARDING_CONTRACT_V1
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 
 type Props = {
@@ -27,7 +28,7 @@ export default function Step6DiasSemana({ value, onChange, onNext, onBack }: Pro
   };
 
   return (
-    <div>
+    <div data-testid="mf-step-root">
       <h2 className="text-xl font-semibold">Dias de treino</h2>
 
       <div className="mt-4 flex flex-wrap gap-2">

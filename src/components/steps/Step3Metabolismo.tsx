@@ -1,3 +1,4 @@
+// MF_ONBOARDING_CONTRACT_V1
 // MF_STEP3_SPINNER_FIX_V4
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // MF_STEP3_GUARD_MINIMO_MAXIMO_V1
@@ -270,7 +271,7 @@ metabolismo: calc
 
   if (!resultado) {
   return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8" data-testid="mf-step-root">
 
 <Card className="mt-4 border-white/10 bg-white/5">
   <CardHeader className="pb-3">

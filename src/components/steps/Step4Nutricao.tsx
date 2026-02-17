@@ -1,3 +1,4 @@
+// MF_ONBOARDING_CONTRACT_V1
 import { useEffect } from "react";
 // MF_STEP4_DYNAMIC_KCAL_STRATEGY_V1
 // MF_STEP4_KCAL_SSOT_V1
@@ -555,7 +556,7 @@ const mfStrategyPercent = (e: string) => {
   const __mfKcalAlvo = mfComputeKcalAlvo({ baseKcal: __mfBaseKcal, percent: __mfPercent, faixa: __mfFaixa });
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
+    <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8" data-testid="mf-step-root">
         
         
         <div className="space-y-2">

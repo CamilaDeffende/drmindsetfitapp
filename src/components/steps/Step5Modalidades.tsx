@@ -1,3 +1,4 @@
+// MF_ONBOARDING_CONTRACT_V1
 import { useMemo } from "react";
 
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
@@ -26,7 +27,7 @@ export default function Step5Modalidades({ value, onChange, onNext, onBack }: Pr
     { key: "cross", label: "Cross" },
   ]), []);
   return (
-    <div>
+    <div data-testid="mf-step-root">
       <h2 className="text-xl font-semibold">Modalidade principal</h2>
 
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">

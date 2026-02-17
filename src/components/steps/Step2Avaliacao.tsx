@@ -1,3 +1,4 @@
+// MF_ONBOARDING_CONTRACT_V1
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { GlobalProfilePicker } from "@/features/global-profile/ui/GlobalProfilePicker";
@@ -258,7 +259,7 @@ let percentualGordura: number = 0
   const altura = form.watch('altura')
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8" data-testid="mf-step-root">
       <div className="mb-6">
         <GlobalProfilePicker title="Localização, fuso e unidades" />
       </div>

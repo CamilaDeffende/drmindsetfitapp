@@ -1,3 +1,4 @@
+// MF_ONBOARDING_CONTRACT_V1
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 type Props = {
   value: { dieta: string };
@@ -24,7 +25,7 @@ export default function Step7Preferencias({ value, onChange, onNext, onBack }: P
   const current = value?.dieta || "flexivel";
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-testid="mf-step-root">
       <h2 className="text-xl font-semibold">Preferências alimentares</h2>
       <p className="mt-2 text-sm opacity-80">
         Isso ajusta suas sugestões sem radicalizar. Você poderá editar depois.

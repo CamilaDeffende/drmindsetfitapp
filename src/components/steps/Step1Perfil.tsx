@@ -1,3 +1,4 @@
+// MF_ONBOARDING_CONTRACT_V1
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 import { useForm } from 'react-hook-form'
@@ -113,7 +114,7 @@ const onSubmit = (data: PerfilUsuario) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8" data-testid="mf-step-root">
         
         
         <div className="space-y-2">
