@@ -12,7 +12,8 @@ export default function Step7Preferencias({ value, onChange, onNext, onBack }: P
   void onNext; void onBack;
 
 /* MF_BLOCK2_1_STEP7PREF_AUTOSAVE */
-  useOnboardingDraftSaver({ step7Preferencias: value } as any, 400);
+  // MF_STEP7_DUAL_SAVE_V1: salva canonical + legacy (compat)
+  useOnboardingDraftSaver({ step7: value, step7Preferencias: value } as any, 400);
 
   const options = [
     { k: "flexivel", label: "Flexível", desc: "Aderência acima de tudo." },

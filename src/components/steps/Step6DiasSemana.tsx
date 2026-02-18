@@ -15,7 +15,8 @@ export default function Step6DiasSemana({ value, onChange, onNext, onBack }: Pro
   void onNext; void onBack;
 
 /* MF_BLOCK2_1_STEP6_AUTOSAVE */
-  useOnboardingDraftSaver({ step6DiasSemana: value } as any, 400);
+  // MF_STEP6_DUAL_SAVE_V1: salva canonical + legacy (compat)
+  useOnboardingDraftSaver({ step6: value, step6DiasSemana: value } as any, 400);
 
   const toggle = (d: string) => {
     const set = new Set(value.days);

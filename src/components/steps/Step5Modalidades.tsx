@@ -17,7 +17,8 @@ export default function Step5Modalidades({ value, onChange, onNext, onBack }: Pr
   void onNext; void onBack;
 
 /* MF_BLOCK2_1_STEP5MOD_AUTOSAVE */
-  useOnboardingDraftSaver({ step5Modalidades: value } as any, 400);
+  // MF_STEP5_DUAL_SAVE_V1: salva canonical + legacy (compat)
+  useOnboardingDraftSaver({ step5: value, step5Modalidades: value } as any, 400);
 
   const options = useMemo(() => ([
     { key: "musculacao", label: "Musculação" },
