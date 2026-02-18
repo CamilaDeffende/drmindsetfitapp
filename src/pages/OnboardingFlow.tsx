@@ -22,6 +22,9 @@ import Step6DiasSemana from "@/components/steps/Step6DiasSemana";
 import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
 
+// MF_ONBOARDING_SSOT_BRIDGE_V1
+import { writeOnboardingDraftStorage, normalizeDraftKeys } from "@/services/ssot/onboardingDraft.bridge";
+
 // MF_REDIRECT_LOOP_GUARD_V1
 function mfNavGuard(to: string) {
   try {
@@ -73,6 +76,9 @@ function loadDraft(): Draft {
 function saveDraft(d: Draft) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(d));
+    // MF_ONBOARDING_SSOT_BRIDGE_V1 (canonical key p/ Report + compat)
+    try { writeOnboardingDraftStorage(normalizeDraftKeys(d || {})); } catch {}
+
   } catch {}
 }
 
