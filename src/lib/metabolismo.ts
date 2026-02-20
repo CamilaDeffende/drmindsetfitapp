@@ -1,4 +1,4 @@
-// Helpers locais
+// Helpers seguros
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
@@ -10,23 +10,22 @@ function calcAjusteBiotipoKcal(params: {
   bfPct?: number | null;
 }) {
   const biotipo = params.biotipo;
-  if (biotipo !== "ectomorfo")
+  if (biotipo !== "ectomorfo") {
     return { kcal: 0, motivo: "Sem ajuste de biotipo." };
+  }
 
   const obj = params.objetivo ?? "manutencao";
-  const imc =
-    typeof params.imc === "number" && Number.isFinite(params.imc)
-      ? params.imc
-      : undefined;
-  const bf =
-    typeof params.bfPct === "number" && Number.isFinite(params.bfPct)
-      ? params.bfPct
-      : undefined;
+  const imc = Number.isFinite(params.imc as any)
+    ? (params.imc as number)
+    : undefined;
+  const bf = Number.isFinite(params.bfPct as any)
+    ? (params.bfPct as number)
+    : undefined;
 
+  // indicador simples de "magração"
   const baixoIMC = imc !== undefined ? imc < 21.0 : false;
   const muitoBaixoIMC = imc !== undefined ? imc < 19.5 : false;
   const bfBaixo = bf !== undefined ? bf < 12 : false;
-
   const scoreMagro =
     (baixoIMC ? 1 : 0) + (muitoBaixoIMC ? 1 : 0) + (bfBaixo ? 1 : 0);
 
@@ -47,9 +46,7 @@ function calcAjusteBiotipoKcal(params: {
   return { kcal, motivo };
 }
 
-// ============================
-// Motor de Decisão Metabólica
-// ============================
+// Motor de Decisão Metabólica - DrMindSetfit
 import type {
   PerfilUsuario,
   AvaliacaoFisica,
@@ -57,7 +54,7 @@ import type {
   ResultadoMetabolico,
 } from "@/types";
 
-// BLOCO 1: multiplicador por frequência semanal (atividade real)
+// BLOCO 1 (Premium): multiplicador por frequência semanal (atividade real)
 const getWeeklyActivityMultiplier = (freq?: string): number => {
   switch (String(freq || "").toLowerCase()) {
     case "sedentario":
@@ -73,7 +70,7 @@ const getWeeklyActivityMultiplier = (freq?: string): number => {
   }
 };
 
-// Fator de Atividade Física (FAF) por nível de treino
+// Fator de Atividade Física (FAF)
 const getFAF = (nivelTreino: string): number => {
   const faf: Record<string, number> = {
     sedentario: 1.2,
@@ -133,28 +130,25 @@ export const calcularFaoWho = (
   }
 };
 
-// Tinsley (atletas)
+// Tinsley (para atletas)
 export const calcularTinsley = (massaMagra: number): number => {
   return 25.9 * massaMagra + 284;
 };
 
-// ==================================
-// MOTOR DE DECISÃO (robusto / seguro)
-// ==================================
+// MOTOR DE DECISÃO INTELIGENTE
 export const decidirEquacaoMetabolica = (
   perfil: PerfilUsuario,
   avaliacao: AvaliacaoFisica
 ): EquacaoMetabolica => {
-  const p: any = perfil ?? {};
-  const a: any = avaliacao ?? {};
-
-  const comp = a.composicao ?? {};
+  const safePerfil = (perfil ?? {}) as any;
+  const safeAval = (avaliacao ?? {}) as any;
+  const composicao = (safeAval.composicao ?? {}) as any;
   const temComposicao =
-    comp &&
-    (comp.percentualMassaMagra != null || comp.massaMagraKg != null);
+    composicao.percentualMassaMagra !== undefined &&
+    composicao.percentualMassaMagra !== null;
 
-  const nivelTreino: string = p.nivelTreino ?? "iniciante";
-  const objetivo: string = p.objetivo ?? "manutencao";
+  const nivelTreino = safePerfil.nivelTreino ?? "iniciante";
+  const objetivo = safePerfil.objetivo ?? "manutencao";
 
   // Atleta + composição corporal → Tinsley
   if (nivelTreino === "atleta" && temComposicao) {
@@ -179,7 +173,7 @@ export const decidirEquacaoMetabolica = (
     return "fao-who";
   }
 
-  // Default: Mifflin (mais moderno)
+  // Default: Mifflin (mais moderno e preciso)
   return "mifflin";
 };
 
@@ -188,62 +182,61 @@ export const gerarJustificativa = (
   equacao: EquacaoMetabolica,
   perfil: PerfilUsuario
 ): string => {
-  const p: any = perfil ?? {};
   const justificativas: Record<EquacaoMetabolica, string> = {
-    cunningham: `Escolhida por você ${p.nivelTreino === "avancado" ? "treinar de forma avançada" : "ter nível intermediário"} e possuir (ou estimar) composição corporal. A equação de Cunningham é mais precisa quando temos a massa magra real.`,
+    cunningham: `Escolhida por você ${
+      perfil.nivelTreino === "avancado"
+        ? "treinar de forma avançada"
+        : "ter nível intermediário"
+    } e possuir dados de composição corporal. A equação de Cunningham é mais precisa quando temos a massa magra real.`,
 
     "fao-who": `Recomendada pela Organização Mundial da Saúde para ${
-      p.objetivo === "longevidade"
+      perfil.objetivo === "longevidade"
         ? "objetivos de saúde e longevidade"
-        : "perfis mais iniciantes/sedentários"
+        : "iniciantes"
     }. É uma fórmula validada internacionalmente e considerada segura.`,
 
     "harris-benedict":
       "Equação clássica e amplamente utilizada. Apropriada para seu perfil atual.",
 
-    mifflin:
-      "A equação de Mifflin-St Jeor é considerada uma das mais precisas para a população geral, especialmente em contextos de peso corporal e composição típicos.",
+    mifflin: `A equação de Mifflin-St Jeor é considerada a mais precisa para a população geral, especialmente para ${
+      perfil.objetivo === "hipertrofia"
+        ? "ganho de massa muscular"
+        : "melhoria de performance"
+    }.`,
 
     tinsley:
-      "Como você é tratado como atleta e há dados (ou estimativa) de composição corporal, utilizamos a equação de Tinsley, desenvolvida para atletas de alto rendimento.",
+      "Como você é atleta e temos seus dados de composição corporal, utilizamos a equação de Tinsley, desenvolvida especificamente para atletas de alto rendimento.",
   };
 
   return justificativas[equacao];
 };
 
-// ==================================
-// Cálculo principal (robusto / safe)
-// ==================================
+// Calcular metabolismo completo
 export const calcularMetabolismo = (
-  perfil: PerfilUsuario,
-  avaliacao: AvaliacaoFisica
+  perfilRaw: PerfilUsuario,
+  avaliacaoRaw: AvaliacaoFisica
 ): ResultadoMetabolico => {
-  const p: any = perfil ?? {};
-  const a: any = avaliacao ?? {};
-  const comp: any = a.composicao ?? {};
+  const perfil = (perfilRaw ?? {}) as any;
+  const avaliacao = (avaliacaoRaw ?? {}) as any;
 
-  // Valores básicos com defaults seguros
-  const peso: number = Number(a.peso ?? p.peso ?? 70);
-  const altura: number = Number(a.altura ?? p.altura ?? 170);
-  const idade: number = Number(p.idade ?? a.idade ?? 30);
-  const sexo: string = (p.sexo ?? a.sexo ?? "masculino") as string;
-  const nivelTreino: string = p.nivelTreino ?? "iniciante";
+  const peso = Number(avaliacao.peso ?? 70);
+  const altura = Number(avaliacao.altura ?? 170);
+  const idade = Number(perfil.idade ?? 30);
+  const sexo = (perfil.sexo ?? "masculino") as string;
+  const nivelTreino = (perfil.nivelTreino ?? "iniciante") as string;
 
-  // Massa magra: tenta usar massaMagraKg ou percentualMassaMagra, senão estimativa
-  const massaMagraKgRaw = comp.massaMagraKg;
-  const percMMRaw = comp.percentualMassaMagra;
+  const composicao = (avaliacao.composicao ?? {}) as any;
+  const percentualMM = typeof composicao.percentualMassaMagra === "number"
+    ? composicao.percentualMassaMagra
+    : undefined;
 
-  let massaMagra: number;
-  if (Number.isFinite(Number(massaMagraKgRaw))) {
-    massaMagra = Number(massaMagraKgRaw);
-  } else if (Number.isFinite(Number(percMMRaw))) {
-    massaMagra = peso * (Number(percMMRaw) / 100);
-  } else {
-    massaMagra = peso * 0.75; // estimativa conservadora
-  }
+  const massaMagra =
+    typeof percentualMM === "number"
+      ? peso * (percentualMM / 100)
+      : peso * 0.75; // Estimativa conservadora
 
   // Decidir equação automaticamente
-  const equacaoEscolhida = decidirEquacaoMetabolica(p as any, a as any);
+  const equacaoEscolhida = decidirEquacaoMetabolica(perfil, avaliacao);
 
   // Calcular TMB com a equação escolhida
   let tmb = 0;
@@ -265,40 +258,41 @@ export const calcularMetabolismo = (
       break;
   }
 
-  // FAF (base) + multiplicador por frequência semanal
+  // GET = TMB × FAF
   const fafBase = getFAF(nivelTreino);
-  const freqSemanal: string | undefined =
-    a.frequenciaAtividadeSemanal ??
-    p.frequenciaAtividadeSemanal ??
-    p.nivelAtividadeSemanal;
+  const freqSemanal = (avaliacao as any)
+    ?.frequenciaAtividadeSemanal as string | undefined;
   const fafMult = getWeeklyActivityMultiplier(freqSemanal);
   const fafFinal = Math.min(2.4, Math.max(1.0, fafBase * fafMult));
   const faf = fafFinal;
-
   const get = tmb * fafFinal;
 
   // Calorias alvo (baseado no objetivo)
-  const objetivo: string = p.objetivo ?? "manutencao";
   let caloriasAlvo = get;
+  const objetivo = (perfil.objetivo ?? "manutencao") as string;
   if (objetivo === "emagrecimento") {
-    caloriasAlvo = get * 0.85; // déficit ~15%
+    caloriasAlvo = get * 0.85; // déficit de 15%
   } else if (objetivo === "hipertrofia") {
-    caloriasAlvo = get * 1.1; // superávit ~10%
+    caloriasAlvo = get * 1.1; // superávit de 10%
   }
 
-  // IMC para ajuste de biotipo
+  // Faixa segura inicial
+  let faixaSegura = {
+    minimo: Math.round(caloriasAlvo * 0.9),
+    ideal: Math.round(caloriasAlvo),
+    maximo: Math.round(caloriasAlvo * 1.1),
+  };
+
+  // Ajuste por biotipo (premium, seguro e explicável)
+  const biotipo =
+    (avaliacao as any)?.biotipo ?? (perfil as any)?.biotipo ?? undefined;
   const alturaM = altura > 0 ? altura / 100 : 1.7;
-  const imc = peso / (alturaM * alturaM);
+  const imc = peso / Math.pow(alturaM, 2);
 
-  // Biotipo + BF%
-  const biotipo: string | undefined =
-    a.biotipo ?? p.biotipo ?? undefined;
-
-  const bfRaw =
-    comp.percentualGordura ?? a.bioPercentualGordura ?? null;
   const bfPct =
-    bfRaw != null && bfRaw !== ""
-      ? Number(bfRaw)
+    (avaliacao as any)?.bioPercentualGordura != null &&
+    String((avaliacao as any)?.bioPercentualGordura) !== ""
+      ? Number((avaliacao as any)?.bioPercentualGordura)
       : null;
 
   const ajusteBio = calcAjusteBiotipoKcal({
@@ -310,15 +304,15 @@ export const calcularMetabolismo = (
   const ajusteBiotipoKcal = ajusteBio.kcal;
   const ajusteBiotipoMotivo = ajusteBio.motivo;
 
-  // aplica ajuste no alvo final + faixa segura
+  // aplica ajuste no alvo final + recalcula faixa segura
   caloriasAlvo = caloriasAlvo + (ajusteBiotipoKcal || 0);
-  const faixaSegura = {
+  faixaSegura = {
     minimo: Math.round(caloriasAlvo * 0.9),
     ideal: Math.round(caloriasAlvo),
     maximo: Math.round(caloriasAlvo * 1.1),
   };
 
-  // Comparativo com todas as fórmulas (usando mesmo FAF final)
+  // Comparativo com todas as fórmulas
   const comparativo = {
     cunningham: Math.round(calcularCunningham(massaMagra) * faf),
     faoWho: Math.round(calcularFaoWho(peso, idade, sexo) * faf),
@@ -331,7 +325,7 @@ export const calcularMetabolismo = (
 
   return {
     equacaoUtilizada: equacaoEscolhida,
-    justificativa: gerarJustificativa(equacaoEscolhida, p as any),
+    justificativa: gerarJustificativa(equacaoEscolhida, perfil),
     tmb: Math.round(tmb),
     fafBase: Number(fafBase.toFixed(2)),
     fafMult: Number(fafMult.toFixed(2)),
