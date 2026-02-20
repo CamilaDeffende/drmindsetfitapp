@@ -259,6 +259,6 @@ SELECT
     schemaname
 FROM pg_tables
 WHERE schemaname = 'public'
-    AND tablename IN ('subscriptions', 'profiles', 'treinos', 'nutricoes', 'corridas');
+  AND tablename IN ('subscriptions', 'profiles', 'treinos', 'nutricoes', 'corridas');
 
 -- Se retornar 5 linhas, tudo foi criado com sucesso! ✅
