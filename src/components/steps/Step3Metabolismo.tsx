@@ -65,12 +65,42 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   };
   useOnboardingDraftSaver(__mf_step3_payload as any, 400);
 
-  // 🔥 NOVO: resultado vem sempre do state (sem useState travando)
-  const resultado = (
+  //  NOVO: resultado vem sempre do state (sem useState travando)
+    let resultado = (
     (state as any)?.metabolismo ??
     (state as any)?.resultadoMetabolico ??
     null
   ) as ResultadoMetabolico | null;
+
+  // Fallback: se ainda não temos resultado salvo no state, calculamos aqui mesmo
+  if (!resultado) {
+    try {
+      const perfilSafe = (state as any)?.perfil ?? {};
+      const avaliacaoSafe = (state as any)?.avaliacao ?? {};
+
+      // usa a mesma função que o useEffect usa
+      const calc: any = calcularMetabolismo(perfilSafe, avaliacaoSafe);
+
+      // reaproveita o motor de atividade que o Step4 também usa
+      const nivel = inferNivelTreinoFromState(state as any);
+      const fator = getActivityFactor(nivel);
+      const get = computeGET(Number(calc.tmb || calc.TMB || 0), fator);
+
+      calc.nivelAtividade = nivel;
+      calc.fatorAtividade = fator;
+      calc.get = get;
+
+      // se não existir calorias alvo, usa GET como base
+      if (!calc.caloriasAlvo && get) {
+        calc.caloriasAlvo = Math.round(get);
+      }
+
+      resultado = calc as ResultadoMetabolico;
+    } catch (err) {
+      console.error("[MF] Erro ao calcular metabolismo no Step3:", err);
+      resultado = null;
+    }
+  }
 
   // MF_MFQUEUECALC_STUB_V1
   // Stub seguro: existia chamada legada (debounce/recalc). Mantemos para não quebrar build.
