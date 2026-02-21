@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useGlobalProfileStore } from "../store";
 import { COUNTRIES, getCountry } from "../geo/countries";
 import { REGIONS_BR } from "../geo/regions_BR";
+import { REGIONS_US } from "../geo/regions_US";
 import { searchCitiesBR } from "../geo/search";
 import { resolveByCountry, resolveByCityBR } from "../geo/resolver";
 import { nowFormatted } from "../tz";
@@ -11,23 +12,38 @@ type Props = {
   showDeviceLocationHint?: boolean; // MVP: botão existe, mas só preenche sugestão simples (sem geocoding pago)
 };
 
-export function GlobalProfilePicker({ title = "Localização e preferências", showDeviceLocationHint = true }: Props) {
+export function GlobalProfilePicker({
+  title = "Localização e preferências",
+  showDeviceLocationHint = true,
+}: Props) {
   const { profile, setProfile } = useGlobalProfileStore();
-  const [countryCode, setCountryCode] = useState<string>(profile.countryCode || "BR");
-  const [regionCode, setRegionCode] = useState<string>(profile.regionCode || "");
+  const [countryCode, setCountryCode] = useState<string>(
+    profile.countryCode || "BR"
+  );
+  const [regionCode, setRegionCode] = useState<string>(
+    profile.regionCode || ""
+  );
   const [cityQuery, setCityQuery] = useState<string>(profile.city || "");
   const [citySelected, setCitySelected] = useState<string>(profile.city || "");
   const [openList, setOpenList] = useState(false);
 
-  const isBR = (countryCode || "").toUpperCase() === "BR";
+  const upperCountry = (countryCode || "").toUpperCase();
+  const isBR = upperCountry === "BR";
+  const isUS = upperCountry === "US";
+  const supportsRegionCity = isBR || isUS;
 
-  const countryDefaults = useMemo(() => resolveByCountry(countryCode), [countryCode]);
-  const tzFromCity = useMemo(() => (isBR ? resolveByCityBR(citySelected, regionCode).timeZone : countryDefaults.timeZone), [
-    isBR,
-    citySelected,
-    regionCode,
-    countryDefaults.timeZone,
-  ]);
+  const countryDefaults = useMemo(
+    () => resolveByCountry(countryCode),
+    [countryCode]
+  );
+
+  const tzFromCity = useMemo(
+    () =>
+      isBR
+        ? resolveByCityBR(citySelected, regionCode).timeZone
+        : countryDefaults.timeZone,
+    [isBR, citySelected, regionCode, countryDefaults.timeZone]
+  );
 
   const previewProfile = useMemo(() => {
     const c = getCountry(countryCode);
@@ -40,14 +56,21 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
   }, [countryCode, countryDefaults.locale, countryDefaults.units, tzFromCity]);
 
   const cityOptions = useMemo(() => {
+    // Sugestões automáticas só para BR por enquanto
     if (!isBR) return [];
     const q = cityQuery.trim();
     if (q.length < 2) return [];
     return searchCitiesBR(q, regionCode, 10);
   }, [cityQuery, regionCode, isBR]);
 
+  const regionOptions = useMemo(() => {
+    if (isBR) return REGIONS_BR;
+    if (isUS) return REGIONS_US;
+    return [];
+  }, [isBR, isUS]);
+
+  // Quando troca o país, mantém defaults coerentes
   useEffect(() => {
-    // sempre mantém defaults coerentes quando trocar país
     const next = resolveByCountry(countryCode);
     setProfile({
       countryCode,
@@ -56,21 +79,47 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
       timeZone: next.timeZone,
       updatedAt: Date.now(),
     });
-    // reset dependentes quando troca país
-    setRegionCode((prev) => (countryCode.toUpperCase() === "BR" ? prev : ""));
-    if (countryCode.toUpperCase() !== "BR") {
+
+    // reset de UF/cidade se for um país que não tem suporte a região/cidade
+    setRegionCode((prev) => (supportsRegionCity ? prev : ""));
+    if (!supportsRegionCity) {
       setCityQuery("");
       setCitySelected("");
       setOpenList(false);
     }
-  }, [countryCode]);
+  }, [countryCode, setProfile, supportsRegionCity]);
 
+  // Quando selecionar cidade/UF, atualiza timezone e profile
   useEffect(() => {
-    // quando selecionar cidade/UF, atualiza timezone (somente BR no MVP)
-    if (!isBR) return;
-    const tz = resolveByCityBR(citySelected, regionCode).timeZone;
-    if (tz) setProfile({ regionCode: regionCode || undefined, city: citySelected || undefined, timeZone: tz, updatedAt: Date.now() });
-  }, [citySelected, regionCode, isBR]);
+    if (!supportsRegionCity) return;
+    if (!citySelected && !regionCode) return;
+
+    if (isBR) {
+      const tz = resolveByCityBR(citySelected, regionCode).timeZone;
+      if (tz) {
+        setProfile({
+          regionCode: regionCode || undefined,
+          city: citySelected || undefined,
+          timeZone: tz,
+          updatedAt: Date.now(),
+        });
+      }
+      return;
+    }
+
+    if (isUS) {
+      // Para EUA, por enquanto usamos o timezone padrão do país
+      const next = resolveByCountry("US");
+      setProfile({
+        regionCode: regionCode || undefined,
+        city: citySelected || undefined,
+        timeZone: next.timeZone,
+        locale: next.locale,
+        units: next.units,
+        updatedAt: Date.now(),
+      });
+    }
+  }, [citySelected, regionCode, supportsRegionCity, isBR, isUS, setProfile]);
 
   function onPickCity(name: string) {
     setCitySelected(name);
@@ -79,17 +128,86 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
   }
 
   async function onUseDeviceSuggestion() {
-    // MVP zero-deps/sem API paga: tenta capturar permissão e sugere BR + mantém cidade como está (ou vazio).
-    // Em blocos futuros podemos fazer reverse geocoding opcional com provider.
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
-      () => {
-        // sugestão simples: assume BR e mantém seleção manual do usuário
-        setCountryCode("BR");
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+
+          // API pública, sem chave
+          const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`;
+          const resp = await fetch(url);
+          if (!resp.ok) {
+            console.warn("[GlobalProfilePicker] reverse geocode falhou");
+            return;
+          }
+          const data: any = await resp.json();
+
+          const cc = String(data.countryCode || "BR").toUpperCase();
+
+          // UF para BR (ex: "BR-RJ")
+          let uf = "";
+          const psCode = data.principalSubdivisionCode as string | undefined;
+          if (psCode && psCode.includes("-")) {
+            const parts = psCode.split("-");
+            uf = parts[parts.length - 1];
+          }
+
+          // Fallback BR: bater pelo nome do estado
+          if (!uf && cc === "BR" && data.principalSubdivision) {
+            const matchRegion = REGIONS_BR.find(
+              (r) =>
+                r.name.toLowerCase() ===
+                String(data.principalSubdivision).toLowerCase()
+            );
+            if (matchRegion) uf = matchRegion.code;
+          }
+
+          const cityFromApi =
+            data.city ||
+            data.locality ||
+            data.localityInfo?.locality?.[0]?.name ||
+            "";
+          const cityName = String(cityFromApi || "").trim();
+
+          setCountryCode(cc);
+          if (supportsRegionCity) {
+            setRegionCode(uf);
+            setCitySelected(cityName);
+            setCityQuery(cityName);
+          }
+          setOpenList(false);
+
+          const nextCountry = resolveByCountry(cc);
+          let timeZone = nextCountry.timeZone;
+
+          if (cc === "BR" && cityName && uf) {
+            const resCity = resolveByCityBR(cityName, uf);
+            if (resCity.timeZone) timeZone = resCity.timeZone;
+          }
+
+          setProfile({
+            countryCode: cc,
+            regionCode: supportsRegionCity ? (uf || undefined) : undefined,
+            city: supportsRegionCity ? (cityName || undefined) : undefined,
+            locale: nextCountry.locale,
+            units: nextCountry.units,
+            timeZone,
+            updatedAt: Date.now(),
+          });
+        } catch (e) {
+          console.error(
+            "[GlobalProfilePicker] erro ao usar localização do dispositivo:",
+            e
+          );
+        }
       },
-      () => {
-        // sem toast aqui (infra). UI do step pode avisar.
+      (err) => {
+        console.warn(
+          "[GlobalProfilePicker] geolocalização negada/falhou:",
+          err
+        );
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
@@ -105,6 +223,7 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
+        {/* País */}
         <div className="space-y-1">
           <label className="text-sm font-medium">País</label>
           <select
@@ -120,24 +239,27 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
           </select>
         </div>
 
+        {/* Estado/Região */}
         <div className="space-y-1">
           <label className="text-sm font-medium">Estado/Região</label>
           <select
             className="w-full rounded-xl border bg-background px-3 py-2 text-sm disabled:opacity-60"
             value={regionCode}
             onChange={(e) => setRegionCode(e.target.value)}
-            disabled={!isBR}
+            disabled={!supportsRegionCity}
           >
-            <option value="">{isBR ? "Selecione" : "Disponível em breve"}</option>
-            {isBR &&
-              REGIONS_BR.map((r) => (
-                <option key={r.code} value={r.code}>
-                  {r.name} ({r.code})
-                </option>
-              ))}
+            <option value="">
+              {supportsRegionCity ? "Selecione" : "Disponível em breve"}
+            </option>
+            {regionOptions.map((r) => (
+              <option key={r.code} value={r.code}>
+                {r.name} ({r.code})
+              </option>
+            ))}
           </select>
         </div>
 
+        {/* Cidade */}
         <div className="space-y-1 relative">
           <label className="text-sm font-medium">Cidade</label>
           <input
@@ -145,13 +267,21 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
             value={cityQuery}
             onChange={(e) => {
               setCityQuery(e.target.value);
-              setOpenList(true);
+              if (isBR) setOpenList(true);
+              setCitySelected(e.target.value);
             }}
-            onFocus={() => setOpenList(true)}
-            placeholder={isBR ? "Digite para buscar (ex: Rio...)" : "Disponível em breve"}
-            disabled={!isBR}
+            onFocus={() => isBR && setOpenList(true)}
+            placeholder={
+              isBR
+                ? "Digite para buscar (ex: São Paulo)"
+                : isUS
+                ? "Digite a cidade (ex: New York)"
+                : "Disponível em breve"
+            }
+            disabled={!supportsRegionCity}
           />
 
+          {/* Dropdown só para BR por enquanto */}
           {isBR && openList && cityOptions.length > 0 && (
             <div className="absolute z-20 mt-1 w-full rounded-xl border bg-background shadow-lg">
               {cityOptions.map((c) => (
@@ -163,18 +293,25 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
                   onClick={() => onPickCity(c.name)}
                 >
                   <span className="font-medium">{c.name}</span>
-                  <span className="text-xs text-muted-foreground">{c.regionCode}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {c.regionCode}
+                  </span>
                 </button>
               ))}
             </div>
           )}
 
-          {isBR && cityQuery.trim().length > 0 && cityOptions.length === 0 && (
-            <div className="mt-1 text-xs text-muted-foreground">Sem resultados (tente outra grafia).</div>
-          )}
+          {isBR &&
+            cityQuery.trim().length > 0 &&
+            cityOptions.length === 0 && (
+              <div className="mt-1 text-xs text-muted-foreground">
+                Sem resultados (tente outra grafia).
+              </div>
+            )}
         </div>
       </div>
 
+      {/* Pré-visualização */}
       <div className="rounded-2xl border bg-card p-4">
         <div className="text-sm font-semibold">Pré-visualização</div>
         <div className="mt-2 grid gap-2 md:grid-cols-2">
@@ -184,7 +321,11 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
           </div>
           <div className="text-sm">
             <span className="text-muted-foreground">Unidades: </span>
-            <span className="font-medium">{previewProfile.units === "metric" ? "Métrico (km)" : "Imperial (mi)"}</span>
+            <span className="font-medium">
+              {previewProfile.units === "metric"
+                ? "Métrico (km)"
+                : "Imperial (mi)"}
+            </span>
           </div>
           <div className="text-sm">
             <span className="text-muted-foreground">Timezone (IANA): </span>
@@ -192,7 +333,12 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
           </div>
           <div className="text-sm">
             <span className="text-muted-foreground">Hora local agora: </span>
-            <span className="font-medium">{nowFormatted({ locale: previewProfile.locale, timeZone: previewProfile.timeZone })}</span>
+            <span className="font-medium">
+              {nowFormatted({
+                locale: previewProfile.locale,
+                timeZone: previewProfile.timeZone,
+              })}
+            </span>
           </div>
         </div>
 
@@ -206,7 +352,8 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
               Usar localização do dispositivo (sugestão)
             </button>
             <div className="text-xs text-muted-foreground">
-              Você confirma manualmente — nada de coordenadas fica salvo.
+              A localização é usada só para preencher país/estado/cidade e fuso.
+              Nenhuma coordenada é enviada para o servidor do app.
             </div>
           </div>
         )}
