@@ -256,7 +256,7 @@ export function GlobalProfilePicker({
             }}
             onFocus={() => setOpenList(true)}
             placeholder={
-              isBR ? "Digite para buscar (ex: Petrópolis)" : "Disponível em breve"
+              isBR ? "Digite para buscar (ex: São Paulo)" : "Disponível em breve"
             }
             disabled={!isBR}
           />
