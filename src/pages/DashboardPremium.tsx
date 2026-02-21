@@ -93,12 +93,6 @@ const navigate = useNavigate()
         false;
       setNoPlan(!hasNow);
     }, 1500);
-
-  // ✅ BLOCO 2: EmptyState render-level (fora de hooks)
-  if (noPlan) {
-    return;
-  }
-
     return () => window.clearInterval(interval);
   }, []);
 
@@ -229,6 +223,46 @@ const navigate = useNavigate()
         </Card>
       </div>
     )
+  {/* MF_DASH_PREMIUM_NO_PLAN_EMPTYSTATE_V1 */}
+  // Empty state (render-level): usuário concluiu onboarding mas ainda não possui ActivePlan no storage.
+  if (noPlan) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <Card className="w-full max-w-xl mx-4 glass-effect neon-border">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-neon">Nenhum plano ativo encontrado</h2>
+                <p className="mt-2 text-sm text-gray-400">
+                  Finalize a criação do seu plano ou abra um plano ativo para desbloquear o Dashboard Premium.
+                </p>
+              </div>
+              <Target className="w-6 h-6 text-white/80" />
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button className="w-full glow-blue" onClick={() => navigate("/")}>
+                Criar / Recriar plano
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full border-white/10 bg-white/5 hover:bg-white/10"
+                onClick={() => navigate("/planos-ativos")}
+              >
+                Ver planos ativos
+              </Button>
+            </div>
+
+            <div className="mt-4 text-xs text-white/40">
+              Dica: este estado é detectado via storage (SSOT/legado) e não altera seus dados.
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+
   }
 
   return (
