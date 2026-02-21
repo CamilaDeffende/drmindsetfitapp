@@ -1,0 +1,81 @@
+BRANCH: fix/onboarding-ssot-blind-20260217_205402
+HEAD: b79edc5 — fix(onboarding): SSOT bridge + dual-save steps 5-7 + plan/report compat
+
+STATUS:
+## fix/onboarding-ssot-blind-20260217_205402...origin/fix/onboarding-ssot-blind-20260217_205402
+ M .gitignore
+?? .mf_status_report_20260221_190741.txt
+
+LAST TAGS:
+freeze-latest
+freeze-verify-green-fix-onboarding-ssot-blind-20260217_205402-20260217_211549
+freeze-verify-green-main-20260217_203734
+freeze-verify-green-main-20260217_203322
+freeze-verify-green-main-20260217_202611
+freeze-verify-green-main-20260217_201656
+freeze-verify-green-main-20260217_201427
+freeze-verify-green-main-20260217_195610
+freeze-app-stable-green-20260217_191704
+freeze-scripts-tagcheck-green-20260217_184108
+freeze-onboarding-contract-v2-plus-green-20260217_182458
+freeze-onboarding-contract-v2-green-20260217_181439
+freeze-onboarding-contract-green-20260217_180254
+freeze-router-warnings-zero-green-20260217_175714
+freeze-router-futureflags-green-20260217_175212
+
+SERVICES:
+total 32
+drwxr-xr-x  21 luizhenriquealexandrepereira  staff   672 15 Fev 11:36 .
+drwxr-xr-x@ 25 luizhenriquealexandrepereira  staff   800 17 Fev 17:56 ..
+-rw-r--r--   1 luizhenriquealexandrepereira  staff  2920 15 Fev 11:35 activePlan.bridge.ts
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 ai
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 audit
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 events
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:24 export
+drwxr-xr-x   7 luizhenriquealexandrepereira  staff   224 15 Fev 11:36 gamification
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 gps
+drwxr-xr-x   4 luizhenriquealexandrepereira  staff   128 15 Fev 11:36 history
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 ml
+drwxr-xr-x   8 luizhenriquealexandrepereira  staff   256 15 Fev 11:51 nutrition
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 offline
+drwxr-xr-x   4 luizhenriquealexandrepereira  staff   128 15 Fev 11:36 plan
+-rw-r--r--   1 luizhenriquealexandrepereira  staff  5562 17 Fev 20:54 plan.service.ts
+-rw-r--r--   1 luizhenriquealexandrepereira  staff  1895 27 Jan 11:45 profile.service.ts
+drwxr-xr-x   4 luizhenriquealexandrepereira  staff   128 17 Fev 20:54 ssot
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 subscription
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 supabase
+drwxr-xr-x   9 luizhenriquealexandrepereira  staff   288 15 Fev 11:35 training
+drwxr-xr-x   3 luizhenriquealexandrepereira  staff    96 15 Fev 11:36 wearables
+
+PAGES:
+src/pages/Assinatura.tsx
+src/pages/CardioPlan.tsx
+src/pages/CorridaPro.tsx
+src/pages/Dashboard.tsx
+src/pages/DashboardPremium.tsx
+src/pages/DevEngine.tsx
+src/pages/DiagnosticPage.tsx
+src/pages/Download.tsx
+src/pages/EditDiet.tsx
+src/pages/HiitPlan.tsx
+src/pages/HistoryReports.tsx
+src/pages/Login.tsx
+src/pages/NutritionPlan.tsx
+src/pages/OnboardingFlow.tsx
+src/pages/PlanosAtivos.tsx
+src/pages/Pricing.tsx
+src/pages/Profile.tsx
+src/pages/ProfileSafe.tsx
+src/pages/Report.tsx
+src/pages/Running.tsx
+src/pages/SignUp.tsx
+src/pages/StyleGuidePage.tsx
+src/pages/TreinoAtivo.tsx
+src/pages/ai-dashboard/AIDashboardPage.tsx
+src/pages/design-showcase/DesignShowcasePage.tsx
+src/pages/gamification/AchievementsPage.tsx
+src/pages/live/LiveWorkoutPage.tsx
+src/pages/offline/ConflictsPage.tsx
+src/pages/progress/ProgressPage.tsx
+src/pages/wearables/WearablesPage.tsx
+src/pages/workout-details/WorkoutDetailsPage.tsx

@@ -147,3 +147,6 @@ Drmindsetfitpro/
 
 # versioned automation scripts
 !scripts/
+
+# MF_IGNORE_BACKUPS_V2
+.backups/
