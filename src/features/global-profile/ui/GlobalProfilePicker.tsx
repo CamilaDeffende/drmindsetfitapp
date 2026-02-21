@@ -243,7 +243,11 @@ export function GlobalProfilePicker({
 
           <div className="text-sm">
             <span className="text-muted-foreground">Timezone (IANA): </span>
-            <span className="font-medium">{previewProfile.timeZone}</span>
+            <span className="font-medium">
+              {citySelected && regionCode
+                ? `${citySelected} (${regionCode}) — ${previewProfile.timeZone}`
+                : previewProfile.timeZone}
+            </span>
           </div>
 
           <div className="text-sm">
