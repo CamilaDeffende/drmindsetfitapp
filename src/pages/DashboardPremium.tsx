@@ -246,6 +246,87 @@ const navigate = useNavigate()
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        {/* MF_ADVANCED_HUB_V1 */}
+        <Card className="glass-effect neon-border overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-100">Fases Avançadas</h2>
+                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso — acesso rápido</p>
+              </div>
+              <Target className="w-6 h-6 text-white/80" />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <Button
+                variant="outline"
+                className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10"
+                onClick={() => navigate('/ai')}
+              >
+                <Activity className="w-4 h-4" />
+                IA
+              </Button>
+
+              <Button
+                variant="outline"
+                className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10"
+                onClick={() => navigate('/live-workout')}
+              >
+                <MapPin className="w-4 h-4" />
+                GPS Live
+              </Button>
+
+              <Button
+                variant="outline"
+                className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10"
+                onClick={() => navigate('/wearables')}
+              >
+                <Dumbbell className="w-4 h-4" />
+                Wearables
+              </Button>
+
+              <Button
+                variant="outline"
+                className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10"
+                onClick={() => navigate('/progress')}
+              >
+                <TrendingUp className="w-4 h-4" />
+                Progresso
+              </Button>
+
+              <Button
+                variant="outline"
+                className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10"
+                onClick={() => navigate('/achievements')}
+              >
+                <Zap className="w-4 h-4" />
+                Conquistas
+              </Button>
+
+              <Button
+                variant="outline"
+                className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10"
+                onClick={() => navigate('/conflicts')}
+              >
+                <Calendar className="w-4 h-4" />
+                Offline
+              </Button>
+
+              {import.meta.env.DEV ? (
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10 sm:col-span-3"
+                  onClick={() => navigate('/dev/engine')}
+                >
+                  <Target className="w-4 h-4" />
+                  Dev Engine
+                </Button>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Anel de Progresso Principal - Estilo Apple */}
         <Card className="glass-effect neon-border overflow-hidden">
           <CardContent className="p-6">
