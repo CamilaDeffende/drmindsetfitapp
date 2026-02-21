@@ -12,37 +12,39 @@ type Props = {
 };
 
 export function GlobalProfilePicker({
-  title = "Localização e preferências",
+  title = "Localização, fuso e unidades",
   showDeviceLocationHint = true,
 }: Props) {
   const { profile, setProfile } = useGlobalProfileStore();
+
   const [countryCode, setCountryCode] = useState<string>(
     profile.countryCode || "BR"
   );
+
   const [regionCode, setRegionCode] = useState<string>(
     profile.regionCode || ""
   );
+
   const [cityQuery, setCityQuery] = useState<string>(profile.city || "");
-  const [citySelected, setCitySelected] = useState<string>(
-    profile.city || ""
-  );
+  const [citySelected, setCitySelected] = useState<string>(profile.city || "");
   const [openList, setOpenList] = useState(false);
 
-  const isBR = (countryCode || "").toUpperCase() === "BR";
+  const isBR = countryCode.toUpperCase() === "BR";
 
+  // Defaults baseados no país
   const countryDefaults = useMemo(
     () => resolveByCountry(countryCode),
     [countryCode]
   );
 
-  const tzFromCity = useMemo(
-    () =>
-      isBR
-        ? resolveByCityBR(citySelected, regionCode).timeZone
-        : countryDefaults.timeZone,
-    [isBR, citySelected, regionCode, countryDefaults.timeZone]
-  );
+  // Timezone resolvido pela cidade/estado
+  const tzFromCity = useMemo(() => {
+    return isBR
+      ? resolveByCityBR(citySelected, regionCode).timeZone
+      : countryDefaults.timeZone;
+  }, [isBR, citySelected, regionCode, countryDefaults.timeZone]);
 
+  // Pré-visualização
   const previewProfile = useMemo(() => {
     const c = getCountry(countryCode);
     return {
@@ -51,15 +53,21 @@ export function GlobalProfilePicker({
       timeZone: tzFromCity,
       countryName: c?.name || countryCode,
     };
-  }, [countryCode, countryDefaults.locale, countryDefaults.units, tzFromCity]);
+  }, [
+    countryCode,
+    countryDefaults.locale,
+    countryDefaults.units,
+    tzFromCity,
+  ]);
 
+  // Lista de cidades
   const cityOptions = useMemo(() => {
     if (!isBR) return [];
-    const q = cityQuery.trim();
-    if (q.length < 2) return [];
-    return searchCitiesBR(q, regionCode, 10);
-  }, [cityQuery, regionCode, isBR]);
+    if (cityQuery.trim().length < 2) return [];
+    return searchCitiesBR(cityQuery.trim(), regionCode, 15);
+  }, [isBR, cityQuery, regionCode]);
 
+  // ==== Atualiza país ====
   useEffect(() => {
     const next = resolveByCountry(countryCode);
     setProfile({
@@ -70,28 +78,28 @@ export function GlobalProfilePicker({
       updatedAt: Date.now(),
     });
 
-    setRegionCode((prev) =>
-      countryCode.toUpperCase() === "BR" ? prev : ""
-    );
-    if (countryCode.toUpperCase() !== "BR") {
+    // Zera estado/cidade se não for BR
+    if (countryCode !== "BR") {
+      setRegionCode("");
       setCityQuery("");
       setCitySelected("");
       setOpenList(false);
     }
-  }, [countryCode, setProfile]);
+  }, [countryCode]);
 
+  // ==== Atualiza timezone quando muda a cidade ====
   useEffect(() => {
     if (!isBR) return;
+
     const tz = resolveByCityBR(citySelected, regionCode).timeZone;
-    if (tz) {
-      setProfile({
-        regionCode: regionCode || undefined,
-        city: citySelected || undefined,
-        timeZone: tz,
-        updatedAt: Date.now(),
-      });
-    }
-  }, [citySelected, regionCode, isBR, setProfile]);
+
+    setProfile({
+      regionCode: regionCode || undefined,
+      city: citySelected || undefined,
+      timeZone: tz,
+      updatedAt: Date.now(),
+    });
+  }, [citySelected, regionCode, isBR]);
 
   function onPickCity(name: string) {
     setCitySelected(name);
@@ -99,29 +107,83 @@ export function GlobalProfilePicker({
     setOpenList(false);
   }
 
+  // ============================================================================
+  // 🔥 AUTOLOCALIZAÇÃO — Reverse Geocoding via Nominatim (OpenStreetMap)
+  // ============================================================================
   async function onUseDeviceSuggestion() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
-      () => {
-        setCountryCode("BR");
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        try {
+          const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
+
+          const res = await fetch(url, {
+            headers: { "User-Agent": "drmindsetfit-app" },
+          });
+
+          const data = await res.json();
+          const addr = data.address || {};
+
+          const country = (addr.country_code || "").toUpperCase();
+          const stateName = addr.state || "";
+          const cityName =
+            addr.city || addr.town || addr.village || addr.suburb || "";
+
+          // BR: mapear nome do estado -> UF
+          let uf = "";
+          if (country === "BR") {
+            const match = REGIONS_BR.find((r) =>
+              stateName?.toLowerCase().includes(r.name.toLowerCase())
+            );
+            uf = match?.code || "";
+          }
+
+          // Atualiza selects
+          setCountryCode(country);
+          setRegionCode(uf);
+          setCityQuery(cityName);
+          setCitySelected(cityName);
+
+          // Atualiza store
+          setProfile({
+            countryCode: country,
+            regionCode: uf,
+            city: cityName,
+            timeZone: resolveByCityBR(cityName, uf).timeZone,
+            updatedAt: Date.now(),
+          });
+        } catch (err) {
+          console.error("Erro ao detectar localização:", err);
+        }
       },
-      () => {},
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+
+      () => {
+        console.warn("Geolocalização negada pelo usuário");
+      },
+
+      { enableHighAccuracy: true, timeout: 8000 }
     );
   }
+
+  // ============================================================================
+  // UI
+  // ============================================================================
 
   return (
     <div className="w-full space-y-4">
       <div className="space-y-1">
         <div className="text-base font-semibold">{title}</div>
         <div className="text-sm text-muted-foreground">
-          Personalize idioma, unidades e horário local. Você pode mudar
-          depois.
+          Personalize idioma, unidades e horário local.
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
+        {/* ============================= País ============================= */}
         <div className="space-y-1">
           <label className="text-sm font-medium">País</label>
           <select
@@ -137,17 +199,16 @@ export function GlobalProfilePicker({
           </select>
         </div>
 
+        {/* ============================= Estado ============================= */}
         <div className="space-y-1">
-          <label className="text-sm font-medium">Estado/Região</label>
+          <label className="text-sm font-medium">Estado</label>
           <select
-            className="w-full rounded-xl border bg-background px-3 py-2 text-sm disabled:opacity-60"
+            className="w-full rounded-xl border bg-background px-3 py-2 text-sm"
             value={regionCode}
             onChange={(e) => setRegionCode(e.target.value)}
             disabled={!isBR}
           >
-            <option value="">
-              {isBR ? "Selecione" : "Disponível em breve"}
-            </option>
+            <option value="">{isBR ? "Selecione" : "-"}</option>
             {isBR &&
               REGIONS_BR.map((r) => (
                 <option key={r.code} value={r.code}>
@@ -157,39 +218,36 @@ export function GlobalProfilePicker({
           </select>
         </div>
 
+        {/* ============================= Cidade ============================= */}
         <div className="space-y-1 relative">
           <label className="text-sm font-medium">Cidade</label>
+
           <input
-            className="w-full rounded-xl border bg-background px-3 py-2 text-sm disabled:opacity-60"
+            className="w-full rounded-xl border bg-background px-3 py-2 text-sm"
             value={cityQuery}
+            placeholder={
+              isBR ? "Digite para buscar…" : "Disponível apenas no Brasil"
+            }
             onChange={(e) => {
-              const value = e.target.value;
-              setCityQuery(value);
-              setCitySelected(value); // aceita cidade digitada
+              setCityQuery(e.target.value);
               setOpenList(true);
             }}
-            onFocus={() => {
-              if (isBR && cityQuery.trim().length >= 2) {
-                setOpenList(true);
-              }
-            }}
-            placeholder={
-              isBR ? "Digite para buscar (ex: Rio...)" : "Disponível em breve"
-            }
+            onFocus={() => setOpenList(true)}
             disabled={!isBR}
           />
 
+          {/* Lista de sugestões */}
           {isBR && openList && cityOptions.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full rounded-xl border bg-background shadow-lg">
+            <div className="absolute z-20 mt-1 w-full rounded-xl border bg-background shadow-lg max-h-64 overflow-auto">
               {cityOptions.map((c) => (
                 <button
+                  key={c.name}
                   type="button"
-                  key={`${c.name}-${c.regionCode}`}
-                  className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
+                  className="flex w-full justify-between px-3 py-2 text-sm hover:bg-muted"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => onPickCity(c.name)}
                 >
-                  <span className="font-medium">{c.name}</span>
+                  <span>{c.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {c.regionCode}
                   </span>
@@ -198,67 +256,57 @@ export function GlobalProfilePicker({
             </div>
           )}
 
-          {isBR &&
-            cityQuery.trim().length > 0 &&
-            cityOptions.length === 0 && (
-              <div className="mt-1 text-xs text-muted-foreground">
-                Cidade personalizada. Usaremos o fuso horário padrão do
-                estado selecionado.
-              </div>
-            )}
+          {isBR && cityQuery.length > 0 && cityOptions.length === 0 && (
+            <div className="text-xs text-muted-foreground mt-1">
+              Nenhuma cidade encontrada.
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-card p-4">
+      {/* ============================= Preview ============================= */}
+      <div className="rounded-2xl border p-4 bg-card">
         <div className="text-sm font-semibold">Pré-visualização</div>
+
         <div className="mt-2 grid gap-2 md:grid-cols-2">
           <div className="text-sm">
-            <span className="text-muted-foreground">Idioma/Locale: </span>
-            <span className="font-medium">{previewProfile.locale}</span>
+            <strong>Idioma:</strong> {previewProfile.locale}
           </div>
           <div className="text-sm">
-            <span className="text-muted-foreground">Unidades: </span>
-            <span className="font-medium">
-              {previewProfile.units === "metric"
-                ? "Métrico (km)"
-                : "Imperial (mi)"}
-            </span>
+            <strong>Unidades:</strong>{" "}
+            {previewProfile.units === "metric" ? "Métrico" : "Imperial"}
           </div>
           <div className="text-sm">
-            <span className="text-muted-foreground">Timezone (IANA): </span>
-            <span className="font-medium">{previewProfile.timeZone}</span>
+            <strong>Timezone:</strong> {previewProfile.timeZone}
           </div>
           <div className="text-sm">
-            <span className="text-muted-foreground">
-              Hora local agora:{" "}
-            </span>
-            <span className="font-medium">
-              {nowFormatted({
-                locale: previewProfile.locale,
-                timeZone: previewProfile.timeZone,
-              })}
-            </span>
+            <strong>Hora local:</strong>{" "}
+            {nowFormatted({
+              locale: previewProfile.locale,
+              timeZone: previewProfile.timeZone,
+            })}
           </div>
         </div>
 
         {showDeviceLocationHint && (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-3 flex gap-2">
             <button
               type="button"
-              className="rounded-xl border px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+              className="rounded-xl border px-3 py-2 text-sm hover:bg-muted"
               onClick={onUseDeviceSuggestion}
             >
-              Usar localização do dispositivo (sugestão)
+              Usar localização do dispositivo
             </button>
-            <div className="text-xs text-muted-foreground">
-              Você confirma manualmente — nada de coordenadas fica salvo.
-            </div>
+
+            <span className="text-xs text-muted-foreground">
+              Nada de coordenadas fica salvo.
+            </span>
           </div>
         )}
       </div>
 
       <div className="text-xs text-muted-foreground">
-        Privacidade: salvamos apenas país/estado/cidade/timezone/locale/unidades.
+        Privacidade: salvamos apenas país, estado, cidade, timezone e unidades.
       </div>
     </div>
   );
