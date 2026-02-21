@@ -8,26 +8,40 @@ import { nowFormatted } from "../tz";
 
 type Props = {
   title?: string;
-  showDeviceLocationHint?: boolean; // MVP: botão existe, mas só preenche sugestão simples (sem geocoding pago)
+  showDeviceLocationHint?: boolean;
 };
 
-export function GlobalProfilePicker({ title = "Localização e preferências", showDeviceLocationHint = true }: Props) {
+export function GlobalProfilePicker({
+  title = "Localização e preferências",
+  showDeviceLocationHint = true,
+}: Props) {
   const { profile, setProfile } = useGlobalProfileStore();
-  const [countryCode, setCountryCode] = useState<string>(profile.countryCode || "BR");
-  const [regionCode, setRegionCode] = useState<string>(profile.regionCode || "");
+  const [countryCode, setCountryCode] = useState<string>(
+    profile.countryCode || "BR"
+  );
+  const [regionCode, setRegionCode] = useState<string>(
+    profile.regionCode || ""
+  );
   const [cityQuery, setCityQuery] = useState<string>(profile.city || "");
-  const [citySelected, setCitySelected] = useState<string>(profile.city || "");
+  const [citySelected, setCitySelected] = useState<string>(
+    profile.city || ""
+  );
   const [openList, setOpenList] = useState(false);
 
   const isBR = (countryCode || "").toUpperCase() === "BR";
 
-  const countryDefaults = useMemo(() => resolveByCountry(countryCode), [countryCode]);
-  const tzFromCity = useMemo(() => (isBR ? resolveByCityBR(citySelected, regionCode).timeZone : countryDefaults.timeZone), [
-    isBR,
-    citySelected,
-    regionCode,
-    countryDefaults.timeZone,
-  ]);
+  const countryDefaults = useMemo(
+    () => resolveByCountry(countryCode),
+    [countryCode]
+  );
+
+  const tzFromCity = useMemo(
+    () =>
+      isBR
+        ? resolveByCityBR(citySelected, regionCode).timeZone
+        : countryDefaults.timeZone,
+    [isBR, citySelected, regionCode, countryDefaults.timeZone]
+  );
 
   const previewProfile = useMemo(() => {
     const c = getCountry(countryCode);
@@ -47,7 +61,6 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
   }, [cityQuery, regionCode, isBR]);
 
   useEffect(() => {
-    // sempre mantém defaults coerentes quando trocar país
     const next = resolveByCountry(countryCode);
     setProfile({
       countryCode,
@@ -56,21 +69,29 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
       timeZone: next.timeZone,
       updatedAt: Date.now(),
     });
-    // reset dependentes quando troca país
-    setRegionCode((prev) => (countryCode.toUpperCase() === "BR" ? prev : ""));
+
+    setRegionCode((prev) =>
+      countryCode.toUpperCase() === "BR" ? prev : ""
+    );
     if (countryCode.toUpperCase() !== "BR") {
       setCityQuery("");
       setCitySelected("");
       setOpenList(false);
     }
-  }, [countryCode]);
+  }, [countryCode, setProfile]);
 
   useEffect(() => {
-    // quando selecionar cidade/UF, atualiza timezone (somente BR no MVP)
     if (!isBR) return;
     const tz = resolveByCityBR(citySelected, regionCode).timeZone;
-    if (tz) setProfile({ regionCode: regionCode || undefined, city: citySelected || undefined, timeZone: tz, updatedAt: Date.now() });
-  }, [citySelected, regionCode, isBR]);
+    if (tz) {
+      setProfile({
+        regionCode: regionCode || undefined,
+        city: citySelected || undefined,
+        timeZone: tz,
+        updatedAt: Date.now(),
+      });
+    }
+  }, [citySelected, regionCode, isBR, setProfile]);
 
   function onPickCity(name: string) {
     setCitySelected(name);
@@ -79,18 +100,13 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
   }
 
   async function onUseDeviceSuggestion() {
-    // MVP zero-deps/sem API paga: tenta capturar permissão e sugere BR + mantém cidade como está (ou vazio).
-    // Em blocos futuros podemos fazer reverse geocoding opcional com provider.
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
       () => {
-        // sugestão simples: assume BR e mantém seleção manual do usuário
         setCountryCode("BR");
       },
-      () => {
-        // sem toast aqui (infra). UI do step pode avisar.
-      },
+      () => {},
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
   }
@@ -100,7 +116,8 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
       <div className="space-y-1">
         <div className="text-base font-semibold">{title}</div>
         <div className="text-sm text-muted-foreground">
-          Personalize idioma, unidades e horário local. Você pode mudar depois.
+          Personalize idioma, unidades e horário local. Você pode mudar
+          depois.
         </div>
       </div>
 
@@ -128,7 +145,9 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
             onChange={(e) => setRegionCode(e.target.value)}
             disabled={!isBR}
           >
-            <option value="">{isBR ? "Selecione" : "Disponível em breve"}</option>
+            <option value="">
+              {isBR ? "Selecione" : "Disponível em breve"}
+            </option>
             {isBR &&
               REGIONS_BR.map((r) => (
                 <option key={r.code} value={r.code}>
@@ -144,11 +163,19 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
             className="w-full rounded-xl border bg-background px-3 py-2 text-sm disabled:opacity-60"
             value={cityQuery}
             onChange={(e) => {
-              setCityQuery(e.target.value);
+              const value = e.target.value;
+              setCityQuery(value);
+              setCitySelected(value); // aceita cidade digitada
               setOpenList(true);
             }}
-            onFocus={() => setOpenList(true)}
-            placeholder={isBR ? "Digite para buscar (ex: Rio...)" : "Disponível em breve"}
+            onFocus={() => {
+              if (isBR && cityQuery.trim().length >= 2) {
+                setOpenList(true);
+              }
+            }}
+            placeholder={
+              isBR ? "Digite para buscar (ex: Rio...)" : "Disponível em breve"
+            }
             disabled={!isBR}
           />
 
@@ -163,15 +190,22 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
                   onClick={() => onPickCity(c.name)}
                 >
                   <span className="font-medium">{c.name}</span>
-                  <span className="text-xs text-muted-foreground">{c.regionCode}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {c.regionCode}
+                  </span>
                 </button>
               ))}
             </div>
           )}
 
-          {isBR && cityQuery.trim().length > 0 && cityOptions.length === 0 && (
-            <div className="mt-1 text-xs text-muted-foreground">Sem resultados (tente outra grafia).</div>
-          )}
+          {isBR &&
+            cityQuery.trim().length > 0 &&
+            cityOptions.length === 0 && (
+              <div className="mt-1 text-xs text-muted-foreground">
+                Cidade personalizada. Usaremos o fuso horário padrão do
+                estado selecionado.
+              </div>
+            )}
         </div>
       </div>
 
@@ -184,15 +218,26 @@ export function GlobalProfilePicker({ title = "Localização e preferências", s
           </div>
           <div className="text-sm">
             <span className="text-muted-foreground">Unidades: </span>
-            <span className="font-medium">{previewProfile.units === "metric" ? "Métrico (km)" : "Imperial (mi)"}</span>
+            <span className="font-medium">
+              {previewProfile.units === "metric"
+                ? "Métrico (km)"
+                : "Imperial (mi)"}
+            </span>
           </div>
           <div className="text-sm">
             <span className="text-muted-foreground">Timezone (IANA): </span>
             <span className="font-medium">{previewProfile.timeZone}</span>
           </div>
           <div className="text-sm">
-            <span className="text-muted-foreground">Hora local agora: </span>
-            <span className="font-medium">{nowFormatted({ locale: previewProfile.locale, timeZone: previewProfile.timeZone })}</span>
+            <span className="text-muted-foreground">
+              Hora local agora:{" "}
+            </span>
+            <span className="font-medium">
+              {nowFormatted({
+                locale: previewProfile.locale,
+                timeZone: previewProfile.timeZone,
+              })}
+            </span>
           </div>
         </div>
 

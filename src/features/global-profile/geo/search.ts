@@ -1,5 +1,8 @@
-import type { BRCity } from "./cities_BR_major"; // reaproveita o tipo
-import { CITIES_BR_ALL } from "./cities_BR_all";
+import { CITIES_BR_MAJOR, type BRCity } from "./cities_BR_major";
+import {
+  getCitiesByUF,
+  isCitiesBRLoaded,
+} from "./cities_BR_all";
 
 type CityHit = BRCity & { score: number };
 
@@ -12,44 +15,51 @@ function norm(s: string): string {
 }
 
 /**
- * Busca cidades brasileiras, filtrando por UF (regionCode).
- *
- * - Se tiver UF e NÃO tiver texto de busca → devolve todas as cidades da UF (limitadas).
- * - Se tiver UF e texto → busca só dentro da UF.
- * - Se NÃO tiver UF, mas tiver texto → busca no Brasil todo (fallback).
+ * Retorna a lista base de cidades para a busca:
+ * - se IBGE já carregou, usa TODAS as cidades da UF
+ * - se ainda não, usa fallback com as capitais/principais cidades
  */
+function getSourceCities(regionCode?: string): BRCity[] {
+  const uf = (regionCode || "").toUpperCase().trim();
+
+  // 1) tenta IBGE
+  if (uf && isCitiesBRLoaded()) {
+    const all = getCitiesByUF(uf);
+    if (all && all.length > 0) {
+      return [...all];
+    }
+  }
+
+  // 2) fallback: cidades principais
+  return CITIES_BR_MAJOR.filter((c) =>
+    uf ? c.regionCode === uf : true
+  );
+}
+
 export function searchCitiesBR(
   query: string,
   regionCode?: string,
-  limit = 200
+  limit = 10
 ): BRCity[] {
+  const q = norm(query || "");
   const uf = (regionCode || "").toUpperCase().trim();
 
-  // base de cidades:
-  let base: BRCity[] = [];
+  const base = getSourceCities(uf);
+  if (base.length === 0) return [];
 
-  if (uf) {
-    // cidades da UF selecionada
-    base = (CITIES_BR_ALL[uf] || []) as BRCity[];
-  } else {
-    // sem UF → fallback: todas as cidades (pode ser pesado, mas é só fallback)
-    base = Object.values(CITIES_BR_ALL).flat() as BRCity[];
-  }
-
-  const q = norm(query || "");
-
-  // Sem texto digitado:
-  // - Se tiver UF → lista ordenada da UF
-  // - Se não tiver UF → nada (espera usuário digitar algo)
+  // Se não digitou nada, devolve as primeiras cidades ordenadas
   if (!q) {
-    if (!uf) return [];
-    const sorted = [...base].sort((a, b) =>
-      a.name.localeCompare(b.name, "pt-BR")
-    );
-    return sorted.slice(0, limit);
+    return base
+      .slice()
+      .sort((a, b) => {
+        const wa = a.weight ?? 0;
+        const wb = b.weight ?? 0;
+        if (wa !== wb) return wb - wa;
+        return a.name.localeCompare(b.name, "pt-BR");
+      })
+      .slice(0, limit);
   }
 
-  // Com texto digitado → ranqueia por melhor match no nome
   const hits: CityHit[] = [];
   for (const c of base) {
     const name = norm(c.name);
@@ -61,11 +71,13 @@ export function searchCitiesBR(
     hits.push({ ...c, score });
   }
 
+  if (!hits.length) return [];
+
   hits.sort((a, b) => b.score - a.score);
   return hits.slice(0, limit);
 }
 
-// debounce zero-deps, pra evitar flood de busca enquanto digita
+// debounce zero-deps
 export function debounce<T extends (...args: any[]) => void>(
   fn: T,
   waitMs: number

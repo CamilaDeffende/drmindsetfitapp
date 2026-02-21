@@ -2,12 +2,7 @@
 // Carregamento completo de TODAS as cidades brasileiras usando IBGE
 // https://servicodados.ibge.gov.br/api/v1/localidades/municipios
 
-export type BRCity = {
-  name: string;
-  regionCode: string;  // UF
-  timeZone: string;
-  weight?: number;
-};
+import type { BRCity } from "./cities_BR_major";
 
 export type CitiesBRAll = Record<string, readonly BRCity[]>;
 
@@ -53,27 +48,31 @@ function transformIBGECities(raw: any[]): CitiesBRAll {
   const map: CitiesBRAll = {};
 
   for (const c of raw) {
-    const nome = c.nome;
-    const uf = c.microrregiao.mesorregiao.UF.sigla.toUpperCase();
+    const nome = c.nome as string;
+    const uf = String(
+      c?.microrregiao?.mesorregiao?.UF?.sigla || ""
+    ).toUpperCase();
+
+    if (!uf) continue;
 
     if (!map[uf]) map[uf] = [];
 
-    map[uf] = [
-      ...map[uf],
-      {
-        name: nome,
-        regionCode: uf,
-        timeZone: "America/Sao_Paulo", // default leve
-        weight: 1,
-      }
-    ];
+    const arr = map[uf] as BRCity[];
+
+    arr.push({
+      name: nome,
+      regionCode: uf,
+      // MVP: fuso padrão; depois podemos refinar por estado
+      timeZone: "America/Sao_Paulo",
+      weight: 1,
+    });
   }
 
   // Ordena alfabeticamente por UF
   for (const uf of Object.keys(map)) {
-    map[uf] = map[uf].sort((a, b) =>
-      a.name.localeCompare(b.name, "pt-BR")
-    );
+    map[uf] = map[uf]
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   }
 
   return map;
@@ -83,11 +82,13 @@ function transformIBGECities(raw: any[]): CitiesBRAll {
  * Carrega todas as cidades do Brasil (API IBGE)
  */
 export async function loadAllCitiesBR(): Promise<CitiesBRAll> {
-  if (_loaded) return _CITIES_BR_ALL;
+  if (_loaded && Object.keys(_CITIES_BR_ALL).length > 0) {
+    return _CITIES_BR_ALL;
+  }
 
   // 1) tenta pegar do cache
   const cached = loadFromCache();
-  if (cached) {
+  if (cached && Object.keys(cached).length > 0) {
     _CITIES_BR_ALL = cached;
     _loaded = true;
     return cached;
@@ -109,6 +110,7 @@ export async function loadAllCitiesBR(): Promise<CitiesBRAll> {
     return mapped;
   } catch (e) {
     console.error("[IBGE] Erro ao carregar cidades:", e);
+    _loaded = true; // marca como carregado para evitar loop infinito
     return {};
   }
 }
@@ -125,10 +127,18 @@ export function getCitiesByUF(uf: string): readonly BRCity[] {
  * Saber se o carregamento já ocorreu
  */
 export function isCitiesBRLoaded() {
-  return _loaded;
+  return _loaded && Object.keys(_CITIES_BR_ALL).length > 0;
 }
 
 /**
- * Export default (compat)
+ * Export de leitura (não mutável)
  */
 export const CITIES_BR_ALL = _CITIES_BR_ALL;
+
+// Dispara o carregamento em background assim que o arquivo for importado.
+if (typeof window !== "undefined") {
+  // não precisa aguardar; só dispara
+  loadAllCitiesBR().catch((e) =>
+    console.error("[IBGE] background load failed", e)
+  );
+}
