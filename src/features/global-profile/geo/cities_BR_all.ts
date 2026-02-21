@@ -1,113 +1,134 @@
-export type IBGEUf = {
-  id: number;
-  sigla: string;
-  nome: string;
-};
-
-export type IBGECity = {
-  id: number;
-  nome: string;
-};
+// cities_BR_all.ts
+// Carregamento completo de TODAS as cidades brasileiras usando IBGE
+// https://servicodados.ibge.gov.br/api/v1/localidades/municipios
 
 export type BRCity = {
   name: string;
-  regionCode: string; // UF
-  timeZone: string;   // IANA
+  regionCode: string;  // UF
+  timeZone: string;
   weight?: number;
 };
 
-// Cache interno por UF
-const CITY_CACHE: Record<string, BRCity[]> = {};
+export type CitiesBRAll = Record<string, readonly BRCity[]>;
 
-// Mapeamento real dos fusos brasileiros
-function inferTimeZoneFromUF(uf: string): string {
-  switch (uf.toUpperCase()) {
-    case "AC":
-      return "America/Rio_Branco";
-    case "AM":
-    case "RR":
-      return "America/Manaus";
-    case "RO":
-      return "America/Porto_Velho";
-    case "MT":
-      return "America/Cuiaba";
-    case "MS":
-      return "America/Campo_Grande";
-    case "PA":
-    case "AP":
-      return "America/Belem";
-    case "BA":
-      return "America/Bahia";
-    case "AL":
-    case "SE":
-    case "PE":
-    case "PB":
-    case "RN":
-      return "America/Fortaleza";
-    case "TO":
-      return "America/Araguaina";
-    default:
-      return "America/Sao_Paulo";
+const STORAGE_KEY = "drmindsetfit.cities_br_all.v1";
+
+let _CITIES_BR_ALL: CitiesBRAll = {};
+let _loaded = false;
+
+/**
+ * Tenta carregar do localStorage
+ */
+function loadFromCache(): CitiesBRAll | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "object" && parsed !== null) {
+      return parsed as CitiesBRAll;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/**
+ * Salva no localStorage
+ */
+function saveToCache(data: CitiesBRAll) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+/**
+ * Converte payload do IBGE → CitiesBRAll
+ */
+function transformIBGECities(raw: any[]): CitiesBRAll {
+  const map: CitiesBRAll = {};
+
+  for (const c of raw) {
+    const nome = c.nome;
+    const uf = c.microrregiao.mesorregiao.UF.sigla.toUpperCase();
+
+    if (!map[uf]) map[uf] = [];
+
+    map[uf] = [
+      ...map[uf],
+      {
+        name: nome,
+        regionCode: uf,
+        timeZone: "America/Sao_Paulo", // default leve
+        weight: 1,
+      }
+    ];
+  }
+
+  // Ordena alfabeticamente por UF
+  for (const uf of Object.keys(map)) {
+    map[uf] = map[uf].sort((a, b) =>
+      a.name.localeCompare(b.name, "pt-BR")
+    );
+  }
+
+  return map;
+}
+
+/**
+ * Carrega todas as cidades do Brasil (API IBGE)
+ */
+export async function loadAllCitiesBR(): Promise<CitiesBRAll> {
+  if (_loaded) return _CITIES_BR_ALL;
+
+  // 1) tenta pegar do cache
+  const cached = loadFromCache();
+  if (cached) {
+    _CITIES_BR_ALL = cached;
+    _loaded = true;
+    return cached;
+  }
+
+  // 2) buscar do IBGE
+  try {
+    const resp = await fetch(
+      "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+    );
+    const json = await resp.json();
+
+    const mapped = transformIBGECities(json);
+
+    _CITIES_BR_ALL = mapped;
+    _loaded = true;
+    saveToCache(mapped);
+
+    return mapped;
+  } catch (e) {
+    console.error("[IBGE] Erro ao carregar cidades:", e);
+    return {};
   }
 }
 
 /**
- * Busca TODAS as cidades de uma UF via API oficial do IBGE.
- * Exemplo:
- * https://servicodados.ibge.gov.br/api/v1/localidades/estados/RJ/municipios
+ * Obtém cidades de uma UF específica
  */
-export async function fetchCitiesByUF(uf: string): Promise<BRCity[]> {
-  const code = uf.toUpperCase().trim();
-  if (!code) return [];
-
-  // 1 — Cache
-  if (CITY_CACHE[code]) {
-    return CITY_CACHE[code];
-  }
-
-  const url = `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${code}/municipios`;
-
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.error("[IBGE] Erro ao buscar cidades:", res.status, res.statusText);
-      return [];
-    }
-
-    const data: IBGECity[] = await res.json();
-    const tz = inferTimeZoneFromUF(code);
-
-    const cities: BRCity[] = data.map((c, index) => ({
-      name: c.nome,
-      regionCode: code,
-      timeZone: tz,
-      weight: 10000 - index, // ajuda no ranking
-    }));
-
-    // Boost para capitais + grandes centros
-    const capitalsBoost = [
-      "São Paulo",
-      "Rio de Janeiro",
-      "Belo Horizonte",
-      "Brasília",
-      "Curitiba",
-      "Salvador",
-      "Porto Alegre",
-      "Recife",
-      "Fortaleza",
-      "Manaus",
-    ];
-
-    for (const city of cities) {
-      if (capitalsBoost.includes(city.name)) {
-        city.weight = (city.weight || 0) + 20000;
-      }
-    }
-
-    CITY_CACHE[code] = cities;
-    return cities;
-  } catch (err) {
-    console.error("[IBGE] Falha de rede:", err);
-    return [];
-  }
+export function getCitiesByUF(uf: string): readonly BRCity[] {
+  const key = (uf || "").toUpperCase();
+  return _CITIES_BR_ALL[key] || [];
 }
+
+/**
+ * Saber se o carregamento já ocorreu
+ */
+export function isCitiesBRLoaded() {
+  return _loaded;
+}
+
+/**
+ * Export default (compat)
+ */
+export const CITIES_BR_ALL = _CITIES_BR_ALL;
