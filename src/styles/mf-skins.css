@@ -1,51 +1,31 @@
 /* =============================================================================
-   MF_NEON_SKINS_V2 — skins por rota (pixel-level)
-   Como funciona:
-     <html data-mf-route="dashboard"> ... </html>
-   Você ajusta aqui até ficar 1:1 com as imagens.
+   MF_NEON_SKINS_V2 — ajuste fino por tela (pixel-level)
+   Seletores:
+     html[data-mf-route="dashboard"]
+     html[data-mf-route="metabolismo"]
+     html[data-mf-route="plano"]
+     html[data-mf-route="treinos"]
 ============================================================================= */
 
-/* base de “polimento” geral (seguro, não quebra layout) */
 :root{
   --mf-space-1: 8px;
   --mf-space-2: 12px;
   --mf-space-3: 16px;
   --mf-space-4: 20px;
   --mf-space-5: 24px;
-  --mf-space-6: 28px;
 }
-
-/* micro-ajustes globais */
-.mf-card { transform: translateZ(0); }
-.mf-btn { letter-spacing: 0.02em; }
-
-/* ============================================================================
-   SKINS (exemplos) — ajuste fino 1:1 por tela
-   DICA: use DevTools → copie medidas e replique aqui.
-============================================================================ */
 
 /* Dashboard */
 html[data-mf-route="dashboard"] .mf-card{
-  /* exemplo: intensificar glow do dashboard */
-  box-shadow: var(--mf-shadow), 0 0 18px rgba(0,240,255,.10), 0 0 24px rgba(123,92,255,.10);
+  /* ajuste fino exemplo (depois alinhamos com suas imagens) */
+  box-shadow: var(--mf-shadow), 0 0 18px rgba(0,240,255,.10), 0 0 26px rgba(123,92,255,.10);
 }
 
 /* Metabolismo */
-html[data-mf-route="metabolismo"] .mf-card::before{
-  opacity: .62;
-}
+html[data-mf-route="metabolismo"] .mf-card::before{ opacity: .62; }
 
 /* Plano */
-html[data-mf-route="plano"] .mf-sep{
-  opacity: .85;
-}
+html[data-mf-route="plano"] .mf-muted{ opacity: .90; }
 
 /* Treinos */
-html[data-mf-route="treinos"] .mf-grid{
-  opacity: .40;
-}
-
-/* Onboarding (se existir rota /onboarding/step-*) */
-html[data-mf-route^="onboarding"] .mf-card{
-  border: 1px solid rgba(255,255,255,.10);
-}
+html[data-mf-route="treinos"] .mf-grid{ opacity: .40; }
