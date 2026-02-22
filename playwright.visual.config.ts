@@ -7,9 +7,17 @@ export default defineConfig({
   // ✅ snapshots cross-platform (não usa -darwin/-linux/-win32)
   snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{-projectName}{-platform}{ext}",
 
+  
   use: {
+    // MF_VISUAL_HARDEN_V1
     baseURL: "http://localhost:8080",
+    viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 1,
+    reducedMotion: "reduce",
+    locale: "pt-BR",
+    timezoneId: "America/Sao_Paulo",
   },
+
 
   webServer: {
     command: "npm run dev -- --strictPort --port 8080",
