@@ -1,16 +1,19 @@
 // src/features/global-profile/geo/search.ts
 
 import { CITIES_BR_MAJOR, type BRCity } from "./cities_BR_major";
-import { getCitiesByUF, isCitiesBRLoaded } from "./cities_BR_all";
 import {
+  getCitiesByUF,
+  isCitiesBRLoaded,
+} from "./cities_BR_all";
+import {
+  ensureCitiesUSLoaded,
   getCitiesByUSState,
   isCitiesUSLoaded,
   type USCity,
 } from "./cities_US_all";
 
-type CityHit<T extends { name: string; regionCode: string; timeZone: string }> = T & {
-  score: number;
-};
+type CityHit<T extends { name: string; regionCode?: string; stateCode?: string; timeZone: string }> =
+  T & { score: number };
 
 function norm(s: string): string {
   return s
@@ -35,7 +38,7 @@ function getSourceCitiesBR(regionCode?: string): BRCity[] {
     }
   }
 
-  // 2) fallback: principais cidades
+  // 2) fallback: cidades principais
   return CITIES_BR_MAJOR.filter((c) => (uf ? c.regionCode === uf : true));
 }
 
@@ -50,7 +53,7 @@ export function searchCitiesBR(
   const base = getSourceCitiesBR(uf);
   if (base.length === 0) return [];
 
-  // se não digitou nada, devolve as primeiras ordenadas
+  // Se não digitou nada, devolve as primeiras cidades ordenadas
   if (!q) {
     return base
       .slice()
@@ -75,6 +78,7 @@ export function searchCitiesBR(
   }
 
   if (!hits.length) return [];
+
   hits.sort((a, b) => b.score - a.score);
   return hits.slice(0, limit);
 }
@@ -85,12 +89,17 @@ export function searchCitiesBR(
 
 function getSourceCitiesUS(regionCode?: string): USCity[] {
   const uf = (regionCode || "").toUpperCase().trim();
+  if (!uf) return [];
 
-  if (uf && isCitiesUSLoaded()) {
-    const all = getCitiesByUSState(uf);
-    if (all && all.length > 0) {
-      return [...all];
-    }
+  // se ainda não carregamos esse estado, dispara o carregamento em background
+  if (!isCitiesUSLoaded(uf)) {
+    void ensureCitiesUSLoaded(uf);
+    return [];
+  }
+
+  const all = getCitiesByUSState(uf);
+  if (all && all.length > 0) {
+    return [...all];
   }
 
   return [];
@@ -131,12 +140,13 @@ export function searchCitiesUS(
   }
 
   if (!hits.length) return [];
+
   hits.sort((a, b) => b.score - a.score);
   return hits.slice(0, limit);
 }
 
 /* =======================================================================
-   GENÉRICO POR PAÍS (usado no GlobalProfilePicker)
+   GENÉRICO POR PAÍS (usado pelo GlobalProfilePicker)
    ======================================================================= */
 
 export function searchCitiesByCountry(
@@ -147,15 +157,10 @@ export function searchCitiesByCountry(
 ) {
   const cc = (countryCode || "").toUpperCase().trim();
 
-  if (cc === "BR") {
-    return searchCitiesBR(query, regionCode, limit);
-  }
+  if (cc === "BR") return searchCitiesBR(query, regionCode, limit);
+  if (cc === "US") return searchCitiesUS(query, regionCode, limit);
 
-  if (cc === "US") {
-    return searchCitiesUS(query, regionCode, limit);
-  }
-
-  // Espanha / outros: ainda não implementado
+  // Espanha / outros países: por enquanto sem implementação
   return [];
 }
 
