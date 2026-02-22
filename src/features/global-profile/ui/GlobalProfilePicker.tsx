@@ -3,13 +3,13 @@ import { useGlobalProfileStore } from "../store";
 import { COUNTRIES, getCountry } from "../geo/countries";
 import { REGIONS_BR } from "../geo/regions_BR";
 import { REGIONS_US } from "../geo/regions_US";
+import { searchCitiesByCountry } from "../geo/search";
 import { resolveByCountry, resolveByCityBR } from "../geo/resolver";
 import { nowFormatted } from "../tz";
-import { searchCitiesByCountry } from "../geo/search";
 
 type Props = {
   title?: string;
-  showDeviceLocationHint?: boolean; // botão existe, mas só preenche sugestão simples
+  showDeviceLocationHint?: boolean;
 };
 
 export function GlobalProfilePicker({
@@ -17,6 +17,7 @@ export function GlobalProfilePicker({
   showDeviceLocationHint = true,
 }: Props) {
   const { profile, setProfile } = useGlobalProfileStore();
+
   const [countryCode, setCountryCode] = useState<string>(
     profile.countryCode || "BR"
   );
@@ -26,12 +27,10 @@ export function GlobalProfilePicker({
   const [cityQuery, setCityQuery] = useState<string>(profile.city || "");
   const [citySelected, setCitySelected] = useState<string>(profile.city || "");
   const [openList, setOpenList] = useState(false);
-  const [cityOptions, setCityOptions] = useState<
-    { name: string; regionCode?: string; timeZone?: string }[]
-  >([]);
 
   const isBR = (countryCode || "").toUpperCase() === "BR";
   const isUS = (countryCode || "").toUpperCase() === "US";
+  const supportsRegions = isBR || isUS;
 
   const countryDefaults = useMemo(
     () => resolveByCountry(countryCode),
@@ -56,48 +55,18 @@ export function GlobalProfilePicker({
     };
   }, [countryCode, countryDefaults.locale, countryDefaults.units, tzFromCity]);
 
-  // Busca de cidades para BR/US (único search)
-  useEffect(() => {
-    const q = cityQuery.trim();
-    if (!q || q.length < 2) {
-      setCityOptions([]);
-      return;
-    }
+  // estados dinâmicos conforme país
+  const currentRegions = useMemo(() => {
+    if (isBR) return REGIONS_BR;
+    if (isUS) return REGIONS_US;
+    return [] as typeof REGIONS_BR;
+  }, [isBR, isUS]);
 
-    if (!isBR && !isUS) {
-      setCityOptions([]);
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const results = await searchCitiesByCountry(
-          countryCode,
-          q,
-          regionCode,
-          10
-        );
-        if (!cancelled) {
-          setCityOptions(
-            results.map((c: any) => ({
-              name: c.name,
-              regionCode: c.regionCode,
-              timeZone: (c as any).timeZone,
-            }))
-          );
-        }
-      } catch (e) {
-        console.warn("[GlobalProfilePicker] erro ao buscar cidades:", e);
-        if (!cancelled) setCityOptions([]);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [cityQuery, regionCode, countryCode, isBR, isUS]);
+  // cidades dinâmicas por país + estado
+  const cityOptions = useMemo(() => {
+    if (!supportsRegions) return [];
+    return searchCitiesByCountry(countryCode, cityQuery, regionCode, 10);
+  }, [supportsRegions, countryCode, cityQuery, regionCode]);
 
   // Quando troca o país, mantém defaults coerentes
   useEffect(() => {
@@ -110,20 +79,17 @@ export function GlobalProfilePicker({
       updatedAt: Date.now(),
     });
 
-    // Reset de UF/cidade se sair de BR/US
-    setRegionCode((prev) =>
-      countryCode.toUpperCase() === "BR" || countryCode.toUpperCase() === "US"
-        ? prev
-        : ""
-    );
-    if (countryCode.toUpperCase() !== "BR" && countryCode.toUpperCase() !== "US") {
+    // se sair de BR/US, limpa estado/cidade
+    const upper = countryCode.toUpperCase();
+    if (upper !== "BR" && upper !== "US") {
+      setRegionCode("");
       setCityQuery("");
       setCitySelected("");
       setOpenList(false);
     }
   }, [countryCode, setProfile]);
 
-  // Quando selecionar cidade/UF (BR), atualiza timezone específica
+  // Quando selecionar cidade/UF BR, atualiza timezone via resolver BR
   useEffect(() => {
     if (!isBR) return;
     if (!citySelected && !regionCode) return;
@@ -143,9 +109,32 @@ export function GlobalProfilePicker({
     setCitySelected(name);
     setCityQuery(name);
     setOpenList(false);
+
+    // tenta achar cidade exata pra pegar timezone (BR + US)
+    const [match] = searchCitiesByCountry(countryCode, name, regionCode, 1);
+    const nextCountry = resolveByCountry(countryCode);
+
+    let timeZone = nextCountry.timeZone;
+    if ((match as any)?.timeZone) {
+      timeZone = (match as any).timeZone;
+    } else if (countryCode.toUpperCase() === "BR") {
+      const tz = resolveByCityBR(name, regionCode).timeZone;
+      if (tz) timeZone = tz;
+    }
+
+    setProfile({
+      countryCode,
+      regionCode: regionCode || undefined,
+      city: name || undefined,
+      locale: nextCountry.locale,
+      units: nextCountry.units,
+      timeZone,
+      updatedAt: Date.now(),
+    });
   }
 
   async function onUseDeviceSuggestion() {
+    // continua o mesmo comportamento de antes (BR via BigDataCloud)
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -163,27 +152,18 @@ export function GlobalProfilePicker({
 
           const cc = String(data.countryCode || "BR").toUpperCase();
 
-          let region = "";
+          let uf = "";
           const psCode = data.principalSubdivisionCode as string | undefined;
-          if (psCode && psCode.includes("-")) {
-            // ex: BR-RJ, US-CA
-            region = psCode.split("-").pop() || "";
+          if (psCode && psCode.startsWith("BR-")) {
+            uf = psCode.slice(3);
           }
-
-          // Fallback por nome de estado, separado por país
-          if (!region && data.principalSubdivision) {
-            const nameLower = String(data.principalSubdivision).toLowerCase();
-            if (cc === "BR") {
-              const matchRegion = REGIONS_BR.find(
-                (r) => r.name.toLowerCase() === nameLower
-              );
-              if (matchRegion) region = matchRegion.code;
-            } else if (cc === "US") {
-              const matchRegion = REGIONS_US.find(
-                (r) => r.name.toLowerCase() === nameLower
-              );
-              if (matchRegion) region = matchRegion.code;
-            }
+          if (!uf && data.principalSubdivision) {
+            const matchRegion = REGIONS_BR.find(
+              (r) =>
+                r.name.toLowerCase() ===
+                String(data.principalSubdivision).toLowerCase()
+            );
+            if (matchRegion) uf = matchRegion.code;
           }
 
           const cityFromApi =
@@ -195,23 +175,22 @@ export function GlobalProfilePicker({
           const cityName = String(cityFromApi || "").trim();
 
           setCountryCode(cc);
-          setRegionCode(region);
+          setRegionCode(uf);
           setCitySelected(cityName);
           setCityQuery(cityName);
           setOpenList(false);
 
           const nextCountry = resolveByCountry(cc);
-
           let timeZone = nextCountry.timeZone;
 
-          if (cc === "BR" && cityName && region) {
-            const resCity = resolveByCityBR(cityName, region);
+          if (cc === "BR" && cityName && uf) {
+            const resCity = resolveByCityBR(cityName, uf);
             if (resCity.timeZone) timeZone = resCity.timeZone;
           }
 
           setProfile({
             countryCode: cc,
-            regionCode: region || undefined,
+            regionCode: uf || undefined,
             city: cityName || undefined,
             locale: nextCountry.locale,
             units: nextCountry.units,
@@ -268,23 +247,16 @@ export function GlobalProfilePicker({
             className="w-full rounded-xl border bg-background px-3 py-2 text-sm disabled:opacity-60"
             value={regionCode}
             onChange={(e) => setRegionCode(e.target.value)}
-            disabled={!isBR && !isUS}
+            disabled={!supportsRegions}
           >
             <option value="">
-              {isBR || isUS ? "Selecione" : "Disponível em breve"}
+              {supportsRegions ? "Selecione" : "Disponível em breve"}
             </option>
-            {isBR &&
-              REGIONS_BR.map((r) => (
-                <option key={r.code} value={r.code}>
-                  {r.name} ({r.code})
-                </option>
-              ))}
-            {isUS &&
-              REGIONS_US.map((r) => (
-                <option key={r.code} value={r.code}>
-                  {r.name} ({r.code})
-                </option>
-              ))}
+            {currentRegions.map((r) => (
+              <option key={r.code} value={r.code}>
+                {r.name} ({r.code})
+              </option>
+            ))}
           </select>
         </div>
 
@@ -300,37 +272,33 @@ export function GlobalProfilePicker({
             }}
             onFocus={() => setOpenList(true)}
             placeholder={
-              isBR
-                ? "Digite para buscar (ex: São Paulo)"
-                : isUS
-                ? "Digite para buscar (ex: New York)"
+              supportsRegions
+                ? "Digite para buscar (ex: São Paulo / Miami)"
                 : "Disponível em breve"
             }
-            disabled={!isBR && !isUS}
+            disabled={!supportsRegions}
           />
 
-          {(isBR || isUS) && openList && cityOptions.length > 0 && (
+          {supportsRegions && openList && cityOptions.length > 0 && (
             <div className="absolute z-20 mt-1 w-full rounded-xl border bg-background shadow-lg max-h-64 overflow-auto">
               {cityOptions.map((c) => (
                 <button
                   type="button"
-                  key={`${c.name}-${c.regionCode || "XX"}`}
+                  key={`${c.name}-${c.regionCode}`}
                   className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => onPickCity(c.name)}
                 >
                   <span className="font-medium">{c.name}</span>
-                  {c.regionCode && (
-                    <span className="text-xs text-muted-foreground">
-                      {c.regionCode}
-                    </span>
-                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {c.regionCode}
+                  </span>
                 </button>
               ))}
             </div>
           )}
 
-          {(isBR || isUS) &&
+          {supportsRegions &&
             cityQuery.trim().length > 0 &&
             cityOptions.length === 0 && (
               <div className="mt-1 text-xs text-muted-foreground">
@@ -351,9 +319,7 @@ export function GlobalProfilePicker({
           <div className="text-sm">
             <span className="text-muted-foreground">Unidades: </span>
             <span className="font-medium">
-              {previewProfile.units === "metric"
-                ? "Métrico (km)"
-                : "Imperial (mi)"}
+              {previewProfile.units === "metric" ? "Métrico (km)" : "Imperial (mi)"}
             </span>
           </div>
           <div className="text-sm">
