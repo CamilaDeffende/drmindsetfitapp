@@ -1,9 +1,16 @@
 import { test, expect } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
 
-// Rotas geradas automaticamente a partir do src/App.tsx
-// Fonte: .mf_routes_visual.json
-// Regra: só rotas estáticas (sem :param), sem "*".
-const routes: string[] = require("../../.mf_routes_visual.json");
+function loadRoutes(): string[] {
+  const p = path.resolve(process.cwd(), ".mf_routes_visual.json");
+  const raw = fs.readFileSync(p, "utf-8");
+  const arr = JSON.parse(raw);
+  if (!Array.isArray(arr)) return [];
+  return arr.filter((x) => typeof x === "string");
+}
+
+const routes = loadRoutes();
 
 test.describe("MF Visual Lock — snapshots (auto routes)", () => {
   test.beforeEach(async ({ page }) => {
@@ -14,7 +21,6 @@ test.describe("MF Visual Lock — snapshots (auto routes)", () => {
     test(`snapshot: ${r}`, async ({ page }) => {
       await page.goto(r, { waitUntil: "networkidle" });
 
-      // freeze extra contra flake
       await page.addStyleTag({
         content: `*{ transition: none !important; animation: none !important; }`,
       });
