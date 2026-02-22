@@ -1,8 +1,11 @@
 import { test, expect } from "@playwright/test";
 
-const routes = ["/", "/metabolismo", "/plano", "/treinos"];
+// Rotas geradas automaticamente a partir do src/App.tsx
+// Fonte: .mf_routes_visual.json
+// Regra: só rotas estáticas (sem :param), sem "*".
+const routes: string[] = require("../../.mf_routes_visual.json");
 
-test.describe("MF Visual Lock — snapshots", () => {
+test.describe("MF Visual Lock — snapshots (auto routes)", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
   });
@@ -16,9 +19,9 @@ test.describe("MF Visual Lock — snapshots", () => {
         content: `*{ transition: none !important; animation: none !important; }`,
       });
 
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(350);
 
-      const safe = r === "/" ? "dashboard" : r.split("/").filter(Boolean).join("-");
+      const safe = r === "/" ? "root" : r.split("/").filter(Boolean).join("-");
       const name = `mf-${safe}.png`;
 
       await expect(page).toHaveScreenshot([name], {
