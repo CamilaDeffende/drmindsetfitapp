@@ -1,0 +1,80 @@
+name: Visual Baseline (Linux)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch do PR para gerar baseline linux (ex: feat/...)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  generate-linux-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('package-lock.json', 'pnpm-lock.yaml', 'yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-ms-playwright-
+
+      - name: Install Playwright browsers (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Build (sanity)
+        run: npm run -s build
+
+      - name: Update snapshots (linux baseline)
+        env:
+          CI: "true"
+        run: npx playwright test -c playwright.visual.config.ts --update-snapshots --workers=1
+
+      - name: Commit linux snapshots
+        run: |
+          set -euo pipefail
+          git status -sb
+
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "ℹ️ nada para commitar (baseline linux já estava ok)"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add -A tests/visual/screens.visual.spec.ts-snapshots
+          git commit -m "test(visual): add/update linux baselines" || true
+          git push
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-baseline-linux-artifacts
+          path: |
+            test-results/**
+            playwright-report/**
+            tests/visual/screens.visual.spec.ts-snapshots/**
+          if-no-files-found: ignore
