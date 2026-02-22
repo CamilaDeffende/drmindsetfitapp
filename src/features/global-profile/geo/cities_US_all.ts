@@ -1,37 +1,190 @@
-// src/features/global-profile/geo/cities_US_all.ts
+import { CITIES_BR_MAJOR, type BRCity } from "./cities_BR_major";
+import {
+  getCitiesByUF,
+  isCitiesBRLoaded,
+} from "./cities_BR_all";
+import {
+  getCitiesByUSState,
+  isCitiesUSLoaded,
+  type USCity,
+} from "./cities_US_all";
 
-export type USCity = {
-  name: string;
-  stateCode: string;   // ex: "CA", "NY"
-  timeZone: string;    // IANA
-  weight?: number;     // ranking simples (para ordenar sugestões)
+type CityHit<T extends { name: string; regionCode: string; timeZone: string }> = T & {
+  score: number;
 };
 
-// MVP: algumas cidades principais dos EUA.
-// Depois dá pra expandir essa lista ou trocar por uma fonte externa.
-const CITIES_US_MAJOR: readonly USCity[] = [
-  { name: "New York", stateCode: "NY", timeZone: "America/New_York", weight: 100 },
-  { name: "Los Angeles", stateCode: "CA", timeZone: "America/Los_Angeles", weight: 95 },
-  { name: "Chicago", stateCode: "IL", timeZone: "America/Chicago", weight: 90 },
-  { name: "Houston", stateCode: "TX", timeZone: "America/Chicago", weight: 85 },
-  { name: "Phoenix", stateCode: "AZ", timeZone: "America/Phoenix", weight: 80 },
-  { name: "Philadelphia", stateCode: "PA", timeZone: "America/New_York", weight: 78 },
-  { name: "San Antonio", stateCode: "TX", timeZone: "America/Chicago", weight: 76 },
-  { name: "San Diego", stateCode: "CA", timeZone: "America/Los_Angeles", weight: 74 },
-  { name: "Dallas", stateCode: "TX", timeZone: "America/Chicago", weight: 72 },
-  { name: "San Jose", stateCode: "CA", timeZone: "America/Los_Angeles", weight: 70 },
-];
-
-// 🔹 No futuro isso aqui pode receber dados de uma API.
-// Por enquanto ele só usa a lista interna acima.
-export function getCitiesByUSState(stateCode: string): USCity[] {
-  const uf = (stateCode || "").toUpperCase().trim();
-  if (!uf) return [];
-  return CITIES_US_MAJOR.filter((c) => c.stateCode === uf);
+function norm(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
 }
 
-// Indica se temos dados de cidades dos EUA carregados.
-// Como é tudo local, sempre que o módulo existe consideramos "true".
-export function isCitiesUSLoaded(): boolean {
-  return CITIES_US_MAJOR.length > 0;
+/* =======================================================================
+   BRASIL
+   ======================================================================= */
+
+/**
+ * Retorna a lista base de cidades BR para a busca:
+ * - se IBGE já carregou, usa TODAS as cidades da UF
+ * - se ainda não, usa fallback com as capitais/principais cidades
+ */
+function getSourceCitiesBR(regionCode?: string): BRCity[] {
+  const uf = (regionCode || "").toUpperCase().trim();
+
+  // 1) tenta IBGE
+  if (uf && isCitiesBRLoaded()) {
+    const all = getCitiesByUF(uf);
+    if (all && all.length > 0) {
+      return [...all];
+    }
+  }
+
+  // 2) fallback: cidades principais
+  return CITIES_BR_MAJOR.filter((c) =>
+    uf ? c.regionCode === uf : true
+  );
+}
+
+export function searchCitiesBR(
+  query: string,
+  regionCode?: string,
+  limit = 10
+): BRCity[] {
+  const q = norm(query || "");
+  const uf = (regionCode || "").toUpperCase().trim();
+
+  const base = getSourceCitiesBR(uf);
+  if (base.length === 0) return [];
+
+  // Se não digitou nada, devolve as primeiras cidades ordenadas
+  if (!q) {
+    return base
+      .slice()
+      .sort((a, b) => {
+        const wa = a.weight ?? 0;
+        const wb = b.weight ?? 0;
+        if (wa !== wb) return wb - wa;
+        return a.name.localeCompare(b.name, "pt-BR");
+      })
+      .slice(0, limit);
+  }
+
+  const hits: CityHit<BRCity>[] = [];
+  for (const c of base) {
+    const name = norm(c.name);
+    const idx = name.indexOf(q);
+    if (idx === -1) continue;
+
+    const weight = c.weight || 0;
+    const score = (idx === 0 ? 1000 : 500) + weight - idx;
+    hits.push({ ...c, score });
+  }
+
+  if (!hits.length) return [];
+
+  hits.sort((a, b) => b.score - a.score);
+  return hits.slice(0, limit);
+}
+
+/* =======================================================================
+   EUA
+   ======================================================================= */
+
+/**
+ * Lista base de cidades US:
+ * - se o cache já carregou, usa TODAS as cidades daquele estado
+ * - senão, retorna lista vazia (MVP; sem fallback manual ainda)
+ */
+function getSourceCitiesUS(regionCode?: string): USCity[] {
+  const uf = (regionCode || "").toUpperCase().trim();
+
+  if (uf && isCitiesUSLoaded()) {
+    const all = getCitiesByUSState(uf);
+    if (all && all.length > 0) {
+      return [...all];
+    }
+  }
+
+  return [];
+}
+
+export function searchCitiesUS(
+  query: string,
+  regionCode?: string,
+  limit = 10
+): USCity[] {
+  const q = norm(query || "");
+  const uf = (regionCode || "").toUpperCase().trim();
+
+  const base = getSourceCitiesUS(uf);
+  if (base.length === 0) return [];
+
+  if (!q) {
+    return base
+      .slice()
+      .sort((a, b) => {
+        const wa = a.weight ?? 0;
+        const wb = b.weight ?? 0;
+        if (wa !== wb) return wb - wa;
+        return a.name.localeCompare(b.name, "en-US");
+      })
+      .slice(0, limit);
+  }
+
+  const hits: CityHit<USCity>[] = [];
+  for (const c of base) {
+    const name = norm(c.name);
+    const idx = name.indexOf(q);
+    if (idx === -1) continue;
+
+    const weight = c.weight || 0;
+    const score = (idx === 0 ? 1000 : 500) + weight - idx;
+    hits.push({ ...c, score });
+  }
+
+  if (!hits.length) return [];
+
+  hits.sort((a, b) => b.score - a.score);
+  return hits.slice(0, limit);
+}
+
+/* =======================================================================
+   GENÉRICO POR PAÍS (usado pelo GlobalProfilePicker)
+   ======================================================================= */
+
+export function searchCitiesByCountry(
+  countryCode: string,
+  query: string,
+  regionCode?: string,
+  limit = 10
+) {
+  const cc = (countryCode || "").toUpperCase().trim();
+
+  if (cc === "BR") {
+    return searchCitiesBR(query, regionCode, limit);
+  }
+
+  if (cc === "US") {
+    return searchCitiesUS(query, regionCode, limit);
+  }
+
+  // Espanha / outros países: por enquanto sem implementação
+  return [];
+}
+
+/* =======================================================================
+   debounce zero-deps
+   ======================================================================= */
+
+export function debounce<T extends (...args: any[]) => void>(
+  fn: T,
+  waitMs: number
+) {
+  let t: any;
+  return (...args: Parameters<T>) => {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fn(...args), waitMs);
+  };
 }
