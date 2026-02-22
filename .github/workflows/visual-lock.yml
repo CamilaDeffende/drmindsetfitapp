@@ -1,23 +1,17 @@
-name: Visual Lock (Playwright)
+name: Visual Lock
 
 on:
   pull_request:
     branches: [ main ]
-    paths:
-      - "src/**"
-      - "tests/visual/**"
-      - "playwright.visual.config.ts"
-      - "package.json"
-      - "package-lock.json"
-      - "pnpm-lock.yaml"
-      - "yarn.lock"
   workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
   visual-lock:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,17 +19,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: "20"
+          cache: "npm"
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-ms-playwright-${{ hashFiles(package-lock.json, pnpm-lock.yaml, yarn.lock) }}
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('package-lock.json', 'pnpm-lock.yaml', 'yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-ms-playwright-
 
@@ -45,12 +39,12 @@ jobs:
       - name: Build (sanity)
         run: npm run -s build
 
-      - name: Run Visual Lock
+      - name: Run Visual Lock (validate only)
         env:
           CI: "true"
         run: npx playwright test -c playwright.visual.config.ts --workers=1 --retries=1
 
-      - name: Upload Playwright artifacts on failure
+      - name: Upload artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -58,5 +52,4 @@ jobs:
           path: |
             test-results/**
             playwright-report/**
-            tests/visual/screens.visual.spec.ts-snapshots/**
           if-no-files-found: ignore
