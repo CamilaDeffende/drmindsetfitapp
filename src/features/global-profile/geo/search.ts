@@ -1,8 +1,7 @@
+// src/features/global-profile/geo/search.ts
+
 import { CITIES_BR_MAJOR, type BRCity } from "./cities_BR_major";
-import {
-  getCitiesByUF,
-  isCitiesBRLoaded,
-} from "./cities_BR_all";
+import { getCitiesByUF, isCitiesBRLoaded } from "./cities_BR_all";
 import {
   getCitiesByUSState,
   isCitiesUSLoaded,
@@ -25,11 +24,6 @@ function norm(s: string): string {
    BRASIL
    ======================================================================= */
 
-/**
- * Retorna a lista base de cidades BR para a busca:
- * - se IBGE já carregou, usa TODAS as cidades da UF
- * - se ainda não, usa fallback com as capitais/principais cidades
- */
 function getSourceCitiesBR(regionCode?: string): BRCity[] {
   const uf = (regionCode || "").toUpperCase().trim();
 
@@ -41,10 +35,8 @@ function getSourceCitiesBR(regionCode?: string): BRCity[] {
     }
   }
 
-  // 2) fallback: cidades principais
-  return CITIES_BR_MAJOR.filter((c) =>
-    uf ? c.regionCode === uf : true
-  );
+  // 2) fallback: principais cidades
+  return CITIES_BR_MAJOR.filter((c) => (uf ? c.regionCode === uf : true));
 }
 
 export function searchCitiesBR(
@@ -58,7 +50,7 @@ export function searchCitiesBR(
   const base = getSourceCitiesBR(uf);
   if (base.length === 0) return [];
 
-  // Se não digitou nada, devolve as primeiras cidades ordenadas
+  // se não digitou nada, devolve as primeiras ordenadas
   if (!q) {
     return base
       .slice()
@@ -83,7 +75,6 @@ export function searchCitiesBR(
   }
 
   if (!hits.length) return [];
-
   hits.sort((a, b) => b.score - a.score);
   return hits.slice(0, limit);
 }
@@ -92,11 +83,6 @@ export function searchCitiesBR(
    EUA
    ======================================================================= */
 
-/**
- * Lista base de cidades US:
- * - se o cache já carregou, usa TODAS as cidades daquele estado
- * - senão, retorna lista vazia (MVP; sem fallback manual ainda)
- */
 function getSourceCitiesUS(regionCode?: string): USCity[] {
   const uf = (regionCode || "").toUpperCase().trim();
 
@@ -145,13 +131,12 @@ export function searchCitiesUS(
   }
 
   if (!hits.length) return [];
-
   hits.sort((a, b) => b.score - a.score);
   return hits.slice(0, limit);
 }
 
 /* =======================================================================
-   GENÉRICO POR PAÍS (usado pelo GlobalProfilePicker)
+   GENÉRICO POR PAÍS (usado no GlobalProfilePicker)
    ======================================================================= */
 
 export function searchCitiesByCountry(
@@ -170,7 +155,7 @@ export function searchCitiesByCountry(
     return searchCitiesUS(query, regionCode, limit);
   }
 
-  // Espanha / outros países: por enquanto sem implementação
+  // Espanha / outros: ainda não implementado
   return [];
 }
 
