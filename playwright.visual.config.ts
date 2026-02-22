@@ -1,8 +1,15 @@
 import { defineConfig } from "@playwright/test";
-import base from "./playwright.config";
 
 export default defineConfig({
-  ...base,
   testDir: "./tests/visual",
-  testMatch: /.*\.(spec|test)\.(ts|tsx|js)$/,
+  testMatch: ["**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"],
+  use: {
+    baseURL: "http://localhost:8080",
+  },
+  webServer: {
+    command: "npm run dev -- --strictPort --port 8080",
+    url: "http://localhost:8080",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
 });
