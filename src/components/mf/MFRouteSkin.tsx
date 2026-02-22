@@ -1,20 +1,44 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-function sanitizeRoute(pathname: string) {
+/**
+ * Converte pathname em slug seguro para data attribute.
+ * "/" -> dashboard
+ * "/onboarding/step-1" -> onboarding-step-1
+ */
+function sanitizeRoute(pathname: string): string {
   if (!pathname || pathname === "/") return "dashboard";
-  const p = pathname.replace(/^\/+/, "").replace(/\/+$/, "");
-  return p.replace(/[^\w\-\/]/g, "").replace(/\//g, "-").toLowerCase();
+
+  // remove query e hash
+  const clean = pathname.split("?")[0].split("#")[0];
+
+  const segments = clean.split("/").filter(Boolean);
+
+  const safe = segments
+    .map((seg) =>
+      seg
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, "")
+        .replace(/-+/g, "-")
+    )
+    .filter(Boolean)
+    .join("-");
+
+  return safe || "dashboard";
 }
 
 /**
- * MFRouteSkin — escreve data-mf-route no <html> baseado na rota.
- * Permite CSS 1:1 por tela sem editar cada página.
+ * MFRouteSkin
+ * Injeta data-mf-route no <html>
+ * Permite CSS 1:1 por rota sem alterar páginas.
  */
 export function MFRouteSkin() {
-  const loc = useLocation();
+  const location = useLocation();
+
   useEffect(() => {
-    document.documentElement.setAttribute("data-mf-route", sanitizeRoute(loc.pathname));
-  }, [loc.pathname]);
+    const slug = sanitizeRoute(location.pathname);
+    document.documentElement.setAttribute("data-mf-route", slug);
+  }, [location.pathname]);
+
   return null;
 }
