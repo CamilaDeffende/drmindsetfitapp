@@ -39,6 +39,22 @@ jobs:
       - name: Build (sanity)
         run: npm run -s build
 
+      # MF_LINUX_SNAPSHOT_GUARD_V1
+      - name: Guard (Linux baselines must exist)
+        if: runner.os == Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(tests/visual/screens.visual.spec.ts-snapshots/*-linux.png)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "❌ Visual Lock: não encontrei snapshots linux (*-linux.png)."
+            echo "➡️ Rode o workflow manual: Visual Baseline (Linux) (visual-baseline-linux.yml)"
+            echo "➡️ Ele gera + commita os baselines linux no mesmo branch do PR."
+            exit 1
+          fi
+          echo "✅ Linux baselines presentes: ${#files[@]} arquivo(s)."
+
       - name: Run Visual Lock (validate only)
         env:
           CI: "true"
