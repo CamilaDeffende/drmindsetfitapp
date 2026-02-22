@@ -4,7 +4,6 @@ const routes = ["/", "/metabolismo", "/plano", "/treinos"];
 
 test.describe("MF Visual Lock — snapshots", () => {
   test.beforeEach(async ({ page }) => {
-    // reduz flake por animação/subpixel
     await page.emulateMedia({ reducedMotion: "reduce" });
   });
 
@@ -12,17 +11,15 @@ test.describe("MF Visual Lock — snapshots", () => {
     test(`snapshot: ${r}`, async ({ page }) => {
       await page.goto(r, { waitUntil: "networkidle" });
 
-      // injeta css de freeze (não altera app em prod)
-      await page.addStyleTag({ content: `
-        *{ transition: none !important; animation: none !important; }
-      `});
+      // freeze extra contra flake
+      await page.addStyleTag({
+        content: `*{ transition: none !important; animation: none !important; }`,
+      });
 
       await page.waitForTimeout(300);
 
-      const name =
-        "mf-" +
-        (r === "/" ? "dashboard" : r.replace(/\\//g, "-").replace(/^-/, "")) +
-        ".png";
+      const safe = r === "/" ? "dashboard" : r.split("/").filter(Boolean).join("-");
+      const name = `mf-${safe}.png`;
 
       await expect(page).toHaveScreenshot([name], {
         fullPage: true,
