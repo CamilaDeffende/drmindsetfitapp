@@ -5,7 +5,7 @@ export default defineConfig({
   testMatch: ["**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"],
 
   // ✅ snapshots cross-platform (não usa -darwin/-linux/-win32)
-  snapshotPathTemplate: "{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}",
+  snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{-projectName}{-platform}{ext}",
 
   use: {
     baseURL: "http://localhost:8080",
