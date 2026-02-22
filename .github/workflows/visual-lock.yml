@@ -1,0 +1,62 @@
+name: Visual Lock (Playwright)
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "src/**"
+      - "tests/visual/**"
+      - "playwright.visual.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - "pnpm-lock.yaml"
+      - "yarn.lock"
+  workflow_dispatch: {}
+
+jobs:
+  visual-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles(package-lock.json, pnpm-lock.yaml, yarn.lock) }}
+          restore-keys: |
+            ${{ runner.os }}-ms-playwright-
+
+      - name: Install Playwright browsers (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Build (sanity)
+        run: npm run -s build
+
+      - name: Run Visual Lock
+        env:
+          CI: "true"
+        run: npx playwright test -c playwright.visual.config.ts --workers=1 --retries=1
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-artifacts
+          path: |
+            test-results/**
+            playwright-report/**
+            tests/visual/screens.visual.spec.ts-snapshots/**
+          if-no-files-found: ignore
