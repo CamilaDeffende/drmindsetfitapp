@@ -106,11 +106,9 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
   const { state, updateState, nextStep } = useDrMindSetfit();
 
   // BLOCK2A: UNLOCK Step1 -> Step2 (persist progress + draft + goNext)
-  // Aqui adicionamos uma garantia extra de que não vamos avançar sem nome.
   const __goNextSafe = (data: PerfilUsuario) => {
     const nome = (data?.nomeCompleto || "").trim();
     if (!nome || nome.length < 3) {
-      // Filtro extra de segurança (caso em algum lugar chamem __goNextSafe direto)
       console.warn(
         " Tentativa de avançar Step1 sem nome completo válido. Bloqueando goNextSafe."
       );
@@ -134,15 +132,12 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     } catch (e) {}
   };
 
-  /* MF_STEP1_DRAFT_SEED
-     Fonte de verdade do Step-1: draft vindo do OnboardingFlow (value/onChange).
-     Isso impede o "preenche e some" em remount/re-render.
-  */
+  /* MF_STEP1_DRAFT_SEED */
   const draftSeed = (value && typeof value === "object" ? value : {}) as Partial<
     PerfilUsuario
   >;
 
-  // MF_STEP1_SSOT_DRAFT_V1: persist progressivo (SSOT local)
+  // MF_STEP1_SSOT_DRAFT_V1
   const draftSSOT = useOnboardingStore((st) => st.draft) as Record<
     string,
     any
@@ -150,48 +145,66 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
 
   const form = useForm<PerfilUsuario>({
     resolver: zodResolver(perfilSchema) as any,
-    mode: "onChange",          // valida conforme digita
+    mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
       ...(draftSSOT as any),
       ...(draftSeed as any),
-      nomeCompleto: (draftSeed.nomeCompleto ??
-        state.perfil?.nomeCompleto ??
-        "") as any,
-      sexo: (draftSeed.sexo ?? state.perfil?.sexo ?? "masculino") as any,
-      idade: (draftSeed.idade ?? state.perfil?.idade ?? 30) as any,
-      altura: (draftSeed.altura ?? state.perfil?.altura ?? 170) as any,
+
+      // se não houver draft nem state.perfil => vem vazio (placeholders só visual)
+      nomeCompleto:
+        (draftSeed.nomeCompleto ??
+          state.perfil?.nomeCompleto ??
+          "") as any,
+
+      sexo: (draftSeed.sexo ??
+        state.perfil?.sexo ??
+        undefined) as any,
+
+      idade: (draftSeed.idade ??
+        state.perfil?.idade ??
+        undefined) as any,
+
+      altura: (draftSeed.altura ??
+        state.perfil?.altura ??
+        undefined) as any,
+
       pesoAtual: (draftSeed.pesoAtual ??
         state.perfil?.pesoAtual ??
-        70) as any,
+        undefined) as any,
+
       historicoPeso: (draftSeed.historicoPeso ??
         state.perfil?.historicoPeso ??
         "") as any,
+
       nivelTreino: (draftSeed.nivelTreino ??
         state.perfil?.nivelTreino ??
-        "iniciante") as any,
+        undefined) as any,
+
       modalidadePrincipal: (draftSeed.modalidadePrincipal ??
         state.perfil?.modalidadePrincipal ??
-        "musculacao") as any,
+        undefined) as any,
+
       frequenciaSemanal: (draftSeed.frequenciaSemanal ??
         state.perfil?.frequenciaSemanal ??
-        3) as any,
+        undefined) as any,
+
       duracaoTreino: (draftSeed.duracaoTreino ??
         state.perfil?.duracaoTreino ??
-        60) as any,
+        undefined) as any,
+
       objetivo: (draftSeed.objetivo ??
         state.perfil?.objetivo ??
-        "hipertrofia") as any,
+        undefined) as any,
     },
   });
 
   const { isValid } = form.formState;
 
-  // MF_STEP1_AUTOSAVE_WATCH_V1: salva conforme digita (debounced) p/ Motor Inteligente
+  // MF_STEP1_AUTOSAVE_WATCH_V1
   const _watchAll = form.watch();
   useOnboardingDraftSaver(
     {
-      // chaves do Step1 (pt)
       nomeCompleto: (_watchAll as any).nomeCompleto ?? "",
       sexo: (_watchAll as any).sexo ?? "",
       idade: (_watchAll as any).idade ?? "",
@@ -205,7 +218,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
       duracaoTreino: (_watchAll as any).duracaoTreino ?? "",
       objetivo: (_watchAll as any).objetivo ?? "",
 
-      // aliases EN p/ SSOT futura
+      // aliases EN
       name: (_watchAll as any).nomeCompleto ?? "",
       sex: (_watchAll as any).sexo ?? "",
       age: (_watchAll as any).idade ?? "",
@@ -216,10 +229,8 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
   );
 
   const onSubmit = (data: PerfilUsuario) => {
-    // Segurança extra já aqui também
     const nome = (data?.nomeCompleto || "").trim();
     if (!nome || nome.length < 3) {
-      // Força erro no form se alguém tentar "forçar" submit
       form.setError("nomeCompleto", {
         type: "manual",
         message: "Nome completo é obrigatório",
@@ -229,7 +240,6 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
 
     updateState({ perfil: data });
     nextStep();
-    // avanço oficial do funil (OnboardingFlow)
     __goNextSafe(data);
   };
 
@@ -284,7 +294,6 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                         <Input
                           placeholder="Digite seu nome completo"
                           {...field}
-                          /* MF_STEP1_BIND_NOME */
                           onChange={(e) => {
                             field.onChange(e);
                             try {
@@ -317,7 +326,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue />
+                              <SelectValue placeholder="Selecione..." />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -360,7 +369,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                     )}
                   />
 
-                  <FormField
+                <FormField
                     control={form.control}
                     name="pesoAtual"
                     render={({ field }) => (
@@ -417,7 +426,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Selecione..." />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -445,7 +454,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
               </div>
 
               {/* Ações */}
-              
+              {/* (os botões ficam onde você já tiver no fluxo principal) */}
             </form>
           </Form>
         </CardContent>
