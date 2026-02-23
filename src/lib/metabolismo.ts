@@ -66,7 +66,8 @@ const getWeeklyActivityMultiplier = (freq?: string): number => {
     case "muito_ativo":
       return 1.725;
     default:
-      return 1.375;
+      // quando não informado, não mexe tanto no FAF base
+      return 1.0;
   }
 };
 
@@ -219,21 +220,51 @@ export const calcularMetabolismo = (
   const perfil = (perfilRaw ?? {}) as any;
   const avaliacao = (avaliacaoRaw ?? {}) as any;
 
-  const peso = Number(avaliacao.peso ?? 70);
-  const altura = Number(avaliacao.altura ?? 170);
-  const idade = Number(perfil.idade ?? 30);
-  const sexo = (perfil.sexo ?? "masculino") as string;
+  // ===== Validações obrigatórias (sem valores iniciais fictícios) =====
+  if (!avaliacao || avaliacao.peso == null || avaliacao.peso === "") {
+    throw new Error("Peso não informado.");
+  }
+  if (!avaliacao.altura && avaliacao.altura !== 0) {
+    throw new Error("Altura não informada.");
+  }
+  if (!perfil.idade && perfil.idade !== 0) {
+    throw new Error("Idade não informada.");
+  }
+  if (!perfil.sexo) {
+    throw new Error("Sexo não informado. Informe masculino ou feminino.");
+  }
+
+  const peso = Number(avaliacao.peso);
+  const altura = Number(avaliacao.altura);
+  const idade = Number(perfil.idade);
+  const sexo = perfil.sexo as string;
+
+  if (!Number.isFinite(peso) || peso <= 0) {
+    throw new Error("Peso inválido.");
+  }
+  if (!Number.isFinite(altura) || altura <= 0) {
+    throw new Error("Altura inválida.");
+  }
+  if (!Number.isFinite(idade) || idade <= 0) {
+    throw new Error("Idade inválida.");
+  }
+  if (sexo !== "masculino" && sexo !== "feminino") {
+    throw new Error("Sexo inválido. Use 'masculino' ou 'feminino'.");
+  }
+
+  // Opcional: se não tiver nível de treino, cai em iniciante (não é crítico)
   const nivelTreino = (perfil.nivelTreino ?? "iniciante") as string;
 
   const composicao = (avaliacao.composicao ?? {}) as any;
-  const percentualMM = typeof composicao.percentualMassaMagra === "number"
-    ? composicao.percentualMassaMagra
-    : undefined;
+  const percentualMM =
+    typeof composicao.percentualMassaMagra === "number"
+      ? composicao.percentualMassaMagra
+      : undefined;
 
   const massaMagra =
     typeof percentualMM === "number"
       ? peso * (percentualMM / 100)
-      : peso * 0.75; // Estimativa conservadora
+      : peso * 0.75; // Estimativa conservadora se não tiver composição
 
   // Decidir equação automaticamente
   const equacaoEscolhida = decidirEquacaoMetabolica(perfil, avaliacao);
