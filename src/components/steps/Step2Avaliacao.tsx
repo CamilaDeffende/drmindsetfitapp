@@ -1,6 +1,7 @@
 // MF_ONBOARDING_CONTRACT_V1
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
+
 import { GlobalProfilePicker } from "@/features/global-profile/ui/GlobalProfilePicker";
 import { useForm } from "react-hook-form";
 import { BrandIcon } from "@/components/branding/BrandIcon";
@@ -30,12 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import type { AvaliacaoFisica, MetodoComposicao } from "@/types";
 import { useState } from "react";
@@ -61,6 +56,7 @@ const avaliacaoSchema = z
   .object({
     peso: z.coerce.number().min(30).max(300),
     altura: z.coerce.number().min(100).max(250),
+
     metodoComposicao: z.enum(["bioimpedancia", "pollock7", "nenhum"]),
 
     frequenciaAtividadeSemanal: z.enum([
@@ -78,7 +74,7 @@ const avaliacaoSchema = z
     torax: z.coerce.number().optional().or(z.literal("")),
     gluteo: z.coerce.number().optional().or(z.literal("")),
 
-    // Pollock 7 Dobras
+    // Pollock 7 Dobras (opcionais)
     peitoral: z.coerce.number().optional().or(z.literal("")),
     axilarMedia: z.coerce.number().optional().or(z.literal("")),
     triceps: z.coerce.number().optional().or(z.literal("")),
@@ -87,10 +83,10 @@ const avaliacaoSchema = z
     supraIliaca: z.coerce.number().optional().or(z.literal("")),
     coxa: z.coerce.number().optional().or(z.literal("")),
 
-    // Bioimpedância
+    // Bioimpedância (opcionais)
     bioPercentualGordura: z.coerce.number().optional().or(z.literal("")),
-    bioPercentualMassaMagra: z.coerce
-      .number()
+    bioPercentualMassaMagra: z
+      .coerce.number()
       .optional()
       .or(z.literal("")),
     bioAguaCorporal: z.coerce.number().optional().or(z.literal("")),
@@ -100,10 +96,9 @@ const avaliacaoSchema = z
       .or(z.literal("")),
   })
   .superRefine((data, ctx) => {
-    const metodo = String(data.metodoComposicao || "").toLowerCase();
-
-    const isPollock = metodo === "pollock7";
-    const isBio = metodo === "bioimpedancia";
+    const metodo = String(data.metodoComposicao ?? "").toLowerCase();
+    const isPollock = metodo.includes("pollock");
+    const isBio = metodo.includes("bio");
 
     const req = (key: keyof typeof data, label: string) => {
       const v = (data as any)[key];
@@ -159,13 +154,8 @@ export function Step2Avaliacao({
   void onNext;
   void onBack;
 
-  const { state, updateState } = useDrMindSetfit();
+  const { state, updateState, nextStep } = useDrMindSetfit();
   const navigate = useNavigate();
-
-  const initialMetodo = (draftSSOT as any)?.metodoComposicao ?? "nenhum";
-
-  const [metodoSelecionado, setMetodoSelecionado] =
-    useState<MetodoComposicao>(initialMetodo as MetodoComposicao);
 
   const [mfInvalidMsg, setMfInvalidMsg] = useState<string | null>(null);
 
@@ -174,6 +164,7 @@ export function Step2Avaliacao({
     defaultValues: {
       ...(draftSSOT as any),
 
+      // Peso/altura puxados do Step1, sem defaults 70/170
       peso:
         (draftSSOT as any)?.peso ??
         state.perfil?.pesoAtual ??
@@ -183,15 +174,17 @@ export function Step2Avaliacao({
         state.perfil?.altura ??
         undefined,
 
-      metodoComposicao: initialMetodo as MetodoComposicao,
+      metodoComposicao:
+        (draftSSOT as any)?.metodoComposicao ?? "nenhum",
 
       frequenciaAtividadeSemanal:
         (draftSSOT as any)?.frequenciaAtividadeSemanal ??
-        (state as any)?.avaliacao?.frequenciaAtividadeSemanal ??
+        state.avaliacao?.frequenciaAtividadeSemanal ??
         "moderadamente_ativo",
+
       biotipo:
         (draftSSOT as any)?.biotipo ??
-        (state as any)?.avaliacao?.biotipo ??
+        state.avaliacao?.biotipo ??
         "mesomorfo",
 
       cintura: (draftSSOT as any)?.cintura ?? "",
@@ -199,7 +192,6 @@ export function Step2Avaliacao({
       abdomen: (draftSSOT as any)?.abdomen ?? "",
       torax: (draftSSOT as any)?.torax ?? "",
       gluteo: (draftSSOT as any)?.gluteo ?? "",
-
       peitoral: (draftSSOT as any)?.peitoral ?? "",
       axilarMedia: (draftSSOT as any)?.axilarMedia ?? "",
       triceps: (draftSSOT as any)?.triceps ?? "",
@@ -207,18 +199,22 @@ export function Step2Avaliacao({
       abdominal: (draftSSOT as any)?.abdominal ?? "",
       supraIliaca: (draftSSOT as any)?.supraIliaca ?? "",
       coxa: (draftSSOT as any)?.coxa ?? "",
-
       bioPercentualGordura:
         (draftSSOT as any)?.bioPercentualGordura ?? "",
       bioPercentualMassaMagra:
         (draftSSOT as any)?.bioPercentualMassaMagra ?? "",
-      bioAguaCorporal: (draftSSOT as any)?.bioAguaCorporal ?? "",
+      bioAguaCorporal:
+        (draftSSOT as any)?.bioAguaCorporal ?? "",
       bioIdadeMetabolica:
         (draftSSOT as any)?.bioIdadeMetabolica ?? "",
     },
   });
 
   const _watchAll = form.watch();
+  const metodoSelecionado = (form.watch(
+    "metodoComposicao"
+  ) || "nenhum") as MetodoComposicao;
+
   useOnboardingDraftSaver(
     {
       step2: _watchAll as any,
@@ -226,11 +222,12 @@ export function Step2Avaliacao({
     400
   );
 
-  const calcularIMC = (peso: number, altura: number) => {
-    if (!peso || !altura) return "--";
-    const imc = peso / Math.pow(altura / 100, 2);
-    if (!Number.isFinite(imc)) return "--";
-    return imc.toFixed(1);
+  const calcularIMCValor = (pesoVal: any, alturaVal: any) => {
+    const p = Number(pesoVal);
+    const a = Number(alturaVal);
+    if (!p || !a) return null;
+    const v = p / Math.pow(a / 100, 2);
+    return Number(v.toFixed(1));
   };
 
   const calcularPollock7 = (data: AvaliacaoFormData, sexo: string) => {
@@ -293,15 +290,13 @@ export function Step2Avaliacao({
       console.warn("[Step2Avaliacao] erro ao salvar progresso:", e);
     }
 
-    const imcNumber = Number(
-      calcularIMC(data.peso, data.altura) || 0
-    );
+    const imcNumber = calcularIMCValor(data.peso, data.altura);
 
     const avaliacao: AvaliacaoFisica = {
       frequenciaAtividadeSemanal: data.frequenciaAtividadeSemanal,
       peso: data.peso,
       altura: data.altura,
-      imc: imcNumber,
+      imc: imcNumber ?? 0,
       circunferencias: {
         cintura: data.cintura ? Number(data.cintura) : undefined,
         quadril: data.quadril ? Number(data.quadril) : undefined,
@@ -312,10 +307,8 @@ export function Step2Avaliacao({
       composicao: {
         metodo: data.metodoComposicao,
       },
+      biotipo: data.biotipo,
     } as any;
-
-    // biotipo armazenado junto da avaliação (para Step3)
-    (avaliacao as any).biotipo = data.biotipo;
 
     if (data.metodoComposicao === "pollock7") {
       const resultado = calcularPollock7(
@@ -365,7 +358,7 @@ export function Step2Avaliacao({
       }
     }
 
-    updateState({ avaliacao } as any);
+    updateState({ avaliacao });
 
     try {
       if (typeof onNext === "function") {
@@ -374,7 +367,9 @@ export function Step2Avaliacao({
         try {
           navigate("/onboarding/step-3", { replace: true });
         } catch {
-          // fallback: deixa o OnboardingFlow cuidar
+          try {
+            if (typeof nextStep === "function") nextStep();
+          } catch {}
         }
       }
     } catch (e) {
@@ -384,15 +379,10 @@ export function Step2Avaliacao({
 
   const peso = form.watch("peso");
   const altura = form.watch("altura");
-
-  const handleInvalid = (errors: any) => {
-    console.warn("[Step2Avaliacao] invalid:", errors);
-    try {
-      setMfInvalidMsg(
-        "Revise os campos obrigatórios antes de continuar."
-      );
-    } catch {}
-  };
+  const imcDisplay = (() => {
+    const v = calcularIMCValor(peso, altura);
+    return v == null ? "--" : v.toFixed(1);
+  })();
 
   return (
     <div
@@ -429,7 +419,17 @@ export function Step2Avaliacao({
 
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit, handleInvalid)}
+          onSubmit={form.handleSubmit(
+            onSubmit,
+            (errors) => {
+              console.warn("[Step2Avaliacao] invalid:", errors);
+              try {
+                setMfInvalidMsg(
+                  "Revise os campos obrigatórios antes de continuar."
+                );
+              } catch {}
+            }
+          )}
           className="space-y-6 sm:space-y-7"
         >
           {mfInvalidMsg && (
@@ -439,10 +439,10 @@ export function Step2Avaliacao({
             </Alert>
           )}
 
-          {/* Atividade semanal + Biotipo */}
+          {/* Rotina geral */}
           <Card>
             <CardHeader>
-              <CardTitle>Rotina e biotipo</CardTitle>
+              <CardTitle>Rotina geral</CardTitle>
               <CardDescription>
                 Usamos isso para ajustar o fator de atividade e a
                 estratégia do plano nas próximas etapas.
@@ -480,47 +480,127 @@ export function Step2Avaliacao({
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Não é só treino. Conta também rotina, trabalho e dia
-                      a dia.
+                      Não é só treino. Conta também rotina, trabalho e
+                      dia a dia.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          {/* Autoavaliação de biotipo – card com 3 botões */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Autoavaliação de biotipo</CardTitle>
+              <CardDescription>
+                Referência prática para individualizar calorias.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Qual biotipo mais se parece com você?
+              </p>
 
               <FormField
                 control={form.control}
                 name="biotipo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Biotipo (tendência prática)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="ectomorfo">
-                          Ectomorfo
-                        </SelectItem>
-                        <SelectItem value="mesomorfo">
-                          Mesomorfo
-                        </SelectItem>
-                        <SelectItem value="endomorfo">
-                          Endomorfo
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Só uma referência de tendência, não é diagnóstico.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const selected = field.value;
+
+                  const baseBtn =
+                    "flex flex-col items-start justify-start text-left px-4 py-3 rounded-2xl border transition-all w-full h-full";
+
+                  const getClasses = (value: string) =>
+                    baseBtn +
+                    " " +
+                    (selected === value
+                      ? "border-sky-400 bg-sky-500/10 shadow-md"
+                      : "border-white/10 bg-white/5 hover:bg-white/10");
+
+                  return (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {/* Ectomorfo */}
+                        <button
+                          type="button"
+                          className={getClasses("ectomorfo")}
+                          onClick={() => field.onChange("ectomorfo")}
+                        >
+                          <span className="font-semibold">
+                            Ectomorfo
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Tende a perder peso com facilidade.
+                          </span>
+                        </button>
+
+                        {/* Mesomorfo */}
+                        <button
+                          type="button"
+                          className={getClasses("mesomorfo")}
+                          onClick={() => field.onChange("mesomorfo")}
+                        >
+                          <span className="font-semibold">
+                            Mesomorfo
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Atlético • ganha massa com mais
+                            facilidade.
+                          </span>
+                        </button>
+
+                        {/* Endomorfo */}
+                        <button
+                          type="button"
+                          className={getClasses("endomorfo")}
+                          onClick={() => field.onChange("endomorfo")}
+                        >
+                          <span className="font-semibold">
+                            Endomorfo
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Tende a ganhar/reter peso com
+                            facilidade.
+                          </span>
+                        </button>
+                      </div>
+
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        {selected === "ectomorfo" && (
+                          <>
+                            Ectomorfo recebe ajuste automático de
+                            calorias para manter sustentabilidade do
+                            plano.
+                          </>
+                        )}
+                        {selected === "mesomorfo" && (
+                          <>
+                            Mesomorfo recebe distribuição equilibrada
+                            entre ganho de massa e controle de
+                            gordura.
+                          </>
+                        )}
+                        {selected === "endomorfo" && (
+                          <>
+                            Endomorfo recebe foco extra em controle
+                            calórico e preservação de massa magra.
+                          </>
+                        )}
+                        {!selected && (
+                          <>
+                            Escolha a opção que mais se aproxima de
+                            você. É só uma referência prática, não
+                            diagnóstico.
+                          </>
+                        )}
+                      </div>
+
+                      <FormMessage />
+                    </>
+                  );
+                }}
               />
             </CardContent>
           </Card>
@@ -571,7 +651,7 @@ export function Step2Avaliacao({
                   <FormLabel>IMC</FormLabel>
                   <div className="h-10 flex items-center px-3 bg-muted rounded-md">
                     <span className="text-lg font-bold">
-                      {calcularIMC(peso as any, altura as any)}
+                      {imcDisplay}
                     </span>
                   </div>
                   <FormDescription className="text-xs mt-1">
@@ -582,13 +662,13 @@ export function Step2Avaliacao({
             </CardContent>
           </Card>
 
-          {/* Circunferências (opcional) */}
+          {/* Circunferências */}
           <Card>
             <CardHeader>
               <CardTitle>Circunferências (opcional)</CardTitle>
               <CardDescription>
-                Úteis para acompanhar progresso visual e distribuição de
-                gordura.
+                Ajudam a acompanhar evolução de gordura abdominal,
+                quadril e tronco.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -663,43 +743,118 @@ export function Step2Avaliacao({
           {/* Composição corporal */}
           <Card>
             <CardHeader>
-              <CardTitle>Composição corporal</CardTitle>
+              <CardTitle>Composição corporal (opcional)</CardTitle>
               <CardDescription>
-                Se tiver medidas de dobras ou bioimpedância, o plano
-                fica ainda mais preciso. Se não tiver, pode seguir em
-                frente.
+                Preencha se tiver avaliação recente por bioimpedância
+                ou dobras cutâneas.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Tabs
-                value={metodoSelecionado}
-                onValueChange={(v: string) => {
-                  const m = v as MetodoComposicao;
-                  setMetodoSelecionado(m);
-                  form.setValue("metodoComposicao", m, {
-                    shouldValidate: true,
-                  });
-                }}
-              >
-                <TabsList className="grid grid-cols-3 w-full">
-                  <TabsTrigger value="nenhum">Sem medidas</TabsTrigger>
-                  <TabsTrigger value="pollock7">
-                    Pollock 7 dobras
-                  </TabsTrigger>
-                  <TabsTrigger value="bioimpedancia">
-                    Bioimpedância
-                  </TabsTrigger>
-                </TabsList>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="metodoComposicao"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Método utilizado</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="nenhum">
+                          Não tenho avaliação
+                        </SelectItem>
+                        <SelectItem value="bioimpedancia">
+                          Bioimpedância
+                        </SelectItem>
+                        <SelectItem value="pollock7">
+                          Dobras cutâneas (Pollock 7)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Se não tiver esses dados agora, escolha &quot;Não
+                      tenho avaliação&quot; e siga adiante.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <TabsContent value="nenhum" className="pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Se você não tiver dados de dobras ou bioimpedância,
-                    não tem problema. O app usa seu perfil, peso e
-                    rotina para estimar o resto.
-                  </p>
-                </TabsContent>
+              {/* Bioimpedância */}
+              {metodoSelecionado === "bioimpedancia" && (
+                <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-sm font-semibold">
+                    Dados da bioimpedância
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="bioPercentualGordura"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>% Gordura</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="bioPercentualMassaMagra"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>% Massa magra</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="bioAguaCorporal"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>% Água corporal (opcional)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="bioIdadeMetabolica"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Idade metabólica (opcional)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
 
-                <TabsContent value="pollock7" className="pt-4">
+              {/* Pollock 7 */}
+              {metodoSelecionado === "pollock7" && (
+                <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="text-sm font-semibold">
+                    Dobras cutâneas (Pollock 7)
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
@@ -793,87 +948,20 @@ export function Step2Avaliacao({
                       )}
                     />
                   </div>
-                </TabsContent>
-
-                <TabsContent value="bioimpedancia" className="pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="bioPercentualGordura"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>% Gordura</FormLabel>
-                          <FormControl>
-                            <Input type="number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="bioPercentualMassaMagra"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>% Massa magra</FormLabel>
-                          <FormControl>
-                            <Input type="number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="bioAguaCorporal"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>% Água corporal</FormLabel>
-                          <FormControl>
-                            <Input type="number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="bioIdadeMetabolica"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Idade metabólica</FormLabel>
-                          <FormControl>
-                            <Input type="number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </TabsContent>
-              </Tabs>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Use a mesma avaliação (mesmo avaliador / adipômetro)
+                    para comparar evolução.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Botões */}
-          <div className="flex justify-between pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                try {
-                  if (typeof onBack === "function") onBack();
-                  else navigate("/onboarding/step-1", {
-                    replace: true,
-                  });
-                } catch {}
-              }}
-            >
-              Voltar
-            </Button>
+          {/* Botão principal do step */}
+          <div className="flex justify-end pt-2">
             <Button
               type="submit"
-              className="bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
+              className="w-full sm:w-auto bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
             >
               Continuar
             </Button>
