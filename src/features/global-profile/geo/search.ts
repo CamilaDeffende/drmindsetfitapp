@@ -1,10 +1,6 @@
-// src/features/global-profile/geo/search.ts
-
 import { CITIES_BR_MAJOR, type BRCity } from "./cities_BR_major";
-import {
-  getCitiesByUF,
-  isCitiesBRLoaded,
-} from "./cities_BR_all";
+import { getCitiesByUF, isCitiesBRLoaded } from "./cities_BR_all";
+
 import {
   ensureCitiesUSLoaded,
   getCitiesByUSState,
@@ -12,8 +8,21 @@ import {
   type USCity,
 } from "./cities_US_all";
 
-type CityHit<T extends { name: string; regionCode?: string; stateCode?: string; timeZone: string }> =
-  T & { score: number };
+import {
+  getCitiesByESRegion,
+  isCitiesESLoaded,
+  type ESCity,
+} from "./cities_ES_all";
+
+type CityHit<
+  T extends {
+    name: string;
+    regionCode?: string;
+    stateCode?: string;
+    timeZone: string;
+    weight?: number;
+  }
+> = T & { score: number };
 
 function norm(s: string): string {
   return s
@@ -38,7 +47,7 @@ function getSourceCitiesBR(regionCode?: string): BRCity[] {
     }
   }
 
-  // 2) fallback: cidades principais
+  // 2) fallback: principais cidades
   return CITIES_BR_MAJOR.filter((c) => (uf ? c.regionCode === uf : true));
 }
 
@@ -53,7 +62,7 @@ export function searchCitiesBR(
   const base = getSourceCitiesBR(uf);
   if (base.length === 0) return [];
 
-  // Se não digitou nada, devolve as primeiras cidades ordenadas
+  // sem query → lista “default”
   if (!q) {
     return base
       .slice()
@@ -78,7 +87,6 @@ export function searchCitiesBR(
   }
 
   if (!hits.length) return [];
-
   hits.sort((a, b) => b.score - a.score);
   return hits.slice(0, limit);
 }
@@ -140,7 +148,68 @@ export function searchCitiesUS(
   }
 
   if (!hits.length) return [];
+  hits.sort((a, b) => b.score - a.score);
+  return hits.slice(0, limit);
+}
 
+/* =======================================================================
+   ESPANHA
+   ======================================================================= */
+
+function getSourceCitiesES(regionCode?: string): ESCity[] {
+  const code = (regionCode || "").toUpperCase().trim();
+  if (!code) return [];
+
+  // aqui o isCitiesESLoaded NÃO recebe parâmetros
+  if (!isCitiesESLoaded()) {
+    // se você tiver um lazy-load tipo ensureCitiesESLoaded(),
+    // ele pode ser chamado aqui; por enquanto só retorna []
+    return [];
+  }
+
+  const all = getCitiesByESRegion(code);
+  if (all && all.length > 0) {
+    return [...all];
+  }
+
+  return [];
+}
+
+export function searchCitiesES(
+  query: string,
+  regionCode?: string,
+  limit = 10
+): ESCity[] {
+  const q = norm(query || "");
+  const code = (regionCode || "").toUpperCase().trim();
+
+  const base = getSourceCitiesES(code);
+  if (base.length === 0) return [];
+
+  if (!q) {
+    return base
+      .slice()
+      .sort((a, b) => {
+        const wa = a.weight ?? 0;
+        const wb = b.weight ?? 0;
+        if (wa !== wb) return wb - wa;
+        return a.name.localeCompare(b.name, "es-ES");
+      })
+      .slice(0, limit);
+  }
+
+  const hits: CityHit<ESCity>[] = [];
+  for (const c of base) {
+    const name = norm(c.name);
+    const idx = name.indexOf(q);
+    if (idx === -1) continue;
+
+    const weight = c.weight || 0;
+    const score = (idx === 0 ? 1000 : 500) + weight - idx;
+    hits.push({ ...c, score });
+  }
+
+  if (!hits.length) return [];
   hits.sort((a, b) => b.score - a.score);
   return hits.slice(0, limit);
 }
@@ -159,8 +228,9 @@ export function searchCitiesByCountry(
 
   if (cc === "BR") return searchCitiesBR(query, regionCode, limit);
   if (cc === "US") return searchCitiesUS(query, regionCode, limit);
+  if (cc === "ES") return searchCitiesES(query, regionCode, limit);
 
-  // Espanha / outros países: por enquanto sem implementação
+  // outros países ainda não implementados
   return [];
 }
 
