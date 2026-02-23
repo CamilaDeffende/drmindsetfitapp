@@ -10,7 +10,8 @@ import {
 
 import {
   getCitiesByESRegion,
-  isCitiesESLoaded,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isCitiesESLoaded, // mantido só se quiser usar depois; não usamos agora
   type ESCity,
 } from "./cities_ES_all";
 
@@ -47,7 +48,7 @@ function getSourceCitiesBR(regionCode?: string): BRCity[] {
     }
   }
 
-  // 2) fallback: principais cidades
+  // 2) fallback: cidades principais
   return CITIES_BR_MAJOR.filter((c) => (uf ? c.regionCode === uf : true));
 }
 
@@ -62,7 +63,7 @@ export function searchCitiesBR(
   const base = getSourceCitiesBR(uf);
   if (base.length === 0) return [];
 
-  // sem query → lista “default”
+  // Se não digitou nada, devolve as primeiras cidades ordenadas
   if (!q) {
     return base
       .slice()
@@ -160,13 +161,7 @@ function getSourceCitiesES(regionCode?: string): ESCity[] {
   const code = (regionCode || "").toUpperCase().trim();
   if (!code) return [];
 
-  // aqui o isCitiesESLoaded NÃO recebe parâmetros
-  if (!isCitiesESLoaded()) {
-    // se você tiver um lazy-load tipo ensureCitiesESLoaded(),
-    // ele pode ser chamado aqui; por enquanto só retorna []
-    return [];
-  }
-
+  // Simples: pega direto do cities_ES_all.ts; sem lazy-load
   const all = getCitiesByESRegion(code);
   if (all && all.length > 0) {
     return [...all];
