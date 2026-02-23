@@ -132,16 +132,13 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     } catch (e) {}
   };
 
-  /* MF_STEP1_DRAFT_SEED */
+  // Seed vindo do fluxo de onboarding (caso tenha draft externo)
   const draftSeed = (value && typeof value === "object" ? value : {}) as Partial<
     PerfilUsuario
   >;
 
-  // MF_STEP1_SSOT_DRAFT_V1
-  const draftSSOT = useOnboardingStore((st) => st.draft) as Record<
-    string,
-    any
-  >;
+  // Draft interno (SSOT local)
+  const draftSSOT = useOnboardingStore((st) => st.draft) as Record<string, any>;
 
   const form = useForm<PerfilUsuario>({
     resolver: zodResolver(perfilSchema) as any,
@@ -150,75 +147,54 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     defaultValues: {
       ...(draftSSOT as any),
       ...(draftSeed as any),
-
-      // se não houver draft nem state.perfil => vem vazio (placeholders só visual)
-      nomeCompleto:
-        (draftSeed.nomeCompleto ??
-          state.perfil?.nomeCompleto ??
-          "") as any,
-
-      sexo: (draftSeed.sexo ??
-        state.perfil?.sexo ??
-        undefined) as any,
-
-      idade: (draftSeed.idade ??
-        state.perfil?.idade ??
-        undefined) as any,
-
-      altura: (draftSeed.altura ??
-        state.perfil?.altura ??
-        undefined) as any,
-
+      // campos numéricos SEM valor padrão fixo
+      nomeCompleto: (draftSeed.nomeCompleto ??
+        state.perfil?.nomeCompleto ??
+        "") as any,
+      sexo: (draftSeed.sexo ?? state.perfil?.sexo ?? "masculino") as any,
+      idade: (draftSeed.idade ?? state.perfil?.idade ?? undefined) as any,
+      altura: (draftSeed.altura ?? state.perfil?.altura ?? undefined) as any,
       pesoAtual: (draftSeed.pesoAtual ??
         state.perfil?.pesoAtual ??
         undefined) as any,
-
       historicoPeso: (draftSeed.historicoPeso ??
         state.perfil?.historicoPeso ??
         "") as any,
-
       nivelTreino: (draftSeed.nivelTreino ??
         state.perfil?.nivelTreino ??
-        undefined) as any,
-
+        "iniciante") as any,
       modalidadePrincipal: (draftSeed.modalidadePrincipal ??
         state.perfil?.modalidadePrincipal ??
-        undefined) as any,
-
+        "musculacao") as any,
       frequenciaSemanal: (draftSeed.frequenciaSemanal ??
         state.perfil?.frequenciaSemanal ??
         undefined) as any,
-
       duracaoTreino: (draftSeed.duracaoTreino ??
         state.perfil?.duracaoTreino ??
         undefined) as any,
-
       objetivo: (draftSeed.objetivo ??
         state.perfil?.objetivo ??
-        undefined) as any,
+        "hipertrofia") as any,
     },
   });
 
-  const { isValid } = form.formState;
-
-  // MF_STEP1_AUTOSAVE_WATCH_V1
+  // Autosave para o motor inteligente
   const _watchAll = form.watch();
   useOnboardingDraftSaver(
     {
+      // chaves do Step1 (pt)
       nomeCompleto: (_watchAll as any).nomeCompleto ?? "",
       sexo: (_watchAll as any).sexo ?? "",
       idade: (_watchAll as any).idade ?? "",
       altura: (_watchAll as any).altura ?? "",
       pesoAtual: (_watchAll as any).pesoAtual ?? "",
-
       historicoPeso: (_watchAll as any).historicoPeso ?? "",
       nivelTreino: (_watchAll as any).nivelTreino ?? "",
       modalidadePrincipal: (_watchAll as any).modalidadePrincipal ?? "",
       frequenciaSemanal: (_watchAll as any).frequenciaSemanal ?? "",
       duracaoTreino: (_watchAll as any).duracaoTreino ?? "",
       objetivo: (_watchAll as any).objetivo ?? "",
-
-      // aliases EN
+      // aliases EN p/ SSOT futura
       name: (_watchAll as any).nomeCompleto ?? "",
       sex: (_watchAll as any).sexo ?? "",
       age: (_watchAll as any).idade ?? "",
@@ -294,6 +270,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                         <Input
                           placeholder="Digite seu nome completo"
                           {...field}
+                          /* MF_STEP1_BIND_NOME */
                           onChange={(e) => {
                             field.onChange(e);
                             try {
@@ -369,7 +346,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                     )}
                   />
 
-                <FormField
+                  <FormField
                     control={form.control}
                     name="pesoAtual"
                     render={({ field }) => (
@@ -454,7 +431,14 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
               </div>
 
               {/* Ações */}
-              {/* (os botões ficam onde você já tiver no fluxo principal) */}
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="submit"
+                  className="w-full sm:w-auto bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
+                >
+                  Continuar
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>

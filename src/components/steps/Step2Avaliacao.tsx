@@ -188,7 +188,7 @@ export function Step2Avaliacao({
     defaultValues: {
       ...(draftSSOT as any),
 
-      // 👉 Peso/altura puxados do Step1, sem defaults 70/170
+      // Peso/altura puxados do Step1, sem defaults 70/170
       peso:
         (draftSSOT as any)?.peso ??
         state.perfil?.pesoAtual ??
