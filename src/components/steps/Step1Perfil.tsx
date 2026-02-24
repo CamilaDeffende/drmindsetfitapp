@@ -2,6 +2,7 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import type { PerfilUsuario } from "@/types";
 import { BrandIcon } from "@/components/branding/BrandIcon";
@@ -37,7 +37,6 @@ import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { useNavigate } from "react-router-dom";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { useOnboardingStore } from "@/store/onboarding/onboardingStore";
-import { useEffect } from "react";
 
 type OnboardingStepProps = {
   value?: any;
@@ -111,7 +110,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     const nome = (data?.nomeCompleto || "").trim();
     if (!nome || nome.length < 3) {
       console.warn(
-        " Tentativa de avançar Step1 sem nome completo válido. Bloqueando goNextSafe."
+        "Tentativa de avançar Step1 sem nome completo válido. Bloqueando goNextSafe."
       );
       return;
     }
@@ -200,76 +199,75 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     },
   });
 
-    const { isValid } = form.formState;
+  const { isValid } = form.formState;
 
-    // MF_STEP1_AUTOSAVE_WATCH_V1
-    const _watchAll = form.watch();
-    useOnboardingDraftSaver(
-      {
-        nomeCompleto: (_watchAll as any).nomeCompleto ?? "",
-        sexo: (_watchAll as any).sexo ?? "",
-        idade: (_watchAll as any).idade ?? "",
-        altura: (_watchAll as any).altura ?? "",
-        pesoAtual: (_watchAll as any).pesoAtual ?? "",
+  // MF_STEP1_AUTOSAVE_WATCH_V1
+  const _watchAll = form.watch();
+  useOnboardingDraftSaver(
+    {
+      nomeCompleto: (_watchAll as any).nomeCompleto ?? "",
+      sexo: (_watchAll as any).sexo ?? "",
+      idade: (_watchAll as any).idade ?? "",
+      altura: (_watchAll as any).altura ?? "",
+      pesoAtual: (_watchAll as any).pesoAtual ?? "",
 
-        historicoPeso: (_watchAll as any).historicoPeso ?? "",
-        nivelTreino: (_watchAll as any).nivelTreino ?? "",
-        modalidadePrincipal: (_watchAll as any).modalidadePrincipal ?? "",
-        frequenciaSemanal: (_watchAll as any).frequenciaSemanal ?? "",
-        duracaoTreino: (_watchAll as any).duracaoTreino ?? "",
-        objetivo: (_watchAll as any).objetivo ?? "",
+      historicoPeso: (_watchAll as any).historicoPeso ?? "",
+      nivelTreino: (_watchAll as any).nivelTreino ?? "",
+      modalidadePrincipal: (_watchAll as any).modalidadePrincipal ?? "",
+      frequenciaSemanal: (_watchAll as any).frequenciaSemanal ?? "",
+      duracaoTreino: (_watchAll as any).duracaoTreino ?? "",
+      objetivo: (_watchAll as any).objetivo ?? "",
 
-        // aliases EN
-        name: (_watchAll as any).nomeCompleto ?? "",
-        sex: (_watchAll as any).sexo ?? "",
-        age: (_watchAll as any).idade ?? "",
-        heightCm: (_watchAll as any).altura ?? "",
-        weightKg: (_watchAll as any).pesoAtual ?? "",
-      },
-      400
-    );
+      // aliases EN
+      name: (_watchAll as any).nomeCompleto ?? "",
+      sex: (_watchAll as any).sexo ?? "",
+      age: (_watchAll as any).idade ?? "",
+      heightCm: (_watchAll as any).altura ?? "",
+      weightKg: (_watchAll as any).pesoAtual ?? "",
+    },
+    400
+  );
 
-    // 🔁 NOVO: sincroniza form -> state.perfil em tempo real
-    useEffect(() => {
-      try {
-        const payload = _watchAll as any;
-        updateState({ perfil: payload });
+  // 🔧 NOVO: espelha SEMPRE que o form estiver válido (independe do botão do shell)
+  useEffect(() => {
+    if (!isValid) return;
+    const data = form.getValues();
 
-        if (typeof onChange === "function") {
-          onChange(payload);
-        }
-      } catch (e) {
-        console.error("[MF] erro ao sincronizar perfil no Step1", e);
-      }
-    }, [_watchAll, updateState, onChange]);
-
-    // só pra matar o warning enquanto não usamos isValid
-    void isValid;
-
-    const onSubmit = (data: PerfilUsuario) => {
-      const nome = (data?.nomeCompleto || "").trim();
-      if (!nome || nome.length < 3) {
-        form.setError("nomeCompleto", {
-          type: "manual",
-          message: "Nome completo é obrigatório",
-        });
-        return;
-      }
-
-      // 🔧 aqui a correção
+    try {
       updateState({
         perfil: data,
         avaliacao: {
           ...((state as any)?.avaliacao ?? {}),
-          // espelha os campos que o Step2 usa
           altura: data.altura,
           peso: data.pesoAtual,
         },
       } as any);
+    } catch (e) {}
+  }, [_watchAll, isValid, updateState, state, form]);
 
-      nextStep();
-      __goNextSafe(data);
-    };
+  const onSubmit = (data: PerfilUsuario) => {
+    const nome = (data?.nomeCompleto || "").trim();
+    if (!nome || nome.length < 3) {
+      form.setError("nomeCompleto", {
+        type: "manual",
+        message: "Nome completo é obrigatório",
+      });
+      return;
+    }
+
+    // Continua tendo o submit “oficial”
+    updateState({
+      perfil: data,
+      avaliacao: {
+        ...((state as any)?.avaliacao ?? {}),
+        altura: data.altura,
+        peso: data.pesoAtual,
+      },
+    } as any);
+
+    nextStep();
+    __goNextSafe(data);
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8" data-testid="mf-step-root">
@@ -288,7 +286,9 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
         <div className="mb-4 flex items-center justify-center">
           <BrandIcon size={64} />
         </div>
-        <h2 className="text-3xl font-bold mb-2">Vamos calibrar seu protocolo</h2>
+        <h2 className="text-3xl font-bold mb-2">
+          Vamos calibrar seu protocolo
+        </h2>
         <p className="text-muted-foreground">
           Leva ~2 minutos. Quanto mais fiel, mais assertivo o seu plano.
         </p>
@@ -358,8 +358,12 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="masculino">Masculino</SelectItem>
-                            <SelectItem value="feminino">Feminino</SelectItem>
+                            <SelectItem value="masculino">
+                              Masculino
+                            </SelectItem>
+                            <SelectItem value="feminino">
+                              Feminino
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -397,7 +401,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                     )}
                   />
 
-                <FormField
+                  <FormField
                     control={form.control}
                     name="pesoAtual"
                     render={({ field }) => (
@@ -481,8 +485,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                 />
               </div>
 
-              {/* Ações */}
-              {/* (os botões ficam onde você já tiver no fluxo principal) */}
+              {/* Não precisa ter botão de submit aqui; o shell usa o "Continuar" global */}
             </form>
           </Form>
         </CardContent>
