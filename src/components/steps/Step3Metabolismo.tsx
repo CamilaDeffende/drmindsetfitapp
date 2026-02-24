@@ -4,7 +4,7 @@
 // MF_STEP3_GUARD_MINIMO_MAXIMO_V1
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import {
   Card,
