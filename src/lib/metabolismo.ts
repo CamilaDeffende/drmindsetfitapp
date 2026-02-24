@@ -76,7 +76,7 @@ const getWeeklyActivityMultiplier = (freq?: string): number => {
       return 1.725;
     default:
       // quando não informado, não mexe tanto no FAF base
-      return 1.0;
+      return 0;
   }
 };
 
@@ -307,19 +307,26 @@ export const calcularMetabolismo = (
   }
 
   // ===============================
-  // FAF / GET
+  // FAF / GET  (corrigido)
   // ===============================
-  const fafBase = getFAF(nivelTreino);
-
   const freqSemanal = (avaliacao as any)
     ?.frequenciaAtividadeSemanal as string | undefined;
-  const fafMult = getWeeklyActivityMultiplier(freqSemanal);
 
-  // Limitamos FAF final entre 1.0 e 2.4 (segurança)
-  const fafFinal = clamp(fafBase * fafMult, 1.0, 2.4);
+  const fafFromNivel = getFAF(nivelTreino);
+  const fafFromFreq = getWeeklyActivityMultiplier(freqSemanal);
+
+  // o que usamos de fato para cálculo:
+  // se tiver frequência semanal, ela manda; se não, cai no nível de treino
+  let fafFinal = fafFromFreq || fafFromNivel;
+  fafFinal = clamp(fafFinal, 1.0, 2.4);
+
+  // campos informativos para o Step3
+  const fafBase = fafFromNivel;             // "FAF base (nível)"
+  const fafMult = fafFromFreq || 1.0;       // "Multiplicador (freq. semanal)"
+
   const faf = fafFinal;
 
-  // GET = TMB × FAF
+  // GET = TMB × FAF final (um único fator)
   const get = tmb * fafFinal;
 
   // ===============================
@@ -412,7 +419,6 @@ export const calcularMetabolismo = (
     ajusteBiotipoMotivo,
 
     // campo extra para o Step3 mostrar label de frequência
-    // (não quebra nada em outros lugares)
     nivelAtividadeSemanal,
   } as any;
 
