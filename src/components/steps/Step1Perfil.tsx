@@ -246,20 +246,30 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     // só pra matar o warning enquanto não usamos isValid
     void isValid;
 
-  const onSubmit = (data: PerfilUsuario) => {
-    const nome = (data?.nomeCompleto || "").trim();
-    if (!nome || nome.length < 3) {
-      form.setError("nomeCompleto", {
-        type: "manual",
-        message: "Nome completo é obrigatório",
-      });
-      return;
-    }
+    const onSubmit = (data: PerfilUsuario) => {
+      const nome = (data?.nomeCompleto || "").trim();
+      if (!nome || nome.length < 3) {
+        form.setError("nomeCompleto", {
+          type: "manual",
+          message: "Nome completo é obrigatório",
+        });
+        return;
+      }
 
-    updateState({ perfil: data });
-    nextStep();
-    __goNextSafe(data);
-  };
+      // 🔧 aqui a correção
+      updateState({
+        perfil: data,
+        avaliacao: {
+          ...((state as any)?.avaliacao ?? {}),
+          // espelha os campos que o Step2 usa
+          altura: data.altura,
+          peso: data.pesoAtual,
+        },
+      } as any);
+
+      nextStep();
+      __goNextSafe(data);
+    };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8" data-testid="mf-step-root">
