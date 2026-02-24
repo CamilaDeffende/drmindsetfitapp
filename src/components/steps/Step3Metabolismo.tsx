@@ -4,7 +4,7 @@
 // MF_STEP3_GUARD_MINIMO_MAXIMO_V1
 // PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import {
   Card,
@@ -57,24 +57,19 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   };
   useOnboardingDraftSaver(__mf_step3_payload as any, 400);
 
-  //  NOVO: resultado vem sempre do state (sem useState travando)
-  let resultado = (
-    (state as any)?.metabolismo ??
-    (state as any)?.resultadoMetabolico ??
-    null
-  ) as ResultadoMetabolico | null;
+  // 🔄 Resultado: sempre recalculado com base nos dados atuais do state
+  const perfilSafe = (state as any)?.perfil ?? {};
+  const avaliacaoSafe = (state as any)?.avaliacao ?? {};
 
-  // Fallback: se ainda não temos resultado salvo no state, calculamos aqui mesmo
-  if (!resultado) {
-    try {
-      const perfilSafe = (state as any)?.perfil ?? {};
-      const avaliacaoSafe = (state as any)?.avaliacao ?? {};
-      const calc = calcularMetabolismo(perfilSafe, avaliacaoSafe);
-      resultado = calc as ResultadoMetabolico;
-    } catch (err) {
-      console.error("[MF] Erro ao calcular metabolismo no Step3:", err);
-      resultado = null;
-    }
+  let resultado: ResultadoMetabolico | null = null;
+  try {
+    resultado = calcularMetabolismo(
+      perfilSafe,
+      avaliacaoSafe
+    ) as ResultadoMetabolico;
+  } catch (err) {
+    console.error("[MF] Erro ao calcular metabolismo no Step3:", err);
+    resultado = null;
   }
 
   // MF_MFQUEUECALC_STUB_V1
@@ -152,41 +147,19 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
 
   function mfPersistStep3() {
     // MF_STEP3_PERSIST_V11: somente persistência (sem navegação interna; fluxo via Shell)
-    const prevPerfil = ((state as any)?.perfil ?? {}) as any;
-    const prevAvaliacao = ((state as any)?.avaliacao ?? {}) as any;
-
-    const perfilAtual = {
-      ...prevPerfil,
-      nivelAtividadeSemanal: mfPALKey,
-      biotipoTendencia: mfBioKey,
-    };
-
-    const avaliacaoAtual = {
-      ...prevAvaliacao,
-      frequenciaAtividadeSemanal: mfPALKey,
-      biotipo: mfBioKey,
-    };
-
-    let novoResultado: ResultadoMetabolico | null = null;
-    try {
-      novoResultado = calcularMetabolismo(
-        perfilAtual as any,
-        avaliacaoAtual as any
-      );
-    } catch (err) {
-      console.error("[MF] Erro ao recalcular metabolismo no Step3:", err);
-    }
-
     try {
       updateState?.({
-        perfil: perfilAtual,
-        avaliacao: avaliacaoAtual,
-        ...(novoResultado
-          ? {
-              metabolismo: novoResultado,
-              resultadoMetabolico: novoResultado,
-            }
-          : {}),
+        perfil: {
+          ...(state as any)?.perfil,
+          nivelAtividadeSemanal: mfPALKey,
+          biotipoTendencia: mfBioKey,
+        },
+        // MF_BLOCK14_CANONICALIZE_V1: espelha Step3 -> avaliacao (fonte da verdade do app)
+        avaliacao: {
+          ...((state as any)?.avaliacao ?? {}),
+          frequenciaAtividadeSemanal: mfPALKey,
+          biotipo: mfBioKey,
+        },
       } as any);
     } catch {}
 
@@ -212,8 +185,13 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     } catch {}
   }
 
-  // MF_STEP3_AUTOSAVE_GUARD_V3 — persiste sempre que mudar e divergir do state
+  // MF_STEP3_AUTOSAVE_GUARD_V2
+  const __mfAutoSavedRef = useRef(false);
+
+  // BEGIN_MF_BLOCK6_AUTOSAVE_V1
   useEffect(() => {
+    // Autosave idempotente: salva 1x e só se estiver diferente do state atual (evita loops).
+    if (__mfAutoSavedRef.current) return;
     if (!mfPALKey || !mfBioKey) return;
 
     const curPal = String(
@@ -228,12 +206,16 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     );
 
     if (curPal === String(mfPALKey) && curBio === String(mfBioKey)) {
+      __mfAutoSavedRef.current = true;
       return;
     }
 
-    mfPersistStep3();
+    try {
+      __mfAutoSavedRef.current = true;
+      mfPersistStep3();
+    } catch {}
   }, [mfPALKey, mfBioKey, state]);
-  // END_MF_BLOCK6_AUTOSAVE_V1 (ajustado)
+  // END_MF_BLOCK6_AUTOSAVE_V1
 
   // MF_BLOCK15_COHERENCE_WARNING_V1
   const mfFreqTreino = Number((state as any)?.perfil?.frequenciaSemanal ?? 0);
@@ -271,6 +253,8 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     (state as any)?.metabolismo?.nivelAtividadeSemanal ??
     "—";
   const __weeklyLabel = mfActivityWeeklyLabel(__weeklyRaw);
+
+  // silenciar warnings de variáveis não usadas (diagnóstico interno)
   void __delta;
   void __weeklyLabel;
 
@@ -322,34 +306,19 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     </div>
   ) : null;
 
-  // Cálculo do metabolismo + GET, se ainda não existir no state
+  // Espelha o resultado atual no state para outras telas usarem
   useEffect(() => {
-    if (state.perfil && state.avaliacao && !state.metabolismo) {
-      try {
-        const calc = calcularMetabolismo(
-          state.perfil as any,
-          state.avaliacao as any
-        );
-
-        mfQueueCalc();
-        updateState({
-          metabolismo: calc,
-          resultadoMetabolico: calc,
-          // MF_BLOCK14_CANONICALIZE_V1: espelha Step3 -> avaliacao (fonte da verdade do app)
-          avaliacao: {
-            ...((state as any)?.avaliacao ?? {}),
-            frequenciaAtividadeSemanal: mfPALKey,
-            biotipo: mfBioKey,
-          },
-        } as any);
-      } catch (err) {
-        console.error("[MF] Erro ao calcular metabolismo inicial no Step3:", err);
-      }
-    } else if (state.metabolismo) {
+    if (!resultado) return;
+    try {
       mfQueueCalc();
+      updateState?.({
+        metabolismo: resultado,
+      } as any);
+    } catch (err) {
+      console.error("[MF] Erro ao salvar metabolismo no state:", err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.perfil, state.avaliacao, state.metabolismo, updateState]);
+    // eslint-disable-next-line react-hooks-exhaustive-deps
+  }, [resultado?.tmb, resultado?.get, resultado?.caloriasAlvo]);
 
   // 🔄 Enquanto ainda não temos resultado calculado, mostra spinner
   if (!resultado) {
@@ -434,7 +403,7 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text.white">
+                    <p className="text-sm font-semibold text-white">
                       Biotipo (tendência prática)
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -442,7 +411,7 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
                       plano.
                     </p>
                   </div>
-                  <Badge className="bg.white/10 text-white border-white/10">
+                  <Badge className="bg-white/10 text-white border-white/10">
                     Estratégia
                   </Badge>
                 </div>
@@ -476,7 +445,7 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
             </div>
             {/* END_MF_UI_PAL_BIOTIPO_RENDER_V1 */}
 
-            <div className="text-sm text-muted-foreground mt-4">
+            <div className="text-sm text-muted-foreground">
               Conclua as próximas etapas para gerar o protocolo completo com
               dias, modalidades e progressão.
             </div>
@@ -519,7 +488,7 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <div className="mb-4 flex items-center justify-center">
+        <div className="mb-4 flex items-center justify_center">
           <BrandIcon size={64} />
         </div>
         <h2 className="text-3xl font-bold mb-2">Metabolismo calibrado</h2>
