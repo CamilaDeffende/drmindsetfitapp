@@ -63,7 +63,7 @@ import type {
 // FAF / Atividade
 // ===============================
 
-// BLOCO 1 (Premium): multiplicador por frequência semanal (atividade real)
+// BLOCO 1: multiplicador de atividade geral
 const getWeeklyActivityMultiplier = (freq?: string): number => {
   switch (String(freq || "").toLowerCase()) {
     case "sedentario":
@@ -75,8 +75,7 @@ const getWeeklyActivityMultiplier = (freq?: string): number => {
     case "muito_ativo":
       return 1.725;
     default:
-      // quando não informado, não mexe tanto no FAF base
-      return 0;
+      return 1.375; // neutro
   }
 };
 
@@ -90,6 +89,23 @@ const getFAF = (nivelTreino: string): number => {
     atleta: 1.9,
   };
   return faf[nivelTreino] || 1.55;
+};
+
+// Se não tiver frequência semanal, inferimos a partir do nível
+const mapNivelTreinoToWeekly = (nivelTreino: string): string => {
+  switch (nivelTreino) {
+    case "sedentario":
+      return "sedentario";
+    case "iniciante":
+      return "moderadamente_ativo";
+    case "intermediario":
+      return "ativo";
+    case "avancado":
+    case "atleta":
+      return "muito_ativo";
+    default:
+      return "moderadamente_ativo";
+  }
 };
 
 // ===============================
@@ -237,7 +253,7 @@ export const calcularMetabolismo = (
   const perfil = (perfilRaw ?? {}) as any;
   const avaliacao = (avaliacaoRaw ?? {}) as any;
 
-  // ===== Validações obrigatórias (sem valores iniciais fictícios) =====
+  // ===== Validações obrigatórias =====
   if (!avaliacao || avaliacao.peso == null || avaliacao.peso === "") {
     throw new Error("Peso não informado.");
   }
@@ -269,7 +285,6 @@ export const calcularMetabolismo = (
     throw new Error("Sexo inválido. Use 'masculino' ou 'feminino'.");
   }
 
-  // Opcional: se não tiver nível de treino, cai em iniciante
   const nivelTreino = (perfil.nivelTreino ?? "iniciante") as string;
 
   const composicao = (avaliacao.composicao ?? {}) as any;
@@ -307,26 +322,28 @@ export const calcularMetabolismo = (
   }
 
   // ===============================
-  // FAF / GET  (corrigido)
+  // FAF / GET (TDEE)
   // ===============================
-  const freqSemanal = (avaliacao as any)
+  const weeklyKeyRaw = (avaliacao as any)
     ?.frequenciaAtividadeSemanal as string | undefined;
 
-  const fafFromNivel = getFAF(nivelTreino);
-  const fafFromFreq = getWeeklyActivityMultiplier(freqSemanal);
+  const freqSemanalKey =
+    weeklyKeyRaw && weeklyKeyRaw !== ""
+      ? weeklyKeyRaw
+      : mapNivelTreinoToWeekly(nivelTreino);
 
-  // o que usamos de fato para cálculo:
-  // se tiver frequência semanal, ela manda; se não, cai no nível de treino
-  let fafFinal = fafFromFreq || fafFromNivel;
-  fafFinal = clamp(fafFinal, 1.0, 2.4);
+  const fafBase = getFAF(nivelTreino); // depende do nível declarado no perfil
+  const fafWeekly = getWeeklyActivityMultiplier(freqSemanalKey); // intensidade geral da rotina
 
-  // campos informativos para o Step3
-  const fafBase = fafFromNivel;             // "FAF base (nível)"
-  const fafMult = fafFromFreq || 1.0;       // "Multiplicador (freq. semanal)"
+  // Em vez de multiplicar os dois (que estourava o TDEE),
+  // usamos o MAIOR entre eles como FAF final (range mais realista).
+  const fafFinal = clamp(Math.max(fafBase, fafWeekly), 1.2, 2.0);
 
-  const faf = fafFinal;
+  // "Multiplicador" mostra quanto a frequência semanal ajustou o FAF base
+  const fafMult =
+    fafBase > 0 ? Number((fafFinal / fafBase).toFixed(2)) : 1.0;
 
-  // GET = TMB × FAF final (um único fator)
+  // GET / TDEE
   const get = tmb * fafFinal;
 
   // ===============================
@@ -387,18 +404,18 @@ export const calcularMetabolismo = (
   // Comparativo entre equações (já com FAF final aplicado)
   // ===============================
   const comparativo = {
-    cunningham: Math.round(calcularCunningham(massaMagra) * faf),
-    faoWho: Math.round(calcularFaoWho(peso, idade, sexo) * faf),
+    cunningham: Math.round(calcularCunningham(massaMagra) * fafFinal),
+    faoWho: Math.round(calcularFaoWho(peso, idade, sexo) * fafFinal),
     harrisBenedict: Math.round(
-      calcularHarrisBenedict(peso, altura, idade, sexo) * faf
+      calcularHarrisBenedict(peso, altura, idade, sexo) * fafFinal
     ),
-    mifflin: Math.round(calcularMifflin(peso, altura, idade, sexo) * faf),
-    tinsley: Math.round(calcularTinsley(massaMagra) * faf),
+    mifflin: Math.round(calcularMifflin(peso, altura, idade, sexo) * fafFinal),
+    tinsley: Math.round(calcularTinsley(massaMagra) * fafFinal),
   };
 
   // Nivel de atividade "semana" para o Step3 mostrar no badge
   const nivelAtividadeSemanal: string =
-    freqSemanal || nivelTreino || "moderadamente_ativo";
+    freqSemanalKey || nivelTreino || "moderadamente_ativo";
 
   const resultado: ResultadoMetabolico = {
     equacaoUtilizada: equacaoEscolhida,
@@ -418,7 +435,6 @@ export const calcularMetabolismo = (
     ajusteBiotipoKcal,
     ajusteBiotipoMotivo,
 
-    // campo extra para o Step3 mostrar label de frequência
     nivelAtividadeSemanal,
   } as any;
 
