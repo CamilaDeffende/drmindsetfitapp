@@ -37,6 +37,7 @@ import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { useNavigate } from "react-router-dom";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { useOnboardingStore } from "@/store/onboarding/onboardingStore";
+import { useEffect } from "react";
 
 type OnboardingStepProps = {
   value?: any;
@@ -199,34 +200,51 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     },
   });
 
-  const { isValid } = form.formState;
+    const { isValid } = form.formState;
 
-  // MF_STEP1_AUTOSAVE_WATCH_V1
-  const _watchAll = form.watch();
-  useOnboardingDraftSaver(
-    {
-      nomeCompleto: (_watchAll as any).nomeCompleto ?? "",
-      sexo: (_watchAll as any).sexo ?? "",
-      idade: (_watchAll as any).idade ?? "",
-      altura: (_watchAll as any).altura ?? "",
-      pesoAtual: (_watchAll as any).pesoAtual ?? "",
+    // MF_STEP1_AUTOSAVE_WATCH_V1
+    const _watchAll = form.watch();
+    useOnboardingDraftSaver(
+      {
+        nomeCompleto: (_watchAll as any).nomeCompleto ?? "",
+        sexo: (_watchAll as any).sexo ?? "",
+        idade: (_watchAll as any).idade ?? "",
+        altura: (_watchAll as any).altura ?? "",
+        pesoAtual: (_watchAll as any).pesoAtual ?? "",
 
-      historicoPeso: (_watchAll as any).historicoPeso ?? "",
-      nivelTreino: (_watchAll as any).nivelTreino ?? "",
-      modalidadePrincipal: (_watchAll as any).modalidadePrincipal ?? "",
-      frequenciaSemanal: (_watchAll as any).frequenciaSemanal ?? "",
-      duracaoTreino: (_watchAll as any).duracaoTreino ?? "",
-      objetivo: (_watchAll as any).objetivo ?? "",
+        historicoPeso: (_watchAll as any).historicoPeso ?? "",
+        nivelTreino: (_watchAll as any).nivelTreino ?? "",
+        modalidadePrincipal: (_watchAll as any).modalidadePrincipal ?? "",
+        frequenciaSemanal: (_watchAll as any).frequenciaSemanal ?? "",
+        duracaoTreino: (_watchAll as any).duracaoTreino ?? "",
+        objetivo: (_watchAll as any).objetivo ?? "",
 
-      // aliases EN
-      name: (_watchAll as any).nomeCompleto ?? "",
-      sex: (_watchAll as any).sexo ?? "",
-      age: (_watchAll as any).idade ?? "",
-      heightCm: (_watchAll as any).altura ?? "",
-      weightKg: (_watchAll as any).pesoAtual ?? "",
-    },
-    400
-  );
+        // aliases EN
+        name: (_watchAll as any).nomeCompleto ?? "",
+        sex: (_watchAll as any).sexo ?? "",
+        age: (_watchAll as any).idade ?? "",
+        heightCm: (_watchAll as any).altura ?? "",
+        weightKg: (_watchAll as any).pesoAtual ?? "",
+      },
+      400
+    );
+
+    // 🔁 NOVO: sincroniza form -> state.perfil em tempo real
+    useEffect(() => {
+      try {
+        const payload = _watchAll as any;
+        updateState({ perfil: payload });
+
+        if (typeof onChange === "function") {
+          onChange(payload);
+        }
+      } catch (e) {
+        console.error("[MF] erro ao sincronizar perfil no Step1", e);
+      }
+    }, [_watchAll, updateState, onChange]);
+
+    // só pra matar o warning enquanto não usamos isValid
+    void isValid;
 
   const onSubmit = (data: PerfilUsuario) => {
     const nome = (data?.nomeCompleto || "").trim();

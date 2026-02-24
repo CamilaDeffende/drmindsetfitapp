@@ -33,8 +33,6 @@ export type Step3MetabolismoProps = {
 export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   const { value = {}, onChange = () => {}, onBack = () => {} } = props;
   // MF_STEP3_UNUSED_PROPS_SILENCE_V1
-  void value;
-  void onChange;
   void onBack;
 
   // MF_SAFE_ENTRIES_V1
@@ -42,6 +40,8 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     Object.entries(o ?? {}) as Array<[string, any]>;
 
   const { state, updateState } = useDrMindSetfit();
+  console.log("[DEBUG STEP3] perfilSafe", (state as any)?.perfil);
+  console.log("[DEBUG STEP3] avaliacaoSafe", (state as any)?.avaliacao);
 
   /* MF_BLOCK2_1_STEP3_AUTOSAVE */
   const __mf_step3_fromValue =
@@ -57,23 +57,18 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   };
   useOnboardingDraftSaver(__mf_step3_payload as any, 400);
 
-  // 🔄 Resultado: sempre recalculado com base nos dados atuais do state
-  const perfilSafe = (state as any)?.perfil ?? {};
-  const avaliacaoSafe = (state as any)?.avaliacao ?? {};
-
+  // 🔁 Resultado sempre calculado com base no perfil/avaliação ATUAIS
   let resultado: ResultadoMetabolico | null = null;
   try {
-    resultado = calcularMetabolismo(
-      perfilSafe,
-      avaliacaoSafe
-    ) as ResultadoMetabolico;
+    const perfilSafe = (state as any)?.perfil ?? {};
+    const avaliacaoSafe = (state as any)?.avaliacao ?? {};
+    resultado = calcularMetabolismo(perfilSafe, avaliacaoSafe) as ResultadoMetabolico;
   } catch (err) {
     console.error("[MF] Erro ao calcular metabolismo no Step3:", err);
     resultado = null;
   }
 
   // MF_MFQUEUECALC_STUB_V1
-  // Stub seguro: existia chamada legada (debounce/recalc). Mantemos para não quebrar build.
   const mfQueueCalc = () => {};
 
   const MF_AF_OPTIONS = [
@@ -112,12 +107,12 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     {
       key: "mesomorfo",
       label: "Mesomorfo",
-      desc: "Tende a responder bem a treino/hipertrofia, com perfil equilibrado.",
+      desc: "Atlético • ganha massa com mais facilidade.",
     },
     {
       key: "endomorfo",
       label: "Endomorfo",
-      desc: "Tende a acumular gordura com mais facilidade; foco em aderência e estratégia.",
+      desc: "Tende a ganhar/reter peso com facilidade.",
     },
     {
       key: "misto",
@@ -146,19 +141,13 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   );
 
   function mfPersistStep3() {
-    // MF_STEP3_PERSIST_V11: somente persistência (sem navegação interna; fluxo via Shell)
+    // MF_STEP3_PERSIST_V11: somente persistência
     try {
       updateState?.({
         perfil: {
           ...(state as any)?.perfil,
           nivelAtividadeSemanal: mfPALKey,
           biotipoTendencia: mfBioKey,
-        },
-        // MF_BLOCK14_CANONICALIZE_V1: espelha Step3 -> avaliacao (fonte da verdade do app)
-        avaliacao: {
-          ...((state as any)?.avaliacao ?? {}),
-          frequenciaAtividadeSemanal: mfPALKey,
-          biotipo: mfBioKey,
         },
       } as any);
     } catch {}
@@ -173,7 +162,6 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
       });
     } catch {}
 
-    // MF_STEP3_SSV3_ONCHANGE_V11
     try {
       const prev = (value as any) ?? {};
       const step3 = {
@@ -188,9 +176,7 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
   // MF_STEP3_AUTOSAVE_GUARD_V2
   const __mfAutoSavedRef = useRef(false);
 
-  // BEGIN_MF_BLOCK6_AUTOSAVE_V1
   useEffect(() => {
-    // Autosave idempotente: salva 1x e só se estiver diferente do state atual (evita loops).
     if (__mfAutoSavedRef.current) return;
     if (!mfPALKey || !mfBioKey) return;
 
@@ -227,17 +213,15 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     (mfFreqTreino <= 1 && mfPalKeyFromAvaliacao === "muito_ativo");
   // END_MF_BLOCK15_COHERENCE_WARNING_V1
 
-  // MF_BLOCO5C_DELTA_GET_TMB_CALC
+  // BARRINHA VERDE (delta entre GET e TMB)
   const __tmb = Number(
-    (state as any)?.resultadoMetabolico?.tmb ??
-      (state as any)?.resultadoMetabolico?.TMB ??
+    (resultado as any)?.tmb ??
       (state as any)?.metabolismo?.tmb ??
       (state as any)?.metabolismo?.TMB ??
       0
   );
   const __get = Number(
-    (state as any)?.resultadoMetabolico?.get ??
-      (state as any)?.resultadoMetabolico?.GET ??
+    (resultado as any)?.get ??
       (state as any)?.metabolismo?.get ??
       (state as any)?.metabolismo?.GET ??
       0
@@ -249,16 +233,12 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
 
   const __weeklyRaw =
     (state as any)?.perfil?.nivelAtividadeSemanal ??
-    (state as any)?.resultadoMetabolico?.nivelAtividadeSemanal ??
+    (resultado as any)?.nivelAtividadeSemanal ??
     (state as any)?.metabolismo?.nivelAtividadeSemanal ??
     "—";
   const __weeklyLabel = mfActivityWeeklyLabel(__weeklyRaw);
 
-  // silenciar warnings de variáveis não usadas (diagnóstico interno)
-  void __delta;
-  void __weeklyLabel;
-
-  // Preview objetivo do treino (pós-metabolismo)
+  // Preview treino (mantido, mas não mexe no cálculo)
   const __mfTreinoAtivo: any = (state as any)?.treinoAtivo;
   const __mfSessions: any[] = Array.isArray(__mfTreinoAtivo?.sessions)
     ? __mfTreinoAtivo.sessions
@@ -306,19 +286,23 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
     </div>
   ) : null;
 
-  // Espelha o resultado atual no state para outras telas usarem
+  // 💾 Persistir o resultado atual no contexto (para dashboard, relatório, etc.)
   useEffect(() => {
     if (!resultado) return;
     try {
       mfQueueCalc();
-      updateState?.({
+      updateState({
         metabolismo: resultado,
+        avaliacao: {
+          ...((state as any)?.avaliacao ?? {}),
+          frequenciaAtividadeSemanal: mfPALKey,
+          biotipo: mfBioKey,
+        },
       } as any);
-    } catch (err) {
-      console.error("[MF] Erro ao salvar metabolismo no state:", err);
+    } catch (e) {
+      console.error("[MF] Erro ao salvar metabolismo no state:", e);
     }
-    // eslint-disable-next-line react-hooks-exhaustive-deps
-  }, [resultado?.tmb, resultado?.get, resultado?.caloriasAlvo]);
+  }, [resultado, mfPALKey, mfBioKey, updateState, state]);
 
   // 🔄 Enquanto ainda não temos resultado calculado, mostra spinner
   if (!resultado) {
@@ -348,7 +332,7 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            {/* BEGIN_MF_UI_PAL_BIOTIPO_RENDER_V1 */}
+            {/* UI PAL + Biotipo mesmo enquanto calcula */}
             <div className="mt-6 grid gap-4">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between gap-3">
@@ -443,36 +427,17 @@ export function Step3Metabolismo(props: Step3MetabolismoProps = {}) {
                 </div>
               </div>
             </div>
-            {/* END_MF_UI_PAL_BIOTIPO_RENDER_V1 */}
 
-            <div className="text-sm text-muted-foreground">
-              Conclua as próximas etapas para gerar o protocolo completo com
-              dias, modalidades e progressão.
+            <div className="mt-8 flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E6BFF] mb-4" />
+              <p className="text-muted-foreground text-sm">
+                Calculando seu gasto diário…
+              </p>
             </div>
           </CardContent>
         </Card>
 
         {__mfTreinoPreview}
-
-        <div className="space-y-2 mt-8">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-            Metabolismo e energia diária
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Aqui estimamos seu gasto energético (TMB e gasto total diário) com
-            base no seu perfil. Esse número vira a referência para calorias e
-            macros — deixando o plano mais consistente e sustentável.
-          </p>
-        </div>
-
-        <Card>
-          <CardContent className="py-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E6BFF] mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              Calculando seu gasto diário…
-            </p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
