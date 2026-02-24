@@ -90,10 +90,7 @@ const avaliacaoSchema = z
       .optional()
       .or(z.literal("")),
     bioAguaCorporal: z.coerce.number().optional().or(z.literal("")),
-    bioIdadeMetabolica: z.coerce
-      .number()
-      .optional()
-      .or(z.literal("")),
+    bioIdadeMetabolica: z.coerce.number().optional().or(z.literal("")),
   })
   .superRefine((data, ctx) => {
     const metodo = String(data.metodoComposicao ?? "").toLowerCase();
@@ -131,7 +128,7 @@ const avaliacaoSchema = z
       req("bioPercentualGordura", "% Gordura (Bioimpedância)");
       req(
         "bioPercentualMassaMagra",
-        "% Massa magra (Bioimpedância)"
+        "% Massa magra (Bioimpedância)",
       );
     }
   });
@@ -164,14 +161,16 @@ export function Step2Avaliacao({
     defaultValues: {
       ...(draftSSOT as any),
 
-      // Peso/altura puxados do Step1, sem defaults 70/170
+      // ⭐ PRIORIDADE: dados do Step1 (perfil) → avaliação existente → draft
       peso:
-        (draftSSOT as any)?.peso ??
         state.perfil?.pesoAtual ??
+        state.avaliacao?.peso ??
+        (draftSSOT as any)?.peso ??
         undefined,
       altura:
-        (draftSSOT as any)?.altura ??
         state.perfil?.altura ??
+        state.avaliacao?.altura ??
+        (draftSSOT as any)?.altura ??
         undefined,
 
       metodoComposicao:
@@ -212,14 +211,14 @@ export function Step2Avaliacao({
 
   const _watchAll = form.watch();
   const metodoSelecionado = (form.watch(
-    "metodoComposicao"
+    "metodoComposicao",
   ) || "nenhum") as MetodoComposicao;
 
   useOnboardingDraftSaver(
     {
       step2: _watchAll as any,
     },
-    400
+    400,
   );
 
   const calcularIMCValor = (pesoVal: any, alturaVal: any) => {
@@ -253,7 +252,7 @@ export function Step2Avaliacao({
       Number(data.coxa);
 
     let densidadeCorporal: number;
-    let percentualGordura: number = 0;
+    let percentualGordura = 0;
     if (sexo === "masculino") {
       densidadeCorporal =
         1.112 -
@@ -274,7 +273,7 @@ export function Step2Avaliacao({
       densidadeCorporal: Number(densidadeCorporal.toFixed(4)),
       percentualGordura: Number(percentualGordura.toFixed(1)),
       percentualMassaMagra: Number(
-        (100 - percentualGordura).toFixed(1)
+        (100 - percentualGordura).toFixed(1),
       ),
     };
   };
@@ -313,7 +312,7 @@ export function Step2Avaliacao({
     if (data.metodoComposicao === "pollock7") {
       const resultado = calcularPollock7(
         data,
-        state.perfil?.sexo || "masculino"
+        state.perfil?.sexo || "masculino",
       );
       if (resultado) {
         avaliacao.composicao.pollock7 = {
@@ -340,7 +339,7 @@ export function Step2Avaliacao({
         avaliacao.composicao.bioimpedancia = {
           percentualGordura: Number(data.bioPercentualGordura),
           percentualMassaMagra: Number(
-            data.bioPercentualMassaMagra
+            data.bioPercentualMassaMagra,
           ),
           aguaCorporal: data.bioAguaCorporal
             ? Number(data.bioAguaCorporal)
@@ -350,10 +349,10 @@ export function Step2Avaliacao({
             : 0,
         };
         avaliacao.composicao.percentualGordura = Number(
-          data.bioPercentualGordura
+          data.bioPercentualGordura,
         );
         avaliacao.composicao.percentualMassaMagra = Number(
-          data.bioPercentualMassaMagra
+          data.bioPercentualMassaMagra,
         );
       }
     }
@@ -425,10 +424,10 @@ export function Step2Avaliacao({
               console.warn("[Step2Avaliacao] invalid:", errors);
               try {
                 setMfInvalidMsg(
-                  "Revise os campos obrigatórios antes de continuar."
+                  "Revise os campos obrigatórios antes de continuar.",
                 );
               } catch {}
-            }
+            },
           )}
           className="space-y-6 sm:space-y-7"
         >
@@ -546,8 +545,7 @@ export function Step2Avaliacao({
                             Mesomorfo
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            Atlético • ganha massa com mais
-                            facilidade.
+                            Atlético • ganha massa com mais facilidade.
                           </span>
                         </button>
 
@@ -561,8 +559,7 @@ export function Step2Avaliacao({
                             Endomorfo
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            Tende a ganhar/reter peso com
-                            facilidade.
+                            Tende a ganhar/reter peso com facilidade.
                           </span>
                         </button>
                       </div>
