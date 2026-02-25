@@ -1,6 +1,5 @@
 // MF_ONBOARDING_CONTRACT_V1
-// REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
-// PREMIUM_REFINEMENT_PHASE2_1: copy clara, validação explícita, feedback visual, sem sobrecarga cognitiva.
+// Step3Metabolismo – tela de impacto com resultado da calculadora
 
 import { useEffect, useState } from "react";
 import {
@@ -10,14 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import type { ResultadoMetabolico } from "@/types";
-import { calcularMetabolismo } from "@/lib/metabolismo"; 
+import { calcularMetabolismo } from "@/lib/metabolismo";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
-import { BrandIcon } from "@/components/branding/BrandIcon";
 
 type OnboardingStepProps = {
   value?: any;
@@ -34,508 +37,305 @@ export function Step3Metabolismo({
 }: OnboardingStepProps) {
   void value;
   void onChange;
+  void onNext;
 
-  const { state, updateState, nextStep } = useDrMindSetfit();
+  const { state, updateState } = useDrMindSetfit();
 
-  const [calcStatus, setCalcStatus] = useState<
-    "idle" | "calculando" | "ok" | "erro"
-  >("idle");
-  const [calcError, setCalcError] = useState<string | null>(null);
+  const [resultado, setResultado] = useState<ResultadoMetabolico | null>(
+    (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null
+  );
+  const [loading, setLoading] = useState(!resultado);
+  const [error, setError] = useState<string | null>(null);
 
-  const resultado = (state as any)?.metabolismo as
-    | ResultadoMetabolico
-    | undefined;
-
-  // Autosave leve do resultado no draft global
+  // Autosave leve do step 3
   useOnboardingDraftSaver(
     {
       step3: {
-        metabolismo: resultado ?? null,
+        ...(state as any).step3,
+        metabolismo: resultado ?? (state as any).metabolismo ?? null,
       },
     } as any,
     400
   );
 
-  // =========================
-  // Cálculo do metabolismo
-  // =========================
+  // Calcula metabolismo só uma vez (ou reaproveita se já existir)
   useEffect(() => {
-    const perfil = (state as any)?.perfil ?? {};
-    const avaliacao = (state as any)?.avaliacao ?? {};
-
-    // Se ainda não passou pelos steps anteriores, não tenta calcular nada
-    if (!perfil || !avaliacao) {
-      setCalcStatus("idle");
+    if (resultado) {
+      setLoading(false);
       return;
     }
 
-    const sexo = perfil.sexo;
-    const idade = Number(perfil.idade);
-    const peso = Number(avaliacao.peso);
-    const altura = Number(avaliacao.altura);
+    try {
+      const perfil =
+        (state as any)?.perfil ??
+        (state as any)?.step1 ??
+        (state as any)?.avaliacaoPerfil ??
+        {};
+      const avaliacao =
+        (state as any)?.avaliacao ??
+        (state as any)?.step2 ??
+        (state as any)?.avaliacaoFisica ??
+        {};
 
-    const hasRequired =
-      (sexo === "masculino" || sexo === "feminino") &&
-      Number.isFinite(idade) &&
-      idade > 0 &&
-      Number.isFinite(peso) &&
-      peso > 0 &&
-      Number.isFinite(altura) &&
-      altura > 0;
+      const calc = calcularMetabolismo(perfil, avaliacao);
 
-    if (!hasRequired) {
-      console.warn("[Step3Metabolismo] Dados insuficientes para cálculo:", {
-        sexo,
-        idade,
-        peso,
-        altura,
-      });
-      setCalcStatus("idle");
-      setCalcError(
-        "Revise os dados dos passos anteriores (sexo, idade, peso e altura)."
+      setResultado(calc);
+      setLoading(false);
+      setError(null);
+
+      // Salva no contexto global uma única vez
+      updateState({
+        ...(state as any),
+        metabolismo: calc,
+        resultadoMetabolico: calc,
+      } as any);
+    } catch (e: any) {
+      console.error("[MF] Erro ao calcular metabolismo:", e);
+      setError(
+        e?.message ||
+          "Não foi possível calcular seu metabolismo. Revise os dados dos passos anteriores."
       );
-      return;
+      setLoading(false);
     }
+  }, [resultado, state, updateState]);
 
-    setCalcStatus("calculando");
-    setCalcError(null);
+  const equacao =
+    (resultado as any)?.equacaoUtilizada ?? (state as any)?.metabolismo?.equacaoUtilizada;
 
-    let cancelled = false;
-
-    const run = () => {
-      try {
-        console.log("[Step3Metabolismo] Calculando metabolismo com:", {
-          perfil,
-          avaliacao,
-        });
-
-        const res = calcularMetabolismo(perfil as any, avaliacao as any);
-
-        if (cancelled) return;
-
-        updateState({ metabolismo: res });
-        setCalcStatus("ok");
-      } catch (e: any) {
-        if (cancelled) return;
-        console.error("[Step3Metabolismo] Erro ao calcular metabolismo:", e);
-        setCalcStatus("erro");
-        setCalcError(
-          e?.message ||
-            "Não foi possível calcular seu metabolismo. Revise os dados dos passos anteriores."
-        );
-      }
-    };
-
-    run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [state.perfil, state.avaliacao, updateState]);
-
-  // =========================
-  // Helpers de UI
-  // =========================
-
-  const tmb = resultado?.tmb ?? 0;
-  const get = resultado?.get ?? 0;
-  const caloriasAlvo = resultado?.caloriasAlvo ?? 0;
-
-  const faixaMin = resultado?.faixaSegura?.minimo ?? 0;
-  const faixaIdeal = resultado?.faixaSegura?.ideal ?? 0;
-  const faixaMax = resultado?.faixaSegura?.maximo ?? 0;
-
-  const equacao = resultado?.equacaoUtilizada;
-  const justificativa = resultado?.justificativa;
-
-  const fafBase = resultado?.fafBase ?? 0;
-  const fafMult = resultado?.fafMult ?? 0;
-  const fafFinal = resultado?.fafFinal ?? 0;
-
-  const ajusteBiotipoKcal = resultado?.ajusteBiotipoKcal ?? 0;
-  const ajusteBiotipoMotivo = resultado?.ajusteBiotipoMotivo ?? "";
-
-  const comparativo = resultado?.comparativo ?? {};
-
-  const nivelAtividadeSemanal =
-    (resultado as any)?.nivelAtividadeSemanal ??
-    (state as any)?.avaliacao?.frequenciaAtividadeSemanal ??
-    (state as any)?.perfil?.nivelTreino ??
-    "moderadamente_ativo";
-
-  const biotipo =
-    (state as any)?.avaliacao?.biotipo ??
-    (state as any)?.perfil?.biotipo ??
-    "mesomorfo";
-
-  const labelAtividade = (() => {
-    switch (nivelAtividadeSemanal) {
-      case "sedentario":
-        return "sedentário";
-      case "moderadamente_ativo":
-        return "moderadamente ativo";
-      case "ativo":
-        return "ativo";
-      case "muito_ativo":
-        return "muito ativo";
-      default:
-        return nivelAtividadeSemanal;
-    }
-  })();
-
-  const labelEquacao = (() => {
-    switch (equacao) {
-      case "mifflin":
-        return "Mifflin-St Jeor";
-      case "cunningham":
-        return "Cunningham";
-      case "fao-who":
-        return "FAO/WHO";
-      case "harris-benedict":
-        return "Harris-Benedict";
-      case "tinsley":
-        return "Tinsley (atletas)";
-      default:
-        return "Equação metabólica";
-    }
-  })();
-
-  const handleContinuar = () => {
-    if (typeof onNext === "function") onNext();
-    else if (typeof nextStep === "function") nextStep();
-  };
-
-  const handleVoltar = () => {
-    if (typeof onBack === "function") onBack();
-  };
-
-  // =========================
-  // Render
-  // =========================
+  const faixa = resultado?.faixaSegura;
+  const comparativo = resultado?.comparativo;
 
   return (
     <div
-      className="max-w-4xl mx-auto px-4 py-8"
+      className="max-w-4xl mx-auto px-4 py-6 sm:py-8"
       data-testid="mf-step-root"
     >
-      <div className="space-y-2">
+      {/* Cabeçalho */}
+      <div className="space-y-2 mb-6">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Metabolismo calibrado
+          Nível de atividade
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
           Usamos seus dados para estimar metabolismo de repouso (TMB), gasto
           diário (GET/TDEE) e uma faixa calórica segura para seu objetivo.
-          Isso vira a base do plano de treino, dieta e ajustes ao longo do
-          acompanhamento.
+          Esses números são a base do plano de treino e nutrição.
         </p>
       </div>
 
-      <div className="mb-8 mt-6 text-center">
-        <div className="mb-4 flex items-center justify-center">
-          <BrandIcon size={64} />
-        </div>
-        <h2 className="text-3xl font-bold mb-2">
-          Base científica para definir calorias e macros
-        </h2>
-        <p className="text-muted-foreground">
-          Nada de chute: usamos fórmulas validadas + seu nível de atividade e
-          biotipo para chegar em um alvo realista.
-        </p>
-      </div>
-
-      {/* Banner da equação escolhida */}
-      <Card className="mb-6 border-white/10 bg-white/[0.03]">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center justify-between gap-2 text-base sm:text-lg">
-            <span>Equação escolhida: {labelEquacao}</span>
-            {equacao && (
-              <Badge variant="outline" className="text-xs">
-                Automático pelo seu perfil
-              </Badge>
-            )}
-          </CardTitle>
-          {justificativa && (
-            <CardDescription className="text-sm text-muted-foreground">
-              {justificativa}
-            </CardDescription>
-          )}
-        </CardHeader>
-      </Card>
-
-      {/* Mensagens de erro / estado */}
-      {calcStatus === "erro" && calcError && (
-        <Alert className="mb-6 border-red-500/40 bg-red-500/5">
-          <AlertTitle>Não foi possível calcular seu gasto diário</AlertTitle>
-          <AlertDescription>{calcError}</AlertDescription>
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTitle>Algo deu errado</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* Cards principais só aparecem quando temos resultado */}
-      {resultado && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {/* TMB */}
+      {loading && !error && (
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Calculando seu gasto diário…
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && resultado && (
+        <div className="space-y-6">
+          {/* Bloco 1 – Cards principais */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm text-muted-foreground font-normal">
                   TMB (repouso)
                 </CardTitle>
+                <CardDescription className="text-[11px] text-muted-foreground">
+                  Energia mínima para manter funções vitais.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-semibold text-sky-400">
-                  {tmb.toLocaleString("pt-BR")}{" "}
-                  <span className="text-base text-muted-foreground">
-                    kcal
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Energia mínima para manter funções vitais.
+                <p className="text-3xl font-bold text-sky-300">
+                  {resultado.tmb}{" "}
+                  <span className="text-base text-muted-foreground">kcal</span>
                 </p>
               </CardContent>
             </Card>
 
-            {/* GET */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm text-muted-foreground font-normal">
                   GET (dia todo)
                 </CardTitle>
+                <CardDescription className="text-[11px] text-muted-foreground">
+                  Inclui rotina e nível de atividade.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-semibold text-sky-400">
-                  {get.toLocaleString("pt-BR")}{" "}
-                  <span className="text-base text-muted-foreground">
-                    kcal
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Inclui rotina + nível de atividade.
+                <p className="text-3xl font-bold text-blue-300">
+                  {resultado.get}{" "}
+                  <span className="text-base text-muted-foreground">kcal</span>
                 </p>
               </CardContent>
             </Card>
 
-            {/* Meta diária */}
             <Card className="border-emerald-500/40">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm text-muted-foreground font-normal">
                   Meta diária
                 </CardTitle>
+                <CardDescription className="text-[11px] text-muted-foreground">
+                  Direcionada ao seu objetivo atual.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-semibold text-emerald-400">
-                  {caloriasAlvo.toLocaleString("pt-BR")}{" "}
-                  <span className="text-base text-muted-foreground">
-                    kcal
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Direcionada ao seu objetivo atual.
+                <p className="text-3xl font-bold text-emerald-400">
+                  {resultado.caloriasAlvo}{" "}
+                  <span className="text-base text-muted-foreground">kcal</span>
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Faixa calórica segura */}
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
+          {/* Bloco 2 – Faixa calórica segura */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between gap-2">
                 <div>
-                  <CardTitle>Faixa Calórica Segura</CardTitle>
-                  <CardDescription>
-                    Uma zona de trabalho realista para consistência.
+                  <CardTitle className="text-base sm:text-lg">
+                    Faixa calórica segura
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    Zona de trabalho realista para consistência e aderência.
                   </CardDescription>
                 </div>
+                <Badge variant="outline" className="text-xs">
+                  Segurança primeiro
+                </Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    Mínimo
+            <CardContent>
+              {faixa && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Mínimo
+                    </div>
+                    <div className="text-lg font-semibold">
+                      {faixa.minimo} kcal
+                    </div>
                   </div>
-                  <div className="inline-flex items-baseline px-4 py-1 rounded-full bg-white/5 text-lg font-semibold">
-                    {faixaMin.toLocaleString("pt-BR")}{" "}
-                    <span className="ml-1 text-xs text-muted-foreground">
-                      kcal
-                    </span>
+                  <div className="text-center">
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Ideal
+                    </div>
+                    <div className="text-lg font-semibold text-emerald-400">
+                      {faixa.ideal} kcal
+                    </div>
                   </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    Ideal
-                  </div>
-                  <div className="inline-flex items-baseline px-4 py-1 rounded-full bg-emerald-500/10 text-lg font-semibold text-emerald-400">
-                    {faixaIdeal.toLocaleString("pt-BR")}{" "}
-                    <span className="ml-1 text-xs text-muted-foreground">
-                      kcal
-                    </span>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    Máximo
-                  </div>
-                  <div className="inline-flex items-baseline px-4 py-1 rounded-full bg-white/5 text-lg font-semibold">
-                    {faixaMax.toLocaleString("pt-BR")}{" "}
-                    <span className="ml-1 text-xs text-muted-foreground">
-                      kcal
-                    </span>
+                  <div className="text-center">
+                    <div className="text-xs text-muted-foreground mb-1">
+                      Máximo
+                    </div>
+                    <div className="text-lg font-semibold">
+                      {faixa.maximo} kcal
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Detalhes do cálculo */}
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                  Detalhes do cálculo (premium)
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <div className="text-xs text-muted-foreground">
-                      FAF base (nível)
-                    </div>
-                    <div className="mt-1 text-lg font-semibold">
-                      {fafBase.toFixed(2)}
-                    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm text-muted-foreground">
+                <div className="rounded-lg border border-white/10 p-3 bg-white/[0.02]">
+                  <div className="uppercase tracking-wide text-[10px] text-gray-400 mb-1">
+                    FAF base (nível)
                   </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">
-                      Multiplicador (freq. semanal)
-                    </div>
-                    <div className="mt-1 text-lg font-semibold">
-                      {fafMult.toFixed(2)}
-                    </div>
+                  <div className="text-base text-white">
+                    {resultado.fafBase.toFixed(2)}
                   </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">
-                      FAF final (aplicado)
-                    </div>
-                    <div className="mt-1 text-lg font-semibold">
-                      {fafFinal.toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                  <Badge variant="outline">
-                    Frequência: {labelAtividade}
-                  </Badge>
-                  <Badge variant="outline">Biotipo: {biotipo}</Badge>
-                  <Badge variant="outline">
-                    Ajuste biotipo: {ajusteBiotipoKcal} kcal
-                  </Badge>
-                </div>
-
-                {ajusteBiotipoKcal !== 0 && ajusteBiotipoMotivo && (
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    {ajusteBiotipoMotivo}
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    Fator calculado pelo nível de treino informado.
                   </p>
-                )}
-
-                <p className="mt-3 text-[11px] text-muted-foreground">
-                  FAF = fator de atividade. Aplicamos multiplicador premium com
-                  base na frequência semanal e limitamos o FAF final entre 1.0 e
-                  2.4 para segurança.
-                </p>
-              </div>
-
-              {/* Barrinha de "zona de trabalho" */}
-              <div className="mt-4 h-2 w-full rounded-full bg-yellow-400/20 overflow-hidden">
-                <div className="h-full w-1/2 bg-emerald-400" />
+                </div>
+                <div className="rounded-lg border border-white/10 p-3 bg-white/[0.02]">
+                  <div className="uppercase tracking-wide text-[10px] text-gray-400 mb-1">
+                    FAF final (aplicado)
+                  </div>
+                  <div className="text-base text-white">
+                    {resultado.fafFinal.toFixed(2)}
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    Já considerando sua rotina semanal e guardrails.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/10 p-3 bg-white/[0.02]">
+                  <div className="uppercase tracking-wide text-[10px] text-gray-400 mb-1">
+                    Equação escolhida
+                  </div>
+                  <div className="text-base text-white capitalize">
+                    {String(equacao || "mifflin").replace("-", " ")}
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    {resultado.justificativa}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Comparativo entre equações */}
+          {/* Bloco 3 – Comparativo entre equações */}
           {comparativo && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base sm:text-lg">
-                  Comparativo Entre Equações
+                  Comparativo entre equações
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  Veja como as fórmulas variam para o seu perfil.
+                  Veja como as fórmulas variam para o seu perfil (já com
+                  atividade aplicada).
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {[
-                  { key: "cunningham", label: "Cunningham" },
-                  { key: "faoWho", label: "FAO/WHO" },
-                  { key: "harrisBenedict", label: "Harris-Benedict" },
-                  { key: "mifflin", label: "Mifflin-St Jeor" },
-                  { key: "tinsley", label: "Tinsley" },
-                ].map((row) => {
-                  const valor = (comparativo as any)?.[row.key];
-                  if (!valor) return null;
-                  const isEscolhida =
-                    row.key === String(equacao ?? "").toLowerCase() ||
-                    (row.key === "mifflin" && equacao === "mifflin");
-                  return (
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  {([
+                    ["Mifflin-St Jeor", comparativo.mifflin],
+                    ["Harris-Benedict", comparativo.harrisBenedict],
+                    ["Cunningham", comparativo.cunningham],
+                    ["FAO/WHO", comparativo.faoWho],
+                    ["Tinsley (atletas)", comparativo.tinsley],
+                  ] as const).map(([label, value]) => (
                     <div
-                      key={row.key}
-                      className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm"
+                      key={label}
+                      className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 bg-white/[0.02]"
                     >
-                      <div className="flex items-center gap-2">
-                        <span>{row.label}</span>
-                        {isEscolhida && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] border-emerald-500/60 text-emerald-400"
-                          >
-                            Escolhida
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="font-semibold">
-                        {Number(valor).toLocaleString("pt-BR")} kcal
-                      </div>
+                      <span className="text-muted-foreground">{label}</span>
+                      <span className="font-semibold">
+                        {value} <span className="text-xs">kcal</span>
+                      </span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
 
-                <p className="mt-2 text-[11px] text-muted-foreground text-center">
-                  Variação de{" "}
-                  {Math.min(
-                    ...(Object.values(comparativo) as number[])
-                  ).toLocaleString("pt-BR")}{" "}
-                  a{" "}
-                  {Math.max(
-                    ...(Object.values(comparativo) as number[])
-                  ).toLocaleString("pt-BR")}{" "}
-                  kcal entre os métodos.
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Normal existir uma variação entre fórmulas. Nós usamos a
+                  equação mais adequada ao seu caso e mantemos o plano dentro de
+                  uma faixa segura.
                 </p>
               </CardContent>
             </Card>
           )}
-        </>
-      )}
 
-      {/* Estado "calculando" no fim da página */}
-      {calcStatus === "calculando" && (
-        <div className="mt-8 flex flex-col items-center justify-center text-sm text-muted-foreground">
-          <div className="mb-3 h-8 w-8 rounded-full border border-sky-400 border-t-transparent animate-spin" />
-          Calculando seu gasto diário…
+          {/* Navegação local: Voltar (Continuar vem do OnboardingFlow) */}
+          <div className="flex justify-start pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onBack}
+              className="border-white/10"
+            >
+              Voltar
+            </Button>
+          </div>
         </div>
       )}
-
-      {/* Barra de ações inferior (usar botões do fluxo principal) */}
-      <div className="mt-8 flex items-center justify-between gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleVoltar}
-          className="px-4"
-        >
-          Voltar
-        </Button>
-        <Button
-          type="button"
-          onClick={handleContinuar}
-          className="px-6 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
-        >
-          Continuar
-        </Button>
-      </div>
     </div>
   );
 }
+
+export default Step3Metabolismo;
