@@ -199,9 +199,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     },
   });
 
-  const { isValid } = form.formState;
-
-  // MF_STEP1_AUTOSAVE_WATCH_V1
+    // MF_STEP1_AUTOSAVE_WATCH_V1
   const _watchAll = form.watch();
   useOnboardingDraftSaver(
     {
@@ -228,14 +226,25 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     400
   );
 
-  // 🔧 NOVO: espelha SEMPRE que o form estiver válido (independe do botão do shell)
+  // 🔧 NOVO: espelha SEMPRE que os ESSENCIAIS estiverem preenchidos
+  // (idade, sexo, altura, pesoAtual) – não depende mais de isValid do form inteiro
   useEffect(() => {
-    if (!isValid) return;
     const data = form.getValues();
+
+    const temEssenciais =
+      data.sexo &&
+      data.idade &&
+      data.altura &&
+      data.pesoAtual;
+
+    if (!temEssenciais) return;
 
     try {
       updateState({
-        perfil: data,
+        perfil: {
+          ...(state as any)?.perfil,
+          ...data,
+        },
         avaliacao: {
           ...((state as any)?.avaliacao ?? {}),
           altura: data.altura,
@@ -243,7 +252,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
         },
       } as any);
     } catch (e) {}
-  }, [_watchAll, isValid, updateState, state, form]);
+  }, [_watchAll, updateState, state, form]);
 
   const onSubmit = (data: PerfilUsuario) => {
     const nome = (data?.nomeCompleto || "").trim();
@@ -257,7 +266,10 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
 
     // Continua tendo o submit “oficial”
     updateState({
-      perfil: data,
+      perfil: {
+        ...(state as any)?.perfil,
+        ...data,
+      },
       avaliacao: {
         ...((state as any)?.avaliacao ?? {}),
         altura: data.altura,
