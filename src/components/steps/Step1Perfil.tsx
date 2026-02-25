@@ -199,7 +199,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     },
   });
 
-    // MF_STEP1_AUTOSAVE_WATCH_V1
+  // MF_STEP1_AUTOSAVE_WATCH_V1
   const _watchAll = form.watch();
   useOnboardingDraftSaver(
     {
@@ -226,8 +226,8 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     400
   );
 
-  // 🔧 NOVO: espelha SEMPRE que os ESSENCIAIS estiverem preenchidos
-  // (idade, sexo, altura, pesoAtual) – não depende mais de isValid do form inteiro
+  // 🔧 Autosave: sempre que os ESSENCIAIS estiverem preenchidos,
+  // espelha no contexto e zera metabolismo pra forçar recálculo no Step3
   useEffect(() => {
     const data = form.getValues();
 
@@ -241,6 +241,8 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
 
     try {
       updateState({
+        metabolismo: undefined,
+        resultadoMetabolico: undefined,
         perfil: {
           ...(state as any)?.perfil,
           ...data,
@@ -264,8 +266,10 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
       return;
     }
 
-    // Continua tendo o submit “oficial”
+    // Submit “oficial”: garante persistência e também zera metabolismo
     updateState({
+      metabolismo: undefined,
+      resultadoMetabolico: undefined,
       perfil: {
         ...(state as any)?.perfil,
         ...data,
@@ -452,7 +456,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                 />
               </div>
 
-              {/* Objetivo */}
+              {/* Direção do plano */}
               <div className="space-y-4 pt-6 border-t">
                 <h3 className="font-semibold text-lg">Direção do plano</h3>
 

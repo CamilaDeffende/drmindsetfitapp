@@ -1,7 +1,9 @@
 // MF_ONBOARDING_CONTRACT_V1
 // Step3Metabolismo – tela de impacto com resultado da calculadora
+// Fix: recalcula quando perfil/avaliacao mudam (evita reaproveitar resultado antigo)
+// Fix: não espalhar `state` inteiro no updateState (merge parcial)
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,11 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import type { ResultadoMetabolico } from "@/types";
@@ -41,13 +39,56 @@ export function Step3Metabolismo({
 
   const { state, updateState } = useDrMindSetfit();
 
+  // Fonte canônica (preferência): state.perfil e state.avaliacao
+  const perfil = useMemo(
+    () =>
+      (state as any)?.perfil ??
+      (state as any)?.step1 ??
+      (state as any)?.avaliacaoPerfil ??
+      {},
+    [state]
+  );
+
+  const avaliacao = useMemo(
+    () =>
+      (state as any)?.avaliacao ??
+      (state as any)?.step2 ??
+      (state as any)?.avaliacaoFisica ??
+      {},
+    [state]
+  );
+
+  // Chave simples para detectar mudanças que afetam o metabolismo
+  const calcKey = useMemo(() => {
+    const p = perfil as any;
+    const a = avaliacao as any;
+    const peso = a?.peso ?? a?.pesoAtual ?? "";
+    const altura = a?.altura ?? "";
+    const idade = p?.idade ?? "";
+    const sexo = p?.sexo ?? "";
+    const nivelTreino = p?.nivelTreino ?? "";
+    const objetivo = p?.objetivo ?? "";
+    const freq = a?.frequenciaAtividadeSemanal ?? "";
+    const biotipo = a?.biotipo ?? p?.biotipo ?? "";
+    return [
+      peso,
+      altura,
+      idade,
+      sexo,
+      nivelTreino,
+      objetivo,
+      freq,
+      biotipo,
+    ].join("|");
+  }, [perfil, avaliacao]);
+
   const [resultado, setResultado] = useState<ResultadoMetabolico | null>(
     (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null
   );
   const [loading, setLoading] = useState(!resultado);
   const [error, setError] = useState<string | null>(null);
 
-  // Autosave leve do step 3
+  // Autosave leve do step 3 (mantém rascunho)
   useOnboardingDraftSaver(
     {
       step3: {
@@ -58,49 +99,50 @@ export function Step3Metabolismo({
     400
   );
 
-  // Calcula metabolismo só uma vez (ou reaproveita se já existir)
+  // Recalcula sempre que calcKey muda (evita usar resultado antigo)
   useEffect(() => {
-    if (resultado) {
-      setLoading(false);
-      return;
-    }
+    let cancelled = false;
+
+    // Sempre tenta recalcular quando dados mudarem
+    setLoading(true);
+    setError(null);
 
     try {
-      const perfil =
-        (state as any)?.perfil ??
-        (state as any)?.step1 ??
-        (state as any)?.avaliacaoPerfil ??
-        {};
-      const avaliacao =
-        (state as any)?.avaliacao ??
-        (state as any)?.step2 ??
-        (state as any)?.avaliacaoFisica ??
-        {};
+      const calc = calcularMetabolismo(perfil as any, avaliacao as any);
 
-      const calc = calcularMetabolismo(perfil, avaliacao);
+      if (cancelled) return;
 
       setResultado(calc);
       setLoading(false);
       setError(null);
 
-      // Salva no contexto global uma única vez
-      updateState({
-        ...(state as any),
-        metabolismo: calc,
-        resultadoMetabolico: calc,
-      } as any);
+      // Salva no contexto global (merge parcial)
+      try {
+        updateState({
+          metabolismo: calc,
+          resultadoMetabolico: calc,
+        } as any);
+      } catch {}
     } catch (e: any) {
+      if (cancelled) return;
+
       console.error("[MF] Erro ao calcular metabolismo:", e);
+      setResultado(null);
       setError(
         e?.message ||
           "Não foi possível calcular seu metabolismo. Revise os dados dos passos anteriores."
       );
       setLoading(false);
     }
-  }, [resultado, state, updateState]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [calcKey, perfil, avaliacao, updateState]);
 
   const equacao =
-    (resultado as any)?.equacaoUtilizada ?? (state as any)?.metabolismo?.equacaoUtilizada;
+    (resultado as any)?.equacaoUtilizada ??
+    (state as any)?.metabolismo?.equacaoUtilizada;
 
   const faixa = resultado?.faixaSegura;
   const comparativo = resultado?.comparativo;
@@ -117,8 +159,8 @@ export function Step3Metabolismo({
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
           Usamos seus dados para estimar metabolismo de repouso (TMB), gasto
-          diário (GET/TDEE) e uma faixa calórica segura para seu objetivo.
-          Esses números são a base do plano de treino e nutrição.
+          diário (GET/TDEE) e uma faixa calórica segura para seu objetivo. Esses
+          números são a base do plano de treino e nutrição.
         </p>
       </div>
 
@@ -247,23 +289,25 @@ export function Step3Metabolismo({
                     FAF base (nível)
                   </div>
                   <div className="text-base text-white">
-                    {resultado.fafBase.toFixed(2)}
+                    {Number(resultado.fafBase).toFixed(2)}
                   </div>
                   <p className="mt-1 text-[11px] text-gray-400">
                     Fator calculado pelo nível de treino informado.
                   </p>
                 </div>
+
                 <div className="rounded-lg border border-white/10 p-3 bg-white/[0.02]">
                   <div className="uppercase tracking-wide text-[10px] text-gray-400 mb-1">
                     FAF final (aplicado)
                   </div>
                   <div className="text-base text-white">
-                    {resultado.fafFinal.toFixed(2)}
+                    {Number(resultado.fafFinal).toFixed(2)}
                   </div>
                   <p className="mt-1 text-[11px] text-gray-400">
                     Já considerando sua rotina semanal e guardrails.
                   </p>
                 </div>
+
                 <div className="rounded-lg border border-white/10 p-3 bg-white/[0.02]">
                   <div className="uppercase tracking-wide text-[10px] text-gray-400 mb-1">
                     Equação escolhida
