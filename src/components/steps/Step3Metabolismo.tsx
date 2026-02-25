@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import type { ResultadoMetabolico } from "@/types";
-import { calcularMetabolismo } from "@/services/metabolismo/calcularMetabolismo"; // 🔁 ajuste o path se for diferente
+import { calcularMetabolismo } from "@/lib/metabolismo"; 
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 
