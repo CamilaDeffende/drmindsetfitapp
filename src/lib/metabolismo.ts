@@ -1,4 +1,6 @@
-// Helpers seguros
+// ===============================
+// Helpers gerais
+// ===============================
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
@@ -10,6 +12,7 @@ function calcAjusteBiotipoKcal(params: {
   bfPct?: number | null;
 }) {
   const biotipo = params.biotipo;
+  // Por enquanto só ajustamos ectomorfo
   if (biotipo !== "ectomorfo") {
     return { kcal: 0, motivo: "Sem ajuste de biotipo." };
   }
@@ -22,7 +25,7 @@ function calcAjusteBiotipoKcal(params: {
     ? (params.bfPct as number)
     : undefined;
 
-  // indicador simples de "magração"
+  // Indicador simples de "magração"
   const baixoIMC = imc !== undefined ? imc < 21.0 : false;
   const muitoBaixoIMC = imc !== undefined ? imc < 19.5 : false;
   const bfBaixo = bf !== undefined ? bf < 12 : false;
@@ -46,7 +49,9 @@ function calcAjusteBiotipoKcal(params: {
   return { kcal, motivo };
 }
 
-// Motor de Decisão Metabólica - DrMindSetfit
+// ===============================
+// Tipos do app
+// ===============================
 import type {
   PerfilUsuario,
   AvaliacaoFisica,
@@ -54,7 +59,11 @@ import type {
   ResultadoMetabolico,
 } from "@/types";
 
-// BLOCO 1 (Premium): multiplicador por frequência semanal (atividade real)
+// ===============================
+// FAF / Atividade
+// ===============================
+
+// BLOCO 1: multiplicador de atividade geral
 const getWeeklyActivityMultiplier = (freq?: string): number => {
   switch (String(freq || "").toLowerCase()) {
     case "sedentario":
@@ -66,11 +75,11 @@ const getWeeklyActivityMultiplier = (freq?: string): number => {
     case "muito_ativo":
       return 1.725;
     default:
-      return 1.375;
+      return 1.375; // neutro
   }
 };
 
-// Fator de Atividade Física (FAF)
+// FAF baseado no nível de treino declarado no perfil
 const getFAF = (nivelTreino: string): number => {
   const faf: Record<string, number> = {
     sedentario: 1.2,
@@ -81,6 +90,27 @@ const getFAF = (nivelTreino: string): number => {
   };
   return faf[nivelTreino] || 1.55;
 };
+
+// Se não tiver frequência semanal, inferimos a partir do nível
+const mapNivelTreinoToWeekly = (nivelTreino: string): string => {
+  switch (nivelTreino) {
+    case "sedentario":
+      return "sedentario";
+    case "iniciante":
+      return "moderadamente_ativo";
+    case "intermediario":
+      return "ativo";
+    case "avancado":
+    case "atleta":
+      return "muito_ativo";
+    default:
+      return "moderadamente_ativo";
+  }
+};
+
+// ===============================
+// Equações de TMB
+// ===============================
 
 // Cunningham (baseado em massa magra)
 export const calcularCunningham = (massaMagra: number): number => {
@@ -135,7 +165,9 @@ export const calcularTinsley = (massaMagra: number): number => {
   return 25.9 * massaMagra + 284;
 };
 
-// MOTOR DE DECISÃO INTELIGENTE
+// ===============================
+// Motor de decisão da equação
+// ===============================
 export const decidirEquacaoMetabolica = (
   perfil: PerfilUsuario,
   avaliacao: AvaliacaoFisica
@@ -177,7 +209,7 @@ export const decidirEquacaoMetabolica = (
   return "mifflin";
 };
 
-// Justificativa da escolha
+// Justificativa da escolha da equação
 export const gerarJustificativa = (
   equacao: EquacaoMetabolica,
   perfil: PerfilUsuario
@@ -211,7 +243,9 @@ export const gerarJustificativa = (
   return justificativas[equacao];
 };
 
-// Calcular metabolismo completo
+// ===============================
+// Cálculo completo do metabolismo
+// ===============================
 export const calcularMetabolismo = (
   perfilRaw: PerfilUsuario,
   avaliacaoRaw: AvaliacaoFisica
@@ -219,21 +253,50 @@ export const calcularMetabolismo = (
   const perfil = (perfilRaw ?? {}) as any;
   const avaliacao = (avaliacaoRaw ?? {}) as any;
 
-  const peso = Number(avaliacao.peso ?? 70);
-  const altura = Number(avaliacao.altura ?? 170);
-  const idade = Number(perfil.idade ?? 30);
-  const sexo = (perfil.sexo ?? "masculino") as string;
+  // ===== Validações obrigatórias =====
+  if (!avaliacao || avaliacao.peso == null || avaliacao.peso === "") {
+    throw new Error("Peso não informado.");
+  }
+  if (!avaliacao.altura && avaliacao.altura !== 0) {
+    throw new Error("Altura não informada.");
+  }
+  if (!perfil.idade && perfil.idade !== 0) {
+    throw new Error("Idade não informada.");
+  }
+  if (!perfil.sexo) {
+    throw new Error("Sexo não informado. Informe masculino ou feminino.");
+  }
+
+  const peso = Number(avaliacao.peso);
+  const altura = Number(avaliacao.altura);
+  const idade = Number(perfil.idade);
+  const sexo = perfil.sexo as string;
+
+  if (!Number.isFinite(peso) || peso <= 0) {
+    throw new Error("Peso inválido.");
+  }
+  if (!Number.isFinite(altura) || altura <= 0) {
+    throw new Error("Altura inválida.");
+  }
+  if (!Number.isFinite(idade) || idade <= 0) {
+    throw new Error("Idade inválida.");
+  }
+  if (sexo !== "masculino" && sexo !== "feminino") {
+    throw new Error("Sexo inválido. Use 'masculino' ou 'feminino'.");
+  }
+
   const nivelTreino = (perfil.nivelTreino ?? "iniciante") as string;
 
   const composicao = (avaliacao.composicao ?? {}) as any;
-  const percentualMM = typeof composicao.percentualMassaMagra === "number"
-    ? composicao.percentualMassaMagra
-    : undefined;
+  const percentualMM =
+    typeof composicao.percentualMassaMagra === "number"
+      ? composicao.percentualMassaMagra
+      : undefined;
 
   const massaMagra =
     typeof percentualMM === "number"
       ? peso * (percentualMM / 100)
-      : peso * 0.75; // Estimativa conservadora
+      : peso * 0.75; // Estimativa conservadora se não tiver composição
 
   // Decidir equação automaticamente
   const equacaoEscolhida = decidirEquacaoMetabolica(perfil, avaliacao);
@@ -258,34 +321,58 @@ export const calcularMetabolismo = (
       break;
   }
 
-  // GET = TMB × FAF
-  const fafBase = getFAF(nivelTreino);
-  const freqSemanal = (avaliacao as any)
+  // ===============================
+  // FAF / GET (TDEE)
+  // ===============================
+  const weeklyKeyRaw = (avaliacao as any)
     ?.frequenciaAtividadeSemanal as string | undefined;
-  const fafMult = getWeeklyActivityMultiplier(freqSemanal);
-  const fafFinal = Math.min(2.4, Math.max(1.0, fafBase * fafMult));
-  const faf = fafFinal;
+
+  const freqSemanalKey =
+    weeklyKeyRaw && weeklyKeyRaw !== ""
+      ? weeklyKeyRaw
+      : mapNivelTreinoToWeekly(nivelTreino);
+
+  const fafBase = getFAF(nivelTreino); // depende do nível declarado no perfil
+  const fafWeekly = getWeeklyActivityMultiplier(freqSemanalKey); // intensidade geral da rotina
+
+  // Em vez de multiplicar os dois (que estourava o TDEE),
+  // usamos o MAIOR entre eles como FAF final (range mais realista).
+  const fafFinal = clamp(Math.max(fafBase, fafWeekly), 1.2, 2.0);
+
+  // "Multiplicador" mostra quanto a frequência semanal ajustou o FAF base
+  const fafMult =
+    fafBase > 0 ? Number((fafFinal / fafBase).toFixed(2)) : 1.0;
+
+  // GET / TDEE
   const get = tmb * fafFinal;
 
+  // ===============================
   // Calorias alvo (baseado no objetivo)
-  let caloriasAlvo = get;
+  // ===============================
   const objetivo = (perfil.objetivo ?? "manutencao") as string;
+
+  let caloriasAlvo = get;
   if (objetivo === "emagrecimento") {
     caloriasAlvo = get * 0.85; // déficit de 15%
   } else if (objetivo === "hipertrofia") {
     caloriasAlvo = get * 1.1; // superávit de 10%
   }
 
-  // Faixa segura inicial
+  // ===============================
+  // Faixa segura (mínimo / ideal / máximo)
+  // ===============================
   let faixaSegura = {
     minimo: Math.round(caloriasAlvo * 0.9),
     ideal: Math.round(caloriasAlvo),
     maximo: Math.round(caloriasAlvo * 1.1),
   };
 
-  // Ajuste por biotipo (premium, seguro e explicável)
+  // ===============================
+  // Ajuste por biotipo (premium, seguro, explicável)
+  // ===============================
   const biotipo =
     (avaliacao as any)?.biotipo ?? (perfil as any)?.biotipo ?? undefined;
+
   const alturaM = altura > 0 ? altura / 100 : 1.7;
   const imc = peso / Math.pow(alturaM, 2);
 
@@ -301,10 +388,11 @@ export const calcularMetabolismo = (
     imc,
     bfPct,
   });
+
   const ajusteBiotipoKcal = ajusteBio.kcal;
   const ajusteBiotipoMotivo = ajusteBio.motivo;
 
-  // aplica ajuste no alvo final + recalcula faixa segura
+  // Aplica ajuste no alvo final + recalcula faixa segura
   caloriasAlvo = caloriasAlvo + (ajusteBiotipoKcal || 0);
   faixaSegura = {
     minimo: Math.round(caloriasAlvo * 0.9),
@@ -312,29 +400,43 @@ export const calcularMetabolismo = (
     maximo: Math.round(caloriasAlvo * 1.1),
   };
 
-  // Comparativo com todas as fórmulas
+  // ===============================
+  // Comparativo entre equações (já com FAF final aplicado)
+  // ===============================
   const comparativo = {
-    cunningham: Math.round(calcularCunningham(massaMagra) * faf),
-    faoWho: Math.round(calcularFaoWho(peso, idade, sexo) * faf),
+    cunningham: Math.round(calcularCunningham(massaMagra) * fafFinal),
+    faoWho: Math.round(calcularFaoWho(peso, idade, sexo) * fafFinal),
     harrisBenedict: Math.round(
-      calcularHarrisBenedict(peso, altura, idade, sexo) * faf
+      calcularHarrisBenedict(peso, altura, idade, sexo) * fafFinal
     ),
-    mifflin: Math.round(calcularMifflin(peso, altura, idade, sexo) * faf),
-    tinsley: Math.round(calcularTinsley(massaMagra) * faf),
+    mifflin: Math.round(calcularMifflin(peso, altura, idade, sexo) * fafFinal),
+    tinsley: Math.round(calcularTinsley(massaMagra) * fafFinal),
   };
 
-  return {
+  // Nivel de atividade "semana" para o Step3 mostrar no badge
+  const nivelAtividadeSemanal: string =
+    freqSemanalKey || nivelTreino || "moderadamente_ativo";
+
+  const resultado: ResultadoMetabolico = {
     equacaoUtilizada: equacaoEscolhida,
     justificativa: gerarJustificativa(equacaoEscolhida, perfil),
+
     tmb: Math.round(tmb),
+    get: Math.round(get),
+    caloriasAlvo: Math.round(caloriasAlvo),
+
+    // usados no card "Detalhes do cálculo (premium)" do Step3
     fafBase: Number(fafBase.toFixed(2)),
     fafMult: Number(fafMult.toFixed(2)),
     fafFinal: Number(fafFinal.toFixed(2)),
-    get: Math.round(get),
-    caloriasAlvo: Math.round(caloriasAlvo),
+
     faixaSegura,
     comparativo,
     ajusteBiotipoKcal,
     ajusteBiotipoMotivo,
-  };
+
+    nivelAtividadeSemanal,
+  } as any;
+
+  return resultado;
 };

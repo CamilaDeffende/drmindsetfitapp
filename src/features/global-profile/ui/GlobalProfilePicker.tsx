@@ -3,13 +3,14 @@ import { useGlobalProfileStore } from "../store";
 import { COUNTRIES, getCountry } from "../geo/countries";
 import { REGIONS_BR } from "../geo/regions_BR";
 import { REGIONS_US } from "../geo/regions_US";
-import { searchCitiesBR } from "../geo/search";
+import { REGIONS_ES } from "../geo/regions_ES";
+import { searchCitiesByCountry } from "../geo/search";
 import { resolveByCountry, resolveByCityBR } from "../geo/resolver";
 import { nowFormatted } from "../tz";
 
 type Props = {
   title?: string;
-  showDeviceLocationHint?: boolean; // MVP: botão existe, mas só preenche sugestão simples (sem geocoding pago)
+  showDeviceLocationHint?: boolean;
 };
 
 export function GlobalProfilePicker({
@@ -17,6 +18,7 @@ export function GlobalProfilePicker({
   showDeviceLocationHint = true,
 }: Props) {
   const { profile, setProfile } = useGlobalProfileStore();
+
   const [countryCode, setCountryCode] = useState<string>(
     profile.countryCode || "BR"
   );
@@ -30,20 +32,45 @@ export function GlobalProfilePicker({
   const upperCountry = (countryCode || "").toUpperCase();
   const isBR = upperCountry === "BR";
   const isUS = upperCountry === "US";
-  const supportsRegionCity = isBR || isUS;
+  const isES = upperCountry === "ES";
+  const supportsRegions = isBR || isUS || isES;
 
   const countryDefaults = useMemo(
     () => resolveByCountry(countryCode),
     [countryCode]
   );
 
-  const tzFromCity = useMemo(
-    () =>
-      isBR
-        ? resolveByCityBR(citySelected, regionCode).timeZone
-        : countryDefaults.timeZone,
-    [isBR, citySelected, regionCode, countryDefaults.timeZone]
-  );
+  // Timezone preferindo a cidade (quando temos na base), com fallback pro país.
+  const tzFromCity = useMemo(() => {
+    // tenta bater cidade exata no banco do país selecionado
+    if (citySelected && supportsRegions) {
+      const [match] = searchCitiesByCountry(
+        countryCode,
+        citySelected,
+        regionCode,
+        1
+      );
+      if (match && (match as any).timeZone) {
+        return (match as any).timeZone as string;
+      }
+    }
+
+    // fallback BR via resolver específico
+    if (isBR && citySelected) {
+      const r = resolveByCityBR(citySelected, regionCode);
+      if (r.timeZone) return r.timeZone;
+    }
+
+    // fallback final: timezone padrão do país
+    return countryDefaults.timeZone;
+  }, [
+    countryCode,
+    citySelected,
+    regionCode,
+    countryDefaults.timeZone,
+    supportsRegions,
+    isBR,
+  ]);
 
   const previewProfile = useMemo(() => {
     const c = getCountry(countryCode);
@@ -55,19 +82,20 @@ export function GlobalProfilePicker({
     };
   }, [countryCode, countryDefaults.locale, countryDefaults.units, tzFromCity]);
 
-  const cityOptions = useMemo(() => {
-    // Sugestões automáticas só para BR por enquanto
-    if (!isBR) return [];
-    const q = cityQuery.trim();
-    if (q.length < 2) return [];
-    return searchCitiesBR(q, regionCode, 10);
-  }, [cityQuery, regionCode, isBR]);
-
-  const regionOptions = useMemo(() => {
+  // Lista de estados/regiões conforme país
+  const currentRegions = useMemo(() => {
     if (isBR) return REGIONS_BR;
     if (isUS) return REGIONS_US;
-    return [];
-  }, [isBR, isUS]);
+    if (isES) return REGIONS_ES;
+    return [] as typeof REGIONS_BR;
+  }, [isBR, isUS, isES]);
+
+  // Cidades dinâmicas por país + estado
+  const cityOptions = useMemo(() => {
+    if (!supportsRegions) return [];
+    if (!regionCode) return [];
+    return searchCitiesByCountry(countryCode, cityQuery, regionCode, 10);
+  }, [supportsRegions, countryCode, cityQuery, regionCode]);
 
   // Quando troca o país, mantém defaults coerentes
   useEffect(() => {
@@ -80,54 +108,62 @@ export function GlobalProfilePicker({
       updatedAt: Date.now(),
     });
 
-    // reset de UF/cidade se for um país que não tem suporte a região/cidade
-    setRegionCode((prev) => (supportsRegionCity ? prev : ""));
-    if (!supportsRegionCity) {
+    // se sair de BR/US/ES, limpa estado/cidade
+    const upper = countryCode.toUpperCase();
+    if (upper !== "BR" && upper !== "US" && upper !== "ES") {
+      setRegionCode("");
       setCityQuery("");
       setCitySelected("");
       setOpenList(false);
     }
-  }, [countryCode, setProfile, supportsRegionCity]);
+  }, [countryCode, setProfile]);
 
-  // Quando selecionar cidade/UF, atualiza timezone e profile
+  // Quando selecionar cidade/UF BR, atualiza timezone via resolver BR
   useEffect(() => {
-    if (!supportsRegionCity) return;
+    if (!isBR) return;
     if (!citySelected && !regionCode) return;
 
-    if (isBR) {
-      const tz = resolveByCityBR(citySelected, regionCode).timeZone;
-      if (tz) {
-        setProfile({
-          regionCode: regionCode || undefined,
-          city: citySelected || undefined,
-          timeZone: tz,
-          updatedAt: Date.now(),
-        });
-      }
-      return;
-    }
-
-    if (isUS) {
-      // Para EUA, por enquanto usamos o timezone padrão do país
-      const next = resolveByCountry("US");
+    const tz = resolveByCityBR(citySelected, regionCode).timeZone;
+    if (tz) {
       setProfile({
         regionCode: regionCode || undefined,
         city: citySelected || undefined,
-        timeZone: next.timeZone,
-        locale: next.locale,
-        units: next.units,
+        timeZone: tz,
         updatedAt: Date.now(),
       });
     }
-  }, [citySelected, regionCode, supportsRegionCity, isBR, isUS, setProfile]);
+  }, [citySelected, regionCode, isBR, setProfile]);
 
   function onPickCity(name: string) {
     setCitySelected(name);
     setCityQuery(name);
     setOpenList(false);
+
+    // tenta achar cidade exata pra pegar timezone (BR/US/ES)
+    const [match] = searchCitiesByCountry(countryCode, name, regionCode, 1);
+    const nextCountry = resolveByCountry(countryCode);
+
+    let timeZone = nextCountry.timeZone;
+    if ((match as any)?.timeZone) {
+      timeZone = (match as any).timeZone;
+    } else if (isBR) {
+      const tz = resolveByCityBR(name, regionCode).timeZone;
+      if (tz) timeZone = tz;
+    }
+
+    setProfile({
+      countryCode,
+      regionCode: regionCode || undefined,
+      city: name || undefined,
+      locale: nextCountry.locale,
+      units: nextCountry.units,
+      timeZone,
+      updatedAt: Date.now(),
+    });
   }
 
   async function onUseDeviceSuggestion() {
+    // ainda usando BigDataCloud pra geolocalização simples
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -135,7 +171,6 @@ export function GlobalProfilePicker({
         try {
           const { latitude, longitude } = pos.coords;
 
-          // API pública, sem chave
           const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`;
           const resp = await fetch(url);
           if (!resp.ok) {
@@ -146,16 +181,16 @@ export function GlobalProfilePicker({
 
           const cc = String(data.countryCode || "BR").toUpperCase();
 
-          // UF para BR (ex: "BR-RJ")
           let uf = "";
           const psCode = data.principalSubdivisionCode as string | undefined;
-          if (psCode && psCode.includes("-")) {
-            const parts = psCode.split("-");
-            uf = parts[parts.length - 1];
+
+          // Brasil: BR-RJ etc
+          if (psCode && psCode.startsWith("BR-")) {
+            uf = psCode.slice(3);
           }
 
-          // Fallback BR: bater pelo nome do estado
-          if (!uf && cc === "BR" && data.principalSubdivision) {
+          // fallback BR pelo nome do estado
+          if (cc === "BR" && !uf && data.principalSubdivision) {
             const matchRegion = REGIONS_BR.find(
               (r) =>
                 r.name.toLowerCase() ===
@@ -169,14 +204,13 @@ export function GlobalProfilePicker({
             data.locality ||
             data.localityInfo?.locality?.[0]?.name ||
             "";
+
           const cityName = String(cityFromApi || "").trim();
 
           setCountryCode(cc);
-          if (supportsRegionCity) {
-            setRegionCode(uf);
-            setCitySelected(cityName);
-            setCityQuery(cityName);
-          }
+          setRegionCode(uf);
+          setCitySelected(cityName);
+          setCityQuery(cityName);
           setOpenList(false);
 
           const nextCountry = resolveByCountry(cc);
@@ -189,8 +223,8 @@ export function GlobalProfilePicker({
 
           setProfile({
             countryCode: cc,
-            regionCode: supportsRegionCity ? (uf || undefined) : undefined,
-            city: supportsRegionCity ? (cityName || undefined) : undefined,
+            regionCode: uf || undefined,
+            city: cityName || undefined,
             locale: nextCountry.locale,
             units: nextCountry.units,
             timeZone,
@@ -229,7 +263,14 @@ export function GlobalProfilePicker({
           <select
             className="w-full rounded-xl border bg-background px-3 py-2 text-sm"
             value={countryCode}
-            onChange={(e) => setCountryCode(e.target.value)}
+            onChange={(e) => {
+              setCountryCode(e.target.value);
+              // sempre que trocar de país, limpamos cidade/UF na UI
+              setRegionCode("");
+              setCityQuery("");
+              setCitySelected("");
+              setOpenList(false);
+            }}
           >
             {COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>
@@ -245,13 +286,19 @@ export function GlobalProfilePicker({
           <select
             className="w-full rounded-xl border bg-background px-3 py-2 text-sm disabled:opacity-60"
             value={regionCode}
-            onChange={(e) => setRegionCode(e.target.value)}
-            disabled={!supportsRegionCity}
+            onChange={(e) => {
+              setRegionCode(e.target.value);
+              // ao trocar de estado, limpamos a cidade digitada/selecionada
+              setCityQuery("");
+              setCitySelected("");
+              setOpenList(false);
+            }}
+            disabled={!supportsRegions}
           >
             <option value="">
-              {supportsRegionCity ? "Selecione" : "Disponível em breve"}
+              {supportsRegions ? "Selecione" : "Disponível em breve"}
             </option>
-            {regionOptions.map((r) => (
+            {currentRegions.map((r) => (
               <option key={r.code} value={r.code}>
                 {r.name} ({r.code})
               </option>
@@ -267,41 +314,38 @@ export function GlobalProfilePicker({
             value={cityQuery}
             onChange={(e) => {
               setCityQuery(e.target.value);
-              if (isBR) setOpenList(true);
-              setCitySelected(e.target.value);
+              setOpenList(true);
             }}
-            onFocus={() => isBR && setOpenList(true)}
+            onFocus={() => regionCode && setOpenList(true)}
             placeholder={
-              isBR
-                ? "Digite para buscar (ex: São Paulo)"
-                : isUS
-                ? "Digite a cidade (ex: New York)"
+              supportsRegions
+                ? "Digite para buscar (ex: São Paulo / Miami / Madrid)"
                 : "Disponível em breve"
             }
-            disabled={!supportsRegionCity}
+            disabled={!supportsRegions || !regionCode}
           />
 
-          {/* Dropdown só para BR por enquanto */}
-          {isBR && openList && cityOptions.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full rounded-xl border bg-background shadow-lg">
+          {supportsRegions && openList && cityOptions.length > 0 && (
+            <div className="absolute z-20 mt-1 w-full rounded-xl border bg-background shadow-lg max-h-64 overflow-auto">
               {cityOptions.map((c) => (
                 <button
                   type="button"
-                  key={`${c.name}-${c.regionCode}`}
+                  key={`${c.name}-${(c as any).regionCode || (c as any).stateCode || ""}`}
                   className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => onPickCity(c.name)}
                 >
                   <span className="font-medium">{c.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    {c.regionCode}
+                    {(c as any).regionCode || (c as any).stateCode || ""}
                   </span>
                 </button>
               ))}
             </div>
           )}
 
-          {isBR &&
+          {supportsRegions &&
+            regionCode &&
             cityQuery.trim().length > 0 &&
             cityOptions.length === 0 && (
               <div className="mt-1 text-xs text-muted-foreground">
@@ -322,9 +366,7 @@ export function GlobalProfilePicker({
           <div className="text-sm">
             <span className="text-muted-foreground">Unidades: </span>
             <span className="font-medium">
-              {previewProfile.units === "metric"
-                ? "Métrico (km)"
-                : "Imperial (mi)"}
+              {previewProfile.units === "metric" ? "Métrico (km)" : "Imperial (mi)"}
             </span>
           </div>
           <div className="text-sm">

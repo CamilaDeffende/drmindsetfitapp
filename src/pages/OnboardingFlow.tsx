@@ -76,7 +76,7 @@ function saveDraft(d: Draft) {
   } catch {}
 }
 
-// ✅ Export NAMED (App.tsx importa { OnboardingFlow })
+//  Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
 
   // MF_ONBOARDING_LOADER_WATCHDOG_V2
@@ -447,5 +447,5 @@ try { clearOnboardingDraft(); } catch {}
   );
 }
 
-// ✅ manter default export também (conveniência)
+// manter default export também (conveniência)
 export default OnboardingFlow;
