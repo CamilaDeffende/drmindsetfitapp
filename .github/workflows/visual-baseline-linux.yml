@@ -50,6 +50,13 @@ jobs:
         env:
           CI: "true"
         run: npx playwright test -c playwright.visual.config.ts --update-snapshots --workers=1
+      - name: Ensure branch checkout
+        run: |
+          # MF_ENSURE_BRANCH_CHECKOUT_V1
+          BR='${{ inputs.branch || github.ref_name }}'
+          echo \"==> ensure on branch: $BR\"
+          git checkout -B \"$BR\"
+
 
       - name: Commit linux snapshots
         run: |
