@@ -154,3 +154,10 @@ Drmindsetfitpro/
 .env
 .env.*
 !.env.example
+
+# MF_UNIGNORE_LINUX_VISUAL_SNAPSHOTS_V1
+# Garante que baselines linux do Playwright NÃO sejam ignorados.
+!tests/visual/screens.visual.spec.ts-snapshots/
+!tests/visual/screens.visual.spec.ts-snapshots/*.png
+!tests/visual/screens.visual.spec.ts-snapshots/*-linux.png
+!tests/visual/screens.visual.spec.ts-snapshots/*-chromium-linux.png
