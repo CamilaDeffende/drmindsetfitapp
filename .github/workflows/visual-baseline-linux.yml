@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: write
-
 jobs:
   generate-linux-baseline:
     runs-on: ubuntu-latest
@@ -20,7 +19,7 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ inputs.branch != '' && inputs.branch || github.ref_name }}
           fetch-depth: 0
 
       - name: Setup Node
