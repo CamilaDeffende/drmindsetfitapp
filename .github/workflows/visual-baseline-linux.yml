@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch do PR para gerar baseline linux (ex: feat/...)"
-        required: true
-        type: string
+        description: "Branch para commit dos baselines linux"
+        required: false
+        default: ""
 
 permissions:
   contents: write
