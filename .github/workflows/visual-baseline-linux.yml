@@ -53,29 +53,19 @@ jobs:
 
       - name: Commit linux snapshots
         run: |
-          # MF_BASELINE_COMMIT_UNTRACKED_V1
+          # MF_BASELINE_COMMIT_UNTRACKED_V2
           set -euo pipefail
+          git status -sb
+
           git add -A tests/visual/screens.visual.spec.ts-snapshots
           if git diff --cached --quiet; then
             echo "ℹ️ nada para commitar (baseline linux já estava ok)"
             exit 0
           fi
-          git status -sb
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "test(visual): add/update linux baselines" || true
-          git push
-
-
-          if git diff --quiet && git diff --cached --quiet; then
-            echo "ℹ️ nada para commitar (baseline linux já estava ok)"
-            exit 0
-          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add -A tests/visual/screens.visual.spec.ts-snapshots
           git commit -m "test(visual): add/update linux baselines" || true
           git push
 
