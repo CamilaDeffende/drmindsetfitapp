@@ -22,6 +22,12 @@ function mmss(sec: number): string {
 export function ExportRunCard({ samples, metrics, sessionName = "Corrida" }: Props) {
   const profile = useGlobalProfile();
 
+  const fmtProfile = {
+    locale: (profile as any)?.locale ?? (profile as any)?.profile?.locale ?? "pt-BR",
+    timeZone: (profile as any)?.timeZone ?? (profile as any)?.profile?.timeZone ?? "America/Sao_Paulo",
+  };
+
+
   const summary = useMemo(() => buildSummary(samples, metrics), [samples, metrics]);
 
   const startedAt = samples[0]?.ts ?? null;
@@ -34,14 +40,14 @@ export function ExportRunCard({ samples, metrics, sessionName = "Corrida" }: Pro
           <div className="text-xs text-muted-foreground">GPX + insights do treino</div>
         </div>
         <div className="text-right text-xs text-muted-foreground">
-          {startedAt ? formatDateTime(startedAt, profile) : "—"}
+          {startedAt ? formatDateTime(startedAt, fmtProfile) : "—"}
         </div>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <div className="rounded-xl border bg-background p-3">
           <div className="text-xs text-muted-foreground">Distância</div>
-          <div className="text-xl font-semibold">{formatNumber(summary.distKm, profile, { maximumFractionDigits: 2 })} km</div>
+          <div className="text-xl font-semibold">{formatNumber(summary.distKm, fmtProfile, { maximumFractionDigits: 2 })} km</div>
         </div>
         <div className="rounded-xl border bg-background p-3">
           <div className="text-xs text-muted-foreground">Pace médio</div>
