@@ -150,3 +150,7 @@ Drmindsetfitpro/
 
 # MF_IGNORE_BACKUPS_V2
 .backups/
+# MF_ENV_LOCAL_ONLY_V1
+.env
+.env.*
+!.env.example
