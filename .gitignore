@@ -149,3 +149,4 @@ Drmindsetfitpro/
 # versioned automation scripts
 !scripts/
 
+.env
