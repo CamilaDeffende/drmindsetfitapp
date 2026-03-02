@@ -1,4 +1,4 @@
-# MF_VERCELIGNORE_V2 — não enviar artefatos locais gigantes
+# MF_VERCELIGNORE_V2
 node_modules
 dist
 .backups
