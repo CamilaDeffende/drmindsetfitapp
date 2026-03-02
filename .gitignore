@@ -150,3 +150,8 @@ Drmindsetfitpro/
 !scripts/
 
 .env
+.backups
+.mf_bundle
+test-results
+playwright-report
+coverage
