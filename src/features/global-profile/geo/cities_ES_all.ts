@@ -5,7 +5,7 @@ export type ESCity = {
   weight?: number;
 };
 
-let ES_CACHE: Record<string, ESCity[]> = {};
+const ES_CACHE: Record<string, ESCity[]> = {};
 
 export function isCitiesESLoaded(): boolean {
   return Object.keys(ES_CACHE).length > 0;
