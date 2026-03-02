@@ -174,3 +174,5 @@ coverage
 *.bin
 *.sqlite
 *.db
+.mf_last_deploy_preview.txt
+.mf_last_deploy_prod.txt
