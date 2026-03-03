@@ -82,7 +82,7 @@ function saveDraft(d: Draft) {
   } catch {}
 }
 
-// ✅ Export NAMED (App.tsx importa { OnboardingFlow })
+//  Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
 
   // MF_ONBOARDING_LOADER_WATCHDOG_V2
@@ -398,21 +398,36 @@ try { clearOnboardingDraft(); } catch {}
       {/* MF_STEP1_NEXT_FALLBACK: garante avanço estável no Step-1 (E2E-safe) */}
       {(<div className="mt-6 flex items-center justify-end">
           <button
-            data-testid="onboarding-next" data-mf="mf-next"
+            data-testid="onboarding-next"
+            data-mf="mf-next"
             type="button"
-            onClick={() => { try { goNext(); } catch {}
-            try {
-              // MF_FORCE_NEXT_URL_V9: após goNext(), a URL DEVE refletir o step atual.
-              // Regra: se step atual >= 8 => /dashboard, senão => /onboarding/step-(n+1)
-              const __path = window.location.pathname || "";
-              if (__path.startsWith("/onboarding")) {
-                const m = __path.match(/\/onboarding\/step-(\d+)\b/);
-                const __cur = (m && m[1]) ? (Number(m[1]) || 1) : 1;
-                const __dest = __cur >= 8 ? "/dashboard" : `/onboarding/step-${__cur + 1}`;
-                mfSafeNavigate(__dest, { replace: true });
-              }
-            } catch {}
-}}
+            onClick={() => {
+              // 🔒 Regra: no Step1, só avança se tiver nome completo válido
+              try {
+                if (current?.key === "step1") {
+                  const nome = String((draft as any).step1?.nomeCompleto || "").trim();
+                  if (!nome || nome.length < 3) {
+                    alert("Digite seu nome completo antes de continuar.");
+                    return;
+                  }
+                }
+              } catch {}
+
+              // fluxo original de avanço
+              try { goNext(); } catch {}
+
+              try {
+                // MF_FORCE_NEXT_URL_V9: após goNext(), a URL DEVE refletir o step atual.
+                const __path = window.location.pathname || "";
+                if (__path.startsWith("/onboarding")) {
+                  const m = __path.match(/\/onboarding\/step-(\d+)\b/);
+                  const __cur = (m && m[1]) ? (Number(m[1]) || 1) : 1;
+                  const __dest =
+                    __cur >= 8 ? "/dashboard" : `/onboarding/step-${__cur + 1}`;
+                  mfSafeNavigate(__dest, { replace: true });
+                }
+              } catch {}
+            }}
             className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
           >
             Continuar
@@ -438,5 +453,5 @@ try { clearOnboardingDraft(); } catch {}
   );
 }
 
-// ✅ manter default export também (conveniência)
+// manter default export também (conveniência)
 export default OnboardingFlow;
