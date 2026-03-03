@@ -8,6 +8,7 @@ import { ptBR } from 'date-fns/locale'
 import { loadActivePlan } from "@/services/plan.service"
 import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+import { readOnboardingDraftStorage, normalizeDraftKeys } from "@/services/ssot/onboardingDraft.bridge";
 // DEMO-safe: hidrata Report via localStorage e evita loader infinito
 type MFAny = any;
 
@@ -17,7 +18,7 @@ function mfSafeJsonParse(v: string | null): MFAny | null {
 }
 
 function mfReadFirstProfileFromLS(): MFAny | null {
-  const draft = mfSafeJsonParse(localStorage.getItem("mf:onboarding:draft:v1"));
+  const draft = normalizeDraftKeys(readOnboardingDraftStorage() || mfSafeJsonParse(localStorage.getItem("mf:onboarding:draft:v1")) || null);
   if (draft) return draft;
 
   const gp = mfSafeJsonParse(localStorage.getItem("drmindsetfit.globalProfile.v1"));
