@@ -149,3 +149,30 @@ Drmindsetfitpro/
 # versioned automation scripts
 !scripts/
 
+.env
+.backups
+.mf_bundle
+test-results
+playwright-report
+coverage
+.mf_cache
+.mf_tmp
+.playwright
+*.7z
+*.tar
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.dmg
+*.iso
+*.psd
+*.blend
+*.fbx
+*.glb
+*.gltf
+*.bin
+*.sqlite
+*.db
+.mf_last_deploy_preview.txt
+.mf_last_deploy_prod.txt

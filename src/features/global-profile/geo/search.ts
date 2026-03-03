@@ -10,8 +10,7 @@ import {
 
 import {
   getCitiesByESRegion,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isCitiesESLoaded, // mantido só se quiser usar depois; não usamos agora
+  // mantido só se quiser usar depois; não usamos agora
   type ESCity,
 } from "./cities_ES_all";
 

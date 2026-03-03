@@ -1,0 +1,31 @@
+/* =============================================================================
+   MF_NEON_SKINS_V2 — ajuste fino por tela (pixel-level)
+   Seletores:
+     html[data-mf-route="dashboard"]
+     html[data-mf-route="metabolismo"]
+     html[data-mf-route="plano"]
+     html[data-mf-route="treinos"]
+============================================================================= */
+
+:root{
+  --mf-space-1: 8px;
+  --mf-space-2: 12px;
+  --mf-space-3: 16px;
+  --mf-space-4: 20px;
+  --mf-space-5: 24px;
+}
+
+/* Dashboard */
+html[data-mf-route="dashboard"] .mf-card{
+  /* ajuste fino exemplo (depois alinhamos com suas imagens) */
+  box-shadow: var(--mf-shadow), 0 0 18px rgba(0,240,255,.10), 0 0 26px rgba(123,92,255,.10);
+}
+
+/* Metabolismo */
+html[data-mf-route="metabolismo"] .mf-card::before{ opacity: .62; }
+
+/* Plano */
+html[data-mf-route="plano"] .mf-muted{ opacity: .90; }
+
+/* Treinos */
+html[data-mf-route="treinos"] .mf-grid{ opacity: .40; }

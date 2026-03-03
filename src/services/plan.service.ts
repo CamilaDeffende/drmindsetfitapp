@@ -80,12 +80,18 @@ export function activityFactorFromWeeklyFrequency(freq: any): number {
 }
 
 export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
+  // MF_PLAN_DRAFT_COMPAT_V1: aceitar chaves legadas sem quebrar SSOT
+  const __mfAny: any = (draft as any) || {};
+  const __mfStep5 = (__mfAny.step5 ?? __mfAny.step5Modalidades ?? {}) as any;
+  const __mfStep6 = (__mfAny.step6 ?? __mfAny.step6DiasSemana ?? {}) as any;
+  const __mfStep7 = (__mfAny.step7 ?? __mfAny.step7Preferencias ?? {}) as any;
+
   const step1 = draft.step1 || {};
   const step2 = draft.step2 || {};
   const step3 = draft.step3 || {};
-  const step5 = draft.step5 || {};
-  const step6 = draft.step6 || {};
-  const step7 = draft.step7 || {};
+  const step5 = (__mfStep5 || {});
+  const step6 = (__mfStep6 || {});
+  const step7 = (__mfStep7 || {});
 
   const weightKg = Number(step2?.peso || step2?.weight || 80);
   const heightCm = Number(step2?.altura || step2?.height || 175);
