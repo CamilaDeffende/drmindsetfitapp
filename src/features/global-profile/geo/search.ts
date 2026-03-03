@@ -10,6 +10,7 @@ import {
 
 import {
   getCitiesByESRegion,
+  // mantido só se quiser usar depois; não usamos agora
   type ESCity,
 } from "./cities_ES_all";
 

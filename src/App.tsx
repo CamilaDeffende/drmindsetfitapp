@@ -1,6 +1,7 @@
 /* MF_NEON_DS_V1 */
 import DevEngine from "@/pages/DevEngine";
 import * as React from "react";
+import EnginePreviewPage from "./pages/__internal/EnginePreviewPage";
 import { LiveLocationPill } from "@/components/global/LiveLocationPill";
 import Assinatura from "@/pages/Assinatura";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -64,6 +65,8 @@ const LazyCardioPlan = React.lazy(() => import("@/pages/CardioPlan").then((m) =>
 const LazyHiitPlan = React.lazy(() => import("@/pages/HiitPlan").then((m) => ({ default: m.default })));
 const LazyCorridaPro = React.lazy(() => import("@/pages/CorridaPro").then((m) => ({ default: m.default })));
 
+const MF_METABOLIC_ENGINE_V1_ENABLED = (import.meta as any).env?.VITE_MF_METABOLIC_ENGINE_V1_ENABLED === "true";
+
 function App() {
   // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
 
@@ -87,7 +90,9 @@ function App() {
           <LiveLocationPill />
 
           <Routes>
-            {/* MF_STYLEGUIDE_ROUTE_V2 */}
+            
+          {MF_METABOLIC_ENGINE_V1_ENABLED ? (<Route path="/__engine-preview" element={<EnginePreviewPage />} />) : null}
+{/* MF_STYLEGUIDE_ROUTE_V2 */}
             <Route path="/styleguide" element={<StyleGuidePage />} />
 
             {/* Suite / Core */}

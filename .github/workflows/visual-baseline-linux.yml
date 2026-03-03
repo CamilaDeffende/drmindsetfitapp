@@ -4,13 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch do PR para gerar baseline linux (ex: feat/...)"
-        required: true
-        type: string
+        description: "Branch para commit dos baselines linux"
+        required: false
+        default: ""
 
 permissions:
   contents: write
-
 jobs:
   generate-linux-baseline:
     runs-on: ubuntu-latest
@@ -20,7 +19,7 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ inputs.branch != '' && inputs.branch || github.ref_name }}
           fetch-depth: 0
 
       - name: Setup Node
@@ -50,22 +49,27 @@ jobs:
         env:
           CI: "true"
         run: npx playwright test -c playwright.visual.config.ts --update-snapshots --workers=1
+      - name: Ensure branch checkout
+        run: |
+          # MF_ENSURE_BRANCH_CHECKOUT_V1
+          BR='${{ inputs.branch || github.ref_name }}'
+          echo \"==> ensure on branch: $BR\"
+          git checkout -B \"$BR\"
+
 
       - name: Commit linux snapshots
         run: |
-          # MF_BASELINE_COMMIT_UNTRACKED_V2
-          set -euo pipefail
-          git status -sb
-
+          # MF_BASELINE_COMMIT_UNTRACKED_V1
           git add -A tests/visual/screens.visual.spec.ts-snapshots
           if git diff --cached --quiet; then
             echo "ℹ️ nada para commitar (baseline linux já estava ok)"
             exit 0
           fi
 
+set -euo pipefail
+          git status -sb
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git commit -m "test(visual): add/update linux baselines" || true
           git push
 

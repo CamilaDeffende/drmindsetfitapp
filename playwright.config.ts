@@ -1,6 +1,9 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
+  // MF_SNAPSHOT_TEMPLATE_V1 (cross-platform: darwin/linux)
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{platform}{ext}',
+
   // MF_CI_TRACE_ELITE_V1
   ...(process.env.CI ? {
     use: {

@@ -91,7 +91,7 @@ export async function ensureCitiesUSLoaded(stateCode: string): Promise<USCity[]>
   if (usCitiesByState[code]) return usCitiesByState[code];
 
   // já tem request em andamento
-  if (usLoadingByState[code]) return usLoadingByState[code];
+  if (usLoadingByState[code] !== undefined) return usLoadingByState[code]!;
 
   const stateName = getStateNameFromCode(code);
 
