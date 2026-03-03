@@ -34,14 +34,14 @@ export function ExportRunCard({ samples, metrics, sessionName = "Corrida" }: Pro
           <div className="text-xs text-muted-foreground">GPX + insights do treino</div>
         </div>
         <div className="text-right text-xs text-muted-foreground">
-          {startedAt ? formatDateTime(startedAt, profile) : "—"}
+          {startedAt ? formatDateTime(startedAt, profile.profile) : "—"}
         </div>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <div className="rounded-xl border bg-background p-3">
           <div className="text-xs text-muted-foreground">Distância</div>
-          <div className="text-xl font-semibold">{formatNumber(summary.distKm, profile, { maximumFractionDigits: 2 })} km</div>
+          <div className="text-xl font-semibold">{formatNumber(summary.distKm, profile.profile, { maximumFractionDigits: 2 })} km</div>
         </div>
         <div className="rounded-xl border bg-background p-3">
           <div className="text-xs text-muted-foreground">Pace médio</div>

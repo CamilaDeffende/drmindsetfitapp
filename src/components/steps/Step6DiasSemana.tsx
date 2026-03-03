@@ -10,16 +10,23 @@ type Props = {
 
 const DAYS = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
 
-export default function Step6DiasSemana({ value, onChange, onNext, onBack }: Props) {
+export default function Step6DiasSemana({
+  value,
+  onChange,
+  onNext,
+  onBack,
+}: Props) {
   // MF_VOID_UNUSED_PROPS_V1
-  void onNext; void onBack;
+  void onNext;
+  void onBack;
 
-/* MF_BLOCK2_1_STEP6_AUTOSAVE */
-  // MF_STEP6_DUAL_SAVE_V1: salva canonical + legacy (compat)
-  useOnboardingDraftSaver({ step6: value, step6DiasSemana: value } as any, 400);
+  /* MF_BLOCK2_1_STEP6_AUTOSAVE */
+  useOnboardingDraftSaver({ step6DiasSemana: value } as any, 400);
+
+  const safeDays = value?.days ?? [];
 
   const toggle = (d: string) => {
-    const set = new Set(value.days);
+    const set = new Set(safeDays);
     if (set.has(d)) {
       set.delete(d);
     } else {
@@ -33,19 +40,23 @@ export default function Step6DiasSemana({ value, onChange, onNext, onBack }: Pro
       <h2 className="text-xl font-semibold">Dias de treino</h2>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {DAYS.map(d => (
+        {DAYS.map((d) => (
           <button
             key={d}
+            type="button"
             onClick={() => toggle(d)}
-            className={`px-3 py-2 rounded-lg border \${value.days.includes(d) ? "border-white/30 bg-white/10" : "border-white/10"}`}
+            className={`px-3 py-2 rounded-lg border ${
+              safeDays.includes(d)
+                ? "border-white/30 bg-white/10"
+                : "border-white/10"
+            }`}
           >
             {d.toUpperCase()}
           </button>
         ))}
       </div>
 
-      <div className="mt-6 flex justify-between">
-</div>
+      <div className="mt-6 flex justify-between">{/* navegação vem do shell */}</div>
     </div>
   );
 }

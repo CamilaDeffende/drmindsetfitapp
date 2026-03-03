@@ -2,6 +2,7 @@ node_modules
 dist
 .vite
 .DS_Store
+.env.local
 *.log
 *.bak
 *.zip
@@ -148,16 +149,30 @@ Drmindsetfitpro/
 # versioned automation scripts
 !scripts/
 
-# MF_IGNORE_BACKUPS_V2
-.backups/
-# MF_ENV_LOCAL_ONLY_V1
 .env
-.env.*
-!.env.example
-
-# MF_UNIGNORE_LINUX_VISUAL_SNAPSHOTS_V1
-# Garante que baselines linux do Playwright NÃO sejam ignorados.
-!tests/visual/screens.visual.spec.ts-snapshots/
-!tests/visual/screens.visual.spec.ts-snapshots/*.png
-!tests/visual/screens.visual.spec.ts-snapshots/*-linux.png
-!tests/visual/screens.visual.spec.ts-snapshots/*-chromium-linux.png
+.backups
+.mf_bundle
+test-results
+playwright-report
+coverage
+.mf_cache
+.mf_tmp
+.playwright
+*.7z
+*.tar
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.dmg
+*.iso
+*.psd
+*.blend
+*.fbx
+*.glb
+*.gltf
+*.bin
+*.sqlite
+*.db
+.mf_last_deploy_preview.txt
+.mf_last_deploy_prod.txt
