@@ -10,6 +10,18 @@ import { useToast } from "@/hooks/use-toast";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from "@/components/ui/button";
 
+const getPrefilledNameFromOnboarding = (): string => {
+  try {
+    const raw = localStorage.getItem("mf:onboarding:draft:v1");
+    if (!raw) return "";
+    const draft = JSON.parse(raw);
+    const nome = String(draft?.step1?.nomeCompleto || "").trim();
+    return nome.length >= 3 ? nome : "";
+  } catch {
+    return "";
+  }
+};
+
 export function SignUp() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,12 +38,13 @@ export function SignUp() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState({
-    fullName: "",
+
+  const [formData, setFormData] = useState(() => ({
+    fullName: getPrefilledNameFromOnboarding(),
     email: "",
     password: "",
     confirmPassword: "",
-  });
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,10 +64,17 @@ export function SignUp() {
       return;
     }
 
-    const { error: signUpError } = await signUp(formData.email, formData.password, formData.fullName);
+    const { error: signUpError } = await signUp(
+      formData.email,
+      formData.password,
+      formData.fullName
+    );
 
     if (signUpError) {
-      if (signUpError.message?.toLowerCase().includes("already") || signUpError.message?.toLowerCase().includes("registered")) {
+      if (
+        signUpError.message?.toLowerCase().includes("already") ||
+        signUpError.message?.toLowerCase().includes("registered")
+      ) {
         setError("Este email já está cadastrado. Tente fazer login.");
       } else {
         setError("Erro ao criar conta. Tente novamente.");
@@ -68,7 +88,7 @@ export function SignUp() {
       description: "Se necessário, verifique seu email para confirmar o cadastro.",
     });
 
-    // ✅ Funil: após signup, ir para a próxima tela (default dashboard)
+    // Funil: após signup, ir para a próxima tela (default dashboard)
     navigate(next, { replace: true });
     setLoading(false);
   };
@@ -170,7 +190,6 @@ export function SignUp() {
                 />
               </div>
 
-              {/* ✅ BOTÃO QUE ESTAVA FALTANDO */}
               <Button
                 type="submit"
                 disabled={loading}
