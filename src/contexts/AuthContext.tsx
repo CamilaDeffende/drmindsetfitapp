@@ -1,19 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { User, Session, AuthError } from '@supabase/supabase-js'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-
-// __MF_DEMO_ONBOARDING_GUARD__
-// Regra: em /onboarding, DEMO não pode rodar efeitos que redirecionam/ativam premium/logam repetidamente.
-const __mfIsOnboardingRoute = (): boolean => {
-  try {
-    if (typeof window === "undefined") return false;
-    const p = window.location?.pathname || "";
-    return p.startsWith("/onboarding");
-  } catch {
-    return false;
-  }
-};
-
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { User, Session, AuthError } from "@supabase/supabase-js";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 // MF_DEMO_ONCE_GUARD (StrictMode-safe)
 // Evita loops de DEMO que disparam setState/store em re-render/hidratação.
@@ -32,167 +19,186 @@ const __mfOncePerSession = (key: string) => {
   return true;
 };
 
-
 interface AuthContextType {
-  user: User | null
-  session: Session | null
-  loading: boolean
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
-  signOut: () => Promise<void>
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 // DEV_PASS_AUTH: ?dev=1 força usuário logado para testes locais
-const __isDevPass = (() => { try { return new URLSearchParams(window.location.search).get("dev") === "1"; } catch { return false; } })();
+const __isDevPass = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get("dev") === "1";
+  } catch {
+    return false;
+  }
+})();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(__isDevPass ? false : true)
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(__isDevPass ? false : true);
 
   useEffect(() => {
+    // ⚠️ IMPORTANTE:
+    // Não bloquear bootstrap de auth em /onboarding.
+    // O funil (onboarding obrigatório antes do login) deve ser controlado por RouteGuard/rotas,
+    // não travando o AuthProvider — isso causava "loading infinito" no dashboard.
+
     if ((globalThis as any).__mf_demo_guard__auth) return;
     (globalThis as any).__mf_demo_guard__auth = true;
 
-    if (__mfIsOnboardingRoute()) { return; }
+    // Em DEV/StrictMode, evita rodar bloco DEMO mais de uma vez
+    if (!__mfOncePerSession("demo_autologin")) {
+      // Mesmo se pular o bloco DEMO, no modo REAL ainda precisamos garantir getSession/onAuthStateChange.
+      // Então não retornamos aqui.
+    }
 
-    if (!__mfOncePerSession("demo_autologin")) return;
-
-    // Modo DEMO: criar usuário fake automaticamente
+    // Modo DEMO: criar usuário fake automaticamente (somente quando Supabase não está configurado)
     if (!isSupabaseConfigured) {
       const demoUser: User = {
-        id: 'demo-user-123',
-        email: 'demo@drmindsetfit.com',
-        aud: 'authenticated',
-        role: 'authenticated',
+        id: "demo-user-123",
+        email: "demo@drmindsetfit.com",
+        aud: "authenticated",
+        role: "authenticated",
         created_at: new Date().toISOString(),
         app_metadata: {},
-        user_metadata: { full_name: 'Usuário Demo' }
-      } as User
+        user_metadata: { full_name: "Usuário Demo" },
+      } as User;
 
       const demoSession: Session = {
-        access_token: 'demo-token',
-        refresh_token: 'demo-refresh',
+        access_token: "demo-token",
+        refresh_token: "demo-refresh",
         expires_in: 3600,
-        token_type: 'bearer',
-        user: demoUser
-      } as Session
+        token_type: "bearer",
+        user: demoUser,
+      } as Session;
 
-      setUser(demoUser)
-      setSession(demoSession)
-      setLoading(false)
-      if (import.meta.env.DEV) console.log('🎭 Modo DEMO ativado - Login automático')
-      return
+      setUser(demoUser);
+      setSession(demoSession);
+      setLoading(false);
+      if (import.meta.env.DEV) console.log("🎭 Modo DEMO ativado - Login automático");
+      return;
     }
 
     // Modo REAL: usar Supabase
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        // Em caso de falha de rede/config, não travar o app em loading infinito
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      });
 
     // Escutar mudanças de autenticação
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     // Modo DEMO: simular cadastro bem-sucedido
     if (!isSupabaseConfigured) {
-      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Cadastro simulado para', email)
-      return { error: null }
+      if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Cadastro simulado para", email);
+      return { error: null };
     }
 
-    // Modo REAL: usar Supabase
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-          },
+          data: { full_name: fullName },
         },
-      })
+      });
 
-      if (error) return { error }
+      if (error) return { error };
 
-      // Criar perfil inicial
+      // Criar perfil inicial (não falhar o signup se o insert do perfil falhar)
       if (data.user) {
-        await supabase.from('profiles').insert({
-          user_id: data.user.id,
-          nome_completo: fullName,
-          data: {},
-        })
+        try {
+          await supabase.from("profiles").insert({
+            user_id: data.user.id,
+            nome_completo: fullName,
+            data: {},
+          });
+        } catch (e) {
+          if (import.meta.env.DEV) console.warn("⚠️ Falha ao criar profile, seguindo mesmo assim.", e);
+        }
       }
 
-      return { error: null }
+      return { error: null };
     } catch (error) {
-      return { error: error as AuthError }
+      return { error: error as AuthError };
     }
-  }
+  };
 
   const signIn = async (email: string, password: string) => {
     // Modo DEMO: simular login bem-sucedido
     if (!isSupabaseConfigured) {
-      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Login simulado para', email)
-      return { error: null }
+      if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Login simulado para", email);
+      return { error: null };
     }
 
-    // Modo REAL: usar Supabase
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
-      return { error }
+      });
+      return { error };
     } catch (error) {
-      return { error: error as AuthError }
+      return { error: error as AuthError };
     }
-  }
+  };
 
   const signOut = async () => {
     // Modo DEMO: apenas limpar estado local
     if (!isSupabaseConfigured) {
-      setUser(null)
-      setSession(null)
-      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Logout simulado')
-      return
+      setUser(null);
+      setSession(null);
+      if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Logout simulado");
+      return;
     }
 
-    // Modo REAL: usar Supabase
-    await supabase.auth.signOut()
-  }
+    await supabase.auth.signOut();
+  };
 
   const resetPassword = async (email: string) => {
     // Modo DEMO: simular reset de senha
     if (!isSupabaseConfigured) {
-      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Reset de senha simulado para', email)
-      return { error: null }
+      if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Reset de senha simulado para", email);
+      return { error: null };
     }
 
-    // Modo REAL: usar Supabase
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
-      })
-      return { error }
+      });
+      return { error };
     } catch (error) {
-      return { error: error as AuthError }
+      return { error: error as AuthError };
     }
-  }
+  };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     loading,
@@ -200,15 +206,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     resetPassword,
-  }
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth deve ser usado dentro de AuthProvider')
+    throw new Error("useAuth deve ser usado dentro de AuthProvider");
   }
-  return context
+  return context;
 }

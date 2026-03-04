@@ -1,5 +1,5 @@
-
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { loadFlags, setPaywallEnabled, setPremiumUnlocked } from "@/lib/featureFlags";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 
@@ -12,17 +12,51 @@ type Plan = {
 };
 
 export default function Assinatura() {
-  const activateAndGoLogin = (planId?: string) => {
-    try { localStorage.setItem("mindsetfit:isSubscribed", "true"); } catch {}
-    try { localStorage.setItem("mindsetfit:subscription:v1", JSON.stringify({ planId: planId || "mensal", active: true, activatedAt: Date.now() })); } catch {}
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getNext = () => {
+    try {
+      const next = new URLSearchParams(location.search).get("next");
+      return next || "/dashboard";
+    } catch {
+      return "/dashboard";
+    }
   };
 
-  // TS: garante uso (sem alterar UI)
-  void activateAndGoLogin;
-const plans: Plan[] = useMemo(
+  const activateAndGoLogin = (planId?: string) => {
+    try {
+      localStorage.setItem("mindsetfit:isSubscribed", "true");
+    } catch {}
+
+    try {
+      localStorage.setItem(
+        "mindsetfit:subscription:v1",
+        JSON.stringify({
+          planId: planId || "mensal",
+          active: true,
+          activatedAt: Date.now(),
+        })
+      );
+    } catch {}
+
+    const next = getNext();
+    navigate(`/signup?next=${encodeURIComponent(next)}`);
+  };
+
+  const continueFree = () => {
+    const next = getNext();
+    navigate(`/signup?next=${encodeURIComponent(next)}`);
+  };
+
+  const plans: Plan[] = useMemo(
     () => [
-      { id: "mensal", title: "Mensal", price: "R$ 97,90", note: "30 dias de acesso • Cancelamento a qualquer momento" }
-,
+      {
+        id: "mensal",
+        title: "Mensal",
+        price: "R$ 97,90",
+        note: "30 dias de acesso • Cancelamento a qualquer momento",
+      },
       { id: "anual", title: "Anual", price: "R$ 597,90", note: "12 meses de acesso • Plano anual" },
     ],
     []
@@ -49,7 +83,7 @@ const plans: Plan[] = useMemo(
   };
 
   return (
-<div className="min-h-dvh bg-[#070A12] text-white">
+    <div className="min-h-dvh bg-[#070A12] text-white">
       <div className="mx-auto w-full max-w-[520px] px-4 pb-10 pt-8">
         <div className="flex items-center gap-3">
           <div className="shrink-0">
@@ -60,12 +94,13 @@ const plans: Plan[] = useMemo(
             <div className="text-[12px] text-white/60">MindsetFit • Premium</div>
           </div>
 
-          <a
-            href="/dashboard"
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
             className="ml-auto inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-semibold text-white/85 hover:bg-white/10 active:scale-[0.99]"
           >
             Voltar
-          </a>
+          </button>
         </div>
 
         <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_60px_-30px_rgba(0,149,255,0.35)]">
@@ -80,9 +115,7 @@ const plans: Plan[] = useMemo(
                 key={pl.id}
                 className={[
                   "rounded-2xl border p-4",
-                  pl.highlight
-                    ? "border-[#0095FF]/40 bg-[#0095FF]/10"
-                    : "border-white/10 bg-white/5",
+                  pl.highlight ? "border-[#0095FF]/40 bg-[#0095FF]/10" : "border-white/10 bg-white/5",
                 ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -105,13 +138,27 @@ const plans: Plan[] = useMemo(
                   <button
                     type="button"
                     className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-[12px] font-semibold text-black hover:opacity-95 active:scale-[0.99]"
-                    onClick={() => { activateAndGoLogin(pl.id); }}
+                    onClick={() => {
+                      activateAndGoLogin(pl.id);
+                    }}
                   >
                     Assinar {pl.title}
                   </button>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* CTA Free */}
+          <div className="mt-4">
+            <button
+              type="button"
+              className="inline-flex w-full items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-[12px] font-semibold text-white/90 hover:bg-white/10 active:scale-[0.99]"
+              onClick={continueFree}
+            >
+              Continuar grátis
+            </button>
+            <div className="mt-2 text-center text-[11px] text-white/55">Você ainda poderá assinar depois no app.</div>
           </div>
         </div>
 
@@ -120,7 +167,9 @@ const plans: Plan[] = useMemo(
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-[14px] font-semibold">Liberar Premium (DEV)</div>
-              <div className="mt-1 text-[12px] text-white/70">Apenas para testes internos. Salvo no dispositivo.</div>
+              <div className="mt-1 text-[12px] text-white/70">
+                Apenas para testes internos. Salvo no dispositivo.
+              </div>
             </div>
             <button
               type="button"
@@ -134,7 +183,9 @@ const plans: Plan[] = useMemo(
           <div className="mt-4 flex items-center justify-between gap-4">
             <div>
               <div className="text-[14px] font-semibold">Paywall</div>
-              <div className="mt-1 text-[12px] text-white/70">Quando ativo, recursos premium redirecionam para /assinatura.</div>
+              <div className="mt-1 text-[12px] text-white/70">
+                Quando ativo, recursos premium redirecionam para /assinatura.
+              </div>
             </div>
             <button
               type="button"
@@ -147,19 +198,13 @@ const plans: Plan[] = useMemo(
 
           <div className="mt-4 text-[12px] text-white/60">
             Estado:{" "}
-            <span className="font-semibold text-white/80">
-              {devFlags.paywallEnabled ? "paywall ON" : "paywall OFF"}
-            </span>{" "}
+            <span className="font-semibold text-white/80">{devFlags.paywallEnabled ? "paywall ON" : "paywall OFF"}</span>{" "}
             •{" "}
-            <span className="font-semibold text-white/80">
-              {devFlags.premiumUnlocked ? "premium ON" : "premium OFF"}
-            </span>
+            <span className="font-semibold text-white/80">{devFlags.premiumUnlocked ? "premium ON" : "premium OFF"}</span>
           </div>
         </div>
 
-        <div className="mt-6 text-center text-[11px] text-white/45">
-          MindsetFit • Premium Layer (next)
-        </div>
+        <div className="mt-6 text-center text-[11px] text-white/45">MindsetFit • Premium Layer (next)</div>
       </div>
     </div>
   );
