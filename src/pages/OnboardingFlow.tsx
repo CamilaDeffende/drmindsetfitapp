@@ -263,7 +263,6 @@ export function OnboardingFlow() {
         saveOnboardingProgress({ step: active + 1 });
       } catch {}
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   useEffect(() => {
