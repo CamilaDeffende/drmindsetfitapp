@@ -67,6 +67,8 @@ function isOnboardingDone() {
   }
 }
 
+// Mantemos utilitários (mas NÃO vamos limpar draft no Step8 por enquanto,
+// pois precisamos sincronizar após login/cadastro)
 function clearOnboardingDraft() {
   try {
     localStorage.removeItem(LS_KEY);
@@ -138,13 +140,7 @@ export function OnboardingFlow() {
     }
   };
 
-  // MF_ONB_WATCHDOG_UNUSED_SILENCE_V1
-  void mfBootMs;
-  void mfStuck;
-  void mfPath;
-  void mfResetOnboarding;
-  // MF_ONBOARDING_WATCHDOG_UNUSED_SILENCE_V1
-  // Se o watchdog não estiver sendo renderizado, evitamos TS6133.
+  // Silences / watchdog (mantém seu comportamento atual)
   void mfBootMs;
   void mfStuck;
   void mfPath;
@@ -158,7 +154,6 @@ export function OnboardingFlow() {
     const step = mfClampStep(n);
     const to = `/onboarding/step-${step}`;
     try {
-      // usa o guard existente quando possível
       const guard = mfNavGuard as unknown;
       if (typeof guard === "function") {
         try {
@@ -190,18 +185,19 @@ export function OnboardingFlow() {
       if (mfNavGuard(to)) navigate(to, opts ?? { replace: true });
     } catch {}
   };
+
   // UNLOCK_FLOW_REDIRECT_EFFECT_V1: /onboarding deve respeitar progresso salvo (sem apagar dados)
   useEffect(() => {
     try {
       const p = loadOnboardingProgress();
-      const step =
-        p && typeof p.step === "number" && p.step >= 1 && p.step <= 8 ? p.step : 1;
+      const step = p && typeof p.step === "number" && p.step >= 1 && p.step <= 8 ? p.step : 1;
       const path = (location?.pathname || "").replace(/\/+$/g, "");
       const redirect = guardOnboardingPath(path, step, isDone());
       if (redirect && redirect !== path) {
         mfSafeNavigate(redirect, { replace: true });
       }
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const SHOW_LEGACY_NAV: boolean = false;
@@ -209,8 +205,6 @@ export function OnboardingFlow() {
   const { appReady } = useApp();
 
   // MF_APPREADY_GATE_DEV_BYPASS_V1
-  // Em DEV, não travar a árvore inteira aguardando hydrate/async do AppContext.
-  // PROD mantém comportamento original.
   const mfAppReady = Boolean(appReady) || Boolean(import.meta.env.DEV);
 
   // Hooks sempre no topo (rules-of-hooks)
@@ -241,11 +235,7 @@ export function OnboardingFlow() {
       if (path.startsWith("/onboarding")) {
         const req = path.match(/^\/onboarding\/step-(\d+)\b/);
         const requested = req ? Number(req[1]) : null;
-        if (
-          requested != null &&
-          Number.isFinite(requested) &&
-          requested > active + 1
-        ) {
+        if (requested != null && Number.isFinite(requested) && requested > active + 1) {
           mfSafeNavigate(desired, { replace: true });
         }
       }
@@ -253,6 +243,7 @@ export function OnboardingFlow() {
         saveOnboardingProgress({ step: active + 1 });
       } catch {}
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   useEffect(() => {
@@ -277,13 +268,9 @@ export function OnboardingFlow() {
   };
 
   // Gate depois dos hooks
-  // __MF_APPREADY_NO_BLANK_V1__
   if (!mfAppReady) {
     return (
-      <div
-        data-testid="app-loading"
-        className="min-h-screen flex items-center justify-center"
-      >
+      <div data-testid="app-loading" className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-2">
           <div className="text-sm text-muted-foreground">Carregando ambiente…</div>
           <div className="text-lg font-semibold">Preparando seu onboarding</div>
@@ -292,8 +279,9 @@ export function OnboardingFlow() {
     );
   }
 
+  // IMPORTANTE: NÃO redirecionar para /dashboard aqui.
+  // Quem decide o fluxo pós-DONE é o RouteGuard (assinatura -> login -> dashboard).
   if (isOnboardingDone()) {
-    navigate("/dashboard", { replace: true });
     return null;
   }
 
@@ -407,9 +395,8 @@ export function OnboardingFlow() {
               window.location.replace("/assinatura");
             }
 
-            try {
-              clearOnboardingDraft();
-            } catch {}
+            // NÃO limpar draft aqui. Vamos sincronizar com Supabase após login/cadastro (PostAuthSync)
+            // try { clearOnboardingDraft(); } catch {}
 
             // navegação extra de segurança
             navigate("/assinatura", { replace: true });
@@ -432,17 +419,12 @@ export function OnboardingFlow() {
       </div>
 
       <div className="mt-3 h-2 w-full rounded-full bg-white/5 border border-white/10 overflow-hidden">
-        <div
-          className="h-full bg-white/20"
-          style={{ width: `${((active + 1) / 8) * 100}%` }}
-        />
+        <div className="h-full bg-white/20" style={{ width: `${((active + 1) / 8) * 100}%` }} />
       </div>
 
       <div className="mt-6">{current?.render()}</div>
 
       <div className="mt-6 flex items-center justify-between gap-3"></div>
-
-      {/* Navegação mínima para Steps 1–4 (legado) se eles não tiverem botões próprios */}
 
       {/* MF_STEP1_NEXT_FALLBACK: garante avanço estável no Step-1 (E2E-safe) */}
       {
@@ -455,9 +437,7 @@ export function OnboardingFlow() {
               // 🔒 Regra: no Step1, só avança se tiver nome completo válido
               try {
                 if (current?.key === "step1") {
-                  const nome = String(
-                    (draft as any).step1?.nomeCompleto || ""
-                  ).trim();
+                  const nome = String((draft as any).step1?.nomeCompleto || "").trim();
                   if (!nome || nome.length < 3) {
                     alert("Digite seu nome completo antes de continuar.");
                     return;
@@ -471,15 +451,11 @@ export function OnboardingFlow() {
               } catch {}
 
               try {
-                // MF_FORCE_NEXT_URL_V9: após goNext(), a URL DEVE refletir o step atual.
                 const __path = window.location.pathname || "";
                 if (__path.startsWith("/onboarding")) {
                   const m = __path.match(/\/onboarding\/step-(\d+)\b/);
                   const __cur = m && m[1] ? Number(m[1]) || 1 : 1;
-                  const __dest =
-                    __cur >= 8
-                      ? "/assinatura"
-                      : `/onboarding/step-${__cur + 1}`;
+                  const __dest = __cur >= 8 ? "/assinatura" : `/onboarding/step-${__cur + 1}`;
                   mfSafeNavigate(__dest, { replace: true });
                 }
               } catch {}
@@ -492,10 +468,7 @@ export function OnboardingFlow() {
       }
 
       {/* MF_ONBOARDING_FLOW_RENDERED */}
-      <span
-        data-testid="mf-onboarding-flow"
-        style={{ display: "none" }}
-      >
+      <span data-testid="mf-onboarding-flow" style={{ display: "none" }}>
         ok
       </span>
 

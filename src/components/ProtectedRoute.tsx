@@ -26,10 +26,12 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
     );
   }
 
-  if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
+  // Se não estiver logado, manda para login e preserva a rota desejada
+  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname)}`} replace />;
 
+  // Se precisa premium e não tem, manda para Assinatura (paywall real) e preserva rota desejada
   if (requiresPremium && !status.isPremium) {
-    return <Navigate to="/pricing" replace state={{ from: loc.pathname }} />;
+    return <Navigate to={`/assinatura?next=${encodeURIComponent(loc.pathname)}`} replace />;
   }
 
   return <>{children}</>;
