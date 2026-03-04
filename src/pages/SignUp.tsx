@@ -1,70 +1,77 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useMemo, useState } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Lock, Mail, Zap, Check } from "lucide-react";
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from "@/hooks/use-toast";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { Button } from "@/components/ui/button";
 
 export function SignUp() {
-  const navigate = useNavigate()
-  const { signUp } = useAuth()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { signUp } = useAuth();
+  const { toast } = useToast();
+
+  const next = useMemo(() => {
+    try {
+      return new URLSearchParams(location.search).get("next") || "/dashboard";
+    } catch {
+      return "/dashboard";
+    }
+  }, [location.search]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  })
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     // Validações
     if (formData.password.length < 6) {
-      setError('A senha deve ter no mínimo 6 caracteres')
-      setLoading(false)
-      return
+      setError("A senha deve ter no mínimo 6 caracteres");
+      setLoading(false);
+      return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('As senhas não conferem')
-      setLoading(false)
-      return
+      setError("As senhas não conferem");
+      setLoading(false);
+      return;
     }
 
-    const { error: signUpError } = await signUp(
-      formData.email,
-      formData.password,
-      formData.fullName
-    )
+    const { error: signUpError } = await signUp(formData.email, formData.password, formData.fullName);
 
     if (signUpError) {
-      if (signUpError.message.includes('already registered')) {
-        setError('Este email já está cadastrado. Tente fazer login.')
+      if (signUpError.message?.toLowerCase().includes("already") || signUpError.message?.toLowerCase().includes("registered")) {
+        setError("Este email já está cadastrado. Tente fazer login.");
       } else {
-        setError('Erro ao criar conta. Tente novamente.')
+        setError("Erro ao criar conta. Tente novamente.");
       }
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
 
     toast({
-      title: 'Conta criada com sucesso!',
-      description: 'Verifique seu email para confirmar o cadastro.',
-    })
+      title: "Conta criada com sucesso!",
+      description: "Se necessário, verifique seu email para confirmar o cadastro.",
+    });
 
-    // Redirecionar para login ou dashboard
-    navigate('/pricing')
-    setLoading(false)
-  }
+    // ✅ Funil: após signup, ir para a próxima tela (default dashboard)
+    navigate(next, { replace: true });
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black flex items-center justify-center p-4">
@@ -85,6 +92,7 @@ export function SignUp() {
               Crie sua conta e transforme seu corpo e mente
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
@@ -95,7 +103,7 @@ export function SignUp() {
 
               <div className="space-y-2">
                 <Label htmlFor="fullName" className="flex items-center gap-2">
-                  <BrandIcon className="w-4 h-4"  />
+                  <BrandIcon className="w-4 h-4" />
                   Nome Completo
                 </Label>
                 <Input
@@ -162,9 +170,21 @@ export function SignUp() {
                 />
               </div>
 
+              {/* ✅ BOTÃO QUE ESTAVA FALTANDO */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 text-base font-semibold glow-blue"
+              >
+                {loading ? "Criando conta..." : "Criar conta"}
+              </Button>
+
               <div className="text-center text-sm text-gray-400">
-                Já tem uma conta?{' '}
-                <Link to="/login" className="text-[#1E6BFF] hover:text-[#1E6BFF] font-semibold">
+                Já tem uma conta?{" "}
+                <Link
+                  to={`/login?next=${encodeURIComponent(next)}`}
+                  className="text-[#1E6BFF] hover:text-[#1E6BFF] font-semibold"
+                >
                   Fazer login
                 </Link>
               </div>
@@ -177,5 +197,5 @@ export function SignUp() {
         </p>
       </div>
     </div>
-  )
+  );
 }
