@@ -10,6 +10,7 @@ import { useApp } from "@/contexts/AppContext";
 import { migrateLegacyToSSOT } from "@/services/activePlan.bridge";
 import { loadOnboardingProgress, saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { guardOnboardingPath } from "@/lib/onboardingGuard";
+
 // Steps 1–4 (legado do app): export NAMED (sem props no BLOCO C para não quebrar)
 import { Step1Perfil } from "@/components/steps/Step1Perfil";
 import { Step2Avaliacao } from "@/components/steps/Step2Avaliacao";
@@ -44,6 +45,10 @@ function mfNavGuard(to: string) {
 
 type Draft = {
   activeIndex?: number;
+  step1?: any;
+  step2?: any;
+  step3?: any;
+  step4?: any;
   step5?: any;
   step6?: any;
   step7?: any;
@@ -59,6 +64,7 @@ function isDone(): boolean {
     return false;
   }
 }
+
 function isOnboardingDone() {
   try {
     return localStorage.getItem(DONE_KEY) === "1";
@@ -104,10 +110,12 @@ export function OnboardingFlow() {
       return "";
     }
   }, []);
+
   useEffect(() => {
     const t = setTimeout(() => setMfStuck(true), 1500);
     return () => clearTimeout(t);
   }, []);
+
   const mfResetOnboarding = () => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
@@ -146,8 +154,12 @@ export function OnboardingFlow() {
   void mfPath;
   void mfResetOnboarding;
 
+  // evita TS6133 (usar depois no PostAuthSync)
+  void clearOnboardingDraft;
+
   // MF_SAFE_NAV_GUARD_V1
   const navigate = useNavigate();
+
   // MF_NEXT_SYNC_V1: helper único para sincronizar Step (state + URL)
   const mfClampStep = (n: number) => Math.max(1, Math.min(8, n));
   const mfGotoStep = (n: number) => {
@@ -176,6 +188,7 @@ export function OnboardingFlow() {
   // Guard anti-loop: só navega quando o destino muda e é diferente do pathname atual.
   const location = useLocation();
   const __mfLastNavRef = useRef<string | null>(null);
+
   const mfSafeNavigate = (to: string, opts?: any) => {
     try {
       if (!to) return;
@@ -190,7 +203,8 @@ export function OnboardingFlow() {
   useEffect(() => {
     try {
       const p = loadOnboardingProgress();
-      const step = p && typeof p.step === "number" && p.step >= 1 && p.step <= 8 ? p.step : 1;
+      const step =
+        p && typeof p.step === "number" && p.step >= 1 && p.step <= 8 ? p.step : 1;
       const path = (location?.pathname || "").replace(/\/+$/g, "");
       const redirect = guardOnboardingPath(path, step, isDone());
       if (redirect && redirect !== path) {
@@ -258,6 +272,7 @@ export function OnboardingFlow() {
       return nx;
     });
   };
+
   // MF_NEXT_SYNC_V1
   const goBack = () => {
     setActive((x) => {
@@ -427,45 +442,43 @@ export function OnboardingFlow() {
       <div className="mt-6 flex items-center justify-between gap-3"></div>
 
       {/* MF_STEP1_NEXT_FALLBACK: garante avanço estável no Step-1 (E2E-safe) */}
-      {
-        <div className="mt-6 flex items-center justify-end">
-          <button
-            data-testid="onboarding-next"
-            data-mf="mf-next"
-            type="button"
-            onClick={() => {
-              // 🔒 Regra: no Step1, só avança se tiver nome completo válido
-              try {
-                if (current?.key === "step1") {
-                  const nome = String((draft as any).step1?.nomeCompleto || "").trim();
-                  if (!nome || nome.length < 3) {
-                    alert("Digite seu nome completo antes de continuar.");
-                    return;
-                  }
+      <div className="mt-6 flex items-center justify-end">
+        <button
+          data-testid="onboarding-next"
+          data-mf="mf-next"
+          type="button"
+          onClick={() => {
+            // 🔒 Regra: no Step1, só avança se tiver nome completo válido
+            try {
+              if (current?.key === "step1") {
+                const nome = String((draft as any).step1?.nomeCompleto || "").trim();
+                if (!nome || nome.length < 3) {
+                  alert("Digite seu nome completo antes de continuar.");
+                  return;
                 }
-              } catch {}
+              }
+            } catch {}
 
-              // fluxo original de avanço
-              try {
-                goNext();
-              } catch {}
+            // fluxo original de avanço
+            try {
+              goNext();
+            } catch {}
 
-              try {
-                const __path = window.location.pathname || "";
-                if (__path.startsWith("/onboarding")) {
-                  const m = __path.match(/\/onboarding\/step-(\d+)\b/);
-                  const __cur = m && m[1] ? Number(m[1]) || 1 : 1;
-                  const __dest = __cur >= 8 ? "/assinatura" : `/onboarding/step-${__cur + 1}`;
-                  mfSafeNavigate(__dest, { replace: true });
-                }
-              } catch {}
-            }}
-            className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-          >
-            Continuar
-          </button>
-        </div>
-      }
+            try {
+              const __path = window.location.pathname || "";
+              if (__path.startsWith("/onboarding")) {
+                const m = __path.match(/\/onboarding\/step-(\d+)\b/);
+                const __cur = m && m[1] ? Number(m[1]) || 1 : 1;
+                const __dest = __cur >= 8 ? "/assinatura" : `/onboarding/step-${__cur + 1}`;
+                mfSafeNavigate(__dest, { replace: true });
+              }
+            } catch {}
+          }}
+          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
+        >
+          Continuar
+        </button>
+      </div>
 
       {/* MF_ONBOARDING_FLOW_RENDERED */}
       <span data-testid="mf-onboarding-flow" style={{ display: "none" }}>
