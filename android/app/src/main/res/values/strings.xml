@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">drmindsetfitapp</string>
+    <string name="title_activity_main">drmindsetfitapp</string>
+    <string name="package_name">com.drmindsetfit.app</string>
+    <string name="custom_url_scheme">com.drmindsetfit.app</string>
+</resources>
