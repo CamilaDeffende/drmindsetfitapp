@@ -1,5 +1,5 @@
 // MF_BOOT_DEDUP_REACT_V1
-// MF_MAIN_REACT_DUPE_FIX_V1
+// MF_MAIN_REACT_DUPE_FIX_V3
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
@@ -10,11 +10,10 @@ import { ProfileProvider } from "@/contexts/ProfileContext";
 import { useAuth, AuthProvider } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 
-// NOVO: PostAuthSyncGate
+// Sync global pós-auth
 import PostAuthSyncGate from "@/sync/PostAuthSyncGate";
 
 import "leaflet/dist/leaflet.css";
-
 import { initI18n } from "@/i18n";
 
 function BootSplash({ children }: { children: React.ReactNode }) {
@@ -43,28 +42,8 @@ initI18n();
 const el = document.getElementById("root");
 if (!el) throw new Error("Root element #root not found");
 
-function RootProviders({ children }: { children: React.ReactNode }) {
-  const auth = useAuth();
-  const userId = (auth as any)?.user?.id ?? (auth as any)?.session?.user?.id ?? null;
-
-  // TODO (Phase 1.1): substituir por user.id real do AuthContext
-  // MF_MAIN_GATE_V1: nunca retornar null no bootstrap (evita root vazio).
-  // Em DEMO/sem sessão: usar userId estável para permitir providers e onboarding renderizarem.
-  const __demoUserId = "demo-user-123";
-  const __resolvedUserId = userId ?? __demoUserId;
-  // se quiser bloquear SEMPRE sem auth real, troque por: return <SplashScreen />
-  // (mas em modo DEMO queremos UI viva)
-  // if (!userId) return <SplashScreen />;
-  // nota: __resolvedUserId garante ProfileProvider/AppProvider
-  void __resolvedUserId;
-
-  // MF_MAIN_PROFILE_GATE_FALSE_V1: demo mode — não bloquear UI
-  return (
-    <ProfileProvider userId={__resolvedUserId} gate={false}>
-      <AppProvider>{children}</AppProvider>
-    </ProfileProvider>
-  );
-}
+// Detecta Capacitor
+const isNative = typeof window !== "undefined" && !!(window as any).Capacitor;
 
 // MF_HARD_BOOT_DIAG_V1
 type MF_BootEntry = { t: number; kind: string; msg: string; stack?: string };
@@ -78,34 +57,34 @@ function mfBootPush(kind: string, msg: string, stack?: string) {
     const w = window as any;
     w.__mf_bootlog = w.__mf_bootlog || [];
     w.__mf_bootlog.push({ t: Date.now(), kind, msg: String(msg), stack });
-    // Keep last 80
     if (w.__mf_bootlog.length > 80) w.__mf_bootlog = w.__mf_bootlog.slice(-80);
-    // Overlay
-    let el = document.getElementById("mf-boot-overlay");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "mf-boot-overlay";
-      el.style.position = "fixed";
-      el.style.inset = "0";
-      el.style.zIndex = "2147483647";
-      el.style.background = "rgba(0,0,0,0.92)";
-      el.style.color = "#fff";
-      el.style.fontFamily =
+
+    let overlay = document.getElementById("mf-boot-overlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "mf-boot-overlay";
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.zIndex = "2147483647";
+      overlay.style.background = "rgba(0,0,0,0.92)";
+      overlay.style.color = "#fff";
+      overlay.style.fontFamily =
         'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
-      el.style.fontSize = "12px";
-      el.style.padding = "16px";
-      el.style.overflow = "auto";
-      el.style.display = "none";
-      document.body.appendChild(el);
+      overlay.style.fontSize = "12px";
+      overlay.style.padding = "16px";
+      overlay.style.overflow = "auto";
+      overlay.style.display = "none";
+      document.body.appendChild(overlay);
     }
+
     const lines = (w.__mf_bootlog || []).map((e: any) => {
       const dt = new Date(e.t).toISOString();
       const st = e.stack ? "\n" + e.stack : "";
       return `[${dt}] ${e.kind}: ${e.msg}${st}`;
     });
-    el.textContent = "MF BOOT DIAG (mostra o que travou)\n\n" + lines.join("\n\n");
-    // show overlay only on errors
-    if (kind === "error" || kind === "rejection") el.style.display = "block";
+
+    overlay.textContent = "MF BOOT DIAG (mostra o que travou)\n\n" + lines.join("\n\n");
+    if (kind === "error" || kind === "rejection") overlay.style.display = "block";
   } catch {}
 }
 
@@ -119,7 +98,6 @@ try {
       const r = ev?.reason;
       mfBootPush("rejection", String(r?.message || r || "unhandledrejection"), String(r?.stack || ""));
     });
-    // Patch console.error to surface silent errors
     const _ce = console.error.bind(console);
     console.error = (...args: any[]) => {
       try {
@@ -130,7 +108,6 @@ try {
   }
 } catch {}
 
-// ErrorBoundary in main (catches React render errors)
 class BootErrorBoundary extends React.Component<{ children: React.ReactNode }, { err?: any }> {
   state: { err?: any } = {};
   static getDerivedStateFromError(err: any) {
@@ -164,11 +141,35 @@ class BootErrorBoundary extends React.Component<{ children: React.ReactNode }, {
   }
 }
 
+function RootProviders({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  const userId = (auth as any)?.user?.id ?? (auth as any)?.session?.user?.id ?? null;
+
+  // Para o Android/iOS: aguarda auth “assentar”
+  const [waited, setWaited] = React.useState(false);
+  React.useEffect(() => {
+    if (!isNative) return;
+    const t = window.setTimeout(() => setWaited(true), 4000);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  // Se for nativo e ainda não carregou auth, splash por alguns segundos
+  if (isNative && !userId && !waited) return <SplashScreen />;
+
+  // Se for nativo e NÃO veio sessão, continua em modo DEMO pra não travar
+  const __demoUserId = "demo-user-123";
+  const __resolvedUserId = userId ?? __demoUserId;
+
+  return (
+    <ProfileProvider userId={__resolvedUserId} gate={false}>
+      <AppProvider>{children}</AppProvider>
+    </ProfileProvider>
+  );
+}
+
 createRoot(el).render(
   <AuthProvider>
-    {/* NOVO: Sync global pós-auth (não faz redirect e não bloqueia UI) */}
     <PostAuthSyncGate />
-
     <RootProviders>
       <React.StrictMode>
         <BootSplash>
@@ -183,20 +184,14 @@ createRoot(el).render(
   </AuthProvider>
 );
 
-// MF_DEV_SW_UNREGISTER_V1
-// Evita loading infinito em DEV por cache/Service Worker antigo.
-// Seguro: só roda em DEV (Vite) e ignora erros.
+// MF_DEV_SW_UNREGISTER_V3
+// No Capacitor e em DEV: desregistra SW antigo para não sobrar cache quebrando o carregamento.
 try {
-  if (import.meta.env.DEV && typeof window !== "undefined" && "serviceWorker" in navigator) {
+  const shouldUnregisterSW = import.meta.env.DEV || isNative;
+  if (shouldUnregisterSW && typeof window !== "undefined" && "serviceWorker" in navigator) {
     navigator.serviceWorker
       .getRegistrations()
-      .then((regs) =>
-        regs.forEach((r) => {
-          try {
-            r.unregister();
-          } catch {}
-        })
-      )
+      .then((regs) => regs.forEach((r) => r.unregister().catch?.(() => {})))
       .catch(() => {});
   }
 } catch {}

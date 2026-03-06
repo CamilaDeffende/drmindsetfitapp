@@ -96,7 +96,7 @@ function saveDraft(d: Draft) {
   } catch {}
 }
 
-//  Export NAMED (App.tsx importa { OnboardingFlow })
+// Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
   // MF_ONBOARDING_LOADER_WATCHDOG_V2
   const [mfBootMs] = useState(() => Date.now());
@@ -218,8 +218,26 @@ export function OnboardingFlow() {
 
   const { appReady } = useApp();
 
-  // MF_APPREADY_GATE_DEV_BYPASS_V1
-  const mfAppReady = Boolean(appReady) || Boolean(import.meta.env.DEV);
+  // Detecta se está rodando no Capacitor (Android/iOS)
+  const isNative = typeof window !== "undefined" && !!(window as any).Capacitor;
+
+  // Se o appReady não chegar a tempo no nativo, libera mesmo assim
+  const [mfForceReady, setMfForceReady] = useState(false);
+
+  useEffect(() => {
+    if (!isNative) return;
+    const t = window.setTimeout(() => {
+      console.warn("MF_APPREADY_TIMEOUT: liberando onboarding no nativo");
+      setMfForceReady(true);
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [isNative]);
+
+  // MF_APPREADY_GATE_DEV_BYPASS_V2
+  const mfAppReady =
+    Boolean(appReady) ||
+    Boolean(import.meta.env.DEV) ||
+    (isNative && mfForceReady);
 
   // Hooks sempre no topo (rules-of-hooks)
   const [draft, setDraft] = useState<Draft>(() => loadDraft());
@@ -447,7 +465,7 @@ export function OnboardingFlow() {
           data-mf="mf-next"
           type="button"
           onClick={() => {
-            // 🔒 Regra: no Step1, só avança se tiver nome completo válido
+            // Regra: no Step1, só avança se tiver nome completo válido
             try {
               if (current?.key === "step1") {
                 const nome = String((draft as any).step1?.nomeCompleto || "").trim();

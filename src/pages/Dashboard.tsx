@@ -1,84 +1,130 @@
-import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Activity, TrendingUp, Footprints, Dumbbell, Home, MapPin, UtensilsCrossed } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
-import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
+import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Activity,
+  TrendingUp,
+  Footprints,
+  Dumbbell,
+  Home,
+  MapPin,
+  UtensilsCrossed,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
+import { useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
 
 export function Dashboard() {
-  const { state } = useDrMindSetfit()
-  const navigate = useNavigate()
-  const [passosHoje, setPassosHoje] = useState(0)
-  const [cargaSemana, setCargaSemana] = useState(0)
-  const [horaAtual, setHoraAtual] = useState(new Date())
+  const { state } = useDrMindSetfit();
+  const navigate = useNavigate();
+  const [passosHoje, setPassosHoje] = useState(0);
+  const [cargaSemana, setCargaSemana] = useState(0);
+  const [horaAtual, setHoraAtual] = useState(new Date());
+
+  // SAFE STATE
+  const consumoCalorias = Array.isArray(state?.consumoCalorias) ? state.consumoCalorias : [];
+  const passosDiarios = Array.isArray(state?.passosDiarios) ? state.passosDiarios : [];
+  const historicoCargas = Array.isArray(state?.treino?.historicoCargas) ? state.treino.historicoCargas : [];
+  const refeicoes = Array.isArray(state?.nutricao?.refeicoes) ? state.nutricao.refeicoes : [];
+  const caloriasMeta = Number(state?.nutricao?.macros?.calorias ?? 2000);
+
+  const onboardingDone = (() => {
+    try {
+      return localStorage.getItem("mf:onboarding:done:v1") === "1";
+    } catch {
+      return false;
+    }
+  })();
+
+  const ultimoConsumo = consumoCalorias.length
+    ? consumoCalorias[consumoCalorias.length - 1]?.consumido ?? 0
+    : 0;
 
   // Atualizar hora a cada segundo
   useEffect(() => {
     const interval = setInterval(() => {
-      setHoraAtual(new Date())
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [])
+      setHoraAtual(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Simular contador de passos (em produção viria de um sensor)
+  // Passos do dia
   useEffect(() => {
-    const dataHoje = format(new Date(), 'yyyy-MM-dd')
-    const passosDia = state.passosDiarios.find(p => p.data === dataHoje)
+    const dataHoje = format(new Date(), "yyyy-MM-dd");
+    const passosDia = passosDiarios.find((p: any) => p?.data === dataHoje);
     if (passosDia) {
-      setPassosHoje(passosDia.passos)
+      setPassosHoje(Number(passosDia.passos ?? 0));
+    } else {
+      setPassosHoje(0);
     }
-  }, [state.passosDiarios])
+  }, [passosDiarios]);
 
-  // Calcular carga total da semana
+  // Carga total da semana
   useEffect(() => {
-    if (state.treino?.historicoCargas) {
-      const hoje = new Date()
-      const inicioSemana = new Date(hoje)
-      inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1) // Segunda-feira
+    const hoje = new Date();
+    const inicioSemana = new Date(hoje);
+    inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1);
 
-      const cargaTotal = state.treino.historicoCargas
-        .filter(c => new Date(c.data) >= inicioSemana)
-        .reduce((acc, c) => acc + c.cargaTotal, 0)
+    const cargaTotal = historicoCargas
+      .filter((c: any) => c?.data && new Date(c.data) >= inicioSemana)
+      .reduce((acc: number, c: any) => acc + Number(c?.cargaTotal ?? 0), 0);
 
-      setCargaSemana(cargaTotal)
-    }
-  }, [state.treino])
+    setCargaSemana(cargaTotal);
+  }, [historicoCargas]);
 
-  // Dados para gráfico de calorias (últimos 7 dias)
-  const dadosCalorias = Array.from({ length: 7 }, (_, i) => {
-    const data = new Date()
-    data.setDate(data.getDate() - (6 - i))
-    const dataStr = format(data, 'yyyy-MM-dd')
-    const consumo = state.consumoCalorias.find(c => c.data === dataStr)
+  // Dados gráfico calorias
+  const dadosCalorias = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const data = new Date();
+        data.setDate(data.getDate() - (6 - i));
+        const dataStr = format(data, "yyyy-MM-dd");
+        const consumo = consumoCalorias.find((c: any) => c?.data === dataStr);
 
-    return {
-      dia: format(data, 'EEE'),
-      consumido: consumo?.consumido || 0,
-      meta: state.nutricao?.macros.calorias || 2000
-    }
-  })
+        return {
+          dia: format(data, "EEE"),
+          consumido: Number(consumo?.consumido ?? 0),
+          meta: caloriasMeta,
+        };
+      }),
+    [consumoCalorias, caloriasMeta]
+  );
 
-  // Dados para gráfico de carga semanal
-  const dadosCarga = Array.from({ length: 7 }, (_, i) => {
-    const data = new Date()
-    const hoje = data.getDay()
-    const diaSemana = (hoje === 0 ? 6 : hoje - 1) // Segunda = 0
-    data.setDate(data.getDate() - diaSemana + i)
-    const dataStr = format(data, 'yyyy-MM-dd')
+  // Dados gráfico carga
+  const dadosCarga = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const data = new Date();
+        const hoje = data.getDay();
+        const diaSemana = hoje === 0 ? 6 : hoje - 1;
+        data.setDate(data.getDate() - diaSemana + i);
+        const dataStr = format(data, "yyyy-MM-dd");
 
-    const cargaDia = state.treino?.historicoCargas
-      .filter(c => c.data === dataStr)
-      .reduce((acc, c) => acc + c.cargaTotal, 0) || 0
+        const cargaDia =
+          historicoCargas
+            .filter((c: any) => c?.data === dataStr)
+            .reduce((acc: number, c: any) => acc + Number(c?.cargaTotal ?? 0), 0) || 0;
 
-    return {
-      dia: format(data, 'EEE'),
-      carga: cargaDia
-    }
-  })
+        return {
+          dia: format(data, "EEE"),
+          carga: cargaDia,
+        };
+      }),
+    [historicoCargas]
+  );
 
-  if (!state.concluido) {
+  if (!state?.concluido && !onboardingDone) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-96">
@@ -89,32 +135,34 @@ export function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate('/')} className="w-full">
+            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full">
               Iniciar Questionário
             </Button>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
-      {/* Header Mobile Optimized */}
       <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between mb-2 sm:mb-0">
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] bg-clip-text text-transparent hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
+            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] bg-clip-text text-transparent">
               Dashboard
             </h1>
+
             <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={() => navigate('/')}>
+              <Button variant="outline" size="icon" onClick={() => navigate("/")}>
                 <Home className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => navigate('/running')} className="hidden sm:flex">
+
+              <Button variant="outline" size="icon" onClick={() => navigate("/running")} className="hidden sm:flex">
                 <MapPin className="w-4 h-4" />
               </Button>
-              <Button onClick={() => navigate('/treino')} size="sm" className="sm:size-default">
+
+              <Button onClick={() => navigate("/treino")} size="sm" className="sm:size-default">
                 <Dumbbell className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Treinar</span>
               </Button>
@@ -124,7 +172,6 @@ export function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        {/* Resumo Rápido - Mobile Optimized */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card>
             <CardHeader className="pb-2">
@@ -134,8 +181,8 @@ export function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{state.consumoCalorias[state.consumoCalorias.length - 1]?.consumido || 0}</div>
-              <p className="text-xs text-muted-foreground truncate">Meta: {state.nutricao?.macros.calorias || 0}</p>
+              <div className="text-xl sm:text-2xl font-bold">{ultimoConsumo}</div>
+              <p className="text-xs text-muted-foreground truncate">Meta: {caloriasMeta}</p>
             </CardContent>
           </Card>
 
@@ -173,15 +220,13 @@ export function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{format(horaAtual, 'HH:mm:ss')}</div>
-              <p className="text-xs text-muted-foreground truncate">{format(horaAtual, 'dd/MM/yyyy')}</p>
+              <div className="text-xl sm:text-2xl font-bold">{format(horaAtual, "HH:mm:ss")}</div>
+              <p className="text-xs text-muted-foreground truncate">{format(horaAtual, "dd/MM/yyyy")}</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Gráfico de Calorias */}
           <Card>
             <CardHeader>
               <CardTitle>Consumo Calórico - Últimos 7 Dias</CardTitle>
@@ -201,7 +246,6 @@ export function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Gráfico de Carga */}
           <Card>
             <CardHeader>
               <CardTitle>Carga Total Semanal</CardTitle>
@@ -221,18 +265,17 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Programas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          {state.treino && (
+          {state?.treino && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg sm:text-xl">Programa de Treino</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
-                  {state.treino.divisaoSemanal} • {state.treino.frequencia}x por semana
+                  {state.treino?.divisaoSemanal || "Treino ativo"} • {state.treino?.frequencia || 0}x por semana
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button onClick={() => navigate('/treino')} size="lg" className="w-full">
+                <Button onClick={() => navigate("/treino")} size="lg" className="w-full">
                   <Dumbbell className="w-4 h-4 mr-2" />
                   Iniciar Treino
                 </Button>
@@ -240,16 +283,16 @@ export function Dashboard() {
             </Card>
           )}
 
-          {state.nutricao && (
+          {state?.nutricao && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg sm:text-xl">Planejamento Nutricional</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
-                  {state.nutricao.refeicoes.length} refeições • {state.nutricao.macros.calorias} kcal/dia
+                  {refeicoes.length} refeições • {caloriasMeta} kcal/dia
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button onClick={() => navigate('/nutrition')} size="lg" className="w-full" variant="outline">
+                <Button onClick={() => navigate("/nutrition")} size="lg" className="w-full" variant="outline">
                   <UtensilsCrossed className="w-4 h-4 mr-2" />
                   Ver Dieta
                 </Button>
@@ -259,5 +302,5 @@ export function Dashboard() {
         </div>
       </main>
     </div>
-  )
+  );
 }
