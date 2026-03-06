@@ -7,14 +7,12 @@ type Props = {
 export function BrandIcon({ size = 28, className = "", alt = "MindsetFit" }: Props) {
   return (
     <img
-      src="/brand/mindsetfit-logo.svg"
+      src="/brand/mindsetfit-icon.png"
       width={size}
       height={size}
       alt={alt}
       className={className}
       style={{ display: "block" }}
-      loading="eager"
-      decoding="async"
     />
   );
 }
