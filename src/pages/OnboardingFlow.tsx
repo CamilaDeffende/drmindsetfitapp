@@ -3,6 +3,7 @@
 // MF_APPREADY_GATE_DEV_BYPASS_V1
 // MF_ONBOARDING_LOADER_WATCHDOG_V2
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
+
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { buildActivePlanFromDraft, saveActivePlan } from "@/services/plan.service";
@@ -10,20 +11,18 @@ import { useApp } from "@/contexts/AppContext";
 import { migrateLegacyToSSOT } from "@/services/activePlan.bridge";
 import { loadOnboardingProgress, saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { guardOnboardingPath } from "@/lib/onboardingGuard";
+import { BrandIcon } from "@/components/branding/BrandIcon";
 
-// Steps 1–4 (legado do app): export NAMED (sem props no BLOCO C para não quebrar)
 import { Step1Perfil } from "@/components/steps/Step1Perfil";
 import { Step2Avaliacao } from "@/components/steps/Step2Avaliacao";
 import { Step3Metabolismo } from "@/components/steps/Step3Metabolismo";
 import { Step4Nutricao } from "@/components/steps/Step4Nutricao";
 
-// Steps 5–8 (novos): default export com props (draft real)
 import Step5Modalidades from "@/components/steps/Step5Modalidades";
 import Step6DiasSemana from "@/components/steps/Step6DiasSemana";
 import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
 
-// MF_REDIRECT_LOOP_GUARD_V1
 function mfNavGuard(to: string) {
   try {
     const k = "mf:navguard:v1";
@@ -73,8 +72,6 @@ function isOnboardingDone() {
   }
 }
 
-// Mantemos utilitários (mas NÃO vamos limpar draft no Step8 por enquanto,
-// pois precisamos sincronizar após login/cadastro)
 function clearOnboardingDraft() {
   try {
     localStorage.removeItem(LS_KEY);
@@ -96,9 +93,7 @@ function saveDraft(d: Draft) {
   } catch {}
 }
 
-// Export NAMED (App.tsx importa { OnboardingFlow })
 export function OnboardingFlow() {
-  // MF_ONBOARDING_LOADER_WATCHDOG_V2
   const [mfBootMs] = useState(() => Date.now());
   const [mfStuck, setMfStuck] = useState(false);
   const mfPath = useMemo(() => {
@@ -129,8 +124,9 @@ export function OnboardingFlow() {
             kl.includes("mf:onboard") ||
             kl.includes("mf:progress") ||
             kl.includes("mf:draft")
-          )
+          ) {
             keys.push(k);
+          }
         }
         keys.forEach((k) => {
           try {
@@ -139,6 +135,7 @@ export function OnboardingFlow() {
         });
       }
     } catch {}
+
     try {
       window.location.href = "/onboarding/step-1";
     } catch {
@@ -148,19 +145,14 @@ export function OnboardingFlow() {
     }
   };
 
-  // Silences / watchdog (mantém seu comportamento atual)
   void mfBootMs;
   void mfStuck;
   void mfPath;
   void mfResetOnboarding;
-
-  // evita TS6133 (usar depois no PostAuthSync)
   void clearOnboardingDraft;
 
-  // MF_SAFE_NAV_GUARD_V1
   const navigate = useNavigate();
 
-  // MF_NEXT_SYNC_V1: helper único para sincronizar Step (state + URL)
   const mfClampStep = (n: number) => Math.max(1, Math.min(8, n));
   const mfGotoStep = (n: number) => {
     const step = mfClampStep(n);
@@ -185,7 +177,6 @@ export function OnboardingFlow() {
     }
   };
 
-  // Guard anti-loop: só navega quando o destino muda e é diferente do pathname atual.
   const location = useLocation();
   const __mfLastNavRef = useRef<string | null>(null);
 
@@ -199,7 +190,6 @@ export function OnboardingFlow() {
     } catch {}
   };
 
-  // UNLOCK_FLOW_REDIRECT_EFFECT_V1: /onboarding deve respeitar progresso salvo (sem apagar dados)
   useEffect(() => {
     try {
       const p = loadOnboardingProgress();
@@ -211,17 +201,11 @@ export function OnboardingFlow() {
         mfSafeNavigate(redirect, { replace: true });
       }
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const SHOW_LEGACY_NAV: boolean = false;
 
   const { appReady } = useApp();
 
-  // Detecta se está rodando no Capacitor (Android/iOS)
   const isNative = typeof window !== "undefined" && !!(window as any).Capacitor;
-
-  // Se o appReady não chegar a tempo no nativo, libera mesmo assim
   const [mfForceReady, setMfForceReady] = useState(false);
 
   useEffect(() => {
@@ -233,20 +217,17 @@ export function OnboardingFlow() {
     return () => window.clearTimeout(t);
   }, [isNative]);
 
-  // MF_APPREADY_GATE_DEV_BYPASS_V2
   const mfAppReady =
     Boolean(appReady) ||
     Boolean(import.meta.env.DEV) ||
     (isNative && mfForceReady);
 
-  // Hooks sempre no topo (rules-of-hooks)
   const [draft, setDraft] = useState<Draft>(() => loadDraft());
   const [active, setActive] = useState<number>(() => {
     const i = Number(loadDraft()?.activeIndex ?? 0);
     return Number.isFinite(i) ? i : 0;
   });
 
-  // UNLOCK_STEP_URL_SYNC_V1 — SSOT do step via URL + persistência (sem apagar dados)
   const params = useParams();
   const __clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
   const __stepFromUrl = (() => {
@@ -281,16 +262,14 @@ export function OnboardingFlow() {
     saveDraft({ ...draft, activeIndex: active });
   }, [draft, active]);
 
-  // MF_NEXT_SYNC_V1
   const goNext = () => {
     setActive((x) => {
       const nx = Math.min(x + 1, 7);
-      mfGotoStep(nx + 1); // active 0..7 -> step 1..8
+      mfGotoStep(nx + 1);
       return nx;
     });
   };
 
-  // MF_NEXT_SYNC_V1
   const goBack = () => {
     setActive((x) => {
       const nx = Math.max(x - 1, 0);
@@ -299,20 +278,22 @@ export function OnboardingFlow() {
     });
   };
 
-  // Gate depois dos hooks
   if (!mfAppReady) {
     return (
-      <div data-testid="app-loading" className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <div className="text-sm text-muted-foreground">Carregando ambiente…</div>
-          <div className="text-lg font-semibold">Preparando seu onboarding</div>
+      <div className="min-h-screen mf-app-bg mf-bg-neon text-white flex items-center justify-center px-6">
+        <div className="w-full max-w-sm rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 text-center shadow-[0_0_40px_rgba(0,149,255,0.08)]">
+          <div className="mb-4 flex items-center justify-center">
+            <BrandIcon size={46} className="drop-shadow-[0_0_18px_rgba(0,190,255,0.4)]" />
+          </div>
+          <div className="text-sm text-white/55">Carregando ambiente…</div>
+          <div className="mt-2 text-lg font-semibold text-white">
+            Preparando seu onboarding
+          </div>
         </div>
       </div>
     );
   }
 
-  // IMPORTANTE: NÃO redirecionar para /dashboard aqui.
-  // Quem decide o fluxo pós-DONE é o RouteGuard (assinatura -> login -> dashboard).
   if (isOnboardingDone()) {
     return null;
   }
@@ -320,7 +301,8 @@ export function OnboardingFlow() {
   const steps = [
     {
       key: "step1",
-      title: "Objetivo e Perfil",
+      title: "Dados para calibração",
+      subtitle: "Base científica para personalizar metabolismo, treino e nutrição.",
       render: () => (
         <Step1Perfil
           value={(draft as any).step1 || {}}
@@ -331,7 +313,8 @@ export function OnboardingFlow() {
     },
     {
       key: "step2",
-      title: "Dados corporais",
+      title: "Atividade física semanal",
+      subtitle: "Esse dado ajuda a calibrar seu gasto energético total diário.",
       render: () => (
         <Step2Avaliacao
           value={(draft as any).step2 || {}}
@@ -343,7 +326,8 @@ export function OnboardingFlow() {
     },
     {
       key: "step3",
-      title: "Nível de atividade",
+      title: "Metabolismo calibrado",
+      subtitle: "Base científica para definir calorias e macros com segurança.",
       render: () => (
         <Step3Metabolismo
           value={(draft as any).step3 || {}}
@@ -355,7 +339,8 @@ export function OnboardingFlow() {
     },
     {
       key: "step4",
-      title: "Nutrição",
+      title: "Faixa calórica segura",
+      subtitle: "Base científica para definir calorias e macros com segurança.",
       render: () => (
         <Step4Nutricao
           value={(draft as any).step4 || {}}
@@ -368,6 +353,7 @@ export function OnboardingFlow() {
     {
       key: "step5",
       title: "Modalidades",
+      subtitle: "Vamos definir os pilares do seu protocolo semanal.",
       render: () => (
         <Step5Modalidades
           value={draft.step5 || { primary: null, secondary: null }}
@@ -380,6 +366,7 @@ export function OnboardingFlow() {
     {
       key: "step6",
       title: "Dias da semana",
+      subtitle: "Distribuição inteligente para rotina sustentável.",
       render: () => (
         <Step6DiasSemana
           value={draft.step6 || { days: [] }}
@@ -392,6 +379,7 @@ export function OnboardingFlow() {
     {
       key: "step7",
       title: "Preferências",
+      subtitle: "Ajustes finais para aumentar aderência.",
       render: () => (
         <Step7Preferencias
           value={draft.step7 || { dieta: "flexivel" }}
@@ -404,6 +392,7 @@ export function OnboardingFlow() {
     {
       key: "step8",
       title: "Confirmação",
+      subtitle: "Tudo pronto para gerar seu plano premium.",
       render: () => (
         <Step8Confirmacao
           summary={draft}
@@ -416,7 +405,6 @@ export function OnboardingFlow() {
               localStorage.setItem(DONE_KEY, "1");
             } catch {}
 
-            // Garante SSOT do plano (se existir legado) e segue para Assinatura
             try {
               migrateLegacyToSSOT();
             } catch {}
@@ -427,10 +415,6 @@ export function OnboardingFlow() {
               window.location.replace("/assinatura");
             }
 
-            // NÃO limpar draft aqui. Vamos sincronizar com Supabase após login/cadastro (PostAuthSync)
-            // try { clearOnboardingDraft(); } catch {}
-
-            // navegação extra de segurança
             navigate("/assinatura", { replace: true });
           }}
         />
@@ -441,82 +425,55 @@ export function OnboardingFlow() {
   const current = steps[active];
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-xs opacity-70">Onboarding</div>
-          <h1 className="text-xl font-semibold">{current?.title || "Onboarding"}</h1>
+    <div className="min-h-screen mf-app-bg mf-bg-neon text-white">
+      <div className="mx-auto w-full max-w-[440px] px-4 pb-10 pt-6">
+        <div className="mb-5 flex items-center gap-3">
+          <BrandIcon
+            size={24}
+            className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]"
+          />
+          <div className="text-[13px] font-medium tracking-tight text-white/90">
+            MindsetFit
+          </div>
         </div>
-        <div className="text-sm opacity-70">{active + 1}/8</div>
-      </div>
 
-      <div className="mt-3 h-2 w-full rounded-full bg-white/5 border border-white/10 overflow-hidden">
-        <div className="h-full bg-white/20" style={{ width: `${((active + 1) / 8) * 100}%` }} />
-      </div>
+        <div className="rounded-[28px] border border-white/10 bg-[rgba(10,12,20,0.72)] backdrop-blur-2xl shadow-[0_0_50px_rgba(0,149,255,0.08)] p-5 sm:p-6">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="text-[11px] uppercase tracking-[0.22em] text-white/38">
+                Step {active + 1}
+              </div>
+              <h1 className="mt-2 text-[28px] leading-[1.08] font-semibold tracking-tight text-white">
+                {current?.title || "Onboarding"}
+              </h1>
+              {current?.subtitle ? (
+                <p className="mt-2 text-[13px] leading-5 text-white/55">
+                  {current.subtitle}
+                </p>
+              ) : null}
+            </div>
 
-      <div className="mt-6">{current?.render()}</div>
+            <div className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-medium text-white/65">
+              {active + 1}/8
+            </div>
+          </div>
 
-      <div className="mt-6 flex items-center justify-between gap-3"></div>
+          <div className="mb-6 h-[6px] w-full overflow-hidden rounded-full bg-white/6">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#7EF7E7] shadow-[0_0_20px_rgba(0,180,255,0.35)] transition-all duration-500"
+              style={{ width: `${((active + 1) / 8) * 100}%` }}
+            />
+          </div>
 
-      {/* MF_STEP1_NEXT_FALLBACK: garante avanço estável no Step-1 (E2E-safe) */}
-      <div className="mt-6 flex items-center justify-end">
-        <button
-          data-testid="onboarding-next"
-          data-mf="mf-next"
-          type="button"
-          onClick={() => {
-            // Regra: no Step1, só avança se tiver nome completo válido
-            try {
-              if (current?.key === "step1") {
-                const nome = String((draft as any).step1?.nomeCompleto || "").trim();
-                if (!nome || nome.length < 3) {
-                  alert("Digite seu nome completo antes de continuar.");
-                  return;
-                }
-              }
-            } catch {}
+          <div>{current?.render()}</div>
 
-            // fluxo original de avanço
-            try {
-              goNext();
-            } catch {}
-
-            try {
-              const __path = window.location.pathname || "";
-              if (__path.startsWith("/onboarding")) {
-                const m = __path.match(/\/onboarding\/step-(\d+)\b/);
-                const __cur = m && m[1] ? Number(m[1]) || 1 : 1;
-                const __dest = __cur >= 8 ? "/assinatura" : `/onboarding/step-${__cur + 1}`;
-                mfSafeNavigate(__dest, { replace: true });
-              }
-            } catch {}
-          }}
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-        >
-          Continuar
-        </button>
-      </div>
-
-      {/* MF_ONBOARDING_FLOW_RENDERED */}
-      <span data-testid="mf-onboarding-flow" style={{ display: "none" }}>
-        ok
-      </span>
-
-      {SHOW_LEGACY_NAV && (
-        <div className="mt-6 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={goBack}
-            className="px-4 py-2 rounded-xl border border-white/10 text-sm opacity-90 hover:opacity-100"
-            data-mf="mf-back"
-          >
-            Voltar
-          </button>
+          <span data-testid="mf-onboarding-flow" style={{ display: "none" }}>
+            ok
+          </span>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
-// manter default export também (conveniência)
 export default OnboardingFlow;

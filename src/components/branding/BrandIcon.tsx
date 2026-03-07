@@ -7,7 +7,7 @@ type Props = {
 export function BrandIcon({ size = 28, className = "", alt = "MindsetFit" }: Props) {
   return (
     <img
-      src="/brand/mindsetfit-icon.png"
+      src="/brand/mindsetfit-icon.svg"
       width={size}
       height={size}
       alt={alt}
