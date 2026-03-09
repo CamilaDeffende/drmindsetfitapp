@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { loadFlags, setPaywallEnabled, setPremiumUnlocked } from "@/lib/featureFlags";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Check, ChevronLeft, Crown, ShieldCheck, Sparkles } from "lucide-react";
+import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 
 type Plan = {
   id: "mensal" | "anual";
@@ -44,6 +45,7 @@ function fmtKcal(value: unknown) {
 export default function Assinatura() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { state } = useDrMindSetfit();
 
   const source = getSourceFromSearch(location.search);
 
@@ -89,12 +91,30 @@ export default function Assinatura() {
   const dietaLabel =
     dietaLabelMap[step7?.dieta] ?? "Plano alimentar personalizado";
 
-  const kcalAlvo =
+  const kcalAlvoFromDraft =
     step4?.kcalAlvo ??
     step4?.macros?.calorias ??
     step3?.metabolismo?.caloriasAlvo ??
     step3?.metabolismo?.get ??
     null;
+
+  const perfil = (state as any)?.perfil ?? {};
+  const treino = (state as any)?.treino ?? {};
+  const nutricao = (state as any)?.nutricao ?? {};
+
+  const objetivoLabelState =
+    (perfil as any)?.objetivo ?? objetivoLabel;
+
+  const modalidadeLabelState =
+    (perfil as any)?.modalidadePrincipal ?? modalidadeLabel;
+
+  const diasTreinoLabelState = Array.isArray((treino as any)?.dias)
+    ? (treino as any).dias.join(" • ").toUpperCase()
+    : diasTreinoLabel;
+
+  const kcalAlvo =
+    (nutricao as any)?.macros?.calorias ??
+    kcalAlvoFromDraft;
 
   const plans: Plan[] = useMemo(
     () => [
@@ -233,16 +253,16 @@ export default function Assinatura() {
             Premium desbloqueado sob demanda
           </div>
 
-          <h1 className="text-[30px] leading-[1.05] font-semibold tracking-tight text-white">
+          <h1 className="text-[28px] leading-[1.05] font-semibold tracking-tight text-white">
             Desbloqueie seu plano completo
           </h1>
 
           <p className="mt-3 text-[14px] leading-6 text-white/60">
-            Acesse dieta personalizada, treinos completos, evolução contínua
-            e recursos avançados do MindsetFit.
+            Acesse dieta personalizada, treinos completos e evolução contínua
+            com base no seu perfil.
           </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="mt-5 grid gap-3">
             {benefits.map((item) => (
               <div
                 key={item}
@@ -252,71 +272,60 @@ export default function Assinatura() {
                   <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-emerald-400 bg-emerald-400 text-black">
                     <Check className="h-3 w-3" />
                   </div>
-                  <div className="text-[13px] leading-5 text-white/80">{item}</div>
+
+                  <div className="text-[13px] text-white/80">{item}</div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
 
-        <div className="mt-5 rounded-[28px] border border-emerald-400/20 bg-[linear-gradient(180deg,rgba(16,40,30,0.55),rgba(8,10,18,0.9))] p-5 shadow-[0_0_32px_rgba(34,197,94,0.08)]">
-          <div className="text-[12px] uppercase tracking-[0.18em] text-emerald-300/80">
-            Seu plano já está pronto
-          </div>
+          <div className="mt-6 border-t border-white/10 pt-5">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/80">
+              Seu plano já está pronto
+            </div>
 
-          <h2 className="mt-2 text-[20px] font-semibold tracking-tight text-white">
-            Falta só desbloquear o acesso premium
-          </h2>
+            <h2 className="mt-1 text-[18px] font-semibold text-white">
+              Falta só desbloquear o acesso premium
+            </h2>
 
-          <p className="mt-2 text-[13px] leading-6 text-white/60">
-            Seu protocolo foi gerado com base no seu objetivo e nas respostas do onboarding.
-          </p>
-
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[11px] uppercase tracking-[0.14em] text-white/40">
-                Objetivo
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="text-[11px] text-white/40">Objetivo</div>
+                <div className="mt-1 text-[15px] font-semibold text-white capitalize">
+                  {String(objetivoLabelState).replace("-", " ")}
+                </div>
               </div>
-              <div className="mt-1 text-[15px] font-semibold text-white">
-                {objetivoLabel}
+
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="text-[11px] text-white/40">Meta diária</div>
+                <div className="mt-1 text-[15px] font-semibold text-white">
+                  {fmtKcal(kcalAlvo)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="text-[11px] text-white/40">Modalidade</div>
+                <div className="mt-1 text-[15px] font-semibold text-white capitalize">
+                  {String(modalidadeLabelState).replace("-", " ")}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="text-[11px] text-white/40">Dias de treino</div>
+                <div className="mt-1 text-[15px] font-semibold text-white">
+                  {diasTreinoLabelState}
+                </div>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[11px] uppercase tracking-[0.14em] text-white/40">
-                Meta diária
-              </div>
-              <div className="mt-1 text-[15px] font-semibold text-white">
-                {fmtKcal(kcalAlvo)}
-              </div>
+            <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3 text-[13px] text-cyan-100/90">
+              Ao assinar, você libera imediatamente o dashboard premium, treino completo e plano alimentar ajustado ao seu perfil.
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[11px] uppercase tracking-[0.14em] text-white/40">
-                Modalidade
-              </div>
-              <div className="mt-1 text-[15px] font-semibold text-white capitalize">
-                {String(modalidadeLabel).replace("-", " ")}
-              </div>
+            <div className="mt-3 text-[12px] text-white/45">
+              Estilo alimentar previsto:{" "}
+              <span className="font-semibold text-white/75">{dietaLabel}</span>
             </div>
-
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <div className="text-[11px] uppercase tracking-[0.14em] text-white/40">
-                Dias de treino
-              </div>
-              <div className="mt-1 text-[15px] font-semibold text-white">
-                {diasTreinoLabel}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3 text-[13px] text-cyan-100/90">
-            Ao assinar, você libera imediatamente o dashboard premium, treino completo e plano alimentar ajustado ao seu perfil.
-          </div>
-
-          <div className="mt-3 text-[12px] text-white/45">
-            Estilo alimentar previsto:{" "}
-            <span className="font-semibold text-white/75">{dietaLabel}</span>
           </div>
         </div>
 
