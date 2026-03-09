@@ -27,11 +27,74 @@ function getSourceFromSearch(search: string): AssinaturaSource | null {
   }
 }
 
+function loadOnboardingDraft() {
+  try {
+    const raw = localStorage.getItem("mf:onboarding:draft:v1");
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function fmtKcal(value: unknown) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? `${Math.round(n)} kcal` : "—";
+}
+
 export default function Assinatura() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const source = getSourceFromSearch(location.search);
+
+  const draft = useMemo(() => loadOnboardingDraft(), []);
+
+  const step1 = draft?.step1 ?? {};
+  const step3 = draft?.step3 ?? {};
+  const step4 = draft?.step4 ?? {};
+  const step5 = draft?.step5 ?? {};
+  const step6 = draft?.step6 ?? {};
+  const step7 = draft?.step7 ?? {};
+
+  const objetivoLabelMap: Record<string, string> = {
+    emagrecimento: "Emagrecimento",
+    reposicao: "Recomposição corporal",
+    hipertrofia: "Hipertrofia",
+    performance: "Performance",
+    longevidade: "Saúde / longevidade",
+  };
+
+  const dietaLabelMap: Record<string, string> = {
+    flexivel: "Flexível",
+    onivoro: "Onívoro",
+    lowcarb: "Low carb",
+    vegetariano: "Vegetariano",
+    vegano: "Vegano",
+  };
+
+  const objetivoLabel =
+    objetivoLabelMap[step1?.objetivo] ?? "Plano personalizado";
+
+  const modalidadeLabel =
+    step5?.primary ??
+    step1?.modalidadePrincipal ??
+    "Treino personalizado";
+
+  const diasTreino = Array.isArray(step6?.days) ? step6.days : [];
+  const diasTreinoLabel =
+    diasTreino.length > 0
+      ? diasTreino.map((d: string) => d.toUpperCase()).join(" • ")
+      : "Distribuição automática";
+
+  const dietaLabel =
+    dietaLabelMap[step7?.dieta] ?? "Plano alimentar personalizado";
+
+  const kcalAlvo =
+    step4?.kcalAlvo ??
+    step4?.macros?.calorias ??
+    step3?.metabolismo?.caloriasAlvo ??
+    step3?.metabolismo?.get ??
+    null;
 
   const plans: Plan[] = useMemo(
     () => [
@@ -83,7 +146,6 @@ export default function Assinatura() {
   };
 
   const getBackHref = () => {
-    if (source === "onboarding") return "/onboarding/step-8";
     if (source === "dashboard-free") return "/dashboard";
     if (source === "premium") return "/dashboard-premium";
     return null;
@@ -152,6 +214,7 @@ export default function Assinatura() {
               MindsetFit • Premium
             </div>
           </div>
+
           {source !== "onboarding" ? (
             <button
               type="button"
@@ -193,6 +256,67 @@ export default function Assinatura() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-[28px] border border-emerald-400/20 bg-[linear-gradient(180deg,rgba(16,40,30,0.55),rgba(8,10,18,0.9))] p-5 shadow-[0_0_32px_rgba(34,197,94,0.08)]">
+          <div className="text-[12px] uppercase tracking-[0.18em] text-emerald-300/80">
+            Seu plano já está pronto
+          </div>
+
+          <h2 className="mt-2 text-[20px] font-semibold tracking-tight text-white">
+            Falta só desbloquear o acesso premium
+          </h2>
+
+          <p className="mt-2 text-[13px] leading-6 text-white/60">
+            Seu protocolo foi gerado com base no seu objetivo e nas respostas do onboarding.
+          </p>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-white/40">
+                Objetivo
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-white">
+                {objetivoLabel}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-white/40">
+                Meta diária
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-white">
+                {fmtKcal(kcalAlvo)}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-white/40">
+                Modalidade
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-white capitalize">
+                {String(modalidadeLabel).replace("-", " ")}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-white/40">
+                Dias de treino
+              </div>
+              <div className="mt-1 text-[15px] font-semibold text-white">
+                {diasTreinoLabel}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3 text-[13px] text-cyan-100/90">
+            Ao assinar, você libera imediatamente o dashboard premium, treino completo e plano alimentar ajustado ao seu perfil.
+          </div>
+
+          <div className="mt-3 text-[12px] text-white/45">
+            Estilo alimentar previsto:{" "}
+            <span className="font-semibold text-white/75">{dietaLabel}</span>
           </div>
         </div>
 
