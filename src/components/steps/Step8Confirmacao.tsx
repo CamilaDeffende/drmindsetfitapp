@@ -5,7 +5,7 @@
 import { useMemo } from "react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Check, Flame, UtensilsCrossed, CalendarDays } from "lucide-react";
+import { ChevronLeft, Check } from "lucide-react";
 
 type Props = {
   summary: any;
