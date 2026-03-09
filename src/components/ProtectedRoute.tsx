@@ -60,7 +60,12 @@ export function ProtectedRoute({ children, requiresPremium = false }: ProtectedR
 
   // rota premium sem premium -> assinatura
   if (requiresPremium && !isPremium) {
-    return <Navigate to={`/assinatura?next=${encodeURIComponent(loc.pathname)}`} replace />;
+    return (
+      <Navigate
+        to={`/assinatura?source=dashboard-free&next=${encodeURIComponent(loc.pathname)}`}
+        replace
+      />
+    );
   }
 
   return <>{children}</>;

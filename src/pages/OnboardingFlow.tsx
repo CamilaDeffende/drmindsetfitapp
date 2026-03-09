@@ -421,12 +421,11 @@ export function OnboardingFlow() {
             } catch {}
 
             try {
-              navigate("/assinatura", { replace: true });
+              navigate("/assinatura?source=onboarding", { replace: true });
             } catch {
               window.location.replace("/assinatura");
             }
 
-            navigate("/assinatura", { replace: true });
           }}
         />
       ),

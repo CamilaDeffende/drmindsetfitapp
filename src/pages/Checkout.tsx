@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 
 type PlanId = "mensal" | "anual";
+type SourceId = "onboarding" | "dashboard-free" | "premium" | null;
 
 type PlanConfig = {
   id: PlanId;
@@ -55,17 +56,28 @@ function getPlanFromSearch(search: string): PlanId {
   }
 }
 
+function getSourceFromSearch(search: string): SourceId {
+  try {
+    const raw = new URLSearchParams(search).get("source");
+    if (raw === "onboarding") return "onboarding";
+    if (raw === "dashboard-free") return "dashboard-free";
+    if (raw === "premium") return "premium";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth() as any;
 
   const planId = useMemo(() => getPlanFromSearch(location.search), [location.search]);
+  const source = useMemo(() => getSourceFromSearch(location.search), [location.search]);
   const plan = PLANS[planId];
 
   const handleConfirmPayment = () => {
-    // Simulação temporária de pagamento aprovado
-    // Depois isso será substituído por Stripe / Mercado Pago / etc.
     try {
       localStorage.setItem("mindsetfit:isSubscribed", "true");
     } catch {}
@@ -87,6 +99,13 @@ export default function Checkout() {
     }
 
     navigate(`/signup?next=${encodeURIComponent("/dashboard-premium")}`, { replace: true });
+  };
+
+  const handleBack = () => {
+    const params = new URLSearchParams();
+    if (source) params.set("source", source);
+    const suffix = params.toString() ? `?${params.toString()}` : "";
+    navigate(`/assinatura${suffix}`, { replace: true });
   };
 
   return (
@@ -132,7 +151,7 @@ export default function Checkout() {
 
               <Button
                 variant="outline"
-                onClick={() => navigate("/assinatura")}
+                onClick={handleBack}
                 className="w-full h-12"
               >
                 Voltar
