@@ -14,8 +14,8 @@ import { guardOnboardingPath } from "@/lib/onboardingGuard";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 
 import { Step1Perfil } from "@/components/steps/Step1Perfil";
-import { Step2Avaliacao } from "@/components/steps/Step2Avaliacao";
-import { Step3Metabolismo } from "@/components/steps/Step3Metabolismo";
+import Step2Avaliacao from "@/components/steps/Step2Avaliacao";
+import Step3Metabolismo from "@/components/steps/Step3Metabolismo";
 import { Step4Nutricao } from "@/components/steps/Step4Nutricao";
 
 import Step5Modalidades from "@/components/steps/Step5Modalidades";
