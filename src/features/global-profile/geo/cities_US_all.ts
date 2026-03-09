@@ -13,8 +13,7 @@ export type USCity = {
 type StateCode = string;
 
 const usCitiesByState: Record<StateCode, USCity[]> = {};
-const usLoadingByState: Record<StateCode, Promise<USCity[]>> = {};
-
+const usLoadingByState: Partial<Record<StateCode, Promise<USCity[]>>> = {};
 // normaliza código de estado
 function normalizeStateCode(code: string): StateCode {
   return (code || "").toUpperCase().trim();
