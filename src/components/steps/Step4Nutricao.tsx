@@ -54,6 +54,7 @@ const mfComputeKcalAlvo = (opts: {
   ) {
     return mfClampSSOT(rounded, min as number, max as number);
   }
+
   return rounded;
 };
 
@@ -81,23 +82,29 @@ function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
     anyState?.perfil?.sexo ??
     anyState?.sexo ??
     "masculino") as any;
+
   const idade = Number(
     anyForm?.idade ?? anyState?.perfil?.idade ?? anyState?.idade ?? 30
   );
+
   const pesoKg = Number(
     anyForm?.peso ??
       anyForm?.pesoKg ??
       anyState?.perfil?.peso ??
       anyState?.peso ??
+      anyState?.avaliacao?.peso ??
       70
   );
+
   const alturaCm = Number(
     anyForm?.altura ??
       anyForm?.alturaCm ??
       anyState?.perfil?.altura ??
       anyState?.altura ??
+      anyState?.avaliacao?.altura ??
       170
   );
+
   const massaMagraKg =
     anyForm?.massaMagraKg ??
     anyState?.bioimpedancia?.massaMagraKg ??
@@ -107,11 +114,18 @@ function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   const objetivo = (anyForm?.objetivo ??
     anyState?.objetivo ??
     anyState?.meta ??
+    anyState?.perfil?.objetivo ??
     "manutencao") as any;
-  const biotipo = (anyForm?.biotipo ?? anyState?.biotipo ?? null) as any;
+
+  const biotipo = (anyForm?.biotipo ??
+    anyState?.biotipo ??
+    anyState?.avaliacao?.biotipo ??
+    null) as any;
+
   const atividade = (anyForm?.atividade ??
     anyState?.atividade ??
     anyState?.nivelAtividade ??
+    anyState?.avaliacao?.frequenciaAtividadeSemanal ??
     "moderado") as any;
 
   return {
@@ -134,7 +148,6 @@ export function Step4Nutricao({
   onBack,
 }: OnboardingStepProps) {
   void value;
-  void onChange;
 
   const { state, updateState, nextStep } = useDrMindSetfit();
   const { actions: __mfGActions } = useGamification();
@@ -147,9 +160,11 @@ export function Step4Nutricao({
           0
       );
       if (!kcal || kcal <= 0) return;
+
       const hasAudit = Boolean(
         (state as any)?.nutricao?.audit || (state as any)?.nutrition?.audit
       );
+
       __mfGActions.onNutritionPlanSet(hasAudit);
     } catch {}
 
@@ -161,12 +176,14 @@ export function Step4Nutricao({
           (state as any)?.nutrition?.macros?.calorias ??
           0
       );
+
       const __hasAudit = Boolean(
         (state as any)?.nutricao?.audit ??
           (state as any)?.nutrition?.audit ??
           (state as any)?.macros?.audit ??
           (state as any)?.dieta?.audit
       );
+
       if (__kcal > 0) {
         mfEvents.emit("nutrition_plan_set", {
           kcal: __kcal,
@@ -190,24 +207,43 @@ export function Step4Nutricao({
     400
   );
 
-  function mfPersistStep4() {
+  function mfPersistStep4(nutricaoPayload?: any) {
     try {
+      const currentNutricao =
+        nutricaoPayload ??
+        (state as any)?.nutricao ??
+        (state as any)?.nutrition ??
+        undefined;
+
       const payload = {
         metabolismo:
           (state as any)?.metabolismo ??
           (state as any)?.resultadoMetabolico ??
           undefined,
+        nutricao: currentNutricao,
         dieta:
-          (state as any)?.dieta ?? (state as any)?.planoDieta ?? undefined,
-        macros: (state as any)?.macros ?? undefined,
+          currentNutricao ??
+          (state as any)?.dieta ??
+          (state as any)?.planoDieta ??
+          undefined,
+        macros:
+          currentNutricao?.macros ??
+          (state as any)?.nutricao?.macros ??
+          (state as any)?.macros ??
+          undefined,
+        refeicoes:
+          currentNutricao?.refeicoes ??
+          (state as any)?.nutricao?.refeicoes ??
+          [],
       };
+
       saveOnboardingProgress({ step: 4, data: payload } as any);
     } catch {}
   }
 
-  function mfOnContinue() {
+  function mfOnContinue(nutricaoPayload?: any) {
     try {
-      mfPersistStep4();
+      mfPersistStep4(nutricaoPayload);
     } catch {}
 
     try {
@@ -497,8 +533,10 @@ export function Step4Nutricao({
       ) => {
         const base = alimentosPermitidos.find((a) => a.id === alimentoId);
         if (!base) return;
+
         const macros = calcularMacros(base.id, gramas);
         if (!macros) return;
+
         lista.push({
           ...macros,
           alimentoId: base.id,
@@ -557,23 +595,31 @@ export function Step4Nutricao({
         refeicoes,
       };
 
-      updateState({ nutricao: planejamento });
+      updateState({
+        nutricao: planejamento,
+        dieta: planejamento,
+        planoDieta: planejamento,
+      } as any);
 
       try {
-        const _plano =
-          typeof planejamento !== "undefined"
-            ? (planejamento as any)
-            : undefined;
-        if (_plano) {
-          updateState?.({
-            ...(typeof state === "object" ? state : {}),
-            dieta: (state as any)?.dieta ?? _plano,
-            planoDieta: (state as any)?.planoDieta ?? _plano,
-          } as any);
+        if (typeof onChange === "function") {
+          onChange(planejamento);
         }
       } catch {}
 
-      mfOnContinue();
+      try {
+        saveOnboardingProgress({
+          step: 4,
+          data: {
+            nutricao: planejamento,
+            dieta: planejamento,
+            macros: planejamento?.macros,
+            refeicoes: planejamento?.refeicoes ?? [],
+          },
+        } as any);
+      } catch {}
+
+      mfOnContinue(planejamento);
     } catch (e) {
       console.error("[MF] erro ao gerar planejamento:", e);
     }

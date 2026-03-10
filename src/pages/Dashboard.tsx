@@ -2,7 +2,6 @@ import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/branding/BrandIcon";
-
 import {
   Activity,
   TrendingUp,
@@ -17,9 +16,7 @@ import {
   CalendarDays,
   Flame,
 } from "lucide-react";
-
 import { useNavigate } from "react-router-dom";
-
 import {
   LineChart,
   Line,
@@ -31,9 +28,9 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { loadActivePlan } from "@/services/plan.service";
 
 export function Dashboard() {
   const { state } = useDrMindSetfit();
@@ -42,6 +39,15 @@ export function Dashboard() {
   const [passosHoje, setPassosHoje] = useState(0);
   const [cargaSemana, setCargaSemana] = useState(0);
   const [horaAtual, setHoraAtual] = useState(new Date());
+  const [activePlan, setActivePlan] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      setActivePlan(loadActivePlan());
+    } catch {
+      setActivePlan(null);
+    }
+  }, []);
 
   const consumoCalorias = Array.isArray((state as any)?.consumoCalorias)
     ? (state as any).consumoCalorias
@@ -55,23 +61,74 @@ export function Dashboard() {
     ? (state as any).treino.historicoCargas
     : [];
 
-  const nutricao =
+  const nutrition =
+    activePlan?.nutrition ??
     (state as any)?.nutricao ??
     (state as any)?.dieta ??
     (state as any)?.planoDieta ??
     {};
 
-  const refeicoes = Array.isArray(nutricao?.refeicoes) ? nutricao.refeicoes : [];
+  const training =
+    activePlan?.training ??
+    activePlan?.workout ??
+    (state as any)?.treino ??
+    {};
+
+  const refeicoes = Array.isArray(nutrition?.refeicoes)
+    ? nutrition.refeicoes
+    : Array.isArray(nutrition?.meals)
+    ? nutrition.meals
+    : Array.isArray(activePlan?.meals)
+    ? activePlan.meals
+    : [];
+
   const caloriasMeta = Number(
-    nutricao?.kcalAlvo ??
-      nutricao?.macros?.calorias ??
+    nutrition?.kcalTarget ??
+      nutrition?.kcal ??
+      nutrition?.kcalAlvo ??
+      nutrition?.macros?.calorias ??
+      activePlan?.metabolic?.targetKcal ??
       (state as any)?.metabolismo?.caloriasAlvo ??
       2000
   );
 
-  const proteina = Number(nutricao?.macros?.proteina ?? 0);
-  const carboidratos = Number(nutricao?.macros?.carboidratos ?? 0);
-  const gorduras = Number(nutricao?.macros?.gorduras ?? 0);
+  const proteina = Number(
+    nutrition?.macros?.proteina ??
+      nutrition?.macros?.protein ??
+      activePlan?.macros?.proteinG ??
+      0
+  );
+
+  const carboidratos = Number(
+    nutrition?.macros?.carboidratos ??
+      nutrition?.macros?.carbs ??
+      activePlan?.macros?.carbsG ??
+      activePlan?.macros?.carbG ??
+      activePlan?.macros?.carbohydrates ??
+      0
+  );
+
+  const gorduras = Number(
+    nutrition?.macros?.gorduras ??
+      nutrition?.macros?.fat ??
+      activePlan?.macros?.fatG ??
+      0
+  );
+
+  const treinoFrequencia = Number(
+    training?.frequency ??
+      (Array.isArray(training?.selectedDays) ? training.selectedDays.length : NaN) ??
+      (Array.isArray(training?.week) ? training.week.length : NaN) ??
+      (Array.isArray(training?.days) ? training.days.length : NaN) ??
+      (state as any)?.treino?.frequencia ??
+      0
+  );
+
+  const treinoModalidade =
+    training?.modality ??
+    training?.type ??
+    (state as any)?.treino?.divisaoSemanal ??
+    "Treino personalizado";
 
   const nomeUsuario =
     (state as any)?.perfil?.nomeCompleto?.split(" ")?.[0] ?? "Usuário";
@@ -198,7 +255,6 @@ export function Dashboard() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <BrandIcon size={32} className="drop-shadow-[0_0_12px_rgba(0,190,255,0.35)]" />
-
               <h1 className="text-[30px] font-semibold tracking-tight text-white">
                 Olá, {nomeUsuario}
               </h1>
@@ -273,7 +329,6 @@ export function Dashboard() {
                 <span>Calorias</span>
               </CardTitle>
             </CardHeader>
-
             <CardContent>
               <div className="text-3xl font-semibold">{ultimoConsumo}</div>
               <p className="text-xs text-white/55 mt-1">Meta: {caloriasMeta}</p>
@@ -287,7 +342,6 @@ export function Dashboard() {
                 <span>Passos</span>
               </CardTitle>
             </CardHeader>
-
             <CardContent>
               <div className="text-3xl font-semibold">{passosHoje.toLocaleString()}</div>
               <p className="text-xs text-white/55 mt-1">Meta: 10k</p>
@@ -301,7 +355,6 @@ export function Dashboard() {
                 <span>Carga</span>
               </CardTitle>
             </CardHeader>
-
             <CardContent>
               <div className="text-3xl font-semibold">{cargaSemana.toLocaleString()} kg</div>
               <p className="text-xs text-white/55 mt-1">Semana</p>
@@ -315,7 +368,6 @@ export function Dashboard() {
                 <span>Hora</span>
               </CardTitle>
             </CardHeader>
-
             <CardContent>
               <div className="text-3xl font-semibold">{format(horaAtual, "HH:mm:ss")}</div>
               <p className="text-xs text-white/55 mt-1">{format(horaAtual, "dd/MM/yyyy")}</p>
@@ -331,7 +383,6 @@ export function Dashboard() {
                 Acompanhe seu consumo vs meta diária
               </CardDescription>
             </CardHeader>
-
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={dadosCalorias}>
@@ -346,21 +397,8 @@ export function Dashboard() {
                       color: "#fff",
                     }}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="consumido"
-                    stroke="#3b82f6"
-                    name="Consumido"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="meta"
-                    stroke="#10b981"
-                    name="Meta"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                  />
+                  <Line type="monotone" dataKey="consumido" stroke="#3b82f6" name="Consumido" strokeWidth={2} />
+                  <Line type="monotone" dataKey="meta" stroke="#10b981" name="Meta" strokeWidth={2} strokeDasharray="5 5" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -373,7 +411,6 @@ export function Dashboard() {
                 Volume de treino por dia (segunda a domingo)
               </CardDescription>
             </CardHeader>
-
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dadosCarga}>
@@ -486,11 +523,11 @@ export function Dashboard() {
                   <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                     <div className="flex items-center gap-2 text-[13px] font-medium text-white/80">
                       <CalendarDays className="h-4 w-4 text-cyan-300" />
-                      {proximaRefeicao.nome ?? "Refeição"}
+                      {proximaRefeicao.nome ?? proximaRefeicao.name ?? "Refeição"}
                     </div>
 
                     <div className="mt-2 text-[14px] text-white/50">
-                      {proximaRefeicao.horario ?? "Horário a definir"}
+                      {proximaRefeicao.horario ?? proximaRefeicao.time ?? "Horário a definir"}
                     </div>
 
                     {Array.isArray(proximaRefeicao.alimentos) &&
@@ -498,10 +535,10 @@ export function Dashboard() {
                       <div className="mt-3 space-y-2">
                         {proximaRefeicao.alimentos.slice(0, 3).map((item: any, idx: number) => (
                           <div
-                            key={`${item?.nome ?? "item"}-${idx}`}
+                            key={`${item?.nome ?? item?.name ?? "item"}-${idx}`}
                             className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white/75"
                           >
-                            {item?.nome ?? "Alimento"}
+                            {item?.nome ?? item?.name ?? "Alimento"}
                           </div>
                         ))}
                       </div>
@@ -524,8 +561,7 @@ export function Dashboard() {
               ) : (
                 <div className="space-y-4">
                   <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-[13px] text-white/50">
-                    Ainda não encontramos a próxima refeição no estado atual do app.
-                    Se o Step 4 gerou corretamente, ela deve aparecer aqui.
+                    Ainda não encontramos a próxima refeição no plano salvo.
                   </div>
 
                   <Button
@@ -549,8 +585,7 @@ export function Dashboard() {
                 <div>
                   <CardTitle className="text-xl">Programa de treino</CardTitle>
                   <CardDescription className="text-white/60 mt-1">
-                    {(state as any)?.treino?.divisaoSemanal || "Treino personalizado"} •{" "}
-                    {(state as any)?.treino?.frequencia || 0}x por semana
+                    {treinoModalidade} • {Number.isFinite(treinoFrequencia) ? treinoFrequencia : 0}x por semana
                   </CardDescription>
                 </div>
 
