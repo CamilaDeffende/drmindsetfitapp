@@ -69,6 +69,45 @@ function sumMealMacros(meals: any[]) {
   );
 }
 
+function getNextMealByTime(meals: any[]) {
+  if (!Array.isArray(meals) || meals.length === 0) return null;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const parsedMeals = meals
+    .map((meal) => {
+      const rawTime = String(meal?.horario ?? meal?.time ?? "").trim();
+      const match = rawTime.match(/^(\d{1,2}):(\d{2})$/);
+
+      if (!match) {
+        return {
+          meal,
+          minutes: Number.POSITIVE_INFINITY,
+          valid: false,
+        };
+      }
+
+      const hours = Number(match[1]);
+      const minutes = Number(match[2]);
+
+      return {
+        meal,
+        minutes: hours * 60 + minutes,
+        valid: true,
+      };
+    })
+    .filter((item) => item.valid)
+    .sort((a, b) => a.minutes - b.minutes);
+
+  if (!parsedMeals.length) return meals[0] ?? null;
+
+  const nextToday = parsedMeals.find((item) => item.minutes >= currentMinutes);
+  if (nextToday) return nextToday.meal;
+
+  return parsedMeals[0].meal;
+}
+
 export function DashboardPremium() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
@@ -202,7 +241,7 @@ export function DashboardPremium() {
     toNum(activePlan?.macros?.fatG, NaN) ||
     toNum(derivedMealMacros.fat, 0);
 
-  const nextMeal = meals?.[0] ?? null;
+  const nextMeal = useMemo(() => getNextMealByTime(meals), [meals]);
 
   const workoutWeek =
     activePlan?.training?.week ??
