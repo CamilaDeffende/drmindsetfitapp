@@ -14,6 +14,8 @@ import {
   Crown,
   Lock,
   ArrowRight,
+  CalendarDays,
+  Flame,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -41,23 +43,35 @@ export function Dashboard() {
   const [cargaSemana, setCargaSemana] = useState(0);
   const [horaAtual, setHoraAtual] = useState(new Date());
 
-  const consumoCalorias = Array.isArray(state?.consumoCalorias)
-    ? state.consumoCalorias
+  const consumoCalorias = Array.isArray((state as any)?.consumoCalorias)
+    ? (state as any).consumoCalorias
     : [];
 
-  const passosDiarios = Array.isArray(state?.passosDiarios)
-    ? state.passosDiarios
+  const passosDiarios = Array.isArray((state as any)?.passosDiarios)
+    ? (state as any).passosDiarios
     : [];
 
-  const historicoCargas = Array.isArray(state?.treino?.historicoCargas)
-    ? state.treino.historicoCargas
+  const historicoCargas = Array.isArray((state as any)?.treino?.historicoCargas)
+    ? (state as any).treino.historicoCargas
     : [];
 
-  const refeicoes = Array.isArray(state?.nutricao?.refeicoes)
-    ? state.nutricao.refeicoes
-    : [];
+  const nutricao =
+    (state as any)?.nutricao ??
+    (state as any)?.dieta ??
+    (state as any)?.planoDieta ??
+    {};
 
-  const caloriasMeta = Number(state?.nutricao?.macros?.calorias ?? 2000);
+  const refeicoes = Array.isArray(nutricao?.refeicoes) ? nutricao.refeicoes : [];
+  const caloriasMeta = Number(
+    nutricao?.kcalAlvo ??
+      nutricao?.macros?.calorias ??
+      (state as any)?.metabolismo?.caloriasAlvo ??
+      2000
+  );
+
+  const proteina = Number(nutricao?.macros?.proteina ?? 0);
+  const carboidratos = Number(nutricao?.macros?.carboidratos ?? 0);
+  const gorduras = Number(nutricao?.macros?.gorduras ?? 0);
 
   const nomeUsuario =
     (state as any)?.perfil?.nomeCompleto?.split(" ")?.[0] ?? "Usuário";
@@ -74,6 +88,11 @@ export function Dashboard() {
     ? consumoCalorias[consumoCalorias.length - 1]?.consumido ?? 0
     : 0;
 
+  const proximaRefeicao = useMemo(() => {
+    if (!refeicoes.length) return null;
+    return refeicoes[0];
+  }, [refeicoes]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setHoraAtual(new Date());
@@ -84,10 +103,7 @@ export function Dashboard() {
 
   useEffect(() => {
     const dataHoje = format(new Date(), "yyyy-MM-dd");
-
-    const passosDia = passosDiarios.find(
-      (p: any) => p?.data === dataHoje
-    );
+    const passosDia = passosDiarios.find((p: any) => p?.data === dataHoje);
 
     if (passosDia) {
       setPassosHoje(Number(passosDia.passos ?? 0));
@@ -98,16 +114,12 @@ export function Dashboard() {
 
   useEffect(() => {
     const hoje = new Date();
-
     const inicioSemana = new Date(hoje);
     inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1);
 
     const cargaTotal = historicoCargas
       .filter((c: any) => c?.data && new Date(c.data) >= inicioSemana)
-      .reduce(
-        (acc: number, c: any) => acc + Number(c?.cargaTotal ?? 0),
-        0
-      );
+      .reduce((acc: number, c: any) => acc + Number(c?.cargaTotal ?? 0), 0);
 
     setCargaSemana(cargaTotal);
   }, [historicoCargas]);
@@ -116,14 +128,9 @@ export function Dashboard() {
     () =>
       Array.from({ length: 7 }, (_, i) => {
         const data = new Date();
-
         data.setDate(data.getDate() - (6 - i));
-
         const dataStr = format(data, "yyyy-MM-dd");
-
-        const consumo = consumoCalorias.find(
-          (c: any) => c?.data === dataStr
-        );
+        const consumo = consumoCalorias.find((c: any) => c?.data === dataStr);
 
         return {
           dia: format(data, "EEE"),
@@ -138,23 +145,15 @@ export function Dashboard() {
     () =>
       Array.from({ length: 7 }, (_, i) => {
         const data = new Date();
-
         const hoje = data.getDay();
-
         const diaSemana = hoje === 0 ? 6 : hoje - 1;
-
         data.setDate(data.getDate() - diaSemana + i);
-
         const dataStr = format(data, "yyyy-MM-dd");
 
         const cargaDia =
           historicoCargas
             .filter((c: any) => c?.data === dataStr)
-            .reduce(
-              (acc: number, c: any) =>
-                acc + Number(c?.cargaTotal ?? 0),
-              0
-            ) || 0;
+            .reduce((acc: number, c: any) => acc + Number(c?.cargaTotal ?? 0), 0) || 0;
 
         return {
           dia: format(data, "EEE"),
@@ -168,23 +167,21 @@ export function Dashboard() {
     navigate("/assinatura?source=dashboard-free", { replace: true });
   };
 
-  if (!state?.concluido && !onboardingDone) {
+  if (!(state as any)?.concluido && !onboardingDone) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-96">
+      <div className="min-h-screen mf-app-bg mf-bg-neon flex items-center justify-center px-4">
+        <Card className="w-full max-w-md border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
           <CardHeader>
             <CardTitle>Complete seu perfil</CardTitle>
-
-            <CardDescription>
-              Você precisa completar o questionário inicial
-              para acessar o dashboard
+            <CardDescription className="text-white/60">
+              Você precisa completar o questionário inicial para acessar o dashboard.
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <Button
               onClick={() => navigate("/onboarding/step-1")}
-              className="w-full"
+              className="w-full rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white"
             >
               Iniciar questionário
             </Button>
@@ -196,15 +193,11 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen mf-app-bg mf-bg-neon text-white">
-
-      {/* HEADER */}
-
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgba(5,8,16,0.78)] backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex items-center justify-between gap-3">
-
             <div className="flex items-center gap-3">
-              <BrandIcon size={32} />
+              <BrandIcon size={32} className="drop-shadow-[0_0_12px_rgba(0,190,255,0.35)]" />
 
               <h1 className="text-[30px] font-semibold tracking-tight text-white">
                 Olá, {nomeUsuario}
@@ -212,7 +205,6 @@ export function Dashboard() {
             </div>
 
             <div className="flex gap-2">
-
               <Button
                 variant="outline"
                 size="icon"
@@ -238,129 +230,379 @@ export function Dashboard() {
                 <Dumbbell className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Treinar</span>
               </Button>
-
             </div>
           </div>
         </div>
       </header>
 
-      {/* CTA PREMIUM */}
-
       <main className="mx-auto max-w-7xl px-4 py-6">
-
-        <section className="mb-6 rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5">
-
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-            <div>
-
+        <section className="mb-6 rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_40px_rgba(0,149,255,0.06)]">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-400/10 px-3 py-1 text-[11px] font-semibold text-amber-200">
                 <Crown className="h-3.5 w-3.5" />
                 Upgrade disponível
               </div>
 
-              <h2 className="mt-3 text-[24px] font-semibold text-white">
+              <h2 className="mt-3 text-[24px] font-semibold tracking-tight text-white">
                 Seu plano premium está pronto
               </h2>
 
-              <p className="mt-2 text-[14px] text-white/60">
-                Desbloqueie treino completo, plano alimentar detalhado
-                e recursos avançados do MindsetFit.
+              <p className="mt-2 text-[14px] leading-6 text-white/60">
+                Desbloqueie treino completo, plano alimentar detalhado e recursos avançados do MindsetFit.
               </p>
-
             </div>
 
-            <Button onClick={goPremium}>
-              Ver premium
-              <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
-
+            <div className="shrink-0">
+              <Button
+                onClick={goPremium}
+                className="h-12 rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-5 text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)]"
+              >
+                Ver premium
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
         </section>
-
-        {/* MÉTRICAS */}
 
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-
-          <Card>
+          <Card className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Activity className="w-4 h-4 text-green-400" />
-                Calorias
+                <span>Calorias</span>
               </CardTitle>
             </CardHeader>
 
             <CardContent>
-              <div className="text-3xl font-semibold">
-                {ultimoConsumo}
-              </div>
-
-              <p className="text-xs opacity-60">
-                Meta: {caloriasMeta}
-              </p>
+              <div className="text-3xl font-semibold">{ultimoConsumo}</div>
+              <p className="text-xs text-white/55 mt-1">Meta: {caloriasMeta}</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Footprints className="w-4 h-4 text-cyan-300" />
-                Passos
+                <span>Passos</span>
               </CardTitle>
             </CardHeader>
 
             <CardContent>
-              <div className="text-3xl font-semibold">
-                {passosHoje.toLocaleString()}
-              </div>
-
-              <p className="text-xs opacity-60">
-                Meta: 10k
-              </p>
+              <div className="text-3xl font-semibold">{passosHoje.toLocaleString()}</div>
+              <p className="text-xs text-white/55 mt-1">Meta: 10k</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Dumbbell className="w-4 h-4 text-cyan-300" />
-                Carga
+                <span>Carga</span>
               </CardTitle>
             </CardHeader>
 
             <CardContent>
-              <div className="text-3xl font-semibold">
-                {cargaSemana} kg
-              </div>
-
-              <p className="text-xs opacity-60">
-                Semana
-              </p>
+              <div className="text-3xl font-semibold">{cargaSemana.toLocaleString()} kg</div>
+              <p className="text-xs text-white/55 mt-1">Semana</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-orange-400" />
-                Hora
+                <span>Hora</span>
               </CardTitle>
             </CardHeader>
 
             <CardContent>
-              <div className="text-3xl font-semibold">
-                {format(horaAtual, "HH:mm:ss")}
-              </div>
-
-              <p className="text-xs opacity-60">
-                {format(horaAtual, "dd/MM/yyyy")}
-              </p>
+              <div className="text-3xl font-semibold">{format(horaAtual, "HH:mm:ss")}</div>
+              <p className="text-xs text-white/55 mt-1">{format(horaAtual, "dd/MM/yyyy")}</p>
             </CardContent>
           </Card>
-
         </section>
 
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
+            <CardHeader>
+              <CardTitle>Consumo calórico · últimos 7 dias</CardTitle>
+              <CardDescription className="text-white/60">
+                Acompanhe seu consumo vs meta diária
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dadosCalorias}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
+                  <XAxis dataKey="dia" stroke="rgba(255,255,255,0.45)" />
+                  <YAxis stroke="rgba(255,255,255,0.45)" />
+                  <Tooltip
+                    contentStyle={{
+                      background: "rgba(8,10,18,0.96)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "16px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="consumido"
+                    stroke="#3b82f6"
+                    name="Consumido"
+                    strokeWidth={2}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="meta"
+                    stroke="#10b981"
+                    name="Meta"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
+            <CardHeader>
+              <CardTitle>Carga total semanal</CardTitle>
+              <CardDescription className="text-white/60">
+                Volume de treino por dia (segunda a domingo)
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dadosCarga}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
+                  <XAxis dataKey="dia" stroke="rgba(255,255,255,0.45)" />
+                  <YAxis stroke="rgba(255,255,255,0.45)" />
+                  <Tooltip
+                    contentStyle={{
+                      background: "rgba(8,10,18,0.96)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "16px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Bar dataKey="carga" fill="#8b5cf6" name="Carga (kg)" radius={[10, 10, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <Card className="rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-xl">Resumo da dieta gerada</CardTitle>
+                  <CardDescription className="text-white/60 mt-1">
+                    Prévia do plano alimentar estruturado no onboarding
+                  </CardDescription>
+                </div>
+
+                <div className="inline-flex items-center gap-1 rounded-full border border-amber-300/20 bg-amber-400/10 px-2.5 py-1 text-[11px] font-semibold text-amber-200">
+                  <Lock className="h-3 w-3" />
+                  Premium
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 text-center">
+                  <div className="text-[11px] text-white/40">Proteína</div>
+                  <div className="mt-1 text-[22px] font-semibold text-cyan-300">
+                    {proteina || "—"}g
+                  </div>
+                </div>
+
+                <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 text-center">
+                  <div className="text-[11px] text-white/40">Carbo</div>
+                  <div className="mt-1 text-[22px] font-semibold text-cyan-300">
+                    {carboidratos || "—"}g
+                  </div>
+                </div>
+
+                <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 text-center">
+                  <div className="text-[11px] text-white/40">Gorduras</div>
+                  <div className="mt-1 text-[22px] font-semibold text-cyan-300">
+                    {gorduras || "—"}g
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
+                <div className="flex items-center gap-2 text-[13px] font-medium text-white/80">
+                  <Flame className="h-4 w-4 text-orange-300" />
+                  Meta diária
+                </div>
+
+                <div className="mt-2 text-[28px] font-semibold text-white">
+                  {caloriasMeta} kcal
+                </div>
+
+                <div className="mt-1 text-[12px] text-white/45">
+                  {refeicoes.length} refeições planejadas
+                </div>
+              </div>
+
+              <Button
+                onClick={goPremium}
+                size="lg"
+                className="w-full rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white"
+              >
+                <UtensilsCrossed className="w-4 h-4 mr-2" />
+                Desbloquear dieta completa
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-xl">Próxima refeição</CardTitle>
+                  <CardDescription className="text-white/60 mt-1">
+                    Preview do que já foi gerado para o seu plano
+                  </CardDescription>
+                </div>
+
+                <div className="inline-flex items-center gap-1 rounded-full border border-amber-300/20 bg-amber-400/10 px-2.5 py-1 text-[11px] font-semibold text-amber-200">
+                  <Lock className="h-3 w-3" />
+                  Premium
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              {proximaRefeicao ? (
+                <div className="space-y-4">
+                  <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
+                    <div className="flex items-center gap-2 text-[13px] font-medium text-white/80">
+                      <CalendarDays className="h-4 w-4 text-cyan-300" />
+                      {proximaRefeicao.nome ?? "Refeição"}
+                    </div>
+
+                    <div className="mt-2 text-[14px] text-white/50">
+                      {proximaRefeicao.horario ?? "Horário a definir"}
+                    </div>
+
+                    {Array.isArray(proximaRefeicao.alimentos) &&
+                    proximaRefeicao.alimentos.length > 0 ? (
+                      <div className="mt-3 space-y-2">
+                        {proximaRefeicao.alimentos.slice(0, 3).map((item: any, idx: number) => (
+                          <div
+                            key={`${item?.nome ?? "item"}-${idx}`}
+                            className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white/75"
+                          >
+                            {item?.nome ?? "Alimento"}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-3 text-[13px] text-white/45">
+                        Nenhum alimento listado ainda.
+                      </div>
+                    )}
+                  </div>
+
+                  <Button
+                    onClick={goPremium}
+                    size="lg"
+                    variant="outline"
+                    className="w-full rounded-[18px] border border-white/15 bg-black/20 text-white hover:bg-white/5"
+                  >
+                    Ver plano alimentar completo
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-[13px] text-white/50">
+                    Ainda não encontramos a próxima refeição no estado atual do app.
+                    Se o Step 4 gerou corretamente, ela deve aparecer aqui.
+                  </div>
+
+                  <Button
+                    onClick={goPremium}
+                    size="lg"
+                    variant="outline"
+                    className="w-full rounded-[18px] border border-white/15 bg-black/20 text-white hover:bg-white/5"
+                  >
+                    Desbloquear premium
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          <Card className="rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-xl">Programa de treino</CardTitle>
+                  <CardDescription className="text-white/60 mt-1">
+                    {(state as any)?.treino?.divisaoSemanal || "Treino personalizado"} •{" "}
+                    {(state as any)?.treino?.frequencia || 0}x por semana
+                  </CardDescription>
+                </div>
+
+                <div className="inline-flex items-center gap-1 rounded-full border border-amber-300/20 bg-amber-400/10 px-2.5 py-1 text-[11px] font-semibold text-amber-200">
+                  <Lock className="h-3 w-3" />
+                  Premium
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <Button
+                onClick={goPremium}
+                size="lg"
+                className="w-full rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white"
+              >
+                <Dumbbell className="w-4 h-4 mr-2" />
+                Desbloquear treino
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-xl">Planejamento nutricional</CardTitle>
+                  <CardDescription className="text-white/60 mt-1">
+                    {refeicoes.length} refeições • {caloriasMeta} kcal/dia
+                  </CardDescription>
+                </div>
+
+                <div className="inline-flex items-center gap-1 rounded-full border border-amber-300/20 bg-amber-400/10 px-2.5 py-1 text-[11px] font-semibold text-amber-200">
+                  <Lock className="h-3 w-3" />
+                  Premium
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <Button
+                onClick={goPremium}
+                size="lg"
+                className="w-full rounded-[18px] border border-white/15 bg-black/20 text-white hover:bg-white/5"
+                variant="outline"
+              >
+                <UtensilsCrossed className="w-4 h-4 mr-2" />
+                Ver dieta completa
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
       </main>
     </div>
   );
