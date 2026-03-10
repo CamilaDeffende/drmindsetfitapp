@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+
 export type SubscriptionStatus = {
   isPremium: boolean;
   source: "dev" | "db" | "none" | "error";
@@ -14,8 +15,7 @@ function devPremiumOverride(): boolean {
 
 /**
  * SaaS v1: premium = active subscription in DB.
- * This is intentionally "graceful":
- * - If tables are not created yet, it returns isPremium=false (app still works).
+ * Também suporta trial de 7 dias via status "trialing".
  */
 export const subscriptionService = {
   async getStatus(userId: string | null | undefined): Promise<SubscriptionStatus> {
@@ -24,13 +24,12 @@ export const subscriptionService = {
     if (devPremiumOverride()) {
       return { isPremium: true, source: "dev", checkedAtIso: now };
     }
+
     if (!userId) {
       return { isPremium: false, source: "none", checkedAtIso: now };
     }
 
     try {
-      // expects a table "subscriptions" with:
-      // user_id (uuid), status (text), current_period_end (timestamptz nullable)
       const { data, error } = await supabase
         .from("subscriptions")
         .select("status,current_period_end")
@@ -39,19 +38,55 @@ export const subscriptionService = {
         .limit(1);
 
       if (error) {
-        return { isPremium: false, source: "error", checkedAtIso: now, debug: String(error.message) };
+        return {
+          isPremium: false,
+          source: "error",
+          checkedAtIso: now,
+          debug: String(error.message),
+        };
       }
 
       const row = data?.[0];
       const status = String(row?.status ?? "").toLowerCase();
-      const cpe = row?.current_period_end ? new Date(row.current_period_end).getTime() : null;
-      const alive = cpe ? cpe > Date.now() : true; // if null, treat as active until you implement Stripe periods
+      const cpe = row?.current_period_end
+        ? new Date(row.current_period_end).getTime()
+        : null;
 
+      const alive = cpe ? cpe > Date.now() : true;
       const isPremium = (status === "active" || status === "trialing") && alive;
 
       return { isPremium, source: "db", checkedAtIso: now };
     } catch (e: any) {
-      return { isPremium: false, source: "error", checkedAtIso: now, debug: String(e?.message ?? e) };
+      return {
+        isPremium: false,
+        source: "error",
+        checkedAtIso: now,
+        debug: String(e?.message ?? e),
+      };
     }
+  },
+
+  async startTrial(userId: string) {
+    const now = new Date();
+    const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const payload = {
+      user_id: userId,
+      status: "trialing",
+      plan: "premium",
+      current_period_start: now.toISOString(),
+      current_period_end: expires.toISOString(),
+      cancel_at_period_end: true,
+    };
+
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .upsert(payload, { onConflict: "user_id" })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
   },
 };

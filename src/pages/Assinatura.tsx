@@ -4,6 +4,8 @@ import { loadFlags, setPaywallEnabled, setPremiumUnlocked } from "@/lib/featureF
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Check, ChevronLeft, Crown, ShieldCheck, Sparkles } from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { subscriptionService } from "@/services/subscription/SubscriptionService";
 
 type Plan = {
   id: "mensal" | "anual";
@@ -46,10 +48,12 @@ export default function Assinatura() {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useDrMindSetfit();
+  const { user } = useAuth() as any;
 
   const source = getSourceFromSearch(location.search);
-
   const draft = useMemo(() => loadOnboardingDraft(), []);
+
+  const [startingTrial, setStartingTrial] = useState(false);
 
   const step1 = draft?.step1 ?? {};
   const step3 = draft?.step3 ?? {};
@@ -189,8 +193,31 @@ export default function Assinatura() {
   };
 
   const goToLogin = () => {
-    const next = source ? `/assinatura?source=${encodeURIComponent(source)}` : "/assinatura";
+    const next = source
+      ? `/assinatura?source=${encodeURIComponent(source)}`
+      : "/assinatura";
     navigate(`/login?next=${encodeURIComponent(next)}`, { replace: true });
+  };
+
+  const startFreeTrial = async () => {
+    if (!user?.id) {
+      const next = source
+        ? `/assinatura?source=${encodeURIComponent(source)}`
+        : "/assinatura";
+      navigate(`/signup?next=${encodeURIComponent(next)}`, { replace: true });
+      return;
+    }
+
+    try {
+      setStartingTrial(true);
+      await subscriptionService.startTrial(user.id);
+      navigate("/dashboard-premium", { replace: true });
+    } catch (e) {
+      console.error("Erro ao iniciar trial:", e);
+      alert("Não foi possível iniciar o trial agora. Tente novamente.");
+    } finally {
+      setStartingTrial(false);
+    }
   };
 
   const continueFree = () => {
@@ -329,6 +356,33 @@ export default function Assinatura() {
           </div>
         </div>
 
+        <div className="mt-6 rounded-[28px] border border-emerald-400/25 bg-[linear-gradient(180deg,rgba(16,40,30,0.7),rgba(8,10,18,0.92))] p-5 shadow-[0_0_30px_rgba(34,197,94,0.10)]">
+          <div className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
+            Trial grátis
+          </div>
+
+          <div className="mt-3 text-[22px] font-semibold tracking-tight text-white">
+            Teste premium por 7 dias
+          </div>
+
+          <div className="mt-2 text-[13px] leading-6 text-white/60">
+            Libere agora o dashboard premium e experimente o app completo antes de decidir.
+          </div>
+
+          <button
+            type="button"
+            onClick={startFreeTrial}
+            disabled={startingTrial}
+            className="mt-5 inline-flex w-full items-center justify-center rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {startingTrial ? "Ativando trial..." : "Testar grátis por 7 dias"}
+          </button>
+
+          <div className="mt-2 text-center text-[11px] text-white/45">
+            Sem pagamento agora. Após 7 dias, você escolhe se quer continuar.
+          </div>
+        </div>
+
         <div className="mt-6 grid gap-4">
           {plans.map((pl) => (
             <div
@@ -410,7 +464,7 @@ export default function Assinatura() {
                 className="inline-flex w-full items-center justify-center rounded-[20px] border border-white/15 bg-white/5 px-4 py-3 text-[13px] font-semibold text-white/90 hover:bg-white/10 active:scale-[0.99]"
                 onClick={continueFree}
               >
-                Continuar grátis
+                Continuar sem premium
               </button>
 
               <div className="text-center text-[11px] text-white/50">
