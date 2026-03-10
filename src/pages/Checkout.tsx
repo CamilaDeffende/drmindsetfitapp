@@ -87,6 +87,7 @@ export default function Checkout() {
         "mindsetfit:subscription:v1",
         JSON.stringify({
           planId: plan.id,
+          kind: "paid",
           active: true,
           activatedAt: Date.now(),
         })
@@ -98,7 +99,9 @@ export default function Checkout() {
       return;
     }
 
-    navigate(`/signup?next=${encodeURIComponent("/dashboard-premium")}`, { replace: true });
+    navigate(`/signup?next=${encodeURIComponent("/dashboard-premium")}`, {
+      replace: true,
+    });
   };
 
   const handleBack = () => {
