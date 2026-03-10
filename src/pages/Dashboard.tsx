@@ -1,6 +1,8 @@
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BrandIcon } from "@/components/branding/BrandIcon";
+
 import {
   Activity,
   TrendingUp,
@@ -9,8 +11,13 @@ import {
   Home,
   MapPin,
   UtensilsCrossed,
+  Crown,
+  Lock,
+  ArrowRight,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
+
 import {
   LineChart,
   Line,
@@ -22,22 +29,38 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 
 export function Dashboard() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
+
   const [passosHoje, setPassosHoje] = useState(0);
   const [cargaSemana, setCargaSemana] = useState(0);
   const [horaAtual, setHoraAtual] = useState(new Date());
 
-  // SAFE STATE
-  const consumoCalorias = Array.isArray(state?.consumoCalorias) ? state.consumoCalorias : [];
-  const passosDiarios = Array.isArray(state?.passosDiarios) ? state.passosDiarios : [];
-  const historicoCargas = Array.isArray(state?.treino?.historicoCargas) ? state.treino.historicoCargas : [];
-  const refeicoes = Array.isArray(state?.nutricao?.refeicoes) ? state.nutricao.refeicoes : [];
+  const consumoCalorias = Array.isArray(state?.consumoCalorias)
+    ? state.consumoCalorias
+    : [];
+
+  const passosDiarios = Array.isArray(state?.passosDiarios)
+    ? state.passosDiarios
+    : [];
+
+  const historicoCargas = Array.isArray(state?.treino?.historicoCargas)
+    ? state.treino.historicoCargas
+    : [];
+
+  const refeicoes = Array.isArray(state?.nutricao?.refeicoes)
+    ? state.nutricao.refeicoes
+    : [];
+
   const caloriasMeta = Number(state?.nutricao?.macros?.calorias ?? 2000);
+
+  const nomeUsuario =
+    (state as any)?.perfil?.nomeCompleto?.split(" ")?.[0] ?? "Usuário";
 
   const onboardingDone = (() => {
     try {
@@ -51,18 +74,21 @@ export function Dashboard() {
     ? consumoCalorias[consumoCalorias.length - 1]?.consumido ?? 0
     : 0;
 
-  // Atualizar hora a cada segundo
   useEffect(() => {
     const interval = setInterval(() => {
       setHoraAtual(new Date());
     }, 1000);
+
     return () => clearInterval(interval);
   }, []);
 
-  // Passos do dia
   useEffect(() => {
     const dataHoje = format(new Date(), "yyyy-MM-dd");
-    const passosDia = passosDiarios.find((p: any) => p?.data === dataHoje);
+
+    const passosDia = passosDiarios.find(
+      (p: any) => p?.data === dataHoje
+    );
+
     if (passosDia) {
       setPassosHoje(Number(passosDia.passos ?? 0));
     } else {
@@ -70,27 +96,34 @@ export function Dashboard() {
     }
   }, [passosDiarios]);
 
-  // Carga total da semana
   useEffect(() => {
     const hoje = new Date();
+
     const inicioSemana = new Date(hoje);
     inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1);
 
     const cargaTotal = historicoCargas
       .filter((c: any) => c?.data && new Date(c.data) >= inicioSemana)
-      .reduce((acc: number, c: any) => acc + Number(c?.cargaTotal ?? 0), 0);
+      .reduce(
+        (acc: number, c: any) => acc + Number(c?.cargaTotal ?? 0),
+        0
+      );
 
     setCargaSemana(cargaTotal);
   }, [historicoCargas]);
 
-  // Dados gráfico calorias
   const dadosCalorias = useMemo(
     () =>
       Array.from({ length: 7 }, (_, i) => {
         const data = new Date();
+
         data.setDate(data.getDate() - (6 - i));
+
         const dataStr = format(data, "yyyy-MM-dd");
-        const consumo = consumoCalorias.find((c: any) => c?.data === dataStr);
+
+        const consumo = consumoCalorias.find(
+          (c: any) => c?.data === dataStr
+        );
 
         return {
           dia: format(data, "EEE"),
@@ -101,20 +134,27 @@ export function Dashboard() {
     [consumoCalorias, caloriasMeta]
   );
 
-  // Dados gráfico carga
   const dadosCarga = useMemo(
     () =>
       Array.from({ length: 7 }, (_, i) => {
         const data = new Date();
+
         const hoje = data.getDay();
+
         const diaSemana = hoje === 0 ? 6 : hoje - 1;
+
         data.setDate(data.getDate() - diaSemana + i);
+
         const dataStr = format(data, "yyyy-MM-dd");
 
         const cargaDia =
           historicoCargas
             .filter((c: any) => c?.data === dataStr)
-            .reduce((acc: number, c: any) => acc + Number(c?.cargaTotal ?? 0), 0) || 0;
+            .reduce(
+              (acc: number, c: any) =>
+                acc + Number(c?.cargaTotal ?? 0),
+              0
+            ) || 0;
 
         return {
           dia: format(data, "EEE"),
@@ -124,19 +164,29 @@ export function Dashboard() {
     [historicoCargas]
   );
 
+  const goPremium = () => {
+    navigate("/assinatura?source=dashboard-free", { replace: true });
+  };
+
   if (!state?.concluido && !onboardingDone) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-96">
           <CardHeader>
-            <CardTitle>Complete seu Perfil</CardTitle>
+            <CardTitle>Complete seu perfil</CardTitle>
+
             <CardDescription>
-              Você precisa completar o questionário inicial para acessar o dashboard
+              Você precisa completar o questionário inicial
+              para acessar o dashboard
             </CardDescription>
           </CardHeader>
+
           <CardContent>
-            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full">
-              Iniciar Questionário
+            <Button
+              onClick={() => navigate("/onboarding/step-1")}
+              className="w-full"
+            >
+              Iniciar questionário
             </Button>
           </CardContent>
         </Card>
@@ -145,162 +195,175 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
-      <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between mb-2 sm:mb-0">
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] bg-clip-text text-transparent">
-              Dashboard
-            </h1>
+    <div className="min-h-screen mf-app-bg mf-bg-neon text-white">
+
+      {/* HEADER */}
+
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgba(5,8,16,0.78)] backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+
+            <div className="flex items-center gap-3">
+              <BrandIcon size={32} />
+
+              <h1 className="text-[30px] font-semibold tracking-tight text-white">
+                Olá, {nomeUsuario}
+              </h1>
+            </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={() => navigate("/")}>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => navigate("/")}
+                className="border-white/10 bg-black/20 text-white hover:bg-white/5"
+              >
                 <Home className="w-4 h-4" />
               </Button>
 
-              <Button variant="outline" size="icon" onClick={() => navigate("/running")} className="hidden sm:flex">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goPremium}
+                className="border-white/10 bg-black/20 text-white hover:bg-white/5 hidden sm:flex"
+              >
                 <MapPin className="w-4 h-4" />
               </Button>
 
-              <Button onClick={() => navigate("/treino")} size="sm" className="sm:size-default">
+              <Button
+                onClick={goPremium}
+                className="rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white"
+              >
                 <Dumbbell className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Treinar</span>
               </Button>
+
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
-                <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
-                <span className="truncate">Calorias</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{ultimoConsumo}</div>
-              <p className="text-xs text-muted-foreground truncate">Meta: {caloriasMeta}</p>
-            </CardContent>
-          </Card>
+      {/* CTA PREMIUM */}
+
+      <main className="mx-auto max-w-7xl px-4 py-6">
+
+        <section className="mb-6 rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5">
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+            <div>
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-400/10 px-3 py-1 text-[11px] font-semibold text-amber-200">
+                <Crown className="h-3.5 w-3.5" />
+                Upgrade disponível
+              </div>
+
+              <h2 className="mt-3 text-[24px] font-semibold text-white">
+                Seu plano premium está pronto
+              </h2>
+
+              <p className="mt-2 text-[14px] text-white/60">
+                Desbloqueie treino completo, plano alimentar detalhado
+                e recursos avançados do MindsetFit.
+              </p>
+
+            </div>
+
+            <Button onClick={goPremium}>
+              Ver premium
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+
+          </div>
+
+        </section>
+
+        {/* MÉTRICAS */}
+
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
-                <Footprints className="w-3 h-3 sm:w-4 sm:h-4 text-[#1E6BFF]" />
-                <span className="truncate">Passos</span>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Activity className="w-4 h-4 text-green-400" />
+                Calorias
               </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{passosHoje.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground truncate">Meta: 10k</p>
+              <div className="text-3xl font-semibold">
+                {ultimoConsumo}
+              </div>
+
+              <p className="text-xs opacity-60">
+                Meta: {caloriasMeta}
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
-                <Dumbbell className="w-3 h-3 sm:w-4 sm:h-4 text-[#1E6BFF]" />
-                <span className="truncate">Carga</span>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Footprints className="w-4 h-4 text-cyan-300" />
+                Passos
               </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{cargaSemana.toLocaleString()} kg</div>
-              <p className="text-xs text-muted-foreground truncate">Semana</p>
+              <div className="text-3xl font-semibold">
+                {passosHoje.toLocaleString()}
+              </div>
+
+              <p className="text-xs opacity-60">
+                Meta: 10k
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600" />
-                <span className="truncate">Hora</span>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Dumbbell className="w-4 h-4 text-cyan-300" />
+                Carga
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{format(horaAtual, "HH:mm:ss")}</div>
-              <p className="text-xs text-muted-foreground truncate">{format(horaAtual, "dd/MM/yyyy")}</p>
-            </CardContent>
-          </Card>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Consumo Calórico - Últimos 7 Dias</CardTitle>
-              <CardDescription>Acompanhe seu consumo vs meta diária</CardDescription>
-            </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={dadosCalorias}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="dia" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="consumido" stroke="#3b82f6" name="Consumido" strokeWidth={2} />
-                  <Line type="monotone" dataKey="meta" stroke="#10b981" name="Meta" strokeWidth={2} strokeDasharray="5 5" />
-                </LineChart>
-              </ResponsiveContainer>
+              <div className="text-3xl font-semibold">
+                {cargaSemana} kg
+              </div>
+
+              <p className="text-xs opacity-60">
+                Semana
+              </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Carga Total Semanal</CardTitle>
-              <CardDescription>Volume de treino por dia (Segunda a Domingo)</CardDescription>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <TrendingUp className="w-4 h-4 text-orange-400" />
+                Hora
+              </CardTitle>
             </CardHeader>
+
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={dadosCarga}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="dia" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="carga" fill="#8b5cf6" name="Carga (kg)" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="text-3xl font-semibold">
+                {format(horaAtual, "HH:mm:ss")}
+              </div>
+
+              <p className="text-xs opacity-60">
+                {format(horaAtual, "dd/MM/yyyy")}
+              </p>
             </CardContent>
           </Card>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          {state?.treino && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Programa de Treino</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  {state.treino?.divisaoSemanal || "Treino ativo"} • {state.treino?.frequencia || 0}x por semana
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => navigate("/treino")} size="lg" className="w-full">
-                  <Dumbbell className="w-4 h-4 mr-2" />
-                  Iniciar Treino
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+        </section>
 
-          {state?.nutricao && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Planejamento Nutricional</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  {refeicoes.length} refeições • {caloriasMeta} kcal/dia
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => navigate("/nutrition")} size="lg" className="w-full" variant="outline">
-                  <UtensilsCrossed className="w-4 h-4 mr-2" />
-                  Ver Dieta
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
       </main>
     </div>
   );
 }
+
+export default Dashboard;
