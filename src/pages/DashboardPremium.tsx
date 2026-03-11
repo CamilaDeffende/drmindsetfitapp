@@ -396,18 +396,45 @@ export function DashboardPremium() {
     <div className="min-h-screen mf-app-bg mf-bg-neon text-white">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgba(5,8,16,0.78)] backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
+
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center">
+
+            {/* ESQUERDA */}
             <div className="flex items-center gap-3">
-              <BrandIcon size={28} className="drop-shadow-[0_0_14px_rgba(0,190,255,0.35)]" />
-              <div>
-                <h1 className="text-2xl font-bold text-white">Dashboard Premium</h1>
-                <p className="text-xs text-gray-400">
-                  {format(horaAtual, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                </p>
+
+              <BrandIcon
+                size={30}
+                className="drop-shadow-[0_0_10px_rgba(0,190,255,0.35)] bg-transparent"
+              />
+
+              <div className="text-sm text-white/70">
+                Seu plano completo liberado
               </div>
+
             </div>
 
-            <div className="flex gap-2">
+
+            {/* CENTRO — relógio menor */}
+            <div className="flex justify-center">
+
+              <div className="rounded-xl border border-cyan-300/10 bg-[rgba(10,18,30,0.85)] px-4 py-2 text-center">
+              
+                <div className="text-[20px] font-semibold tracking-[0.08em] text-cyan-300">
+                  {format(horaAtual, "HH:mm:ss")}
+                </div>
+
+                <div className="text-[10px] text-white/50">
+                  {format(horaAtual, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* DIREITA */}
+            <div className="flex justify-end gap-2">
+
               <Button
                 variant="outline"
                 size="icon"
@@ -425,8 +452,11 @@ export function DashboardPremium() {
                 <Download className="w-4 h-4 mr-2" />
                 Exportar PDF
               </Button>
+
             </div>
+
           </div>
+
         </div>
       </header>
 

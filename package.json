@@ -63,7 +63,6 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-pdf/renderer": "^4.3.1",
     "@stripe/stripe-js": "^8.6.1",
-    "@supabase/supabase-js": "^2.95.3",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -127,5 +126,22 @@
     "vite": "^6.4.1",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.18"
-  }
+  },
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CamilaDeffende/drmindsetfitapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CamilaDeffende/drmindsetfitapp/issues"
+  },
+  "homepage": "https://github.com/CamilaDeffende/drmindsetfitapp#readme"
 }

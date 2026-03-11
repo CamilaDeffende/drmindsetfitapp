@@ -171,7 +171,7 @@ export default function Assinatura() {
 
   const getBackHref = () => {
     if (source === "dashboard-free") return "/dashboard";
-    if (source === "premium") return "/dashboard-premium";
+    if (source === "premium") return "/DashboardPremium";
     return null;
   };
 
@@ -211,7 +211,7 @@ export default function Assinatura() {
     try {
       setStartingTrial(true);
       await subscriptionService.startTrial(user.id);
-      navigate("/dashboard-premium", { replace: true });
+      navigate("/DashboardPremium", { replace: true });
     } catch (e) {
       console.error("Erro ao iniciar trial:", e);
       alert("Não foi possível iniciar o trial agora. Tente novamente.");
@@ -240,7 +240,7 @@ export default function Assinatura() {
     }
 
     if (source === "premium") {
-      navigate("/dashboard-premium", { replace: true });
+      navigate("/DashboardPremium", { replace: true });
       return;
     }
 
