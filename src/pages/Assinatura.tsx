@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { loadFlags, setPaywallEnabled, setPremiumUnlocked } from "@/lib/featureFlags";
 import { BrandIcon } from "@/components/branding/BrandIcon";
@@ -51,7 +51,11 @@ export default function Assinatura() {
   const { user } = useAuth() as any;
 
   const source = getSourceFromSearch(location.search);
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const autostartTrial = searchParams.get("autostartTrial") === "1";
+
   const draft = useMemo(() => loadOnboardingDraft(), []);
+  const autoStartRanRef = useRef(false);
 
   const [startingTrial, setStartingTrial] = useState(false);
 
@@ -159,6 +163,37 @@ export default function Assinatura() {
     } catch {}
   }, []);
 
+  const activateTrialAndGo = async () => {
+    if (!user?.id) return;
+
+    try {
+      setStartingTrial(true);
+      await subscriptionService.startTrial(user.id);
+
+      const cleanParams = new URLSearchParams(location.search);
+      cleanParams.delete("autostartTrial");
+
+      const cleanSearch = cleanParams.toString();
+      navigate(
+        {
+          pathname: "/dashboardpremium",
+          search: cleanSearch ? `?${cleanSearch}` : "",
+        },
+        { replace: true }
+      );
+    } catch (e) {
+      console.error("Erro ao iniciar trial:", e);
+      alert("Não foi possível iniciar o trial agora. Tente novamente.");
+      setStartingTrial(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!autostartTrial || !user?.id || autoStartRanRef.current) return;
+    autoStartRanRef.current = true;
+    void activateTrialAndGo();
+  }, [autostartTrial, user?.id]);
+
   const togglePaywall = () => {
     const next = setPaywallEnabled(!devFlags.paywallEnabled);
     setDevFlags(next);
@@ -171,7 +206,7 @@ export default function Assinatura() {
 
   const getBackHref = () => {
     if (source === "dashboard-free") return "/dashboard";
-    if (source === "premium") return "/DashboardPremium";
+    if (source === "premium") return "/dashboardpremium";
     return null;
   };
 
@@ -193,31 +228,30 @@ export default function Assinatura() {
   };
 
   const goToLogin = () => {
-    const next = source
-      ? `/assinatura?source=${encodeURIComponent(source)}`
+    const nextParams = new URLSearchParams();
+    if (source) nextParams.set("source", source);
+    if (autostartTrial) nextParams.set("autostartTrial", "1");
+
+    const next = nextParams.toString()
+      ? `/assinatura?${nextParams.toString()}`
       : "/assinatura";
+
     navigate(`/login?next=${encodeURIComponent(next)}`, { replace: true });
   };
 
   const startFreeTrial = async () => {
     if (!user?.id) {
-      const next = source
-        ? `/assinatura?source=${encodeURIComponent(source)}`
-        : "/assinatura";
-      navigate(`/signup?next=${encodeURIComponent(next)}`, { replace: true });
+      const params = new URLSearchParams();
+      if (source) params.set("source", source);
+      params.set("autostartTrial", "1");
+
+      navigate(`/signup?next=${encodeURIComponent(`/assinatura?${params.toString()}`)}`, {
+        replace: true,
+      });
       return;
     }
 
-    try {
-      setStartingTrial(true);
-      await subscriptionService.startTrial(user.id);
-      navigate("/DashboardPremium", { replace: true });
-    } catch (e) {
-      console.error("Erro ao iniciar trial:", e);
-      alert("Não foi possível iniciar o trial agora. Tente novamente.");
-    } finally {
-      setStartingTrial(false);
-    }
+    await activateTrialAndGo();
   };
 
   const continueFree = () => {
@@ -240,7 +274,7 @@ export default function Assinatura() {
     }
 
     if (source === "premium") {
-      navigate("/DashboardPremium", { replace: true });
+      navigate("/dashboardpremium", { replace: true });
       return;
     }
 

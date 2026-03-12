@@ -141,7 +141,7 @@ function App() {
 
             {/* Dashboard Premium */}
             <Route
-              path="/dashboard-premium"
+              path="/DashboardPremium"
               element={
                 <ProtectedRoute requiresPremium>
                   <ErrorBoundary name="DashboardPremium">

@@ -96,10 +96,9 @@ export function SignUp() {
 
     toast({
       title: "Conta criada com sucesso!",
-      description: "Se necessário, confirme seu email antes de entrar.",
+      description: "Redirecionando...",
     });
 
-    navigate(`/login?next=${encodeURIComponent(next)}`, { replace: true });
     setSubmitting(false);
   };
 
