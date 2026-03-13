@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(__isDevPass ? false : true);
 
   useEffect(() => {
-    // ⚠️ IMPORTANTE:
+    // IMPORTANTE:
     // Não bloquear bootstrap de auth em /onboarding.
     // O funil (onboarding obrigatório antes do login) deve ser controlado por RouteGuard/rotas,
     // não travando o AuthProvider — isso causava "loading infinito" no dashboard.
@@ -114,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // CORRIGIDO: agora é idempotente (upsert) e alinhado ao schema (UNIQUE(user_id))
   const signUp = async (email: string, password: string, fullName: string) => {
     // Modo DEMO: simular cadastro bem-sucedido
     if (!isSupabaseConfigured) {
@@ -132,16 +133,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) return { error };
 
-      // Criar perfil inicial (não falhar o signup se o insert do perfil falhar)
+      // Criar/atualizar perfil inicial (não falhar o signup se o upsert do perfil falhar)
       if (data.user) {
         try {
-          await supabase.from("profiles").insert({
-            user_id: data.user.id,
-            nome_completo: fullName,
-            data: {},
-          });
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert(
+              {
+                user_id: data.user.id,
+                nome_completo: fullName,
+                data: {},
+              },
+              { onConflict: "user_id" }
+            );
+
+          if (profileError) {
+            if (import.meta.env.DEV) console.warn("⚠️ Falha ao upsert do profile, seguindo mesmo assim.", profileError);
+          }
         } catch (e) {
-          if (import.meta.env.DEV) console.warn("⚠️ Falha ao criar profile, seguindo mesmo assim.", e);
+          if (import.meta.env.DEV) console.warn("⚠️ Exceção ao upsert do profile, seguindo mesmo assim.", e);
         }
       }
 

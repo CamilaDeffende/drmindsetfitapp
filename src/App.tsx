@@ -18,9 +18,11 @@ import { ErrorBoundary } from "@/components/system/ErrorBoundary";
 import { Login } from "@/pages/Login";
 import { SignUp } from "@/pages/SignUp";
 import { Pricing } from "@/pages/Pricing";
+import Checkout from "@/pages/Checkout";
 
 // Páginas Protegidas
 import { OnboardingFlow } from "@/pages/OnboardingFlow";
+import { Dashboard } from "@/pages/Dashboard";
 import { DashboardPremium } from "@/pages/DashboardPremium";
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import StyleGuidePage from "@/pages/StyleGuidePage";
@@ -68,9 +70,6 @@ const LazyCorridaPro = React.lazy(() => import("@/pages/CorridaPro").then((m) =>
 const MF_METABOLIC_ENGINE_V1_ENABLED = (import.meta as any).env?.VITE_MF_METABOLIC_ENGINE_V1_ENABLED === "true";
 
 function App() {
-  // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
-
-  // reset premium via URL: /?reset=soft | /?reset=hard
   React.useEffect(() => {
     maybeResetFromUrl();
   }, []);
@@ -124,25 +123,27 @@ function App() {
               }
             />
 
-            {/* Onboarding (Premium) — etapas 1..8 */}
-            <Route
-              path="/onboarding/*"
-              element={
-                <OnboardingFlow />
-              }
-            />
-            <Route
-              path="/onboarding/step-:step"
-              element={
-                <OnboardingFlow />
-              }
-            />
+            {/* Onboarding */}
+            <Route path="/onboarding/*" element={<OnboardingFlow />} />
+            <Route path="/onboarding/step-:step" element={<OnboardingFlow />} />
 
-            {/* Dashboard */}
+            {/* Dashboard Free */}
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
+                  <ErrorBoundary name="Dashboard">
+                    <Dashboard />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Dashboard Premium */}
+            <Route
+              path="/DashboardPremium"
+              element={
+                <ProtectedRoute requiresPremium>
                   <ErrorBoundary name="DashboardPremium">
                     <DashboardPremium />
                   </ErrorBoundary>
@@ -261,6 +262,7 @@ function App() {
             <Route path="/progress" element={<MFSuspense><LazyProgressPage /></MFSuspense>} />
             <Route path="/workout/:id" element={<MFSuspense><LazyWorkoutDetailsPage /></MFSuspense>} />
             <Route path="/live-workout" element={<MFSuspense><LazyLiveWorkoutPage /></MFSuspense>} />
+            <Route path="/checkout" element={<Checkout />} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/diagnostic" replace />} />

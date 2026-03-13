@@ -1,15 +1,11 @@
 // MF_ONBOARDING_CONTRACT_V1
+// PREMIUM_REFINEMENT_PHASE3_STEP8_UI_V3
+// FIX_STEP8_NUTRICAO_SOURCE_V1
+
 import { useMemo } from "react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
-
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ChevronLeft, Check } from "lucide-react";
 
 type Props = {
   summary: any;
@@ -24,16 +20,21 @@ export default function Step8Confirmacao({
 }: Props) {
   const { state } = useDrMindSetfit();
 
-  // ---- Dados do plano vindos do estado global ----
-  const metabolismo = (state as any)?.metabolismo ??
+  // =========================
+  // FONTES PRINCIPAIS
+  // =========================
+  const metabolismo =
+    (state as any)?.metabolismo ??
     (state as any)?.resultadoMetabolico ??
     {};
 
-  const nutricao = (state as any)?.nutricao ??
-    (state as any)?.dieta ??
-    (state as any)?.planoDieta ??
-    {};
+  // IMPORTANTE:
+  // usar state.nutricao como fonte canônica para evitar ler estrutura antiga
+  const nutricao = (state as any)?.nutricao ?? {};
 
+  // =========================
+  // CALORIAS / TMB
+  // =========================
   const kcalAlvo: number | null =
     nutricao?.kcalAlvo ??
     nutricao?.macros?.calorias ??
@@ -41,24 +42,51 @@ export default function Step8Confirmacao({
     metabolismo?.get ??
     null;
 
-  const macros = nutricao?.macros ?? {};
-  const proteina = macros.proteina ?? macros.proteinas ?? null;
-  const carboidratos = macros.carboidratos ?? macros.carbo ?? null;
-  const gorduras = macros.gorduras ?? macros.gordura ?? null;
+  const tmb: number | null =
+    metabolismo?.tmb ??
+    null;
 
+  // =========================
+  // MACROS
+  // =========================
+  const macros = nutricao?.macros ?? {};
+
+  const proteina: number | null =
+    macros?.proteina != null
+      ? Number(macros.proteina)
+      : macros?.proteinas != null
+      ? Number(macros.proteinas)
+      : null;
+
+  const carboidratos: number | null =
+    macros?.carboidratos != null
+      ? Number(macros.carboidratos)
+      : macros?.carbo != null
+      ? Number(macros.carbo)
+      : null;
+
+  const gorduras: number | null =
+    macros?.gorduras != null
+      ? Number(macros.gorduras)
+      : macros?.gordura != null
+      ? Number(macros.gordura)
+      : null;
+
+  // =========================
+  // REFEIÇÕES
+  // =========================
   const refeicoes: any[] = Array.isArray(nutricao?.refeicoes)
     ? nutricao.refeicoes
     : [];
 
   const proximaRefeicao = useMemo(() => {
     if (!refeicoes.length) return null;
-
-    // Se quiser algo mais sofisticado depois (usar horário atual), dá pra ajustar.
-    // Por enquanto: primeira refeição da lista.
     return refeicoes[0];
   }, [refeicoes]);
 
-  // ---- Resumo das respostas do onboarding (draft) ----
+  // =========================
+  // DADOS DO ONBOARDING
+  // =========================
   const step1 = (summary as any)?.step1 ?? {};
   const step5 = (summary as any)?.step5 ?? {};
   const step6 = (summary as any)?.step6 ?? {};
@@ -73,23 +101,23 @@ export default function Step8Confirmacao({
   };
 
   const dietaLabelMap: Record<string, string> = {
-    flexivel: "Flexível / Onívora",
-    lowcarb: "Low-carb",
-    vegetariana: "Vegetariana",
-    vegana: "Vegana",
-    mediterranea: "Mediterrânea",
+    flexivel: "Flexível",
+    onivoro: "Onívoro",
+    lowcarb: "Low carb",
+    vegetariano: "Vegetariano",
+    vegano: "Vegano",
   };
 
   const objetivoLabel =
     objetivoLabelMap[step1?.objetivo] ?? "Não informado";
 
   const modalidadeLabel =
-    step1?.modalidadePrincipal ??
     step5?.primary ??
+    step1?.modalidadePrincipal ??
     "Não informado";
 
   const dietaLabel =
-    dietaLabelMap[step7?.dieta] ?? "Flexível / Onívora";
+    dietaLabelMap[step7?.dieta] ?? "Flexível";
 
   const diasTreino = Array.isArray(step6?.days)
     ? step6.days
@@ -105,181 +133,160 @@ export default function Step8Confirmacao({
     (state as any)?.perfil?.nomeCompleto ||
     "seu plano";
 
-  // Helpers de formatação
+  // =========================
+  // FORMATADORES
+  // =========================
   const fmtKcal = (n: number | null) =>
-    n == null || Number.isNaN(n) ? "–––" : `${Math.round(n)} kcal`;
+    n == null || Number.isNaN(n) ? "–––" : `${Math.round(n)}`;
 
   const fmtGramas = (n: number | null) =>
     n == null || Number.isNaN(n) ? "–––" : `${Math.round(n)} g`;
 
   return (
-    <div data-testid="mf-step-root" className="space-y-6">
-      {/* Cabeçalho */}
-      <div className="space-y-1">
-        <h2 className="text-2xl sm:text-3xl font-semibold">
-          Confirme seu plano
+    <div className="w-full text-white space-y-6" data-testid="mf-step-root">
+      {/* HERO */}
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+        <h2 className="text-[22px] font-semibold tracking-tight">
+          Plano calibrado
         </h2>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Este é o resumo do que foi calibrado para{" "}
-          <span className="font-semibold">{nomeUsuario}</span>.  
-          Ao confirmar, salvamos esse plano como base do seu dashboard.
+        <p className="mt-1 text-[13px] text-white/50">
+          Base científica para estruturar seu protocolo.
         </p>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Resumo do plano (card da esquerda) */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Resumo do seu plano</CardTitle>
-            <CardDescription>
-              Hoje você só precisa executar o próximo passo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Calorias alvo */}
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                <div className="text-xs text-muted-foreground mb-1">
-                  Calorias alvo
-                </div>
-                <div className="text-xl font-semibold">
-                  {fmtKcal(kcalAlvo)}
-                </div>
+      {/* CALORIAS */}
+      <section className="grid grid-cols-2 gap-4">
+        <div className="rounded-[22px] border border-white/10 bg-black/30 p-5">
+          <div className="text-white/50 text-[12px]">TMB (repouso)</div>
+          <div className="mt-1 text-[28px] font-semibold text-cyan-300">
+            {fmtKcal(tmb)}
+          </div>
+          <div className="text-[12px] text-white/40">kcal</div>
+        </div>
+
+        <div className="rounded-[22px] border border-emerald-400/30 bg-emerald-400/10 p-5 shadow-[0_0_25px_rgba(34,197,94,0.15)]">
+          <div className="text-white/50 text-[12px]">Meta diária</div>
+          <div className="mt-1 text-[28px] font-semibold text-emerald-300">
+            {fmtKcal(kcalAlvo)}
+          </div>
+          <div className="text-[12px] text-white/40">kcal</div>
+        </div>
+      </section>
+
+      {/* MACROS */}
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+        <h3 className="text-[18px] font-semibold">Distribuição de macros</h3>
+
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          <div className="rounded-[18px] border border-white/10 p-4 bg-black/20 text-center">
+            <div className="text-[22px] font-semibold text-cyan-300">
+              {fmtGramas(proteina)}
+            </div>
+            <div className="text-white/50 text-[12px]">proteína</div>
+          </div>
+
+          <div className="rounded-[18px] border border-white/10 p-4 bg-black/20 text-center">
+            <div className="text-[22px] font-semibold text-cyan-300">
+              {fmtGramas(carboidratos)}
+            </div>
+            <div className="text-white/50 text-[12px]">carbo</div>
+          </div>
+
+          <div className="rounded-[18px] border border-white/10 p-4 bg-black/20 text-center">
+            <div className="text-[22px] font-semibold text-cyan-300">
+              {fmtGramas(gorduras)}
+            </div>
+            <div className="text-white/50 text-[12px]">gordura</div>
+          </div>
+        </div>
+      </section>
+
+      {/* RESUMO */}
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+        <h3 className="text-[18px] font-semibold">Estrutura do plano</h3>
+
+        <div className="mt-4 space-y-3 text-[14px] text-white/70">
+          <div>
+            <span className="text-white/40">Usuário:</span>{" "}
+            {nomeUsuario}
+          </div>
+
+          <div>
+            <span className="text-white/40">Objetivo:</span>{" "}
+            {objetivoLabel}
+          </div>
+
+          <div>
+            <span className="text-white/40">Modalidade:</span>{" "}
+            {modalidadeLabel}
+          </div>
+
+          <div>
+            <span className="text-white/40">Dias de treino:</span>{" "}
+            {diasTreinoLabel}
+          </div>
+
+          <div>
+            <span className="text-white/40">Estilo alimentar:</span>{" "}
+            {dietaLabel}
+          </div>
+        </div>
+      </section>
+
+      {/* PRÓXIMA REFEIÇÃO */}
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+        <h3 className="text-[18px] font-semibold">Próxima refeição</h3>
+
+        <div className="mt-4 rounded-[18px] border border-white/10 bg-black/20 p-4">
+          {proximaRefeicao ? (
+            <>
+              <div className="text-[16px] font-semibold text-white">
+                {proximaRefeicao.nome ?? "Refeição"}
               </div>
 
-              {/* Macros */}
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                <div className="text-xs text-muted-foreground mb-1">
-                  Macros
-                </div>
-                <div className="text-xs space-y-0.5">
-                  <div>
-                    <span className="font-semibold">P: </span>
-                    {fmtGramas(proteina)}
-                  </div>
-                  <div>
-                    <span className="font-semibold">C: </span>
-                    {fmtGramas(carboidratos)}
-                  </div>
-                  <div>
-                    <span className="font-semibold">G: </span>
-                    {fmtGramas(gorduras)}
-                  </div>
-                </div>
+              <div className="mt-1 text-[13px] text-white/45">
+                {proximaRefeicao.horario ?? "Horário a definir"}
               </div>
 
-              {/* Próxima refeição (preview) */}
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                <div className="text-xs text-muted-foreground mb-1">
-                  Próxima refeição (preview)
-                </div>
-                {proximaRefeicao ? (
-                  <div className="space-y-1 text-xs">
-                    <div className="font-semibold">
-                      {proximaRefeicao.nome ?? "Refeição"}
-                    </div>
-                    {proximaRefeicao.horario && (
-                      <div className="text-muted-foreground">
-                        {proximaRefeicao.horario}
-                      </div>
-                    )}
-                    {Array.isArray(proximaRefeicao.alimentos) &&
-                      proximaRefeicao.alimentos.length > 0 && (
-                        <div className="text-muted-foreground truncate">
-                          {proximaRefeicao.alimentos
-                            .slice(0, 3)
-                            .map((a: any) => a?.nome)
-                            .filter(Boolean)
-                            .join(" · ")}
-                          {proximaRefeicao.alimentos.length > 3
-                            ? "…"
-                            : ""}
-                        </div>
-                      )}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    Seu plano alimentar será montado ao entrar no app.
+              {Array.isArray(proximaRefeicao.alimentos) &&
+                proximaRefeicao.alimentos.length > 0 && (
+                  <div className="mt-2 text-[13px] text-white/55">
+                    {proximaRefeicao.alimentos
+                      .slice(0, 3)
+                      .map((a: any) => a?.nome)
+                      .filter(Boolean)
+                      .join(" • ")}
                   </div>
                 )}
-              </div>
+            </>
+          ) : (
+            <div className="text-[13px] text-white/50">
+              O plano alimentar será exibido no dashboard após a confirmação.
             </div>
+          )}
+        </div>
+      </section>
 
-            {/* Linha fina de meta */}
-            <div className="mt-4 rounded-full bg-white/5 h-2 overflow-hidden">
-              <div className="h-full bg-emerald-500/70 w-3/4" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* CTA */}
+      <div className="flex gap-3 pt-2">
+        {onBack && (
+          <Button
+            variant="outline"
+            onClick={() => onBack?.()}
+            className="h-14 w-[120px] rounded-[20px] border border-white/15 bg-black/20 text-white hover:bg-white/5"
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Voltar
+          </Button>
+        )}
 
-        {/* Card de "Complete seu perfil" / CTA de confirmação */}
-        <Card className="relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-sky-500/30 to-transparent" />
-          <CardHeader className="relative">
-            <CardTitle className="text-2xl text-sky-300">
-              Complete seu Perfil
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Confirme seus dados para desbloquear o dashboard com
-              seu plano já carregado.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="relative space-y-4">
-            <div className="space-y-1 text-sm text-muted-foreground">
-              <div>
-                <span className="font-semibold text-white">
-                  Objetivo:
-                </span>{" "}
-                {objetivoLabel}
-              </div>
-              <div>
-                <span className="font-semibold text-white">
-                  Modalidade principal:
-                </span>{" "}
-                {modalidadeLabel}
-              </div>
-              <div>
-                <span className="font-semibold text-white">
-                  Dias de treino:
-                </span>{" "}
-                {diasTreinoLabel}
-              </div>
-              <div>
-                <span className="font-semibold text-white">
-                  Estilo de dieta:
-                </span>{" "}
-                {dietaLabel}
-              </div>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              Depois de confirmar, você poderá acompanhar o plano,
-              registrar treinos e ajustar calorias/macro ao longo do
-              tempo direto no dashboard.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              {onBack && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={onBack}
-                >
-                  Voltar
-                </Button>
-              )}
-
-              <Button
-                type="button"
-                className="w-full sm:flex-1 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:to-[#00B7FF]"
-                onClick={onConfirm}
-              >
-                Confirmar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Button
+          onClick={onConfirm}
+          className="h-14 flex-1 rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
+        >
+          Finalizar plano
+          <Check className="ml-2 h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
