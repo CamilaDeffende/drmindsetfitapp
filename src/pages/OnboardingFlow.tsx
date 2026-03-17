@@ -18,7 +18,7 @@ import { Step4Nutricao } from "@/components/steps/Step4Nutricao";
 
 // Steps 5–8 (novos): default export com props (draft real)
 import Step5Modalidades from "@/components/steps/Step5Modalidades";
-import Step6DiasSemana from "@/components/steps/Step6DiasSemana";
+import Step6PlanoTreinos from "@/components/steps/Step6PlanoTreinos";
 import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
 
@@ -321,7 +321,7 @@ if (isOnboardingDone()) {
         key: "step6",
         title: "Dias da semana",
         render: () => (
-          <Step6DiasSemana
+          <Step6PlanoTreinos
             value={draft.step6 || { days: [] }}
             onChange={(v: any) => setDraft((d) => ({ ...d, step6: v }))}
             onNext={goNext}

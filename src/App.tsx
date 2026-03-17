@@ -142,11 +142,9 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
-                  <ErrorBoundary name="DashboardPremium">
-                    <DashboardPremium />
-                  </ErrorBoundary>
-                </ProtectedRoute>
+                <ErrorBoundary name="DashboardPremium">
+                  <DashboardPremium />
+                </ErrorBoundary>
               }
             />
 
