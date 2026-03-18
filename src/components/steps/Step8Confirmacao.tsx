@@ -1,7 +1,3 @@
-// MF_ONBOARDING_CONTRACT_V1
-// PREMIUM_REFINEMENT_PHASE3_STEP8_UI_V3
-// FIX_STEP8_NUTRICAO_SOURCE_V1
-
 import { useMemo } from "react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Button } from "@/components/ui/button";
@@ -13,68 +9,76 @@ type Props = {
   onBack?: () => void;
 };
 
+function toNum(v: unknown, fallback: number | null = null) {
+  const n = Number(String(v ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function loadDraftSafe() {
+  try {
+    const raw = localStorage.getItem("mf:onboarding:draft:v1");
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function Step8Confirmacao({
   summary,
   onConfirm,
   onBack,
 }: Props) {
   const { state } = useDrMindSetfit();
+  const draft = loadDraftSafe();
 
-  // =========================
-  // FONTES PRINCIPAIS
-  // =========================
+  const step1 = (summary as any)?.step1 ?? draft?.step1 ?? {};
+  const step3 =
+    (summary as any)?.step3 ??
+    draft?.step3 ??
+    draft?.step3Metabolismo ??
+    {};
+  const step5 = (summary as any)?.step5 ?? draft?.step5 ?? {};
+  const step6 = (summary as any)?.step6 ?? draft?.step6 ?? {};
+  const step7 = (summary as any)?.step7 ?? draft?.step7 ?? {};
+
   const metabolismo =
     (state as any)?.metabolismo ??
     (state as any)?.resultadoMetabolico ??
     {};
 
-  // IMPORTANTE:
-  // usar state.nutricao como fonte canônica para evitar ler estrutura antiga
   const nutricao = (state as any)?.nutricao ?? {};
 
-  // =========================
-  // CALORIAS / TMB
-  // =========================
   const kcalAlvo: number | null =
-    nutricao?.kcalAlvo ??
-    nutricao?.macros?.calorias ??
-    metabolismo?.caloriasAlvo ??
-    metabolismo?.get ??
+    toNum(nutricao?.kcalAlvo) ??
+    toNum(nutricao?.macros?.calorias) ??
+    toNum(metabolismo?.caloriasAlvo) ??
+    toNum(metabolismo?.metaDiaria) ??
+    toNum(metabolismo?.get) ??
+    toNum(step3?.metaCalorica) ??
     null;
 
   const tmb: number | null =
-    metabolismo?.tmb ??
+    toNum(metabolismo?.tmb) ??
+    toNum(step3?.tmb) ??
     null;
 
-  // =========================
-  // MACROS
-  // =========================
   const macros = nutricao?.macros ?? {};
 
   const proteina: number | null =
-    macros?.proteina != null
-      ? Number(macros.proteina)
-      : macros?.proteinas != null
-      ? Number(macros.proteinas)
-      : null;
+    toNum(macros?.proteina) ??
+    toNum(macros?.proteinas) ??
+    null;
 
   const carboidratos: number | null =
-    macros?.carboidratos != null
-      ? Number(macros.carboidratos)
-      : macros?.carbo != null
-      ? Number(macros.carbo)
-      : null;
+    toNum(macros?.carboidratos) ??
+    toNum(macros?.carbo) ??
+    null;
 
   const gorduras: number | null =
-    macros?.gorduras != null
-      ? Number(macros.gorduras)
-      : macros?.gordura != null
-      ? Number(macros.gordura)
-      : null;
+    toNum(macros?.gorduras) ??
+    toNum(macros?.gordura) ??
+    null;
 
-  // =========================
-  // REFEIÇÕES
-  // =========================
   const refeicoes: any[] = Array.isArray(nutricao?.refeicoes)
     ? nutricao.refeicoes
     : [];
@@ -83,14 +87,6 @@ export default function Step8Confirmacao({
     if (!refeicoes.length) return null;
     return refeicoes[0];
   }, [refeicoes]);
-
-  // =========================
-  // DADOS DO ONBOARDING
-  // =========================
-  const step1 = (summary as any)?.step1 ?? {};
-  const step5 = (summary as any)?.step5 ?? {};
-  const step6 = (summary as any)?.step6 ?? {};
-  const step7 = (summary as any)?.step7 ?? {};
 
   const objetivoLabelMap: Record<string, string> = {
     emagrecimento: "Emagrecimento",
@@ -111,10 +107,12 @@ export default function Step8Confirmacao({
   const objetivoLabel =
     objetivoLabelMap[step1?.objetivo] ?? "Não informado";
 
-  const modalidadeLabel =
-    step5?.primary ??
-    step1?.modalidadePrincipal ??
-    "Não informado";
+  const modalidadeLabel = Array.isArray(step5?.selected) && step5.selected.length > 0
+    ? step5.selected.join(" • ")
+    : step5?.primary ?? step1?.modalidadePrincipal ?? "Não informado";
+
+  const nivelTreinoLabel =
+    step5?.level ?? "Não informado";
 
   const dietaLabel =
     dietaLabelMap[step7?.dieta] ?? "Flexível";
@@ -133,9 +131,6 @@ export default function Step8Confirmacao({
     (state as any)?.perfil?.nomeCompleto ||
     "seu plano";
 
-  // =========================
-  // FORMATADORES
-  // =========================
   const fmtKcal = (n: number | null) =>
     n == null || Number.isNaN(n) ? "–––" : `${Math.round(n)}`;
 
@@ -144,7 +139,6 @@ export default function Step8Confirmacao({
 
   return (
     <div className="w-full text-white space-y-6" data-testid="mf-step-root">
-      {/* HERO */}
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <h2 className="text-[22px] font-semibold tracking-tight">
           Plano calibrado
@@ -154,7 +148,6 @@ export default function Step8Confirmacao({
         </p>
       </section>
 
-      {/* CALORIAS */}
       <section className="grid grid-cols-2 gap-4">
         <div className="rounded-[22px] border border-white/10 bg-black/30 p-5">
           <div className="text-white/50 text-[12px]">TMB (repouso)</div>
@@ -173,7 +166,6 @@ export default function Step8Confirmacao({
         </div>
       </section>
 
-      {/* MACROS */}
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <h3 className="text-[18px] font-semibold">Distribuição de macros</h3>
 
@@ -201,39 +193,36 @@ export default function Step8Confirmacao({
         </div>
       </section>
 
-      {/* RESUMO */}
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <h3 className="text-[18px] font-semibold">Estrutura do plano</h3>
 
         <div className="mt-4 space-y-3 text-[14px] text-white/70">
           <div>
-            <span className="text-white/40">Usuário:</span>{" "}
-            {nomeUsuario}
+            <span className="text-white/40">Usuário:</span> {nomeUsuario}
           </div>
 
           <div>
-            <span className="text-white/40">Objetivo:</span>{" "}
-            {objetivoLabel}
+            <span className="text-white/40">Objetivo:</span> {objetivoLabel}
           </div>
 
           <div>
-            <span className="text-white/40">Modalidade:</span>{" "}
-            {modalidadeLabel}
+            <span className="text-white/40">Modalidades:</span> {modalidadeLabel}
           </div>
 
           <div>
-            <span className="text-white/40">Dias de treino:</span>{" "}
-            {diasTreinoLabel}
+            <span className="text-white/40">Nível:</span> {nivelTreinoLabel}
           </div>
 
           <div>
-            <span className="text-white/40">Estilo alimentar:</span>{" "}
-            {dietaLabel}
+            <span className="text-white/40">Dias de treino:</span> {diasTreinoLabel}
+          </div>
+
+          <div>
+            <span className="text-white/40">Estilo alimentar:</span> {dietaLabel}
           </div>
         </div>
       </section>
 
-      {/* PRÓXIMA REFEIÇÃO */}
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <h3 className="text-[18px] font-semibold">Próxima refeição</h3>
 
@@ -267,7 +256,6 @@ export default function Step8Confirmacao({
         </div>
       </section>
 
-      {/* CTA */}
       <div className="flex gap-3 pt-2">
         {onBack && (
           <Button

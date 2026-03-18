@@ -1,9 +1,3 @@
-// MF_ONBOARDING_CONTRACT_V1
-// PREMIUM_REFINEMENT_PHASE3_STEP4_UI_V1
-// MF_STEP4_DYNAMIC_KCAL_STRATEGY_V1
-// MF_STEP4_KCAL_SSOT_V1
-// REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
-
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -76,6 +70,20 @@ const mfStrategyPercent = (e: string) => {
       return 0;
   }
 };
+
+function toNum(v: unknown, fallback = 0) {
+  const n = Number(String(v ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function loadOnboardingDraftSafe() {
+  try {
+    const raw = localStorage.getItem("mf:onboarding:draft:v1");
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
 
 function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   const sexo = (anyForm?.sexo ??
@@ -151,6 +159,13 @@ export function Step4Nutricao({
 
   const { state, updateState, nextStep } = useDrMindSetfit();
   const { actions: __mfGActions } = useGamification();
+
+  const draft = useMemo(() => loadOnboardingDraftSafe(), []);
+  const draftStep2 = draft?.step2 ?? {};
+  const draftStep3 =
+    draft?.step3 ??
+    draft?.step3Metabolismo ??
+    {};
 
   useEffect(() => {
     try {
@@ -259,12 +274,51 @@ export function Step4Nutricao({
     "deficit-leve" | "deficit-moderado" | "deficit-agressivo" | "manutencao" | "superavit"
   >("manutencao");
 
+  const pesoFromState =
+    toNum((state as any)?.avaliacao?.peso) ||
+    toNum((state as any)?.perfil?.peso) ||
+    toNum(draftStep2?.peso) ||
+    70;
+
+  const alturaFromState =
+    toNum((state as any)?.avaliacao?.altura) ||
+    toNum((state as any)?.perfil?.altura) ||
+    toNum(draftStep2?.altura) ||
+    170;
+
+  const sexoFromState = String(
+    (state as any)?.perfil?.sexo ??
+      draft?.step1?.sexo ??
+      "masculino"
+  ).toLowerCase();
+
+  const idadeFromState = toNum(
+    (state as any)?.perfil?.idade ??
+      draft?.step1?.idade ??
+      30
+  );
+
+  const tmbFromDraftOrState =
+    toNum((state as any)?.metabolismo?.tmb) ||
+    toNum(draftStep3?.tmb);
+
+  const metaFromDraftOrState =
+    toNum((state as any)?.metabolismo?.caloriasAlvo) ||
+    toNum((state as any)?.metabolismo?.metaDiaria) ||
+    toNum((state as any)?.metabolismo?.get) ||
+    toNum(draftStep3?.metaCalorica);
+
+  const computedTmb =
+    sexoFromState === "masculino"
+      ? 10 * pesoFromState + 6.25 * alturaFromState - 5 * idadeFromState + 5
+      : 10 * pesoFromState + 6.25 * alturaFromState - 5 * idadeFromState - 161;
+
+  const tmbBase = Math.round(tmbFromDraftOrState || computedTmb || 0);
+
   const __mfBaseKcalFromMetabolic =
-    Number(
-      (state as any)?.metabolismo?.caloriasAlvo ??
-        (state as any)?.metabolismo?.get ??
-        0
-    ) || 2000;
+    metaFromDraftOrState ||
+    Math.round(tmbBase * 1.35) ||
+    2000;
 
   const __mfBaseKcal =
     Number(
@@ -306,6 +360,7 @@ export function Step4Nutricao({
             (state as any)?.perfil?.pesoKg ??
             (state as any)?.peso ??
             (state as any)?.avaliacao?.peso ??
+            draftStep2?.peso ??
             0
         ) || 70;
 
@@ -334,8 +389,8 @@ export function Step4Nutricao({
         goalType: __mfGoalType,
         sex: (state as any)?.avaliacao?.sexo ?? (state as any)?.avaliacao?.sex,
         age: (state as any)?.avaliacao?.idade ?? (state as any)?.avaliacao?.age,
-        weightKg: (state as any)?.avaliacao?.peso,
-        heightCm: (state as any)?.avaliacao?.altura,
+        weightKg: (state as any)?.avaliacao?.peso ?? draftStep2?.peso,
+        heightCm: (state as any)?.avaliacao?.altura ?? draftStep2?.altura,
       });
 
       const kcalGuarded = mfClampSSOT(__mfGuard.kcalTarget, 800, 6500);
@@ -386,6 +441,13 @@ export function Step4Nutricao({
       const kcalFinalGuarded = mfClampSSOT(Math.round(kcalFinal2), 800, 6500);
 
       updateState({
+        metabolismo: {
+          ...(state as any)?.metabolismo,
+          tmb: tmbBase,
+          caloriasAlvo: __mfBaseKcalFromMetabolic,
+          metaDiaria: __mfBaseKcalFromMetabolic,
+          get: __mfBaseKcalFromMetabolic,
+        },
         nutricao: {
           ...(state as any)?.nutricao,
           estrategia,
@@ -403,7 +465,15 @@ export function Step4Nutricao({
     } catch (e) {
       console.error("[MF] Step4 dynamic kcal strategy error:", e);
     }
-  }, [estrategia, __mfBaseKcalFromMetabolic, __mfKcalAlvo, state, updateState]);
+  }, [
+    estrategia,
+    __mfBaseKcalFromMetabolic,
+    __mfKcalAlvo,
+    state,
+    updateState,
+    draftStep2,
+    tmbBase,
+  ]);
 
   const [restricoes, setRestricoes] = useState<Restricao[]>([]);
   const [refeicoesSelecionadas, setRefeicoesSelecionadas] = useState<
@@ -451,7 +521,7 @@ export function Step4Nutricao({
     }
   };
 
-  const pesoAtual = Number((state as any)?.avaliacao?.peso ?? 70);
+  const pesoAtual = toNum((state as any)?.avaliacao?.peso, 0) || toNum(draftStep2?.peso, 70);
   const proteinaPreview = Math.round(pesoAtual * 2);
   const gorduraPreview = Math.round(pesoAtual * 1);
   const carboPreview = Math.round(
@@ -460,7 +530,7 @@ export function Step4Nutricao({
 
   const safeFaixaMin = Number(__mfFaixa?.minimo ?? Math.round(__mfKcalAlvo * 0.92));
   const safeFaixaMax = Number(__mfFaixa?.maximo ?? Math.round(__mfKcalAlvo * 1.08));
-  const tmb = Number((state as any)?.metabolismo?.tmb ?? 0) || Math.round(__mfBaseKcal * 0.66);
+  const tmb = tmbBase || Math.round(__mfBaseKcal * 0.66);
 
   const strategyCards = [
     {
@@ -493,14 +563,14 @@ export function Step4Nutricao({
   const gerarPlanejamento = () => {
     try {
       const calorias = state.metabolismo?.caloriasAlvo || __mfKcalAlvo || 2000;
-      const peso = state.avaliacao?.peso || 70;
+      const peso = state.avaliacao?.peso || draftStep2?.peso || 70;
 
       let caloriasFinais = calorias;
       const pct = mfStrategyPercent(estrategia);
       caloriasFinais = calorias * (1 + pct / 100);
 
-      const proteina = Math.round(peso * 2);
-      const gorduras = Math.round(peso * 1);
+      const proteina = Math.round(Number(peso) * 2);
+      const gorduras = Math.round(Number(peso) * 1);
       const kcalFixas = proteina * 4 + gorduras * 9;
 
       const kcalTarget = Math.round(caloriasFinais);
@@ -596,6 +666,13 @@ export function Step4Nutricao({
       };
 
       updateState({
+        metabolismo: {
+          ...(state as any)?.metabolismo,
+          tmb: tmbBase,
+          caloriasAlvo: __mfBaseKcalFromMetabolic,
+          metaDiaria: __mfBaseKcalFromMetabolic,
+          get: __mfBaseKcalFromMetabolic,
+        },
         nutricao: planejamento,
         dieta: planejamento,
         planoDieta: planejamento,
@@ -611,6 +688,12 @@ export function Step4Nutricao({
         saveOnboardingProgress({
           step: 4,
           data: {
+            metabolismo: {
+              tmb: tmbBase,
+              caloriasAlvo: __mfBaseKcalFromMetabolic,
+              metaDiaria: __mfBaseKcalFromMetabolic,
+              get: __mfBaseKcalFromMetabolic,
+            },
             nutricao: planejamento,
             dieta: planejamento,
             macros: planejamento?.macros,
@@ -635,7 +718,6 @@ export function Step4Nutricao({
   return (
     <div className="w-full text-white" data-testid="mf-step-root">
       <div className="space-y-6">
-        {/* HERO */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00D7FF] shadow-[0_0_20px_rgba(0,149,255,0.22)]">
@@ -680,7 +762,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* FAIXA SEGURA */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4 flex items-center gap-2">
             <Flame className="h-4 w-4 text-cyan-300" />
@@ -725,7 +806,6 @@ export function Step4Nutricao({
           </p>
         </section>
 
-        {/* ESTRATÉGIA */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4">
             <h3 className="text-[22px] font-semibold tracking-tight text-white">
@@ -778,7 +858,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* REFEIÇÕES */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4">
             <h3 className="text-[22px] font-semibold tracking-tight text-white">
@@ -816,7 +895,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* RESTRIÇÕES */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4">
             <h3 className="text-[22px] font-semibold tracking-tight text-white">
@@ -855,7 +933,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* PREVIEW */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4">
             <h3 className="text-[22px] font-semibold tracking-tight text-white">
@@ -900,7 +977,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* CTA */}
         <div className="pt-1 flex gap-3">
           {onBack && (
             <Button

@@ -436,7 +436,7 @@ export function OnboardingFlow() {
 
   return (
     <div className="min-h-screen mf-app-bg mf-bg-neon text-white">
-      <div className="mx-auto w-full max-w-[440px] px-4 pb-10 pt-6">
+      <div className="mx-auto w-full max-w-[560px] px-4 pb-10 pt-6">
         <div className="mb-5 flex items-center gap-3">
           <BrandIcon
             size={24}
@@ -447,7 +447,7 @@ export function OnboardingFlow() {
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-[rgba(10,12,20,0.72)] backdrop-blur-2xl shadow-[0_0_50px_rgba(0,149,255,0.08)] p-5 sm:p-6">
+        <div className="rounded-[28px] border border-white/10 bg-[rgba(10,12,20,0.72)] backdrop-blur-2xl shadow-[0_0_50px_rgba(0,149,255,0.08)] p-5 sm:p-6 md:p-7">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-[0.22em] text-white/38">
