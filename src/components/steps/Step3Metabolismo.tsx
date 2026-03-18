@@ -20,6 +20,17 @@ function getFaixaIMC(imc: number) {
   return "obesidade III";
 }
 
+function loadDraftStep1() {
+  try {
+    const raw = localStorage.getItem("mf:onboarding:draft:v1");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed?.step1 ?? {};
+  } catch {
+    return {};
+  }
+}
+
 function loadDraftStep2() {
   try {
     const raw = localStorage.getItem("mf:onboarding:draft:v1");
@@ -46,34 +57,47 @@ export default function Step3Metabolismo({
 
   const perfil = state?.perfil ?? {};
   const avaliacao = state?.avaliacao ?? {};
+  const step1Draft = loadDraftStep1();
   const step2Draft = loadDraftStep2();
 
   const peso = useMemo(() => {
     return (
-      toNumber((avaliacao as any)?.peso) ||
-      toNumber((avaliacao as any)?.pesoAtual) ||
+      toNumber((step1Draft as any)?.peso) ||
+      toNumber((step1Draft as any)?.pesoAtual) ||
       toNumber((perfil as any)?.pesoAtual) ||
       toNumber((perfil as any)?.peso) ||
+      toNumber((avaliacao as any)?.peso) ||
+      toNumber((avaliacao as any)?.pesoAtual) ||
       toNumber(step2Draft?.peso) ||
       0
     );
-  }, [avaliacao, perfil, step2Draft]);
+  }, [step1Draft, perfil, avaliacao, step2Draft]);
 
   const altura = useMemo(() => {
     return (
-      toNumber((avaliacao as any)?.altura) ||
+      toNumber((step1Draft as any)?.altura) ||
       toNumber((perfil as any)?.altura) ||
+      toNumber((avaliacao as any)?.altura) ||
       toNumber(step2Draft?.altura) ||
       0
     );
-  }, [avaliacao, perfil, step2Draft]);
+  }, [step1Draft, perfil, avaliacao, step2Draft]);
 
   const cintura = useMemo(() => {
     return toNumber(step2Draft?.cintura) || 0;
   }, [step2Draft]);
 
-  const sexo = String((perfil as any)?.sexo ?? "masculino").toLowerCase();
-  const idade = toNumber((perfil as any)?.idade ?? 30);
+  const sexo = String(
+    (perfil as any)?.sexo ??
+      (step1Draft as any)?.sexo ??
+      "masculino"
+  ).toLowerCase();
+
+  const idade = toNumber(
+    (perfil as any)?.idade ??
+      (step1Draft as any)?.idade ??
+      30
+  );
 
   const imc =
     peso > 0 && altura > 0
@@ -95,6 +119,14 @@ export default function Step3Metabolismo({
 
   useOnboardingDraftSaver(
     {
+      step3: {
+        peso,
+        altura,
+        cintura,
+        imc,
+        tmb: Math.round(tmb || 0),
+        metaCalorica,
+      },
       step3Metabolismo: {
         peso,
         altura,
@@ -117,7 +149,7 @@ export default function Step3Metabolismo({
       tmb: Math.round(tmb || 0),
       metaCalorica,
     });
-  }, [peso, altura, cintura, imc, tmb, metaCalorica, onChange]);
+  }, [peso, altura, cintura, imc, tmb, metaCalorica, onChange, value]);
 
   return (
     <div className="w-full text-white space-y-6">

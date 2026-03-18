@@ -1,3 +1,9 @@
+// MF_ONBOARDING_CONTRACT_V1
+// PREMIUM_REFINEMENT_PHASE3_STEP4_UI_V1
+// MF_STEP4_DYNAMIC_KCAL_STRATEGY_V1
+// MF_STEP4_KCAL_SSOT_V1
+// REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
+
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -85,6 +91,49 @@ function loadOnboardingDraftSafe() {
   }
 }
 
+function getUserTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo";
+  } catch {
+    return "America/Sao_Paulo";
+  }
+}
+
+function formatTimeInZone(date: Date, timeZone: string) {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone,
+    }).format(date);
+  } catch {
+    return "00:00";
+  }
+}
+
+function formatDateInZone(date: Date, timeZone: string) {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "2-digit",
+      timeZone,
+    }).format(date);
+  } catch {
+    return "";
+  }
+}
+
+function timeStringToMinutes(value: string) {
+  const match = String(value).trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  return h * 60 + m;
+}
+
 function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   const sexo = (anyForm?.sexo ??
     anyState?.perfil?.sexo ??
@@ -161,11 +210,48 @@ export function Step4Nutricao({
   const { actions: __mfGActions } = useGamification();
 
   const draft = useMemo(() => loadOnboardingDraftSafe(), []);
+  const draftStep1 = draft?.step1 ?? {};
   const draftStep2 = draft?.step2 ?? {};
   const draftStep3 =
     draft?.step3 ??
     draft?.step3Metabolismo ??
     {};
+
+  const [timeZone, setTimeZone] = useState(() => {
+    try {
+      return localStorage.getItem("mf:user:timezone") || getUserTimeZone();
+    } catch {
+      return getUserTimeZone();
+    }
+  });
+
+  const [horaAtual, setHoraAtual] = useState(new Date());
+
+  useEffect(() => {
+    const detected = getUserTimeZone();
+    setTimeZone((prev) => prev || detected);
+
+    try {
+      localStorage.setItem("mf:user:timezone", detected);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setHoraAtual(new Date());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const syncUserTimeZone = () => {
+    const detected = getUserTimeZone();
+    setTimeZone(detected);
+
+    try {
+      localStorage.setItem("mf:user:timezone", detected);
+    } catch {}
+  };
 
   useEffect(() => {
     try {
@@ -218,6 +304,7 @@ export function Step4Nutricao({
     {
       step4: (state as any).nutricao ?? (state as any).nutrition ?? {},
       nutricao: (state as any).nutricao,
+      timezone: timeZone,
     } as any,
     400
   );
@@ -250,6 +337,7 @@ export function Step4Nutricao({
           currentNutricao?.refeicoes ??
           (state as any)?.nutricao?.refeicoes ??
           [],
+        timezone: timeZone,
       };
 
       saveOnboardingProgress({ step: 4, data: payload } as any);
@@ -275,26 +363,29 @@ export function Step4Nutricao({
   >("manutencao");
 
   const pesoFromState =
-    toNum((state as any)?.avaliacao?.peso) ||
+    toNum((draftStep1 as any)?.peso) ||
+    toNum((draftStep1 as any)?.pesoAtual) ||
     toNum((state as any)?.perfil?.peso) ||
+    toNum((state as any)?.avaliacao?.peso) ||
     toNum(draftStep2?.peso) ||
     70;
 
   const alturaFromState =
-    toNum((state as any)?.avaliacao?.altura) ||
+    toNum((draftStep1 as any)?.altura) ||
     toNum((state as any)?.perfil?.altura) ||
+    toNum((state as any)?.avaliacao?.altura) ||
     toNum(draftStep2?.altura) ||
     170;
 
   const sexoFromState = String(
     (state as any)?.perfil?.sexo ??
-      draft?.step1?.sexo ??
+      (draftStep1 as any)?.sexo ??
       "masculino"
   ).toLowerCase();
 
   const idadeFromState = toNum(
     (state as any)?.perfil?.idade ??
-      draft?.step1?.idade ??
+      (draftStep1 as any)?.idade ??
       30
   );
 
@@ -356,7 +447,9 @@ export function Step4Nutricao({
     try {
       const peso =
         Number(
-          (state as any)?.perfil?.peso ??
+          (draftStep1 as any)?.peso ??
+            (draftStep1 as any)?.pesoAtual ??
+            (state as any)?.perfil?.peso ??
             (state as any)?.perfil?.pesoKg ??
             (state as any)?.peso ??
             (state as any)?.avaliacao?.peso ??
@@ -389,8 +482,14 @@ export function Step4Nutricao({
         goalType: __mfGoalType,
         sex: (state as any)?.avaliacao?.sexo ?? (state as any)?.avaliacao?.sex,
         age: (state as any)?.avaliacao?.idade ?? (state as any)?.avaliacao?.age,
-        weightKg: (state as any)?.avaliacao?.peso ?? draftStep2?.peso,
-        heightCm: (state as any)?.avaliacao?.altura ?? draftStep2?.altura,
+        weightKg:
+          (state as any)?.avaliacao?.peso ??
+          (draftStep1 as any)?.peso ??
+          draftStep2?.peso,
+        heightCm:
+          (state as any)?.avaliacao?.altura ??
+          (draftStep1 as any)?.altura ??
+          draftStep2?.altura,
       });
 
       const kcalGuarded = mfClampSSOT(__mfGuard.kcalTarget, 800, 6500);
@@ -471,6 +570,7 @@ export function Step4Nutricao({
     __mfKcalAlvo,
     state,
     updateState,
+    draftStep1,
     draftStep2,
     tmbBase,
   ]);
@@ -521,7 +621,11 @@ export function Step4Nutricao({
     }
   };
 
-  const pesoAtual = toNum((state as any)?.avaliacao?.peso, 0) || toNum(draftStep2?.peso, 70);
+  const pesoAtual =
+    toNum((draftStep1 as any)?.peso, 0) ||
+    toNum((state as any)?.avaliacao?.peso, 0) ||
+    toNum(draftStep2?.peso, 70);
+
   const proteinaPreview = Math.round(pesoAtual * 2);
   const gorduraPreview = Math.round(pesoAtual * 1);
   const carboPreview = Math.round(
@@ -563,7 +667,11 @@ export function Step4Nutricao({
   const gerarPlanejamento = () => {
     try {
       const calorias = state.metabolismo?.caloriasAlvo || __mfKcalAlvo || 2000;
-      const peso = state.avaliacao?.peso || draftStep2?.peso || 70;
+      const peso =
+        (draftStep1 as any)?.peso ||
+        state.avaliacao?.peso ||
+        draftStep2?.peso ||
+        70;
 
       let caloriasFinais = calorias;
       const pct = mfStrategyPercent(estrategia);
@@ -698,6 +806,7 @@ export function Step4Nutricao({
             dieta: planejamento,
             macros: planejamento?.macros,
             refeicoes: planejamento?.refeicoes ?? [],
+            timezone: timeZone,
           },
         } as any);
       } catch {}
@@ -709,11 +818,27 @@ export function Step4Nutricao({
   };
 
   const nextMealPreview = useMemo(() => {
-    const first = refeicoesDiponiveis.find((r) =>
-      refeicoesSelecionadas.includes(r.value)
-    );
-    return first ?? null;
-  }, [refeicoesSelecionadas]);
+    const selectedMeals = refeicoesDiponiveis
+      .filter((r) => refeicoesSelecionadas.includes(r.value))
+      .map((meal) => ({
+        ...meal,
+        minutes: timeStringToMinutes(meal.horarioPadrao),
+      }))
+      .filter((meal) => meal.minutes != null)
+      .sort((a, b) => a.minutes! - b.minutes!);
+
+    if (!selectedMeals.length) return null;
+
+    const currentTime = formatTimeInZone(horaAtual, timeZone);
+    const currentMinutes = timeStringToMinutes(currentTime);
+
+    if (currentMinutes == null) {
+      return selectedMeals[0];
+    }
+
+    const nextToday = selectedMeals.find((meal) => meal.minutes! >= currentMinutes);
+    return nextToday ?? selectedMeals[0];
+  }, [refeicoesSelecionadas, horaAtual, timeZone]);
 
   return (
     <div className="w-full text-white" data-testid="mf-step-root">
@@ -930,6 +1055,51 @@ export function Step4Nutricao({
                 </button>
               );
             })}
+          </div>
+        </section>
+
+        <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-[18px] font-semibold text-white">
+                Horário local do plano
+              </h3>
+              <p className="mt-1 text-[13px] leading-5 text-white/48">
+                Usamos seu fuso atual para estimar corretamente a próxima refeição.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={syncUserTimeZone}
+              className="rounded-[16px] border border-white/15 bg-black/20 text-white hover:bg-white/5"
+            >
+              Usar meu fuso atual
+            </Button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+              <div className="text-[12px] text-white/45">Hora local</div>
+              <div className="mt-2 text-[24px] font-semibold text-cyan-300">
+                {formatTimeInZone(horaAtual, timeZone)}
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+              <div className="text-[12px] text-white/45">Data local</div>
+              <div className="mt-2 text-[16px] font-semibold text-white capitalize">
+                {formatDateInZone(horaAtual, timeZone)}
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+              <div className="text-[12px] text-white/45">Fuso detectado</div>
+              <div className="mt-2 text-[14px] font-semibold text-white break-all">
+                {timeZone}
+              </div>
+            </div>
           </div>
         </section>
 

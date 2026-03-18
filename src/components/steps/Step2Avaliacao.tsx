@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Activity, Ruler, Weight, ScanLine } from "lucide-react";
+import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 
 type Step2Value = {
   biotipo?: string | null;
@@ -35,35 +36,97 @@ const ACTIVITY_OPTIONS = [
   },
 ] as const;
 
+function loadDraftStep1() {
+  try {
+    const raw = localStorage.getItem("mf:onboarding:draft:v1");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed?.step1 ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function toDisplay(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
 export default function Step2Avaliacao({
   value,
   onChange,
   onNext,
   onBack,
 }: Props) {
+  const { state } = useDrMindSetfit();
+
+  const perfil = (state as any)?.perfil ?? {};
+  const avaliacao = (state as any)?.avaliacao ?? {};
+  const step1Draft = useMemo(() => loadDraftStep1(), []);
+
+  const pesoFromStep1 = toDisplay(
+    perfil?.pesoAtual ??
+      perfil?.peso ??
+      avaliacao?.peso ??
+      (step1Draft as any)?.pesoAtual ??
+      (step1Draft as any)?.peso ??
+      (step1Draft as any)?.weightKg
+  );
+
+  const alturaFromStep1 = toDisplay(
+    perfil?.altura ??
+      avaliacao?.altura ??
+      (step1Draft as any)?.altura ??
+      (step1Draft as any)?.heightCm
+  );
+
   const [local, setLocal] = useState<Step2Value>({
     biotipo: value?.biotipo ?? null,
-    peso: value?.peso ?? "",
-    altura: value?.altura ?? "",
+    peso: pesoFromStep1,
+    altura: alturaFromStep1,
     cintura: value?.cintura ?? "",
     atividadeHabitual: value?.atividadeHabitual ?? null,
   });
 
   useEffect(() => {
-    setLocal({
-      biotipo: value?.biotipo ?? null,
-      peso: value?.peso ?? "",
-      altura: value?.altura ?? "",
-      cintura: value?.cintura ?? "",
-      atividadeHabitual: value?.atividadeHabitual ?? null,
-    });
-  }, [value]);
+    setLocal((prev) => ({
+      biotipo: value?.biotipo ?? prev.biotipo ?? null,
+      peso: pesoFromStep1,
+      altura: alturaFromStep1,
+      cintura: value?.cintura ?? prev.cintura ?? "",
+      atividadeHabitual: value?.atividadeHabitual ?? prev.atividadeHabitual ?? null,
+    }));
+  }, [value, pesoFromStep1, alturaFromStep1]);
 
   const updateValue = (patch: Partial<Step2Value>) => {
-    const next = { ...local, ...patch };
+    const next = {
+      ...local,
+      ...patch,
+      peso: pesoFromStep1,
+      altura: alturaFromStep1,
+    };
     setLocal(next);
     onChange?.(next);
   };
+
+  useEffect(() => {
+    onChange?.({
+      ...(value ?? {}),
+      biotipo: local.biotipo ?? null,
+      peso: pesoFromStep1,
+      altura: alturaFromStep1,
+      cintura: local.cintura ?? "",
+      atividadeHabitual: local.atividadeHabitual ?? null,
+    });
+  }, [
+    onChange,
+    value,
+    local.biotipo,
+    local.cintura,
+    local.atividadeHabitual,
+    pesoFromStep1,
+    alturaFromStep1,
+  ]);
 
   const cards = useMemo(
     () => [
@@ -232,41 +295,31 @@ export default function Step2Avaliacao({
         </div>
 
         <p className="mt-1 text-[13px] text-white/50">
-          Informações simples para estimativa metabólica e personalização inicial.
+          Peso e altura vêm do Step 1. Aqui você pode complementar com a cintura.
         </p>
 
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <label className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+          <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
             <div className="mb-2 flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
               <Weight className="h-3.5 w-3.5" />
               Peso
             </div>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={local.peso ?? ""}
-              onChange={(e) => updateValue({ peso: e.target.value })}
-              placeholder="Ex: 68"
-              className="w-full bg-transparent text-[20px] font-semibold text-white outline-none placeholder:text-white/20"
-            />
+            <div className="text-[20px] font-semibold text-white">
+              {pesoFromStep1 || "—"}
+            </div>
             <div className="mt-1 text-[12px] text-white/35">kg</div>
-          </label>
+          </div>
 
-          <label className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+          <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
             <div className="mb-2 flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
               <Ruler className="h-3.5 w-3.5" />
               Altura
             </div>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={local.altura ?? ""}
-              onChange={(e) => updateValue({ altura: e.target.value })}
-              placeholder="Ex: 170"
-              className="w-full bg-transparent text-[20px] font-semibold text-white outline-none placeholder:text-white/20"
-            />
+            <div className="text-[20px] font-semibold text-white">
+              {alturaFromStep1 || "—"}
+            </div>
             <div className="mt-1 text-[12px] text-white/35">cm</div>
-          </label>
+          </div>
 
           <label className="rounded-[18px] border border-white/10 bg-black/20 p-4">
             <div className="mb-2 flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
