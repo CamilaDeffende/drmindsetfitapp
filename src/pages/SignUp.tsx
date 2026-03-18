@@ -221,7 +221,8 @@ export function SignUp() {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="mt-2 h-12 w-full rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)]"
+                variant="ghost"
+                className="mt-2 h-12 w-full overflow-hidden rounded-2xl border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent"
               >
                 {submitting ? "Criando conta..." : "Criar conta"}
               </Button>

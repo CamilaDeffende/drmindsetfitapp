@@ -918,7 +918,8 @@ export function Step4Nutricao({
             type="button"
             onClick={gerarPlanejamento}
             disabled={refeicoesSelecionadas.length === 0}
-            className="h-14 flex-1 rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 disabled:opacity-50"
+            variant="ghost"
+            className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent disabled:opacity-50"
           >
             Gerar planejamento
             <ArrowRight className="ml-2 h-4 w-4" />

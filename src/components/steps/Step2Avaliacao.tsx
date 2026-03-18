@@ -208,12 +208,8 @@ export default function Step2Avaliacao({
         <Button
           disabled={!biotipo}
           onClick={onNext}
-          className="h-14 flex-1 rounded-[20px] border border-cyan-300/20 bg-gradient-to-r
-          from-[#193B72]
-          via-[#255AA8]
-          to-[#7FE9D6]
-          shadow-[0_10px_30px_rgba(0,149,255,0.18)]
-          hover:brightness-110"
+          variant="ghost"
+          className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent"
         >
           Continuar
           <ChevronRight className="ml-1 h-4 w-4" />

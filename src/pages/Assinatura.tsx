@@ -407,7 +407,7 @@ export default function Assinatura() {
             type="button"
             onClick={startFreeTrial}
             disabled={startingTrial}
-            className="mt-5 inline-flex w-full items-center justify-center rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-5 inline-flex w-full items-center justify-center overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {startingTrial ? "Ativando trial..." : "Testar grátis por 7 dias"}
           </button>
@@ -458,7 +458,7 @@ export default function Assinatura() {
                   className={[
                     "inline-flex w-full items-center justify-center rounded-[20px] px-4 py-3 text-[14px] font-semibold transition-all active:scale-[0.99]",
                     pl.highlight
-                      ? "border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
+                      ? "overflow-hidden border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
                       : "bg-white text-black hover:opacity-95",
                   ].join(" ")}
                   onClick={() => goToCheckout(pl.id)}
