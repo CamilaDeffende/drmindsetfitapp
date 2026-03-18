@@ -1,3 +1,8 @@
+// MF_ONBOARDING_CONTRACT_V1
+// PREMIUM_REFINEMENT_PHASE3_STEP8_UI_V4
+// FIX_STEP8_NUTRICAO_SOURCE_V2
+// WEEKLY_DAYS_BY_MODALITY_SUMMARY_V1
+
 import { useMemo } from "react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Button } from "@/components/ui/button";
@@ -9,19 +14,13 @@ type Props = {
   onBack?: () => void;
 };
 
-function toNum(v: unknown, fallback: number | null = null) {
-  const n = Number(String(v ?? "").replace(",", "."));
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function loadDraftSafe() {
-  try {
-    const raw = localStorage.getItem("mf:onboarding:draft:v1");
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
+const MODALITY_LABELS: Record<string, string> = {
+  musculacao: "Musculação",
+  corrida: "Corrida",
+  bike: "Bike",
+  funcional: "Funcional",
+  cross: "Cross",
+};
 
 export default function Step8Confirmacao({
   summary,
@@ -29,17 +28,6 @@ export default function Step8Confirmacao({
   onBack,
 }: Props) {
   const { state } = useDrMindSetfit();
-  const draft = loadDraftSafe();
-
-  const step1 = (summary as any)?.step1 ?? draft?.step1 ?? {};
-  const step3 =
-    (summary as any)?.step3 ??
-    draft?.step3 ??
-    draft?.step3Metabolismo ??
-    {};
-  const step5 = (summary as any)?.step5 ?? draft?.step5 ?? {};
-  const step6 = (summary as any)?.step6 ?? draft?.step6 ?? {};
-  const step7 = (summary as any)?.step7 ?? draft?.step7 ?? {};
 
   const metabolismo =
     (state as any)?.metabolismo ??
@@ -49,35 +37,36 @@ export default function Step8Confirmacao({
   const nutricao = (state as any)?.nutricao ?? {};
 
   const kcalAlvo: number | null =
-    toNum(nutricao?.kcalAlvo) ??
-    toNum(nutricao?.macros?.calorias) ??
-    toNum(metabolismo?.caloriasAlvo) ??
-    toNum(metabolismo?.metaDiaria) ??
-    toNum(metabolismo?.get) ??
-    toNum(step3?.metaCalorica) ??
+    nutricao?.kcalAlvo ??
+    nutricao?.macros?.calorias ??
+    metabolismo?.caloriasAlvo ??
+    metabolismo?.get ??
     null;
 
-  const tmb: number | null =
-    toNum(metabolismo?.tmb) ??
-    toNum(step3?.tmb) ??
-    null;
+  const tmb: number | null = metabolismo?.tmb ?? null;
 
   const macros = nutricao?.macros ?? {};
 
   const proteina: number | null =
-    toNum(macros?.proteina) ??
-    toNum(macros?.proteinas) ??
-    null;
+    macros?.proteina != null
+      ? Number(macros.proteina)
+      : macros?.proteinas != null
+      ? Number(macros.proteinas)
+      : null;
 
   const carboidratos: number | null =
-    toNum(macros?.carboidratos) ??
-    toNum(macros?.carbo) ??
-    null;
+    macros?.carboidratos != null
+      ? Number(macros.carboidratos)
+      : macros?.carbo != null
+      ? Number(macros.carbo)
+      : null;
 
   const gorduras: number | null =
-    toNum(macros?.gorduras) ??
-    toNum(macros?.gordura) ??
-    null;
+    macros?.gorduras != null
+      ? Number(macros.gorduras)
+      : macros?.gordura != null
+      ? Number(macros.gordura)
+      : null;
 
   const refeicoes: any[] = Array.isArray(nutricao?.refeicoes)
     ? nutricao.refeicoes
@@ -87,6 +76,11 @@ export default function Step8Confirmacao({
     if (!refeicoes.length) return null;
     return refeicoes[0];
   }, [refeicoes]);
+
+  const step1 = (summary as any)?.step1 ?? {};
+  const step5 = (summary as any)?.step5 ?? {};
+  const step6 = (summary as any)?.step6 ?? {};
+  const step7 = (summary as any)?.step7 ?? {};
 
   const objetivoLabelMap: Record<string, string> = {
     emagrecimento: "Emagrecimento",
@@ -107,23 +101,45 @@ export default function Step8Confirmacao({
   const objetivoLabel =
     objetivoLabelMap[step1?.objetivo] ?? "Não informado";
 
-  const modalidadeLabel = Array.isArray(step5?.selected) && step5.selected.length > 0
-    ? step5.selected.join(" • ")
-    : step5?.primary ?? step1?.modalidadePrincipal ?? "Não informado";
+  const selectedModalities: string[] = Array.isArray(step5?.selected)
+    ? step5.selected
+    : [step5?.primary, step5?.secondary].filter(Boolean);
 
-  const nivelTreinoLabel =
-    step5?.level ?? "Não informado";
+  const modalidadePrincipalLabel =
+    MODALITY_LABELS[step5?.primary] ??
+    step5?.primary ??
+    step1?.modalidadePrincipal ??
+    "Não informado";
 
   const dietaLabel =
     dietaLabelMap[step7?.dieta] ?? "Flexível";
 
-  const diasTreino = Array.isArray(step6?.days)
-    ? step6.days
-    : [];
+  const weeklyDaysByModality =
+    (step6?.weeklyDaysByModality as Record<string, string[]>) ?? {};
+
+  const groupedDaysSummary = selectedModalities.map((modalityId) => ({
+    modalityId,
+    label: MODALITY_LABELS[modalityId] ?? modalityId,
+    days: Array.isArray(weeklyDaysByModality?.[modalityId])
+      ? weeklyDaysByModality[modalityId]
+      : [],
+  }));
+
+  const fallbackDays = Array.isArray(step6?.days) ? step6.days : [];
 
   const diasTreinoLabel =
-    diasTreino.length > 0
-      ? diasTreino.map((d: string) => d.toUpperCase()).join(" • ")
+    groupedDaysSummary.length > 0
+      ? groupedDaysSummary
+          .map((item) =>
+            `${item.label}: ${
+              item.days.length > 0
+                ? item.days.map((d: string) => d.toUpperCase()).join(" • ")
+                : "sem dias"
+            }`
+          )
+          .join(" | ")
+      : fallbackDays.length > 0
+      ? fallbackDays.map((d: string) => d.toUpperCase()).join(" • ")
       : "Não definido";
 
   const nomeUsuario =
@@ -198,29 +214,55 @@ export default function Step8Confirmacao({
 
         <div className="mt-4 space-y-3 text-[14px] text-white/70">
           <div>
-            <span className="text-white/40">Usuário:</span> {nomeUsuario}
+            <span className="text-white/40">Usuário:</span>{" "}
+            {nomeUsuario}
           </div>
 
           <div>
-            <span className="text-white/40">Objetivo:</span> {objetivoLabel}
+            <span className="text-white/40">Objetivo:</span>{" "}
+            {objetivoLabel}
           </div>
 
           <div>
-            <span className="text-white/40">Modalidades:</span> {modalidadeLabel}
+            <span className="text-white/40">Modalidade principal:</span>{" "}
+            {modalidadePrincipalLabel}
           </div>
 
           <div>
-            <span className="text-white/40">Nível:</span> {nivelTreinoLabel}
+            <span className="text-white/40">Modalidades selecionadas:</span>{" "}
+            {selectedModalities.length > 0
+              ? selectedModalities
+                  .map((key) => MODALITY_LABELS[key] ?? key)
+                  .join(" • ")
+              : "Não informado"}
           </div>
 
           <div>
-            <span className="text-white/40">Dias de treino:</span> {diasTreinoLabel}
+            <span className="text-white/40">Dias de treino:</span>{" "}
+            {diasTreinoLabel}
           </div>
 
           <div>
-            <span className="text-white/40">Estilo alimentar:</span> {dietaLabel}
+            <span className="text-white/40">Estilo alimentar:</span>{" "}
+            {dietaLabel}
           </div>
         </div>
+
+        {groupedDaysSummary.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            {groupedDaysSummary.map((item) => (
+              <div
+                key={item.modalityId}
+                className="rounded-[16px] border border-white/10 bg-black/20 px-4 py-3 text-[13px] text-white/72"
+              >
+                <span className="font-semibold text-white">{item.label}:</span>{" "}
+                {item.days.length > 0
+                  ? item.days.map((d) => d.toUpperCase()).join(" • ")
+                  : "Sem dias definidos"}
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
