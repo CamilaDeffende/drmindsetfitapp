@@ -124,7 +124,7 @@ export function Login() {
     <div className="min-h-dvh mf-app-bg mf-bg-neon text-white">
       <div className="mx-auto w-full max-w-[520px] px-4 pb-10 pt-8">
         <div className="flex items-center gap-3">
-          <BrandIcon size={28} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
+          <BrandIcon size={80} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
 
           <div className="min-w-0">
             <div className="text-[16px] font-semibold tracking-tight text-white/90">
@@ -147,9 +147,10 @@ export function Login() {
 
         <div className="mt-6 rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-6 shadow-[0_0_40px_rgba(0,149,255,0.08)]">
           <div className="mb-5 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-400/10">
-              <BrandIcon size={24} />
-            </div>
+            <BrandIcon
+              size={120}
+              className="mx-auto mb-4 drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]"
+            />
 
             <h1 className="text-[24px] font-semibold tracking-tight text-white">
               Bem-vinda de volta
