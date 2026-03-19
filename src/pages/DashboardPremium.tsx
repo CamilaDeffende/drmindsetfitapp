@@ -403,7 +403,7 @@ export function DashboardPremium() {
             <div className="flex items-center gap-3">
 
               <BrandIcon
-                size={30}
+                size={80}
                 className="drop-shadow-[0_0_10px_rgba(0,190,255,0.35)] bg-transparent"
               />
 

@@ -285,7 +285,7 @@ export default function Assinatura() {
     <div className="min-h-dvh mf-app-bg mf-bg-neon text-white">
       <div className="mx-auto w-full max-w-[560px] px-4 pb-10 pt-8">
         <div className="flex items-center gap-3">
-          <BrandIcon size={28} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
+          <BrandIcon size={80} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
 
           <div className="min-w-0">
             <div className="text-[14px] font-semibold tracking-tight text-white/90">

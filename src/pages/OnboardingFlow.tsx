@@ -294,7 +294,7 @@ export function OnboardingFlow() {
       <div className="min-h-screen mf-app-bg mf-bg-neon text-white flex items-center justify-center px-6">
         <div className="w-full max-w-sm rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 text-center shadow-[0_0_40px_rgba(0,149,255,0.08)]">
           <div className="mb-4 flex items-center justify-center">
-            <BrandIcon size={46} className="drop-shadow-[0_0_18px_rgba(0,190,255,0.4)]" />
+            <BrandIcon size={120} className="drop-shadow-[0_0_18px_rgba(0,190,255,0.4)]" />
           </div>
           <div className="text-sm text-white/55">Carregando ambiente…</div>
           <div className="mt-2 text-lg font-semibold text-white">
@@ -439,7 +439,7 @@ export function OnboardingFlow() {
       <div className="mx-auto w-full max-w-[560px] px-4 pb-10 pt-6">
         <div className="mb-5 flex items-center gap-3">
           <BrandIcon
-            size={24}
+            size={80}
             className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]"
           />
           <div className="text-[13px] font-medium tracking-tight text-white/90">
