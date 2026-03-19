@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronUp,
   Crown,
+  LogOut,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -34,6 +35,7 @@ import { ptBR } from "date-fns/locale";
 import { loadActivePlan } from "@/services/plan.service";
 import { ACTIVE_PLAN_KEY } from "../services/activePlan.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+import { useAuth } from "@/contexts/AuthContext";
 
 type PassosDia = { data: string; passos: number };
 type ConsumoDia = { data: string; consumido: number };
@@ -111,6 +113,7 @@ function getNextMealByTime(meals: any[]) {
 export function DashboardPremium() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const [activePlan, setActivePlan] = useState<any>(null);
   const [noPlan, setNoPlan] = useState(false);
@@ -124,6 +127,16 @@ export function DashboardPremium() {
   const [showWorkoutWeek, setShowWorkoutWeek] = useState(false);
 
   const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  };
 
   useEffect(() => {
     try {
@@ -202,10 +215,10 @@ export function DashboardPremium() {
   const meals = Array.isArray(nutrition?.refeicoes)
     ? nutrition.refeicoes
     : Array.isArray(nutrition?.meals)
-    ? nutrition.meals
-    : Array.isArray(activePlan?.meals)
-    ? activePlan.meals
-    : [];
+      ? nutrition.meals
+      : Array.isArray(activePlan?.meals)
+        ? activePlan.meals
+        : [];
 
   const derivedMealMacros = useMemo(() => sumMealMacros(meals), [meals]);
 
@@ -394,69 +407,61 @@ export function DashboardPremium() {
 
   return (
     <div className="min-h-screen mf-app-bg mf-bg-neon text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgba(5,8,16,0.78)] backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgba(5,8,16,0.82)] backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-3 py-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <BrandIcon
+              size={72}
+              className="shrink-0 drop-shadow-[0_0_14px_rgba(0,190,255,0.35)]"
+            />
 
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center">
-
-            {/* ESQUERDA */}
-            <div className="flex items-center gap-3">
-
-              <BrandIcon
-                size={80}
-                className="drop-shadow-[0_0_10px_rgba(0,190,255,0.35)] bg-transparent"
-              />
-
-              <div className="text-sm text-white/70">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-cyan-300/80">
+                Premium
+              </div>
+              <div className="truncate text-[12px] text-white/65">
                 Seu plano completo liberado
               </div>
-
             </div>
 
-
-            {/* CENTRO — relógio menor */}
-            <div className="flex justify-center">
-
-              <div className="rounded-xl border border-cyan-300/10 bg-[rgba(10,18,30,0.85)] px-4 py-2 text-center">
-              
-                <div className="text-[20px] font-semibold tracking-[0.08em] text-cyan-300">
-                  {format(horaAtual, "HH:mm:ss")}
-                </div>
-
-                <div className="text-[10px] text-white/50">
-                  {format(horaAtual, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                </div>
-
+            <div className="rounded-xl border border-cyan-300/10 bg-[rgba(10,18,30,0.92)] px-2.5 py-1.5 text-center shadow-[0_0_18px_rgba(0,149,255,0.10)]">
+              <div className="text-[13px] font-semibold leading-none tracking-[0.05em] text-cyan-300 sm:text-[15px]">
+                {format(horaAtual, "HH:mm:ss")}
               </div>
-
+              <div className="mt-1 text-[8px] leading-none text-white/45 sm:text-[9px]">
+                {format(horaAtual, "dd/MM", { locale: ptBR })}
+              </div>
             </div>
 
-
-            {/* DIREITA */}
-            <div className="flex justify-end gap-2">
-
+            <div className="flex items-center gap-1.5">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => navigate("/")}
-                className="border-white/10 bg-black/20 text-white hover:bg-white/5"
+                className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
               >
-                <Home className="w-4 h-4" />
+                <Home className="h-4 w-4" />
               </Button>
 
               <Button
                 variant="outline"
+                size="icon"
                 onClick={exportarPDF}
-                className="border-white/10 bg-black/20 text-white hover:bg-white/5"
+                className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Exportar PDF
+                <Download className="h-4 w-4" />
               </Button>
 
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleLogout}
+                className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
-
           </div>
-
         </div>
       </header>
 
