@@ -46,6 +46,12 @@ type CargaDia = {
   exercicioNome?: string;
 };
 
+type PremiumStatus = {
+  kind: string;
+  planId: string;
+  daysLeft: number;
+} | null;
+
 function toNum(v: unknown, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -110,6 +116,46 @@ function getNextMealByTime(meals: any[]) {
   return parsedMeals[0].meal;
 }
 
+function getPremiumStatus(): PremiumStatus {
+  try {
+    const raw = localStorage.getItem("mindsetfit:subscription:v1");
+    if (!raw) return null;
+
+    const sub = JSON.parse(raw);
+    const activatedAt = Number(sub?.activatedAt);
+    const planId = String(sub?.planId || "");
+    const kind = String(sub?.kind || "");
+
+    if (!activatedAt) return null;
+
+    let durationDays = 0;
+
+    if (kind === "trial" || planId === "trial") {
+      durationDays = 7;
+    } else if (planId === "anual") {
+      durationDays = 365;
+    } else if (planId === "mensal") {
+      durationDays = 30;
+    } else {
+      return null;
+    }
+
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const expiresAt = activatedAt + durationDays * msPerDay;
+    const now = Date.now();
+    const diff = expiresAt - now;
+    const daysLeft = Math.max(Math.ceil(diff / msPerDay), 0);
+
+    return {
+      kind,
+      planId,
+      daysLeft,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function DashboardPremium() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
@@ -125,6 +171,7 @@ export function DashboardPremium() {
 
   const [showFullMeals, setShowFullMeals] = useState(false);
   const [showWorkoutWeek, setShowWorkoutWeek] = useState(false);
+  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus>(null);
 
   const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
 
@@ -150,6 +197,18 @@ export function DashboardPremium() {
     const interval = window.setInterval(() => {
       setHoraAtual(new Date());
     }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const updatePremiumStatus = () => {
+      setPremiumStatus(getPremiumStatus());
+    };
+
+    updatePremiumStatus();
+
+    const interval = window.setInterval(updatePremiumStatus, 60 * 1000);
 
     return () => window.clearInterval(interval);
   }, []);
@@ -472,7 +531,9 @@ export function DashboardPremium() {
               <div className="max-w-2xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold text-cyan-300">
                   <Crown className="h-3.5 w-3.5" />
-                  Premium ativo
+                  {premiumStatus
+                    ? `Premium ativo • ${premiumStatus.daysLeft} dia${premiumStatus.daysLeft === 1 ? "" : "s"} restantes`
+                    : "Premium ativo"}
                 </div>
 
                 <h2 className="mt-3 text-[28px] leading-[1.05] font-semibold tracking-tight text-white">

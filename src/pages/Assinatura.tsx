@@ -168,7 +168,24 @@ export default function Assinatura() {
 
     try {
       setStartingTrial(true);
+
       await subscriptionService.startTrial(user.id);
+
+      try {
+        localStorage.setItem("mindsetfit:isSubscribed", "true");
+      } catch {}
+
+      try {
+        localStorage.setItem(
+          "mindsetfit:subscription:v1",
+          JSON.stringify({
+            planId: "trial",
+            kind: "trial",
+            active: true,
+            activatedAt: Date.now(),
+          })
+        );
+      } catch {}
 
       const cleanParams = new URLSearchParams(location.search);
       cleanParams.delete("autostartTrial");
@@ -575,7 +592,7 @@ export default function Assinatura() {
         </div>
 
         <div className="mt-6 text-center text-[11px] text-white/40">
-          MindsetFit • Premium Layer
+          MindsetFit • Premium
         </div>
       </div>
     </div>
