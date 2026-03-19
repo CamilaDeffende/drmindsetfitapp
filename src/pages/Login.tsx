@@ -8,26 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Mail, ChevronLeft } from "lucide-react";
 
-function getNext(search: string) {
+function getParams(search: string) {
   try {
-    return new URLSearchParams(search).get("next") || "/dashboard";
+    return new URLSearchParams(search);
   } catch {
-    return "/dashboard";
-  }
-}
-
-function hasNext(search: string) {
-  try {
-    return !!new URLSearchParams(search).get("next");
-  } catch {
-    return false;
+    return new URLSearchParams();
   }
 }
 
 export function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const next = getNext(location.search);
+  const params = React.useMemo(() => getParams(location.search), [location.search]);
+
+  const next = params.get("next") || "/dashboard";
+  const premiumFromUrl = params.get("premium") === "1";
+  const planFromUrl = params.get("plan") || "mensal";
 
   const { user, signIn, signOut, loading } = useAuth();
 
@@ -36,13 +32,41 @@ export function Login() {
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const signupHref = React.useMemo(() => {
+    const nextParams = new URLSearchParams();
+    nextParams.set("next", next);
+
+    if (premiumFromUrl) nextParams.set("premium", "1");
+    if (planFromUrl) nextParams.set("plan", planFromUrl);
+
+    return `/signup?${nextParams.toString()}`;
+  }, [next, premiumFromUrl, planFromUrl]);
+
   React.useEffect(() => {
     if (!loading && user) {
+      if (premiumFromUrl) {
+        try {
+          localStorage.setItem("mindsetfit:isSubscribed", "true");
+        } catch {}
+
+        try {
+          localStorage.setItem(
+            "mindsetfit:subscription:v1",
+            JSON.stringify({
+              planId: planFromUrl,
+              kind: "paid",
+              active: true,
+              activatedAt: Date.now(),
+            })
+          );
+        } catch {}
+      }
+
       navigate(next, { replace: true });
     }
-  }, [user, loading, next, navigate]);
+  }, [user, loading, next, navigate, premiumFromUrl, planFromUrl]);
 
-  const backTarget = hasNext(location.search) ? "/assinatura" : "/onboarding/step-1";
+  const backTarget = params.get("next") ? "/assinatura" : "/onboarding/step-1";
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +92,24 @@ export function Login() {
       if (error) {
         setError(error.message || "Não foi possível entrar. Verifique seus dados.");
         return;
+      }
+
+      if (premiumFromUrl) {
+        try {
+          localStorage.setItem("mindsetfit:isSubscribed", "true");
+        } catch {}
+
+        try {
+          localStorage.setItem(
+            "mindsetfit:subscription:v1",
+            JSON.stringify({
+              planId: planFromUrl,
+              kind: "paid",
+              active: true,
+              activatedAt: Date.now(),
+            })
+          );
+        } catch {}
       }
 
       navigate(next, { replace: true });
@@ -175,7 +217,7 @@ export function Login() {
               Não tem conta?{" "}
               <Link
                 className="font-semibold text-white/85 hover:text-white"
-                to={`/signup?next=${encodeURIComponent(next)}`}
+                to={signupHref}
               >
                 Criar conta
               </Link>

@@ -28,19 +28,55 @@ export function SignUp() {
   const { signUp, user, loading } = useAuth();
   const { toast } = useToast();
 
+  const searchParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
+
   const next = useMemo(() => {
     try {
-      return new URLSearchParams(location.search).get("next") || "/dashboard";
+      return searchParams.get("next") || "/assinatura?source=onboarding";
     } catch {
-      return "/dashboard";
+      return "/assinatura?source=onboarding";
     }
-  }, [location.search]);
+  }, [searchParams]);
+
+  const premiumFromUrl = searchParams.get("premium") === "1";
+  const planFromUrl = searchParams.get("plan") || "mensal";
+
+  const loginHref = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("next", next);
+
+    if (premiumFromUrl) params.set("premium", "1");
+    if (planFromUrl) params.set("plan", planFromUrl);
+
+    return `/login?${params.toString()}`;
+  }, [next, premiumFromUrl, planFromUrl]);
 
   useEffect(() => {
     if (!loading && user) {
+      if (premiumFromUrl) {
+        try {
+          localStorage.setItem("mindsetfit:isSubscribed", "true");
+        } catch {}
+
+        try {
+          localStorage.setItem(
+            "mindsetfit:subscription:v1",
+            JSON.stringify({
+              planId: planFromUrl,
+              kind: "paid",
+              active: true,
+              activatedAt: Date.now(),
+            })
+          );
+        } catch {}
+      }
+
       navigate(next, { replace: true });
     }
-  }, [user, loading, next, navigate]);
+  }, [user, loading, next, navigate, premiumFromUrl, planFromUrl]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -119,7 +155,7 @@ export function SignUp() {
 
           <button
             type="button"
-            onClick={() => navigate(`/login?next=${encodeURIComponent(next)}`)}
+            onClick={() => navigate(loginHref)}
             className="ml-auto inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-semibold text-white/85 hover:bg-white/10 active:scale-[0.99]"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
@@ -230,7 +266,7 @@ export function SignUp() {
               <div className="pt-1 text-center text-[12px] text-white/60">
                 Já tem uma conta?{" "}
                 <Link
-                  to={`/login?next=${encodeURIComponent(next)}`}
+                  to={loginHref}
                   className="font-semibold text-white/85 hover:text-white"
                 >
                   Fazer login

@@ -89,9 +89,11 @@ function App() {
           <LiveLocationPill />
 
           <Routes>
-            
-          {MF_METABOLIC_ENGINE_V1_ENABLED ? (<Route path="/__engine-preview" element={<EnginePreviewPage />} />) : null}
-{/* MF_STYLEGUIDE_ROUTE_V2 */}
+            {MF_METABOLIC_ENGINE_V1_ENABLED ? (
+              <Route path="/__engine-preview" element={<EnginePreviewPage />} />
+            ) : null}
+
+            {/* MF_STYLEGUIDE_ROUTE_V2 */}
             <Route path="/styleguide" element={<StyleGuidePage />} />
 
             {/* Suite / Core */}
@@ -110,6 +112,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/checkout" element={<Checkout />} />
 
             {/* Corrida Pro */}
             <Route
@@ -150,6 +153,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route path="/DashboardPremium" element={<Navigate to="/DashboardPremium" replace />} />
 
             {/* Premium */}
             <Route
@@ -262,7 +267,6 @@ function App() {
             <Route path="/progress" element={<MFSuspense><LazyProgressPage /></MFSuspense>} />
             <Route path="/workout/:id" element={<MFSuspense><LazyWorkoutDetailsPage /></MFSuspense>} />
             <Route path="/live-workout" element={<MFSuspense><LazyLiveWorkoutPage /></MFSuspense>} />
-            <Route path="/checkout" element={<Checkout />} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/diagnostic" replace />} />

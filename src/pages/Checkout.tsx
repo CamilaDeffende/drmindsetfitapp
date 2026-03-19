@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 
 type PlanId = "mensal" | "anual";
-type SourceId = "onboarding" | "dashboard-free" | "premium" | null;
+type SourceId = "onboarding" | "dashboard" | "premium" | null;
 
 type PlanConfig = {
   id: PlanId;
@@ -60,7 +60,7 @@ function getSourceFromSearch(search: string): SourceId {
   try {
     const raw = new URLSearchParams(search).get("source");
     if (raw === "onboarding") return "onboarding";
-    if (raw === "dashboard-free") return "dashboard-free";
+    if (raw === "dashboard") return "dashboard";
     if (raw === "premium") return "premium";
     return null;
   } catch {
@@ -95,13 +95,14 @@ export default function Checkout() {
     } catch {}
 
     if (user) {
-      navigate("/dashboard-premium", { replace: true });
+      navigate("/dashboardpremium", { replace: true });
       return;
     }
 
-    navigate(`/signup?next=${encodeURIComponent("/dashboard-premium")}`, {
-      replace: true,
-    });
+    navigate(
+      `/signup?next=${encodeURIComponent("/dashboardpremium")}&premium=1&plan=${encodeURIComponent(plan.id)}`,
+      { replace: true }
+    );
   };
 
   const handleBack = () => {
