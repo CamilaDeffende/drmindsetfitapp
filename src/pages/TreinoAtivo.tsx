@@ -11,6 +11,12 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import ProgressaoCargaHint from "@/components/ProgressaoCargaHint";
 import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
+import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
+import {
+  appendTrainingMotorDecision,
+  buildTrainingMotorDecisionForSession,
+  getTrainingMotorDecisionPreview,
+} from "@/services/training/trainingDecision.service";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import {
@@ -177,6 +183,17 @@ function buildInitialSeries(exercicio: CanonicalExerciseView): SerieDados[] {
   }));
 }
 
+function normalizeMotorDecisionConfidence(value: unknown): "high" | "medium" | "low" {
+  const v = String(value ?? "").trim().toLowerCase();
+
+  if (v === "alta" || v === "high") return "high";
+  if (v === "baixa" || v === "low") return "low";
+  if (v === "media" || v === "média" || v === "medium") return "medium";
+
+  return "medium";
+}
+
+
 export function TreinoAtivo() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
@@ -206,12 +223,19 @@ export function TreinoAtivo() {
     });
   }, [exercicio?.id, exercicio?.nome, exercicio?.series, exercicio?.repeticoes]);
 
+  const motorDecisionPreview = useMemo(() => getTrainingMotorDecisionPreview(), []);
+
 
   const historicoCargas = useMemo(() => {
     const canonicalHistory = getCanonicalTrainingLoadHistory();
     if (canonicalHistory.length) return canonicalHistory;
     return Array.isArray((state as any)?.treino?.historicoCargas) ? (state as any).treino.historicoCargas : [];
   }, [state]);
+
+  const readinessSnapshot = useMemo(() => {
+    return getTrainingReadinessSnapshot();
+  }, [historicoCargas.length]);
+
 
   useEffect(() => {
     if (!treino) return;
@@ -417,6 +441,28 @@ export function TreinoAtivo() {
       exercises: performedExercises,
     });
 
+    const decision = buildTrainingMotorDecisionForSession({
+      session: {
+        id: treino.id,
+        dayKey: treino.dia,
+        modality: treino.modalidade,
+        title: treino.titulo,
+        focus: treino.grupamentos.join(", "),
+        intensity: treino.intensidade,
+        estimatedDurationMin: treino.duracaoMin,
+      },
+      usedFallback: !isCanonicalSource,
+      progressionApplied: !!progressionSuggestion,
+      suggestedLoadKg: progressionSuggestion?.suggestedLoadKg ?? null,
+      lastAverageLoadKg: progressionSuggestion?.lastAverageLoadKg ?? null,
+      confidence: normalizeMotorDecisionConfidence(progressionSuggestion?.confidence),
+    });
+
+    if (decision) {
+      appendTrainingMotorDecision(decision);
+    }
+
+
     toast({
       title: "Treino concluído!",
       description: isCanonicalSource
@@ -470,6 +516,58 @@ export function TreinoAtivo() {
       </header>
 
       <main className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24">
+        <Card className="mb-4 border-white/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base sm:text-lg">Prontidão da Sessão</CardTitle>
+            <CardDescription>
+              Leitura adaptativa do motor com fadiga regional e microciclo.
+            </CardDescription>
+            <CardDescription>
+              Leitura adaptativa baseada nas últimas execuções canônicas do treino.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Score</div>
+                <div className="mt-1 text-xl font-bold">{readinessSnapshot.score}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Nível</div>
+                <div className="mt-1 text-sm font-semibold capitalize">{readinessSnapshot.level}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Recomendação</div>
+                <div className="mt-1 text-sm font-semibold capitalize">{readinessSnapshot.recommendation}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Ajuste sugerido</div>
+                <div className="mt-1 text-sm font-semibold">
+                  {readinessSnapshot.recommendedLoadAdjustmentPct > 0
+                    ? `+${readinessSnapshot.recommendedLoadAdjustmentPct}%`
+                    : `${readinessSnapshot.recommendedLoadAdjustmentPct}%`}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="text-xs text-muted-foreground">Racional do motor</div>
+              <div className="mt-1 text-sm">{readinessSnapshot.rationale}</div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {readinessSnapshot.flags.map((flag, idx) => (
+                <span
+                  key={`${flag}-${idx}`}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px]"
+                >
+                  {flag}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="mb-4">
           <CardHeader className="pb-3">
             <CardTitle className="text-base sm:text-lg">Selecione o Treino</CardTitle>
@@ -534,7 +632,59 @@ export function TreinoAtivo() {
               <Progress value={progressoSeries} className="h-2 mb-3" />
             </div>
 
-            {progressionSuggestion ? (
+                        
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-sm font-semibold">Fadiga por grupamento</div>
+                <div className="mt-2 space-y-2">
+                  {readinessSnapshot.fatigueHotspots?.length ? (
+                    readinessSnapshot.fatigueHotspots.map((item, idx) => (
+                      <div key={`${item.muscleGroup}-${idx}`} className="flex items-center justify-between text-sm">
+                        <span>{item.muscleGroup}</span>
+                        <span className="font-semibold">
+                          {item.fatigueScore}/100 • {item.status}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground">Sem hotspots relevantes.</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-sm font-semibold">Deload inteligente do microciclo</div>
+                <div className="mt-2 text-sm">
+                  Status:{" "}
+                  <span className="font-semibold">
+                    {readinessSnapshot.microcycle?.deloadRecommended ? "recomendado" : "não necessário"}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {readinessSnapshot.microcycle?.deloadReason}
+                </div>
+                <div className="mt-2 text-sm">
+                  Redução sugerida de volume:{" "}
+                  <span className="font-semibold">
+                    {readinessSnapshot.microcycle?.suggestedVolumeReductionPct ?? 0}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {motorDecisionPreview ? (
+              <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+                <div className="text-sm font-semibold">Última decisão do motor</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Tipo: <span className="font-semibold">{motorDecisionPreview.decisionType}</span>
+                  {" • "}
+                  Confiança: <span className="font-semibold capitalize">{motorDecisionPreview.confidence}</span>
+                </div>
+                <div className="mt-2 text-sm">{motorDecisionPreview.rationale}</div>
+              </div>
+            ) : null}
+
+{progressionSuggestion ? (
               <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-semibold">Sugestão de progressão automática</div>
