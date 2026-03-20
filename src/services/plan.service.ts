@@ -9,6 +9,7 @@ import {
 } from "@/types/alimentos";
 import { generateSmartTraining } from "@/engine/training/orchestrator/generateSmartTraining";
 import { ensureTrainingPlanInActivePlan } from "./training/trainingPlan.ssot";
+import { saveSmartTrainingPlan } from "@/services/training/trainingEngine.storage";
 
 export type ActivePlanV1 = {
   version: "v1";
@@ -219,7 +220,6 @@ function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
 function buildTrainingPayloadFromSmartEngine(draft: PlanDraft, step3: any, step5: any, step6: any) {
   try {
     const smartPlan = generateSmartTraining(draft as any);
-    saveSmartTrainingPlan(smartPlan.plan);
     saveSmartTrainingPlan(smartPlan.plan);
 
     const base = {

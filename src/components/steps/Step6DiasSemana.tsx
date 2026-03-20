@@ -111,7 +111,6 @@ export default function Step6DiasSemana({
 
   const initialGrouped = useMemo(
     () => normalizeGroupedDays(selectedModalities, value?.weeklyDaysByModality),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -153,7 +152,6 @@ export default function Step6DiasSemana({
 
   useEffect(() => {
     emitChange(groupedDays);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupedDays, selectedModalities]);
 
   useOnboardingDraftSaver(
