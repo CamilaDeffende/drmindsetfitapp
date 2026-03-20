@@ -160,33 +160,6 @@ class BootErrorBoundary extends React.Component<{ children: React.ReactNode }, {
 const el = document.getElementById("root");
 if (!el) throw new Error("Root element #root not found");
 
-// MF_DEV_MOUNT_BANNER_V1
-if (import.meta.env.DEV) {
-  try {
-    console.log("[MF] main.tsx carregou — DEV banner ativo");
-    const id = "mf-dev-banner";
-    if (!document.getElementById(id)) {
-      const b = document.createElement("div");
-      b.id = id;
-      b.textContent = "MF DEV: React mounted OK (se você vê isso, o problema é dentro do <App/>)";
-      b.style.position = "fixed";
-      b.style.top = "10px";
-      b.style.left = "10px";
-      b.style.zIndex = "2147483647";
-      b.style.padding = "10px 12px";
-      b.style.borderRadius = "12px";
-      b.style.background = "rgba(0, 255, 140, 0.18)";
-      b.style.border = "1px solid rgba(0, 255, 140, 0.55)";
-      b.style.color = "white";
-      b.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace";
-      b.style.fontSize = "12px";
-      document.body.appendChild(b);
-    }
-  } catch (e) {
-    console.error("[MF] banner failed", e);
-  }
-}
-
 runMFDevBootstrap();
 createRoot(el).render(
   <MFBackground>
