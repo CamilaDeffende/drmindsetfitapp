@@ -15,6 +15,10 @@ src/**/*.bak.*
 
 # Build / generated
 
+
+# Download exercicios
+exercise-import/.env
+
 # Scans / local tooling
 
 # Local experimental folder inside repo (must not be linted/committed)
@@ -176,3 +180,7 @@ coverage
 *.db
 .mf_last_deploy_preview.txt
 .mf_last_deploy_prod.txt
+
+# android
+.idea
+android/.idea

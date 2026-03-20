@@ -1,385 +1,229 @@
 // MF_ONBOARDING_CONTRACT_V1
-// Step3Metabolismo – tela de impacto com resultado da calculadora
-// Fix: recalcula quando perfil/avaliacao mudam (evita reaproveitar resultado antigo)
-// Fix: não espalhar `state` inteiro no updateState (merge parcial)
+// PREMIUM_REFINEMENT_PHASE3_STEP3_UI_V2
+// FIX_IMC_CALCULATION_V1
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
-import type { ResultadoMetabolico } from "@/types";
-import { calcularMetabolismo } from "@/lib/metabolismo";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-type OnboardingStepProps = {
+type Props = {
   value?: any;
   onChange?: (v: any) => void;
   onNext?: () => void;
   onBack?: () => void;
 };
 
-export function Step3Metabolismo({
-  value,
-  onChange,
+function getFaixaIMC(imc: number) {
+  if (imc < 18.5) return "baixo peso";
+  if (imc < 25) return "normal";
+  if (imc < 30) return "elevado";
+  if (imc < 35) return "obesidade I";
+  if (imc < 40) return "obesidade II";
+  return "obesidade III";
+}
+
+export default function Step3Metabolismo({
   onNext,
   onBack,
-}: OnboardingStepProps) {
-  void value;
-  void onChange;
-  void onNext;
+}: Props) {
+  const { state } = useDrMindSetfit();
 
-  const { state, updateState } = useDrMindSetfit();
+  const perfil = state?.perfil ?? {};
+  const avaliacao = state?.avaliacao ?? {};
 
-  // Fonte canônica (preferência): state.perfil e state.avaliacao
-  const perfil = useMemo(
-    () =>
-      (state as any)?.perfil ??
-      (state as any)?.step1 ??
-      (state as any)?.avaliacaoPerfil ??
-      {},
-    [state]
-  );
-
-  const avaliacao = useMemo(
-    () =>
-      (state as any)?.avaliacao ??
-      (state as any)?.step2 ??
-      (state as any)?.avaliacaoFisica ??
-      {},
-    [state]
-  );
-
-  // Chave simples para detectar mudanças que afetam o metabolismo
-  const calcKey = useMemo(() => {
-    const p = perfil as any;
-    const a = avaliacao as any;
-    const peso = a?.peso ?? a?.pesoAtual ?? "";
-    const altura = a?.altura ?? "";
-    const idade = p?.idade ?? "";
-    const sexo = p?.sexo ?? "";
-    const nivelTreino = p?.nivelTreino ?? "";
-    const objetivo = p?.objetivo ?? "";
-    const freq = a?.frequenciaAtividadeSemanal ?? "";
-    const biotipo = a?.biotipo ?? p?.biotipo ?? "";
-    return [
-      peso,
-      altura,
-      idade,
-      sexo,
-      nivelTreino,
-      objetivo,
-      freq,
-      biotipo,
-    ].join("|");
-  }, [perfil, avaliacao]);
-
-  const [resultado, setResultado] = useState<ResultadoMetabolico | null>(
-    (state as any)?.metabolismo ?? (state as any)?.resultadoMetabolico ?? null
-  );
-  const [loading, setLoading] = useState(!resultado);
-  const [error, setError] = useState<string | null>(null);
-
-  // Autosave leve do step 3 (mantém rascunho)
   useOnboardingDraftSaver(
     {
-      step3: {
-        ...(state as any).step3,
-        metabolismo: resultado ?? (state as any).metabolismo ?? null,
-      },
-    } as any,
+      peso: (avaliacao as any)?.peso ?? "",
+      altura: (avaliacao as any)?.altura ?? "",
+    },
     400
   );
 
-  // Recalcula sempre que calcKey muda (evita usar resultado antigo)
-  useEffect(() => {
-    let cancelled = false;
+  // =========================
+  // PESO / ALTURA
+  // =========================
 
-    // Sempre tenta recalcular quando dados mudarem
-    setLoading(true);
-    setError(null);
+  const pesoRaw =
+    (avaliacao as any)?.peso ??
+    (avaliacao as any)?.pesoAtual ??
+    (perfil as any)?.pesoAtual ??
+    (perfil as any)?.peso ??
+    0;
 
-    try {
-      const calc = calcularMetabolismo(perfil as any, avaliacao as any);
+  const alturaRaw =
+    (avaliacao as any)?.altura ??
+    (perfil as any)?.altura ??
+    0;
 
-      if (cancelled) return;
+  const peso = Number(String(pesoRaw).replace(",", "."));
+  const altura = Number(String(alturaRaw).replace(",", "."));
 
-      setResultado(calc);
-      setLoading(false);
-      setError(null);
+  // =========================
+  // IMC
+  // =========================
 
-      // Salva no contexto global (merge parcial)
-      try {
-        updateState({
-          metabolismo: calc,
-          resultadoMetabolico: calc,
-        } as any);
-      } catch {}
-    } catch (e: any) {
-      if (cancelled) return;
+  const imc =
+    Number.isFinite(peso) &&
+    Number.isFinite(altura) &&
+    peso > 0 &&
+    altura > 0
+      ? Number((peso / Math.pow(altura / 100, 2)).toFixed(1))
+      : null;
 
-      console.error("[MF] Erro ao calcular metabolismo:", e);
-      setResultado(null);
-      setError(
-        e?.message ||
-          "Não foi possível calcular seu metabolismo. Revise os dados dos passos anteriores."
-      );
-      setLoading(false);
-    }
+  // =========================
+  // METABOLISMO BASAL
+  // =========================
 
-    return () => {
-      cancelled = true;
-    };
-  }, [calcKey, perfil, avaliacao, updateState]);
+  const sexo = (perfil as any)?.sexo ?? "masculino";
+  const idade = Number((perfil as any)?.idade ?? 30);
 
-  const equacao =
-    (resultado as any)?.equacaoUtilizada ??
-    (state as any)?.metabolismo?.equacaoUtilizada;
+  const tmb =
+    sexo === "masculino"
+      ? 10 * peso + 6.25 * altura - 5 * idade + 5
+      : 10 * peso + 6.25 * altura - 5 * idade - 161;
 
-  const faixa = resultado?.faixaSegura;
-  const comparativo = resultado?.comparativo;
+  const metaCalorica = Math.round(tmb * 1.35);
 
   return (
-    <div
-      className="max-w-4xl mx-auto px-4 py-6 sm:py-8"
-      data-testid="mf-step-root"
-    >
-      {/* Cabeçalho */}
-      <div className="space-y-2 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Nível de atividade
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-          Usamos seus dados para estimar metabolismo de repouso (TMB), gasto
-          diário (GET/TDEE) e uma faixa calórica segura para seu objetivo. Esses
-          números são a base do plano de treino e nutrição.
+    <div className="w-full text-white space-y-6">
+
+      {/* HERO */}
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+
+        <h2 className="text-[22px] font-semibold tracking-tight">
+          Metabolismo calibrado
+        </h2>
+
+        <p className="mt-1 text-[13px] text-white/50">
+          Base científica para estimar calorias e ajustar o plano.
         </p>
+
+      </section>
+
+      {/* CARD METABÓLICO */}
+      <section className="grid grid-cols-2 gap-4">
+
+        <div className="rounded-[22px] border border-white/10 bg-black/30 p-5">
+          <div className="text-white/50 text-[12px]">
+            TMB (repouso)
+          </div>
+
+          <div className="mt-1 text-[28px] font-semibold text-cyan-300">
+            {Math.round(tmb)}
+          </div>
+
+          <div className="text-[12px] text-white/40">
+            kcal
+          </div>
+        </div>
+
+        <div className="rounded-[22px] border border-emerald-400/30 bg-emerald-400/10 p-5 shadow-[0_0_25px_rgba(34,197,94,0.15)]">
+
+          <div className="text-white/50 text-[12px]">
+            Meta diária
+          </div>
+
+          <div className="mt-1 text-[28px] font-semibold text-emerald-300">
+            {metaCalorica}
+          </div>
+
+          <div className="text-[12px] text-white/40">
+            kcal
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* BASE ANTROPOMÉTRICA */}
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+
+        <h3 className="text-[18px] font-semibold">
+          Base antropométrica
+        </h3>
+
+        <div className="grid grid-cols-3 gap-3 mt-4">
+
+          <div className="rounded-[18px] border border-white/10 p-4 bg-black/20 text-center">
+            <div className="text-[22px] font-semibold text-white">
+              {peso || "--"}
+            </div>
+            <div className="text-white/50 text-[12px]">
+              Peso (kg)
+            </div>
+          </div>
+
+          <div className="rounded-[18px] border border-white/10 p-4 bg-black/20 text-center">
+            <div className="text-[22px] font-semibold text-white">
+              {altura || "--"}
+            </div>
+            <div className="text-white/50 text-[12px]">
+              Altura (cm)
+            </div>
+          </div>
+
+          <div className="rounded-[18px] border border-white/10 p-4 bg-black/20 text-center">
+            <div className="text-[22px] font-semibold text-white">
+              {imc != null ? imc.toFixed(1) : "--"}
+            </div>
+            <div className="text-white/50 text-[12px]">
+              IMC
+            </div>
+          </div>
+
+        </div>
+
+        {/* BARRA */}
+        <div className="mt-5 h-2 w-full rounded-full bg-white/10 overflow-hidden">
+
+          <div
+            className="h-full bg-gradient-to-r from-cyan-400 to-yellow-400"
+            style={{
+              width: imc ? `${Math.min(imc * 3, 100)}%` : "0%",
+            }}
+          />
+
+        </div>
+
+        <div className="flex justify-between mt-2 text-[12px] text-white/40">
+
+          <span>
+            {(perfil as any)?.nivelTreino ?? "—"}
+          </span>
+
+          <span>
+            Indicador geral ({imc ? getFaixaIMC(imc) : "—"})
+          </span>
+
+        </div>
+
+      </section>
+
+      {/* CTA */}
+      <div className="flex gap-3 pt-2">
+
+        {onBack && (
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="h-14 w-[120px] rounded-[20px] border border-white/15 bg-black/20 text-white hover:bg-white/5"
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Voltar
+          </Button>
+        )}
+
+        <Button
+          onClick={() => onNext?.()}
+          className="h-14 flex-1 rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
+        >
+          Continuar
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
+
       </div>
 
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Algo deu errado</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {loading && !error && (
-        <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Calculando seu gasto diário…
-          </p>
-        </div>
-      )}
-
-      {!loading && !error && resultado && (
-        <div className="space-y-6">
-          {/* Bloco 1 – Cards principais */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground font-normal">
-                  TMB (repouso)
-                </CardTitle>
-                <CardDescription className="text-[11px] text-muted-foreground">
-                  Energia mínima para manter funções vitais.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-sky-300">
-                  {resultado.tmb}{" "}
-                  <span className="text-base text-muted-foreground">kcal</span>
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground font-normal">
-                  GET (dia todo)
-                </CardTitle>
-                <CardDescription className="text-[11px] text-muted-foreground">
-                  Inclui rotina e nível de atividade.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-blue-300">
-                  {resultado.get}{" "}
-                  <span className="text-base text-muted-foreground">kcal</span>
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-emerald-500/40">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground font-normal">
-                  Meta diária
-                </CardTitle>
-                <CardDescription className="text-[11px] text-muted-foreground">
-                  Direcionada ao seu objetivo atual.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-emerald-400">
-                  {resultado.caloriasAlvo}{" "}
-                  <span className="text-base text-muted-foreground">kcal</span>
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Bloco 2 – Faixa calórica segura */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <CardTitle className="text-base sm:text-lg">
-                    Faixa calórica segura
-                  </CardTitle>
-                  <CardDescription className="text-sm">
-                    Zona de trabalho realista para consistência e aderência.
-                  </CardDescription>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  Segurança primeiro
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {faixa && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      Mínimo
-                    </div>
-                    <div className="text-lg font-semibold">
-                      {faixa.minimo} kcal
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      Ideal
-                    </div>
-                    <div className="text-lg font-semibold text-emerald-400">
-                      {faixa.ideal} kcal
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      Máximo
-                    </div>
-                    <div className="text-lg font-semibold">
-                      {faixa.maximo} kcal
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm text-muted-foreground">
-                <div className="rounded-lg border border-white/10 p-3 bg-white/[0.02]">
-                  <div className="uppercase tracking-wide text-[10px] text-gray-400 mb-1">
-                    FAF base (nível)
-                  </div>
-                  <div className="text-base text-white">
-                    {Number(resultado.fafBase).toFixed(2)}
-                  </div>
-                  <p className="mt-1 text-[11px] text-gray-400">
-                    Fator calculado pelo nível de treino informado.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border border-white/10 p-3 bg-white/[0.02]">
-                  <div className="uppercase tracking-wide text-[10px] text-gray-400 mb-1">
-                    FAF final (aplicado)
-                  </div>
-                  <div className="text-base text-white">
-                    {Number(resultado.fafFinal).toFixed(2)}
-                  </div>
-                  <p className="mt-1 text-[11px] text-gray-400">
-                    Já considerando sua rotina semanal e guardrails.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border border-white/10 p-3 bg-white/[0.02]">
-                  <div className="uppercase tracking-wide text-[10px] text-gray-400 mb-1">
-                    Equação escolhida
-                  </div>
-                  <div className="text-base text-white capitalize">
-                    {String(equacao || "mifflin").replace("-", " ")}
-                  </div>
-                  <p className="mt-1 text-[11px] text-gray-400">
-                    {resultado.justificativa}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bloco 3 – Comparativo entre equações */}
-          {comparativo && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base sm:text-lg">
-                  Comparativo entre equações
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  Veja como as fórmulas variam para o seu perfil (já com
-                  atividade aplicada).
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  {([
-                    ["Mifflin-St Jeor", comparativo.mifflin],
-                    ["Harris-Benedict", comparativo.harrisBenedict],
-                    ["Cunningham", comparativo.cunningham],
-                    ["FAO/WHO", comparativo.faoWho],
-                    ["Tinsley (atletas)", comparativo.tinsley],
-                  ] as const).map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 bg-white/[0.02]"
-                    >
-                      <span className="text-muted-foreground">{label}</span>
-                      <span className="font-semibold">
-                        {value} <span className="text-xs">kcal</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Normal existir uma variação entre fórmulas. Nós usamos a
-                  equação mais adequada ao seu caso e mantemos o plano dentro de
-                  uma faixa segura.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Navegação local: Voltar (Continuar vem do OnboardingFlow) */}
-          <div className="flex justify-start pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onBack}
-              className="border-white/10"
-            >
-              Voltar
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
-export default Step3Metabolismo;

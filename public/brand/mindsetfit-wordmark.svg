@@ -1,0 +1,20 @@
+<svg width="420" height="120" viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mfTextGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E6BFF"/>
+      <stop offset="100%" stop-color="#00E5FF"/>
+    </linearGradient>
+  </defs>
+
+  <text
+    x="0"
+    y="80"
+    font-family="Inter, Poppins, Arial, sans-serif"
+    font-size="64"
+    font-weight="600"
+    fill="url(#mfTextGrad)"
+    letter-spacing="1"
+  >
+    MindsetFit
+  </text>
+</svg>

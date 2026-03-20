@@ -1,11 +1,18 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+// MF_BOOT_DEDUP_REACT_V1
+// MF_MAIN_REACT_DUPE_FIX_V3
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import { SplashScreen } from "./components/branding/SplashScreen";
 import "./index.css";
 import { SplashScreen } from "./components/branding/SplashScreen";
 import { DevErrorOverlay } from "@/components/system/DevErrorOverlay";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useAuth, AuthProvider } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { initI18n } from "@/i18n";
 import { installDevFatalOverlay } from "./runtime/mf/devFatalOverlay";
@@ -29,6 +36,11 @@ if (import.meta.env.DEV) {
 
 
 initI18n();
+// Sync global pós-auth
+import PostAuthSyncGate from "@/sync/PostAuthSyncGate";
+
+import "leaflet/dist/leaflet.css";
+import { initI18n } from "@/i18n";
 
 function BootSplash({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = React.useState(false);
@@ -58,6 +70,30 @@ function RootProviders({ children }: { children: React.ReactNode }) {
     </ProfileProvider>
   );
 }
+    console.log("BootSplash: iniciando timer...");
+    const t = window.setTimeout(() => {
+      console.log("BootSplash: pronto!");
+      setReady(true);
+    }, 850);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  if (!ready) {
+    console.log("BootSplash: mostrando splash...");
+    return <SplashScreen />;
+  }
+  console.log("BootSplash: renderizando app...");
+  return <>{children}</>;
+}
+
+// init i18n antes do render (fallback pt-BR garantido)
+initI18n();
+
+const el = document.getElementById("root");
+if (!el) throw new Error("Root element #root not found");
+
+// Detecta Capacitor
+const isNative = typeof window !== "undefined" && !!(window as any).Capacitor;
 
 // MF_HARD_BOOT_DIAG_V1
 type MF_BootEntry = { t: number; kind: string; msg: string; stack?: string };
@@ -90,6 +126,22 @@ function mfBootPush(kind: string, msg: string, stack?: string) {
       el.style.overflow = "auto";
       el.style.display = "none";
       document.body.appendChild(el);
+    let overlay = document.getElementById("mf-boot-overlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "mf-boot-overlay";
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.zIndex = "2147483647";
+      overlay.style.background = "rgba(0,0,0,0.92)";
+      overlay.style.color = "#fff";
+      overlay.style.fontFamily =
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      overlay.style.fontSize = "12px";
+      overlay.style.padding = "16px";
+      overlay.style.overflow = "auto";
+      overlay.style.display = "none";
+      document.body.appendChild(overlay);
     }
 
     const lines = (w.__mf_bootlog || []).map((e: any) => {
@@ -100,6 +152,8 @@ function mfBootPush(kind: string, msg: string, stack?: string) {
 
     el.textContent = "MF BOOT DIAG (mostra o que travou)\\n\\n" + lines.join("\\n\\n");
     if (kind === "error" || kind === "rejection") el.style.display = "block";
+    overlay.textContent = "MF BOOT DIAG (mostra o que travou)\n\n" + lines.join("\n\n");
+    if (kind === "error" || kind === "rejection") overlay.style.display = "block";
   } catch {}
 }
 
@@ -214,6 +268,57 @@ try {
     navigator.serviceWorker
       .getRegistrations()
       .then((regs) => regs.forEach((r) => { try { r.unregister(); } catch {} }))
+function RootProviders({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  const userId = (auth as any)?.user?.id ?? (auth as any)?.session?.user?.id ?? null;
+
+  // Para o Android/iOS: aguarda auth “assentar”
+  const [waited, setWaited] = React.useState(false);
+  React.useEffect(() => {
+    if (!isNative) return;
+    const t = window.setTimeout(() => setWaited(true), 4000);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  // Se for nativo e ainda não carregou auth, splash por alguns segundos
+  if (isNative && !userId && !waited) return <SplashScreen />;
+
+  // Se for nativo e NÃO veio sessão, continua em modo DEMO pra não travar
+  const __demoUserId = "demo-user-123";
+  const __resolvedUserId = userId ?? __demoUserId;
+
+  return (
+    <ProfileProvider userId={__resolvedUserId} gate={false}>
+      <AppProvider>{children}</AppProvider>
+    </ProfileProvider>
+  );
+}
+
+createRoot(el).render(
+  <AuthProvider>
+    <PostAuthSyncGate />
+    <RootProviders>
+      <React.StrictMode>
+        <BootSplash>
+          <DevErrorOverlay>
+            <BootErrorBoundary>
+              <App />
+            </BootErrorBoundary>
+          </DevErrorOverlay>
+        </BootSplash>
+      </React.StrictMode>
+    </RootProviders>
+  </AuthProvider>
+);
+
+// MF_DEV_SW_UNREGISTER_V3
+// No Capacitor e em DEV: desregistra SW antigo para não sobrar cache quebrando o carregamento.
+try {
+  const shouldUnregisterSW = import.meta.env.DEV || isNative;
+  if (shouldUnregisterSW && typeof window !== "undefined" && "serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((regs) => regs.forEach((r) => r.unregister().catch?.(() => {})))
       .catch(() => {});
   }
 } catch {}
