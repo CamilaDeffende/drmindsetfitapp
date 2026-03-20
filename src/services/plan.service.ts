@@ -7,8 +7,8 @@ import {
   calcularMacros,
   type AlimentoDatabase,
 } from "@/types/alimentos";
-
-import { persistTrainingPlanToActivePlan } from "./training/activePlan.trainingWriter";
+import { generateSmartTraining } from "@/engine/training/orchestrator/generateSmartTraining";
+import { ensureTrainingPlanInActivePlan } from "./training/trainingPlan.ssot";
 
 export type ActivePlanV1 = {
   version: "v1";
@@ -57,6 +57,13 @@ export type ActivePlanV1 = {
   };
 
   training?: {
+    smartPlan?: any;
+    workouts?: any[];
+    execution?: {
+      currentSession?: any | null;
+      history?: any[];
+      exercisePerformance?: any[];
+    };
     modality?: string;
     frequency?: number;
     week?: any[];
@@ -83,17 +90,16 @@ const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
 
 export function saveActivePlan(plan: ActivePlanV1) {
   try {
-    localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(plan));
-    try {
-      persistTrainingPlanToActivePlan();
-    } catch {}
+    const normalized = ensureTrainingPlanInActivePlan(plan);
+    localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(normalized));
   } catch {}
 }
 
 export function loadActivePlan(): ActivePlanV1 | null {
   try {
     const r = localStorage.getItem(ACTIVE_PLAN_KEY);
-    return r ? (JSON.parse(r) as ActivePlanV1) : null;
+    if (!r) return null;
+    return ensureTrainingPlanInActivePlan(JSON.parse(r) as ActivePlanV1) as ActivePlanV1;
   } catch {
     return null;
   }
@@ -117,10 +123,15 @@ export function activityFactorFromWeeklyFrequency(freq: any): number {
   return 1.375;
 }
 
-function normalizeGoal(goalRaw: string): "cut" | "bulk" | "maintain" {
+function normalizeGoal(goalRaw: any): "cut" | "bulk" | "maintain" {
   const g = String(goalRaw || "").toLowerCase();
 
-  if (g.includes("emag") || g.includes("cut") || g.includes("deficit")) {
+  if (
+    g.includes("emag") ||
+    g.includes("cut") ||
+    g.includes("deficit") ||
+    g.includes("perder")
+  ) {
     return "cut";
   }
 
@@ -175,6 +186,65 @@ function normalizeLevel(raw: any): "iniciante" | "intermediario" | "avancado" {
 function normalizeRestrictions(raw: any): string[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((x) => String(x || "").toLowerCase()).filter(Boolean);
+}
+
+function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
+  const primary = mapPrimaryModality(step5?.primary);
+  const modalidadesRaw = Array.isArray(step5?.modalidades)
+    ? step5.modalidades
+    : Array.isArray(step5?.modalities)
+      ? step5.modalities
+      : [primary];
+
+  const modalities = modalidadesRaw.map(mapPrimaryModality) as Modality[];
+
+  const level = normalizeLevel(
+    step3?.nivel ??
+      step3?.level ??
+      step3?.condicionamento ??
+      "iniciante"
+  );
+
+  const daysByModality = (step6?.diasPorModalidade ||
+    step6?.daysByModality ||
+    {}) as Record<Modality, string[]>;
+
+  return buildWorkoutWeek({
+    modalities: modalities.length ? modalities : [primary],
+    level,
+    daysByModality,
+  });
+}
+
+function buildTrainingPayloadFromSmartEngine(draft: PlanDraft, step3: any, step5: any, step6: any) {
+  try {
+    const smartPlan = generateSmartTraining(draft as any);
+
+    const base = {
+      training: {
+        smartPlan,
+      },
+      workout: {
+        legacyFallbackShape: buildLegacyWorkoutFallback(step3, step5, step6),
+      },
+      draft,
+    };
+
+    const normalized = ensureTrainingPlanInActivePlan(base as any);
+
+    return {
+      training: normalized.training,
+      workout: normalized.workout,
+    };
+  } catch {
+    return {
+      training: {
+        smartPlan: null,
+        workouts: [],
+      },
+      workout: buildLegacyWorkoutFallback(step3, step5, step6),
+    };
+  }
 }
 
 function pickAllowedFoods(params: {
@@ -357,15 +427,16 @@ function buildRealMealPlan(params: {
   }
 
   if (selectedMealTypes.includes("ceia")) {
+    const ceiaProtein = isVeg
+      ? breakfastProtein
+      : pickFoodByIdOrFallback(
+          allowedFoods,
+          ["queijo-cottage", "iogurte-grego", "tofu"],
+          "laticinio"
+        );
+
     mealTemplates["ceia"] = buildMeal("Ceia", "22:00", [
-      ...(isVeg
-        ? (breakfastProtein ? [{ id: breakfastProtein.id, grams: Math.min(breakfastProtein.porcaoPadrao, 100) }] : [])
-        : (pickFoodByIdOrFallback(allowedFoods, ["queijo-cottage", "iogurte-grego", "tofu"], "laticinio")
-          ? [{
-              id: (pickFoodByIdOrFallback(allowedFoods, ["queijo-cottage", "iogurte-grego", "tofu"], "laticinio") as AlimentoDatabase).id,
-              grams: 100
-            }]
-          : [])),
+      ...(ceiaProtein ? [{ id: ceiaProtein.id, grams: 100 }] : []),
       ...(fruitSnack ? [{ id: fruitSnack.id, grams: 80 }] : []),
     ]);
   }
@@ -379,55 +450,30 @@ function buildRealMealPlan(params: {
     "ceia",
   ];
 
-  const refeicoes = orderedMealTypes
+  return orderedMealTypes
     .filter((key) => selectedMealTypes.includes(key))
     .map((key) => mealTemplates[key])
     .filter(Boolean);
-
-  return refeicoes;
 }
 
 export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
   const anyDraft: any = draft || {};
-
   const step1 = anyDraft.step1 || {};
   const step2 = anyDraft.step2 || {};
   const step3 = anyDraft.step3 || {};
-  const step4 = anyDraft.step4 ?? {};
+  const step4 = anyDraft.step4 || {};
   const step5 = anyDraft.step5 ?? anyDraft.step5Modalidades ?? {};
   const step6 = anyDraft.step6 ?? anyDraft.step6DiasSemana ?? {};
   const step7 = anyDraft.step7 ?? anyDraft.step7Preferencias ?? {};
 
-  const weightKg = Number(
-    step2?.peso ??
-      step1?.pesoAtual ??
-      step1?.weightKg ??
-      step2?.weight ??
-      80
-  );
+  const weightKg = Number(step2?.peso || step2?.weight || step1?.pesoAtual || 80);
+  const heightCm = Number(step2?.altura || step2?.height || step1?.altura || 175);
+  const ageYears = Number(step1?.idade || step1?.age || 28);
+  const gender = normGender(step1?.sexo || step1?.gender);
 
-  const heightCm = Number(
-    step2?.altura ??
-      step1?.altura ??
-      step1?.heightCm ??
-      step2?.height ??
-      175
-  );
-
-  const ageYears = Number(step1?.idade ?? step1?.age ?? 28);
-  const gender = normGender(step1?.sexo ?? step1?.gender);
-
-  const goal = normalizeGoal(step1?.objetivo ?? step4?.estrategia ?? "maintain");
-
+  const goal = normalizeGoal(step1?.objetivo || step1?.goal);
   const activityFactor = activityFactorFromWeeklyFrequency(
-    step2?.frequenciaAtividadeSemanal ??
-      step3?.frequenciaSemanal ??
-      step3?.frequencia ??
-      step3?.atividade
-  );
-
-  const preference = normalizePreference(
-    step7?.dieta ?? step7?.preference ?? "flexivel"
+    step3?.frequenciaSemanal || step3?.frequencia || step3?.atividade
   );
 
   const restrictions = normalizeRestrictions(
@@ -469,41 +515,27 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
     goal,
   });
 
-  const step4Macros = step4?.macros ?? {};
+  const preference = normalizePreference(
+    String(step7?.dieta || step7?.preference || "flexivel")
+  );
 
-  const hasRealStep4Macros =
-    Number(step4Macros?.proteina ?? 0) > 0 ||
-    Number(step4Macros?.carboidratos ?? 0) > 0 ||
-    Number(step4Macros?.gorduras ?? 0) > 0;
-
-  const computedMacrosRaw: any = computeMacros({
-    targetKcal: (metabolic as any)?.targetKcal,
+  const normalizedComputedMacros = computeMacros({
+    targetKcal: metabolic.targetKcal,
     goal,
     weightKg,
     preference:
       preference === "vegana" || preference === "vegetariano"
         ? "vegetariano"
         : preference === "lowcarb"
-        ? "lowcarb"
-        : "flexivel",
+          ? "lowcarb"
+          : "flexivel",
   });
 
-  const normalizedComputedMacros = {
-    proteinG: Number(computedMacrosRaw?.proteinG ?? computedMacrosRaw?.proteina ?? 0),
-    carbsG: Number(
-      computedMacrosRaw?.carbsG ??
-        computedMacrosRaw?.carbG ??
-        computedMacrosRaw?.carboidratos ??
-        0
-    ),
-    fatG: Number(computedMacrosRaw?.fatG ?? computedMacrosRaw?.gorduras ?? 0),
-    targetKcal: Number(
-      computedMacrosRaw?.targetKcal ??
-        computedMacrosRaw?.calorias ??
-        (metabolic as any)?.targetKcal ??
-        0
-    ),
-  };
+  const step4Macros = step4?.macros ?? {};
+  const hasRealStep4Macros =
+    Number(step4Macros?.proteina ?? 0) > 0 &&
+    Number(step4Macros?.carboidratos ?? 0) > 0 &&
+    Number(step4Macros?.gorduras ?? 0) >= 0;
 
   const macros = hasRealStep4Macros
     ? {
@@ -511,7 +543,7 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
         carbsG: Number(step4Macros?.carboidratos ?? 0),
         fatG: Number(step4Macros?.gorduras ?? 0),
         targetKcal: Number(
-          step4Macros?.calorias ?? step4?.kcalAlvo ?? (metabolic as any)?.targetKcal
+          step4Macros?.calorias ?? step4?.kcalAlvo ?? metabolic?.targetKcal ?? 0
         ),
       }
     : normalizedComputedMacros;
@@ -521,14 +553,20 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
     : ["cafe-da-manha", "almoco", "lanche-tarde", "jantar"];
 
   const meals = buildRealMealPlan({
-    kcalTarget: Number(step4?.kcalAlvo ?? (metabolic as any)?.targetKcal ?? 2000),
+    kcalTarget: Number(step4?.kcalAlvo ?? metabolic?.targetKcal ?? 2000),
     preference,
     restrictions,
     selectedMealTypes,
   });
 
   const primaryModality = mapPrimaryModality(step5?.primary);
-  const modalities: Modality[] = [primaryModality];
+  const modalitiesRaw = Array.isArray(step5?.modalidades)
+    ? step5.modalidades
+    : Array.isArray(step5?.modalities)
+      ? step5.modalities
+      : [primaryModality];
+
+  const modalities = modalitiesRaw.map(mapPrimaryModality) as Modality[];
 
   const level = normalizeLevel(
     step1?.nivelTreino ??
@@ -538,24 +576,29 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
   );
 
   const selectedDays = Array.isArray(step6?.days) ? step6.days : [];
-
-  const daysByModality = {
-    [modalities[0]]: selectedDays,
-  } as Record<Modality, string[]>;
+  const daysByModality = (
+    step6?.diasPorModalidade ||
+    step6?.daysByModality ||
+    { [modalities[0] ?? primaryModality]: selectedDays }
+  ) as Record<Modality, string[]>;
 
   const workout = buildWorkoutWeek({
-    modalities,
+    modalities: modalities.length ? modalities : [primaryModality],
     level,
     daysByModality,
   });
 
-  const targetKcal = Number(
-    step4?.kcalAlvo ??
-      step4?.macros?.calorias ??
-      macros?.targetKcal ??
-      (metabolic as any)?.targetKcal ??
-      0
-  );
+  const trainingPayload = buildTrainingPayloadFromSmartEngine(draft, step3, step5, step6);
+
+  const macrosTargetKcal = Number((macros as any)?.targetKcal ?? 0);
+
+    const targetKcal = Number(
+      step4?.kcalAlvo ??
+        step4?.macros?.calorias ??
+        macrosTargetKcal ??
+        metabolic?.targetKcal ??
+        0
+    );
 
   const nutritionMacros = {
     proteina: Number(step4?.macros?.proteina ?? macros?.proteinG ?? 0),
@@ -564,35 +607,29 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
     calorias: Number(
       step4?.macros?.calorias ??
         step4?.kcalAlvo ??
-        macros?.targetKcal ??
+        macrosTargetKcal ??
         targetKcal
     ),
-
     protein: Number(step4?.macros?.proteina ?? macros?.proteinG ?? 0),
     carbs: Number(step4?.macros?.carboidratos ?? macros?.carbsG ?? 0),
     fat: Number(step4?.macros?.gorduras ?? macros?.fatG ?? 0),
     targetKcal: Number(
       step4?.macros?.calorias ??
         step4?.kcalAlvo ??
-        macros?.targetKcal ??
+        macrosTargetKcal ??
         targetKcal
     ),
   };
 
   const normalizedMeals = Array.isArray(meals) ? meals : [];
 
-  return {
+  const plan: ActivePlanV1 = {
     version: "v1",
     createdAt: new Date().toISOString(),
-
-    metabolic: {
-      ...(metabolic as any),
-      targetKcal,
-    },
-
+    metabolic,
     macros,
     meals: normalizedMeals,
-    workout,
+    workout: trainingPayload?.workout ?? workout,
 
     nutrition: {
       kcalTarget: targetKcal,
@@ -606,6 +643,7 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
     },
 
     training: {
+      ...(trainingPayload?.training ?? {}),
       modality: String(step5?.primary ?? "musculacao"),
       frequency: selectedDays.length,
       week: (workout as any)?.week ?? (workout as any)?.days ?? [],
@@ -616,4 +654,6 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
 
     draft,
   };
+
+  return ensureTrainingPlanInActivePlan(plan) as ActivePlanV1;
 }

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { loadActivePlan } from "@/services/plan.service"
+import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge"
 import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 import { readOnboardingDraftStorage, normalizeDraftKeys } from "@/services/ssot/onboardingDraft.bridge";
@@ -77,6 +78,55 @@ function mfActivityWeeklyLabel(v: unknown) {
   if (x === "ativo") return "Ativo (3–5x/semana)";
   if (x === "muito_ativo" || x === "muito-ativo") return "Muito ativo (5x+/semana)";
   return "—";
+}
+
+function buildCanonicalTrainingReport(activePlan: any) {
+  const workouts = getCanonicalTrainingWorkouts();
+  if (!Array.isArray(workouts) || !workouts.length) return null;
+
+  const createdAt = activePlan?.createdAt ?? new Date().toISOString();
+  const start = new Date(createdAt);
+  const end = new Date(start.getTime() + 28 * 24 * 60 * 60 * 1000);
+
+  return {
+    source: "training.workouts",
+    dataInicio: start.toISOString(),
+    dataFim: end.toISOString(),
+    duracaoSemanas: 4,
+    treino: {
+      divisao: {
+        tipo: "Plano semanal ativo",
+        intensidade: String(workouts[0]?.intensity ?? "auto"),
+      },
+      frequencia: workouts.length,
+      treinos: workouts.map((w: any, idx: number) => {
+        const exercises = (Array.isArray(w?.blocks) ? w.blocks : [])
+          .flatMap((b: any) => Array.isArray(b?.exercises) ? b.exercises : []);
+
+        const grupamentos = Array.from(
+          new Set(exercises.map((ex: any) => ex?.muscleGroup).filter(Boolean).map(String))
+        );
+
+        const volumeTotal = exercises.reduce((acc: number, ex: any) => acc + (Number(ex?.sets ?? 0) || 0), 0);
+
+        return {
+          dia: String(w?.dayLabel ?? w?.dayKey ?? `Dia ${idx + 1}`),
+          grupamentos,
+          volumeTotal,
+          exercicios: exercises.map((ex: any, exIdx: number) => ({
+            exercicio: {
+              nome: String(ex?.name ?? `Exercício ${exIdx + 1}`),
+              grupoMuscular: ex?.muscleGroup,
+            },
+            series: Number(ex?.sets ?? 0) || 0,
+            repeticoes: String(ex?.reps ?? "—"),
+            descanso: Number(ex?.restSec ?? 0) || 0,
+            observacoes: ex?.notes,
+          })),
+        };
+      }),
+    },
+  };
 }
 
 export function Report() {
@@ -330,7 +380,7 @@ export function Report() {
       },
     } : null
   );
-  const treinoAtivo = state.treinoAtivo;
+  const treinoAtivo = buildCanonicalTrainingReport(activePlan) ?? state.treinoAtivo;
   // Calcular dias do plano
   const diasDieta = dietaAtiva ? differenceInDays(new Date(dietaAtiva.dataFim), new Date(dietaAtiva.dataInicio)) : 0
   const diasTreino = treinoAtivo ? differenceInDays(new Date(treinoAtivo.dataFim), new Date(treinoAtivo.dataInicio)) : 0
@@ -547,15 +597,15 @@ export function Report() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-4 rounded-lg bg-[#1E6BFF]/10 border border-[#1E6BFF]/30">
                   <p className="text-xs text-gray-400 mb-1">Divisão</p>
-                  <p className="text-xl font-bold text-[#1E6BFF]">{treinoAtivo.treino.divisao.tipo}</p>
+                  <p className="text-xl font-bold text-[#1E6BFF]">{treinoAtivo.treino?.divisao?.tipo}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
                   <p className="text-xs text-gray-400 mb-1">Frequência</p>
-                  <p className="text-xl font-bold text-green-400">{treinoAtivo.treino.frequencia}x/semana</p>
+                  <p className="text-xl font-bold text-green-400">{treinoAtivo.treino?.frequencia}x/semana</p>
                 </div>
                 <div className="p-4 rounded-lg bg-[#1E6BFF]/10 border border-[#1E6BFF]/30">
                   <p className="text-xs text-gray-400 mb-1">Intensidade</p>
-                  <p className="text-xl font-bold text-[#1E6BFF] capitalize">{treinoAtivo.treino.divisao.intensidade}</p>
+                  <p className="text-xl font-bold text-[#1E6BFF] capitalize">{treinoAtivo.treino?.divisao?.intensidade}</p>
                 </div>
               </div>
 
@@ -565,7 +615,7 @@ export function Report() {
                   <Activity className="w-4 h-4 text-[#1E6BFF]" />
                   Treinos Semanais (Ciclo completo por {Math.floor(diasTreino / 7)} semanas)
                 </h3>
-                {treinoAtivo.treino.treinos.map((treino: any, idx: number) => (
+                {(treinoAtivo.treino?.treinos ?? []).map((treino: any, idx: number) => (
                   <div key={idx} className="p-4 rounded-lg bg-white/5 border border-white/10">
                     <div className="mb-4">
                       <h4 className="font-semibold text-lg">{treino.dia}</h4>

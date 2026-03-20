@@ -67,7 +67,8 @@ const LazyCardioPlan = React.lazy(() => import("@/pages/CardioPlan").then((m) =>
 const LazyHiitPlan = React.lazy(() => import("@/pages/HiitPlan").then((m) => ({ default: m.default })));
 const LazyCorridaPro = React.lazy(() => import("@/pages/CorridaPro").then((m) => ({ default: m.default })));
 
-const MF_METABOLIC_ENGINE_V1_ENABLED = (import.meta as any).env?.VITE_MF_METABOLIC_ENGINE_V1_ENABLED === "true";
+const MF_METABOLIC_ENGINE_V1_ENABLED =
+  (import.meta as any).env?.VITE_MF_METABOLIC_ENGINE_V1_ENABLED === "true";
 
 function App() {
   React.useEffect(() => {
@@ -83,7 +84,10 @@ function App() {
   ) : (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <DrMindSetfitProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} data-testid="mf-router">
+        <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+          data-testid="mf-router"
+        >
           <RouteGuard />
           <OfflineIndicator />
           <LiveLocationPill />
@@ -93,18 +97,14 @@ function App() {
               <Route path="/__engine-preview" element={<EnginePreviewPage />} />
             ) : null}
 
-            {/* MF_STYLEGUIDE_ROUTE_V2 */}
             <Route path="/styleguide" element={<StyleGuidePage />} />
 
-            {/* Suite / Core */}
             <Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
             <Route path="/perfil" element={<Navigate to="/onboarding/step-1" replace />} />
             <Route path="/profile" element={<Navigate to="/onboarding/step-1" replace />} />
 
-            {/* Diagnóstico */}
             <Route path="/diagnostic" element={<DiagnosticPage />} />
 
-            {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
             <Route path="/" element={<Navigate to="/onboarding/step-1" replace />} />
 
             {/* Públicas */}
@@ -144,7 +144,7 @@ function App() {
 
             {/* Dashboard Premium */}
             <Route
-              path="/DashboardPremium"
+              path="/dashboardpremium"
               element={
                 <ProtectedRoute requiresPremium>
                   <ErrorBoundary name="DashboardPremium">
@@ -154,7 +154,8 @@ function App() {
               }
             />
 
-            <Route path="/DashboardPremium" element={<Navigate to="/DashboardPremium" replace />} />
+            {/* Compat para maiúsculas antigas */}
+            <Route path="/DashboardPremium" element={<Navigate to="/dashboardpremium" replace />} />
 
             {/* Premium */}
             <Route
@@ -266,7 +267,7 @@ function App() {
             <Route path="/conflicts" element={<MFSuspense><LazyConflictsPage /></MFSuspense>} />
             <Route path="/progress" element={<MFSuspense><LazyProgressPage /></MFSuspense>} />
             <Route path="/workout/:id" element={<MFSuspense><LazyWorkoutDetailsPage /></MFSuspense>} />
-            <Route path="/live-workout" element={<MFSuspense><LazyLiveWorkoutPage /></MFSuspense>} />      
+            <Route path="/live-workout" element={<MFSuspense><LazyLiveWorkoutPage /></MFSuspense>} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/diagnostic" replace />} />

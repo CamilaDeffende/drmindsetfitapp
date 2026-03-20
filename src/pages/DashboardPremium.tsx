@@ -31,8 +31,10 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { loadActivePlan } from "@/services/plan.service";
-import { ACTIVE_PLAN_KEY } from "../services/activePlan.bridge";
+import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
+import { getCanonicalTrainingLoadHistory } from "@/services/training/trainingExecution.service";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
@@ -206,34 +208,20 @@ export function DashboardPremium() {
   }, []);
 
   useEffect(() => {
-    const ls = (k: string) => {
+    const hasCanonicalPlan = () => {
       try {
-        return localStorage.getItem(k);
+        const ap = loadActivePlan();
+        const workouts = getCanonicalTrainingWorkouts();
+        return !!ap || workouts.length > 0;
       } catch {
-        return null;
+        return false;
       }
     };
 
-    const hasPlan =
-      !!ls(ACTIVE_PLAN_KEY) ||
-      !!ls("mindsetfit_active_plan_v1") ||
-      !!ls("mindsetfit_activePlanV1") ||
-      !!ls("activePlanV1") ||
-      !!ls("planV1") ||
-      !!ls("planoAtivo");
-
-    setNoPlan(!hasPlan);
+    setNoPlan(!hasCanonicalPlan());
 
     const interval = window.setInterval(() => {
-      const hasNow =
-        !!ls(ACTIVE_PLAN_KEY) ||
-        !!ls("mindsetfit_active_plan_v1") ||
-        !!ls("mindsetfit_activePlanV1") ||
-        !!ls("activePlanV1") ||
-        !!ls("planV1") ||
-        !!ls("planoAtivo");
-
-      setNoPlan(!hasNow);
+      setNoPlan(!hasCanonicalPlan());
     }, 1500);
 
     return () => window.clearInterval(interval);
@@ -247,9 +235,45 @@ export function DashboardPremium() {
     ? ((state as any).consumoCalorias as ConsumoDia[])
     : [];
 
-  const historicoCargas: CargaDia[] = Array.isArray((state as any)?.treino?.historicoCargas)
-    ? ((state as any).treino.historicoCargas as CargaDia[])
-    : [];
+  const historicoCargas: CargaDia[] = (() => {
+    const canonical = getCanonicalTrainingLoadHistory();
+    if (Array.isArray(canonical) && canonical.length) return canonical as CargaDia[];
+
+    return Array.isArray((state as any)?.treino?.historicoCargas)
+      ? ((state as any).treino.historicoCargas as CargaDia[])
+      : [];
+  })();
+
+  const progressionHighlights = useMemo(() => {
+    const workouts = getCanonicalTrainingWorkouts();
+
+    const exercises = workouts.flatMap((w: any) =>
+      Array.isArray(w?.blocks)
+        ? w.blocks.flatMap((b: any) => (Array.isArray(b?.exercises) ? b.exercises : []))
+        : []
+    );
+
+    const seen = new Set<string>();
+
+    const suggestions = exercises
+      .map((ex: any) =>
+        getExerciseProgressionSuggestion({
+          exerciseId: ex?.exerciseId ?? ex?.id,
+          exerciseName: ex?.name ?? ex?.nome,
+          currentSets: ex?.sets,
+          currentReps: ex?.reps,
+        })
+      )
+      .filter(Boolean)
+      .filter((sug: any) => {
+        const key = String(sug?.exerciseId ?? "");
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+    return suggestions.slice(0, 3);
+  }, []);
 
   const nutrition = useMemo(() => {
     return (
@@ -332,6 +356,7 @@ export function DashboardPremium() {
   useEffect(() => {
     const dataHoje = format(new Date(), "yyyy-MM-dd");
     const passosDia = passosDiarios.find((p) => p.data === dataHoje);
+
     if (passosDia) {
       setPassosHoje((prev) => Math.max(prev, passosDia.passos));
     } else {
@@ -701,6 +726,22 @@ export function DashboardPremium() {
             </CardHeader>
 
             <CardContent className="space-y-4">
+              {progressionHighlights.length ? (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <div className="text-sm font-semibold">Próximas progressões sugeridas</div>
+                  <div className="mt-2 space-y-2">
+                    {progressionHighlights.map((item: any, idx: number) => (
+                      <div key={`${item.exerciseId}-${idx}`} className="rounded-lg bg-black/20 p-2 text-xs sm:text-sm">
+                        <span className="font-semibold">
+                          {item.suggestedLoadKg != null ? `${item.suggestedLoadKg} kg` : "Manter"}
+                        </span>
+                        <span className="text-muted-foreground"> • {item.rationale}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {nextMeal ? (
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                   <div className="text-[16px] font-semibold text-white">

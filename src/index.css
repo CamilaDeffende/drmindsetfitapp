@@ -1,3 +1,4 @@
+@import "./styles/mf-neon.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

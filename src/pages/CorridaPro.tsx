@@ -11,6 +11,8 @@ import type { RunSample } from "@/features/run-pro/engine/types";
 
 import { RunProElitePanel } from "@/features/run-pro/components/RunProElitePanel";
 
+import { MFScreen } from "@/components/mf/MFScreen";
+import { MFGlassCard } from "@/components/mf/MFGlassCard";
 type LatLng = { lat: number; lng: number };
 function statusLabel(status: string) {
   switch (status) {
@@ -19,7 +21,8 @@ function statusLabel(status: string) {
     case "acquiring":
       return "Captando sinal GPS…";
     case "ready":
-      return "Pronto para iniciar";case "recording":
+      return "Pronto para iniciar";
+    case "recording":
       return "Gravando";
     case "paused":
       return "Pausado";
@@ -89,18 +92,64 @@ export default function CorridaPro() {
   const stats = useMemo(() => computeRunStats(derivedSamples), [derivedSamples]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <MFScreen>
+
+    <div className="min-h-screen">
       <div className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Corrida PRO</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <h1 className="mf-title">Corrida PRO</h1>
+            <p className="mf-subtitle" style={{ marginTop: 6 }}>
               {statusLabel(status)} • {hint}
             </p>
           </div>
         </div>
 
-        <div className="mt-6">
+        
+        {/* MF_HEADER_PREMIUM_V3 */}
+        <div className="mt-4 mf-card-gap">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mf-chip"><strong>Status</strong> {statusLabel(status)}</span>
+            <span className="mf-chip">
+              <strong>Precisão</strong>{" "}
+              {typeof metrics?.lastAccuracyM === "number" ? Math.round(metrics.lastAccuracyM) + "m" : "—"}
+            </span>
+            <span className="mf-chip"><strong>Pontos</strong> {derivedSamples.length}</span>
+          </div>
+
+          <MFGlassCard>
+            <div className="mf-row-between">
+              <div>
+                <div className="mf-subtitle">TREINO AO VIVO</div>
+                <div className="mf-metric-xl">{(() => { const ms = metrics?.elapsedMs ?? 0; const total = Math.max(0, Math.floor(ms / 1000)); const mm = String(Math.floor(total / 60)).padStart(2, "0"); const ss = String(total % 60).padStart(2, "0"); return `${mm}:${ss}`; })()}</div>
+                <div className="mf-metric-row">
+                  <span>
+                    Dist:{" "}
+                    <strong style={{ color: "var(--mf-text-0)" }}>
+                      {typeof (stats as any)?.distanceKm === "number" ? (stats as any).distanceKm.toFixed(2) : "0.00"} km
+                    </strong>
+                  </span>
+                  <span>•</span>
+                  <span>
+                    Pace:{" "}
+                    <strong style={{ color: "var(--mf-text-0)" }}>
+                      {(stats as any)?.paceLabel ?? "—"}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: 8, justifyItems: "end" }}>
+                <div className="mf-subtitle">DICAS</div>
+                <div className="mf-muted" style={{ fontSize: 12, maxWidth: 240, textAlign: "right" }}>
+                  {hint}
+                </div>
+              </div>
+            </div>
+          </MFGlassCard>
+        </div>
+
+<div className="mt-6">
           <RunControlsCard
             supportsGeo={supportsGeo}
             gpsAccuracyM={metrics?.lastAccuracyM}
@@ -114,13 +163,13 @@ export default function CorridaPro() {
 
       {/* RUNPRO_MAP_PREMIUM */}
       <div className="mx-auto max-w-6xl px-4 pt-4">
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="mf-glass relative overflow-hidden">
           <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-[11px] font-medium text-muted-foreground backdrop-blur">
+            <span className="mf-chip">
               <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
               GPS LIVE
             </span>
-            <span className="inline-flex items-center rounded-full border border-border bg-background/70 px-3 py-1 text-[11px] font-medium text-muted-foreground backdrop-blur">
+            <span className="mf-chip">
               Precisão: {typeof metrics?.lastAccuracyM === "number" ? Math.round(metrics.lastAccuracyM) + "m" : "—"}
             </span>
           </div>
@@ -191,5 +240,7 @@ export default function CorridaPro() {
     
   <div className="mt-4"><RunProElitePanel /></div>
 </div>
+  
+    </MFScreen>
   );
 }

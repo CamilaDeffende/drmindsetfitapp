@@ -11,25 +11,17 @@ import { useApp } from "@/contexts/AppContext";
 import { migrateLegacyToSSOT } from "@/services/activePlan.bridge";
 import { loadOnboardingProgress, saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { guardOnboardingPath } from "@/lib/onboardingGuard";
-import { BrandIcon } from "@/components/branding/BrandIcon";
-
 import { Step1Perfil } from "@/components/steps/Step1Perfil";
 import Step2Avaliacao from "@/components/steps/Step2Avaliacao";
 import Step3Metabolismo from "@/components/steps/Step3Metabolismo";
 import { Step4Nutricao } from "@/components/steps/Step4Nutricao";
-
 import Step5Modalidades from "@/components/steps/Step5Modalidades";
-import Step6DiasSemana from "@/components/steps/Step6DiasSemana";
+import Step6PlanoTreinos from "@/components/steps/Step6PlanoTreinos";
 import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
+import { writeOnboardingDraftStorage, normalizeDraftKeys } from "@/services/ssot/onboardingDraft.bridge";
+import { BrandIcon } from "@/components/branding/BrandIcon";
 
-// MF_ONBOARDING_SSOT_BRIDGE_V1
-import {
-  writeOnboardingDraftStorage,
-  normalizeDraftKeys,
-} from "@/services/ssot/onboardingDraft.bridge";
-
-// MF_REDIRECT_LOOP_GUARD_V1
 function mfNavGuard(to: string) {
   try {
     const k = "mf:navguard:v1";
@@ -97,7 +89,6 @@ function loadDraft(): Draft {
 function saveDraft(d: Draft) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(d));
-    // MF_ONBOARDING_SSOT_BRIDGE_V1 (canonical key p/ Report + compat)
     try {
       writeOnboardingDraftStorage(normalizeDraftKeys(d || {}));
     } catch {}
@@ -160,11 +151,14 @@ export function OnboardingFlow() {
   void mfStuck;
   void mfPath;
   void mfResetOnboarding;
-  void clearOnboardingDraft;
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
+  const { appReady } = useApp();
 
   const mfClampStep = (n: number) => Math.max(1, Math.min(8, n));
+
   const mfGotoStep = (n: number) => {
     const step = mfClampStep(n);
     const to = `/onboarding/step-${step}`;
@@ -188,9 +182,7 @@ export function OnboardingFlow() {
     }
   };
 
-  const location = useLocation();
   const __mfLastNavRef = useRef<string | null>(null);
-
   const mfSafeNavigate = (to: string, opts?: any) => {
     try {
       if (!to) return;
@@ -214,24 +206,8 @@ export function OnboardingFlow() {
     } catch {}
   }, []);
 
-  const { appReady } = useApp();
-
-  const isNative = typeof window !== "undefined" && !!(window as any).Capacitor;
-  const [mfForceReady, setMfForceReady] = useState(false);
-
-  useEffect(() => {
-    if (!isNative) return;
-    const t = window.setTimeout(() => {
-      console.warn("MF_APPREADY_TIMEOUT: liberando onboarding no nativo");
-      setMfForceReady(true);
-    }, 4000);
-    return () => window.clearTimeout(t);
-  }, [isNative]);
-
-  const mfAppReady =
-    Boolean(appReady) ||
-    Boolean(import.meta.env.DEV) ||
-    (isNative && mfForceReady);
+  const SHOW_LEGACY_NAV = false;
+  const mfAppReady = Boolean(appReady) || Boolean(import.meta.env.DEV);
 
   const [draft, setDraft] = useState<Draft>(() => loadDraft());
   const [active, setActive] = useState<number>(() => {
@@ -239,7 +215,6 @@ export function OnboardingFlow() {
     return Number.isFinite(i) ? i : 0;
   });
 
-  const params = useParams();
   const __clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
   const __stepFromUrl = (() => {
     const raw = String((params as any)?.step || "").replace(/[^0-9]/g, "");
@@ -267,7 +242,7 @@ export function OnboardingFlow() {
         saveOnboardingProgress({ step: active + 1 });
       } catch {}
     } catch {}
-  }, [active]);
+  }, [active, location?.pathname]);
 
   useEffect(() => {
     saveDraft({ ...draft, activeIndex: active });
@@ -306,14 +281,14 @@ export function OnboardingFlow() {
   }
 
   if (isOnboardingDone()) {
+    navigate("/dashboard", { replace: true });
     return null;
   }
 
   const steps = [
     {
       key: "step1",
-      title: "Dados para calibração",
-      subtitle: "Base científica para personalizar metabolismo, treino e nutrição.",
+      title: "Objetivo e Perfil",
       render: () => (
         <Step1Perfil
           value={(draft as any).step1 || {}}
@@ -324,8 +299,7 @@ export function OnboardingFlow() {
     },
     {
       key: "step2",
-      title: "Atividade física semanal",
-      subtitle: "Esse dado ajuda a calibrar seu gasto energético total diário.",
+      title: "Dados corporais",
       render: () => (
         <Step2Avaliacao
           value={(draft as any).step2 || {}}
@@ -337,8 +311,7 @@ export function OnboardingFlow() {
     },
     {
       key: "step3",
-      title: "Metabolismo calibrado",
-      subtitle: "Base científica para definir calorias e macros com segurança.",
+      title: "Nível de atividade",
       render: () => (
         <Step3Metabolismo
           value={(draft as any).step3 || {}}
@@ -350,8 +323,7 @@ export function OnboardingFlow() {
     },
     {
       key: "step4",
-      title: "Faixa calórica segura",
-      subtitle: "Base científica para definir calorias e macros com segurança.",
+      title: "Nutrição",
       render: () => (
         <Step4Nutricao
           value={(draft as any).step4 || {}}
@@ -364,7 +336,6 @@ export function OnboardingFlow() {
     {
       key: "step5",
       title: "Modalidades",
-      subtitle: "Vamos definir os pilares do seu protocolo semanal.",
       render: () => (
         <Step5Modalidades
           value={draft.step5 || { primary: null, secondary: null }}
@@ -377,9 +348,8 @@ export function OnboardingFlow() {
     {
       key: "step6",
       title: "Dias da semana",
-      subtitle: "Distribuição inteligente para rotina sustentável.",
       render: () => (
-        <Step6DiasSemana
+        <Step6PlanoTreinos
           value={draft.step6 || { days: [] }}
           onChange={(v: any) => setDraft((d) => ({ ...d, step6: v }))}
           onNext={goNext}
@@ -390,7 +360,6 @@ export function OnboardingFlow() {
     {
       key: "step7",
       title: "Preferências",
-      subtitle: "Ajustes finais para aumentar aderência.",
       render: () => (
         <Step7Preferencias
           value={draft.step7 || { dieta: "flexivel" }}
@@ -403,7 +372,6 @@ export function OnboardingFlow() {
     {
       key: "step8",
       title: "Confirmação",
-      subtitle: "Tudo pronto para gerar seu plano premium.",
       render: () => (
         <Step8Confirmacao
           summary={draft}
@@ -421,11 +389,14 @@ export function OnboardingFlow() {
             } catch {}
 
             try {
-              navigate("/assinatura?source=onboarding", { replace: true });
-            } catch {
-              window.location.replace("/assinatura");
-            }
+              clearOnboardingDraft();
+            } catch {}
 
+            try {
+              navigate("/dashboard", { replace: true });
+            } catch {
+              window.location.replace("/dashboard");
+            }
           }}
         />
       ),
@@ -456,11 +427,6 @@ export function OnboardingFlow() {
               <h1 className="mt-2 text-[28px] leading-[1.08] font-semibold tracking-tight text-white">
                 {current?.title || "Onboarding"}
               </h1>
-              {current?.subtitle ? (
-                <p className="mt-2 text-[13px] leading-5 text-white/55">
-                  {current.subtitle}
-                </p>
-              ) : null}
             </div>
 
             <div className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-medium text-white/65">
@@ -482,6 +448,56 @@ export function OnboardingFlow() {
           </span>
         </div>
       </div>
+
+      <div className="mt-6 flex items-center justify-end">
+        <button
+          data-testid="onboarding-next"
+          data-mf="mf-next"
+          type="button"
+          onClick={() => {
+            try {
+              if (current?.key === "step1") {
+                const nome = String((draft as any).step1?.nomeCompleto || "").trim();
+                if (!nome || nome.length < 3) {
+                  alert("Digite seu nome completo antes de continuar.");
+                  return;
+                }
+              }
+            } catch {}
+
+            try {
+              goNext();
+            } catch {}
+
+            try {
+              const __path = window.location.pathname || "";
+              if (__path.startsWith("/onboarding")) {
+                const m = __path.match(/\/onboarding\/step-(\d+)\b/);
+                const __cur = m && m[1] ? Number(m[1]) || 1 : 1;
+                const __dest =
+                  __cur >= 8 ? "/dashboard" : `/onboarding/step-${__cur + 1}`;
+                mfSafeNavigate(__dest, { replace: true });
+              }
+            } catch {}
+          }}
+          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
+        >
+          Continuar
+        </button>
+      </div>
+
+      {SHOW_LEGACY_NAV && (
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={goBack}
+            className="px-4 py-2 rounded-xl border border-white/10 text-sm opacity-90 hover:opacity-100"
+            data-mf="mf-back"
+          >
+            Voltar
+          </button>
+        </div>
+      )}
     </div>
   );
 }

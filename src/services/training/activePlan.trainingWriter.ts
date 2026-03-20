@@ -1,3 +1,15 @@
+/**
+ * SSOT TREINO OFICIAL
+ * Fonte primária:
+ * - activePlan.training.smartPlan
+ * - activePlan.training.workouts
+ *
+ * Compatibilidade derivada temporária:
+ * - activePlan.workout.week
+ *
+ * state.treino/state.treinoAtivo e builders legados NÃO são fonte principal.
+ */
+
 import { ensureTrainingPlanInActivePlan } from "./trainingPlan.ssot";
 
 /**
