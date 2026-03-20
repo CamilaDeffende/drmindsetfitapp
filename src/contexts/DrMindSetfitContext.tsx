@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import type { DrMindSetfitState } from "@/types";
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
 interface DrMindSetfitContextType {
   state: DrMindSetfitState;
@@ -13,6 +14,7 @@ const DrMindSetfitContext = createContext<DrMindSetfitContextType | undefined>(u
 
 export const STORAGE_KEY = "drmindsetfit_state";
 const ONBOARDING_DONE_KEY = "mf:onboarding:done:v1";
+const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
 
 const initialState: DrMindSetfitState = {
   etapaAtual: 1,
@@ -30,18 +32,139 @@ const readOnboardingDoneFlag = (): boolean => {
   }
 };
 
+const readActivePlan = (): any | null => {
+  try {
+    const raw = localStorage.getItem(ACTIVE_PLAN_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.error("Erro ao carregar activePlan:", error);
+    return null;
+  }
+};
+
+const buildStateFromActivePlan = (activePlan: any): Partial<DrMindSetfitState> => {
+  if (!activePlan) return {};
+
+  const adaptedNutrition = adaptActivePlanNutrition(activePlan?.nutrition);
+
+  const refeicoes =
+    adaptedNutrition?.refeicoes ??
+    activePlan?.nutrition?.refeicoes ??
+    activePlan?.nutrition?.meals ??
+    activePlan?.meals ??
+    [];
+
+  const macros = adaptedNutrition?.macros ?? {
+    calorias:
+      activePlan?.nutrition?.macros?.calorias ??
+      activePlan?.nutrition?.kcalTarget ??
+      activePlan?.metabolic?.targetKcal ??
+      0,
+    proteina:
+      activePlan?.nutrition?.macros?.proteina ??
+      activePlan?.nutrition?.macros?.protein ??
+      activePlan?.macros?.proteinG ??
+      0,
+    carboidratos:
+      activePlan?.nutrition?.macros?.carboidratos ??
+      activePlan?.nutrition?.macros?.carbs ??
+      activePlan?.macros?.carbsG ??
+      0,
+    gorduras:
+      activePlan?.nutrition?.macros?.gorduras ??
+      activePlan?.nutrition?.macros?.fat ??
+      activePlan?.macros?.fatG ??
+      0,
+  };
+
+  const nutricao = {
+    ...(activePlan?.nutrition ?? {}),
+    kcalAlvo:
+      activePlan?.nutrition?.kcalTarget ??
+      activePlan?.nutrition?.kcal ??
+      activePlan?.metabolic?.targetKcal ??
+      0,
+    caloriasAlvo:
+      activePlan?.nutrition?.kcalTarget ??
+      activePlan?.nutrition?.kcal ??
+      activePlan?.metabolic?.targetKcal ??
+      0,
+    macros,
+    refeicoes,
+  };
+
+  const hoje = new Date();
+  const dataInicio = hoje.toISOString().split("T")[0];
+  const dataFim = new Date(hoje.getTime() + 28 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+
+  const dietaAtiva = {
+    dataInicio,
+    dataFim,
+    duracaoSemanas: 4,
+    estrategia:
+      activePlan?.nutrition?.strategy ??
+      activePlan?.nutrition?.preference ??
+      "Dieta 4 semanas",
+    nutricao,
+  };
+
+  const treino = {
+    ...(activePlan?.training ?? {}),
+    week:
+      activePlan?.training?.week ??
+      activePlan?.training?.days ??
+      activePlan?.workout?.week ??
+      activePlan?.workout?.days ??
+      [],
+    days:
+      activePlan?.training?.days ??
+      activePlan?.training?.week ??
+      activePlan?.workout?.days ??
+      activePlan?.workout?.week ??
+      [],
+    modality:
+      activePlan?.training?.modality ??
+      activePlan?.workout?.modality ??
+      "musculacao",
+    frequency:
+      activePlan?.training?.frequency ??
+      activePlan?.training?.selectedDays?.length ??
+      0,
+  };
+
+  const treinoAtivo = {
+    dataInicio,
+    dataFim,
+    duracaoSemanas: 4,
+    estrategia: "Treino 4 semanas",
+    treino,
+    cargasPorSerie: [],
+  };
+
+  return {
+    nutricao,
+    dietaAtiva,
+    treino,
+    treinoAtivo,
+  };
+};
+
 // Função para carregar estado do localStorage
 const loadStateFromStorage = (): DrMindSetfitState => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     const onboardingDone = readOnboardingDoneFlag();
+    const activePlan = readActivePlan();
+    const activePlanState = buildStateFromActivePlan(activePlan);
 
     if (stored) {
       const parsed = JSON.parse(stored) as DrMindSetfitState;
       return {
         ...initialState,
         ...parsed,
-        // se o onboarding real já foi concluído, sincroniza isso no contexto
+        ...activePlanState,
         concluido: Boolean(parsed?.concluido) || onboardingDone,
       };
     }
@@ -49,9 +172,16 @@ const loadStateFromStorage = (): DrMindSetfitState => {
     if (onboardingDone) {
       return {
         ...initialState,
+        ...activePlanState,
         concluido: true,
       };
     }
+
+    return {
+      ...initialState,
+      ...activePlanState,
+      concluido: onboardingDone,
+    };
   } catch (error) {
     console.error("Erro ao carregar estado:", error);
   }
@@ -77,12 +207,36 @@ export function DrMindSetfitProvider({ children }: { children: ReactNode }) {
   // Mantém concluido sincronizado com o flag do onboarding
   useEffect(() => {
     const onboardingDone = readOnboardingDoneFlag();
+    const activePlan = readActivePlan();
+    const activePlanState = buildStateFromActivePlan(activePlan);
 
     if (onboardingDone && !state.concluido) {
       setState((prev) => ({
         ...prev,
+        ...activePlanState,
         concluido: true,
       }));
+      return;
+    }
+
+    // Se existir activePlan e o state ainda não estiver hidratado, sincroniza
+    const precisaHidratarDieta =
+      !!activePlan &&
+      (!state.dietaAtiva ||
+        !state.nutricao ||
+        !Array.isArray((state as any)?.nutricao?.refeicoes) ||
+        (state as any)?.nutricao?.refeicoes?.length === 0);
+
+    if (precisaHidratarDieta) {
+      setState((prev) => {
+        const merged = {
+          ...prev,
+          ...activePlanState,
+          concluido: prev.concluido || onboardingDone,
+        };
+        saveStateToStorage(merged);
+        return merged;
+      });
       return;
     }
 

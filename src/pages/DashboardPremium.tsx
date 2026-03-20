@@ -17,9 +17,8 @@ import {
   CalendarDays,
   Download,
   Home,
-  ChevronDown,
-  ChevronUp,
   Crown,
+  LogOut,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -40,6 +39,15 @@ import { getExerciseProgressionSuggestion } from "@/services/training/trainingPr
 import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
 import { getLatestTrainingMotorDecisions } from "@/services/training/trainingDecision.service";
 import { getCanonicalTrainingLoadHistory } from "@/services/training/trainingExecution.service";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 type PassosDia = { data: string; passos: number };
 type ConsumoDia = { data: string; consumido: number };
@@ -49,6 +57,11 @@ type CargaDia = {
   exercicioId?: string;
   exercicioNome?: string;
 };
+
+type PremiumStatus = {
+  plan: "free" | "trial" | "monthly" | "annual";
+  daysLeft: number;
+} | null;
 
 function toNum(v: unknown, fallback = 0) {
   const n = Number(v);
@@ -114,9 +127,38 @@ function getNextMealByTime(meals: any[]) {
   return parsedMeals[0].meal;
 }
 
+function getPremiumStatus(): PremiumStatus {
+  try {
+    const raw = localStorage.getItem("mindsetfit:subscription:v1");
+    if (!raw) return null;
+
+    const sub = JSON.parse(raw);
+    const plan = String(sub?.plan ?? "free") as "free" | "trial" | "monthly" | "annual";
+    const expiresAtISO = sub?.expiresAtISO ? String(sub.expiresAtISO) : "";
+    const active = Boolean(sub?.active);
+
+    if (!active || plan === "free" || !expiresAtISO) return null;
+
+    const expiresAt = Date.parse(expiresAtISO);
+    if (!Number.isFinite(expiresAt)) return null;
+
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diff = expiresAt - Date.now();
+    const daysLeft = Math.max(Math.ceil(diff / msPerDay), 0);
+
+    return {
+      plan,
+      daysLeft,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function DashboardPremium() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const [activePlan, setActivePlan] = useState<any>(null);
   const [noPlan, setNoPlan] = useState(false);
@@ -126,10 +168,20 @@ export function DashboardPremium() {
   const [cargaSemana, setCargaSemana] = useState(0);
   const [horaAtual, setHoraAtual] = useState(new Date());
 
-  const [showFullMeals, setShowFullMeals] = useState(false);
   const [showWorkoutWeek, setShowWorkoutWeek] = useState(false);
+  const [premiumStatus, setPremiumStatus] = useState<PremiumStatus>(null);
 
   const adapted = adaptActivePlanNutrition(activePlan?.nutrition);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  };
 
   useEffect(() => {
     try {
@@ -144,6 +196,17 @@ export function DashboardPremium() {
       setHoraAtual(new Date());
     }, 1000);
 
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const updatePremiumStatus = () => {
+      setPremiumStatus(getPremiumStatus());
+    };
+
+    updatePremiumStatus();
+
+    const interval = window.setInterval(updatePremiumStatus, 60 * 1000);
     return () => window.clearInterval(interval);
   }, []);
 
@@ -178,16 +241,17 @@ export function DashboardPremium() {
   const historicoCargas: CargaDia[] = (() => {
     const canonical = getCanonicalTrainingLoadHistory();
     if (Array.isArray(canonical) && canonical.length) return canonical as CargaDia[];
+
     return Array.isArray((state as any)?.treino?.historicoCargas)
       ? ((state as any).treino.historicoCargas as CargaDia[])
       : [];
   })();
 
-
   const readinessSnapshot = useMemo(() => getTrainingReadinessSnapshot(), []);
 
   const progressionHighlights = useMemo(() => {
     const workouts = getCanonicalTrainingWorkouts();
+
     const exercises = workouts.flatMap((w: any) =>
       Array.isArray(w?.blocks)
         ? w.blocks.flatMap((b: any) => (Array.isArray(b?.exercises) ? b.exercises : []))
@@ -195,6 +259,7 @@ export function DashboardPremium() {
     );
 
     const seen = new Set<string>();
+
     const suggestions = exercises
       .map((ex: any) =>
         getExerciseProgressionSuggestion({
@@ -232,10 +297,10 @@ export function DashboardPremium() {
   const meals = Array.isArray(nutrition?.refeicoes)
     ? nutrition.refeicoes
     : Array.isArray(nutrition?.meals)
-    ? nutrition.meals
-    : Array.isArray(activePlan?.meals)
-    ? activePlan.meals
-    : [];
+      ? nutrition.meals
+      : Array.isArray(activePlan?.meals)
+        ? activePlan.meals
+        : [];
 
   const derivedMealMacros = useMemo(() => sumMealMacros(meals), [meals]);
 
@@ -298,6 +363,7 @@ export function DashboardPremium() {
   useEffect(() => {
     const dataHoje = format(new Date(), "yyyy-MM-dd");
     const passosDia = passosDiarios.find((p) => p.data === dataHoje);
+
     if (passosDia) {
       setPassosHoje((prev) => Math.max(prev, passosDia.passos));
     } else {
@@ -424,69 +490,61 @@ export function DashboardPremium() {
 
   return (
     <div className="min-h-screen mf-app-bg mf-bg-neon text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgba(5,8,16,0.78)] backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgba(5,8,16,0.82)] backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-3 py-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <BrandIcon
+              size={72}
+              className="shrink-0 drop-shadow-[0_0_14px_rgba(0,190,255,0.35)]"
+            />
 
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center">
-
-            {/* ESQUERDA */}
-            <div className="flex items-center gap-3">
-
-              <BrandIcon
-                size={30}
-                className="drop-shadow-[0_0_10px_rgba(0,190,255,0.35)] bg-transparent"
-              />
-
-              <div className="text-sm text-white/70">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-cyan-300/80">
+                Premium
+              </div>
+              <div className="truncate text-[12px] text-white/65">
                 Seu plano completo liberado
               </div>
-
             </div>
 
-
-            {/* CENTRO — relógio menor */}
-            <div className="flex justify-center">
-
-              <div className="rounded-xl border border-cyan-300/10 bg-[rgba(10,18,30,0.85)] px-4 py-2 text-center">
-              
-                <div className="text-[20px] font-semibold tracking-[0.08em] text-cyan-300">
-                  {format(horaAtual, "HH:mm:ss")}
-                </div>
-
-                <div className="text-[10px] text-white/50">
-                  {format(horaAtual, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                </div>
-
+            <div className="rounded-xl border border-cyan-300/10 bg-[rgba(10,18,30,0.92)] px-2.5 py-1.5 text-center shadow-[0_0_18px_rgba(0,149,255,0.10)]">
+              <div className="text-[13px] font-semibold leading-none tracking-[0.05em] text-cyan-300 sm:text-[15px]">
+                {format(horaAtual, "HH:mm:ss")}
               </div>
-
+              <div className="mt-1 text-[8px] leading-none text-white/45 sm:text-[9px]">
+                {format(horaAtual, "dd/MM", { locale: ptBR })}
+              </div>
             </div>
 
-
-            {/* DIREITA */}
-            <div className="flex justify-end gap-2">
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => navigate(getHomeRoute())}
+                className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
+              >
+                <Home className="h-4 w-4" />
+              </Button>
 
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => navigate("/")}
-                className="border-white/10 bg-black/20 text-white hover:bg-white/5"
+                onClick={exportarPDF}
+                className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
               >
-                <Home className="w-4 h-4" />
+                <Download className="h-4 w-4" />
               </Button>
 
               <Button
                 variant="outline"
-                onClick={exportarPDF}
-                className="border-white/10 bg-black/20 text-white hover:bg-white/5"
+                size="icon"
+                onClick={handleLogout}
+                className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Exportar PDF
+                <LogOut className="h-4 w-4" />
               </Button>
-
             </div>
-
           </div>
-
         </div>
       </header>
 
@@ -497,7 +555,9 @@ export function DashboardPremium() {
               <div className="max-w-2xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold text-cyan-300">
                   <Crown className="h-3.5 w-3.5" />
-                  Premium ativo
+                  {premiumStatus
+                    ? `${premiumStatus.plan === "trial" ? "Trial ativo" : "Premium ativo"} • ${premiumStatus.daysLeft} dia${premiumStatus.daysLeft === 1 ? "" : "s"} restantes`
+                    : "Premium ativo"}
                 </div>
 
                 <h2 className="mt-3 text-[28px] leading-[1.05] font-semibold tracking-tight text-white">
@@ -673,83 +733,102 @@ export function DashboardPremium() {
             </CardHeader>
 
             <CardContent className="space-y-4">
-                        {latestMotorDecisions.length ? (
-              <Card className="glass-effect border-cyan-500/20">
-                <CardHeader>
-                  <CardTitle className="text-base">Últimas decisões do motor</CardTitle>
-                  <CardDescription>Resumo explicável do raciocínio aplicado nas sessões recentes.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {latestMotorDecisions.map((item, idx) => (
-                    <div key={item.id ?? idx} className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-semibold">{item.title ?? item.modality ?? "Sessão"}</div>
-                        <div className="text-[11px] text-muted-foreground capitalize">{item.confidence}</div>
+              {latestMotorDecisions.length ? (
+                <Card className="border-cyan-500/20 bg-white/5">
+                  <CardHeader>
+                    <CardTitle className="text-base">Últimas decisões do motor</CardTitle>
+                    <CardDescription>
+                      Resumo explicável do raciocínio aplicado nas sessões recentes.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {latestMotorDecisions.map((item: any, idx: number) => (
+                      <div
+                        key={item.id ?? idx}
+                        className="rounded-xl border border-white/10 bg-white/5 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm font-semibold">
+                            {item.title ?? item.modality ?? "Sessão"}
+                          </div>
+                          <div className="text-[11px] text-white/50 capitalize">
+                            {item.confidence}
+                          </div>
+                        </div>
+                        <div className="mt-1 text-xs text-white/50">
+                          {item.decisionType}
+                        </div>
+                        <div className="mt-2 text-sm">{item.rationale}</div>
                       </div>
-                      <div className="mt-1 text-xs text-muted-foreground">{item.decisionType}</div>
-                      <div className="mt-2 text-sm">{item.rationale}</div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              <Card className="border-white/10 bg-white/5">
+                <CardHeader>
+                  <CardTitle className="text-base">Prontidão + deload inteligente</CardTitle>
+                  <CardDescription>
+                    Fadiga regional e decisão de deload do microciclo atual.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div className="text-[11px] text-white/50">Score</div>
+                      <div className="mt-1 text-xl font-bold">{readinessSnapshot.score}</div>
                     </div>
-                  ))}
+
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div className="text-[11px] text-white/50">Nível</div>
+                      <div className="mt-1 text-sm font-semibold capitalize">
+                        {readinessSnapshot.level}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div className="text-[11px] text-white/50">Recomendação</div>
+                      <div className="mt-1 text-sm font-semibold capitalize">
+                        {readinessSnapshot.recommendation}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div className="text-[11px] text-white/50">Ajuste</div>
+                      <div className="mt-1 text-sm font-semibold">
+                        {readinessSnapshot.recommendedLoadAdjustmentPct > 0
+                          ? `+${readinessSnapshot.recommendedLoadAdjustmentPct}%`
+                          : `${readinessSnapshot.recommendedLoadAdjustmentPct}%`}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="text-xs text-white/50">Racional</div>
+                    <div className="mt-1 text-sm">{readinessSnapshot.rationale}</div>
+                  </div>
                 </CardContent>
               </Card>
-            ) : null}
 
-        <Card className="mb-4 border-white/10">
-          <CardHeader>
-            <CardTitle className="text-base">Prontidão + deload inteligente</CardTitle>
-                <CardDescription>
-                  Fadiga regional e decisão de deload do microciclo atual.
-                </CardDescription>
-            <CardDescription>
-              Leitura viva do motor baseada nas execuções canônicas recentes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="text-[11px] text-muted-foreground">Score</div>
-                <div className="mt-1 text-xl font-bold">{readinessSnapshot.score}</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="text-[11px] text-muted-foreground">Nível</div>
-                <div className="mt-1 text-sm font-semibold capitalize">{readinessSnapshot.level}</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="text-[11px] text-muted-foreground">Recomendação</div>
-                <div className="mt-1 text-sm font-semibold capitalize">{readinessSnapshot.recommendation}</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="text-[11px] text-muted-foreground">Ajuste</div>
-                <div className="mt-1 text-sm font-semibold">
-                  {readinessSnapshot.recommendedLoadAdjustmentPct > 0
-                    ? `+${readinessSnapshot.recommendedLoadAdjustmentPct}%`
-                    : `${readinessSnapshot.recommendedLoadAdjustmentPct}%`}
+              {progressionHighlights.length ? (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <div className="text-sm font-semibold">Próximas progressões sugeridas</div>
+                  <div className="mt-2 space-y-2">
+                    {progressionHighlights.map((item: any, idx: number) => (
+                      <div
+                        key={`${item.exerciseId}-${idx}`}
+                        className="rounded-lg bg-black/20 p-2 text-xs sm:text-sm"
+                      >
+                        <span className="font-semibold">
+                          {item.suggestedLoadKg != null ? `${item.suggestedLoadKg} kg` : "Manter"}
+                        </span>
+                        <span className="text-white/50"> • {item.rationale}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </div>
+              ) : null}
 
-            <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
-              <div className="text-xs text-muted-foreground">Racional</div>
-              <div className="mt-1 text-sm">{readinessSnapshot.rationale}</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {progressionHighlights.length ? (
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="text-sm font-semibold">Próximas progressões sugeridas</div>
-                <div className="mt-2 space-y-2">
-                  {progressionHighlights.map((item: any, idx: number) => (
-                    <div key={`${item.exerciseId}-${idx}`} className="rounded-lg bg-black/20 p-2 text-xs sm:text-sm">
-                      <span className="font-semibold">
-                        {item.suggestedLoadKg != null ? `${item.suggestedLoadKg} kg` : "Manter"}
-                      </span>
-                      <span className="text-muted-foreground"> • {item.rationale}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
               {nextMeal ? (
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                   <div className="text-[16px] font-semibold text-white">
@@ -767,6 +846,7 @@ export function DashboardPremium() {
                           className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white/75"
                         >
                           {item?.nome ?? item?.name ?? "Alimento"}
+                          {item?.gramas ? ` • ${item.gramas}g` : ""}
                         </div>
                       ))}
                     </div>
@@ -778,61 +858,102 @@ export function DashboardPremium() {
                 </div>
               )}
 
-              <Button
-                variant="outline"
-                onClick={() => setShowFullMeals((v) => !v)}
-                className="w-full rounded-[18px] border-white/15 bg-black/20 text-white hover:bg-white/5"
-              >
-                {showFullMeals ? (
-                  <>
-                    <ChevronUp className="w-4 h-4 mr-2" />
-                    Ocultar plano alimentar
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4 mr-2" />
-                    Ver plano alimentar
-                  </>
-                )}
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-[18px] border-white/15 bg-black/20 text-white hover:bg-white/5"
+                  >
+                    Ver plano alimentar completo
+                  </Button>
+                </DialogTrigger>
 
-              {showFullMeals ? (
-                <div className="space-y-4">
-                  {meals.map((meal: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="rounded-[20px] border border-white/10 bg-black/20 p-4"
-                    >
-                      <div className="flex items-center gap-2 text-[14px] font-semibold text-white">
-                        <CalendarDays className="h-4 w-4 text-cyan-300" />
-                        {meal?.nome ?? meal?.name ?? `Refeição ${idx + 1}`}
-                      </div>
+                <DialogContent className="max-w-3xl border-white/10 bg-[rgba(8,10,18,0.96)] text-white">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl">
+                      <UtensilsCrossed className="h-5 w-5 text-cyan-300" />
+                      Plano alimentar completo
+                    </DialogTitle>
+                  </DialogHeader>
 
-                      <div className="mt-1 text-[13px] text-white/50">
-                        {meal?.horario ?? meal?.time ?? "Horário a definir"}
-                      </div>
+                  <div className="max-h-[70vh] overflow-y-auto pr-2 space-y-4">
+                    {meals.length > 0 ? (
+                      meals.map((meal: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="rounded-[20px] border border-white/10 bg-black/20 p-4"
+                        >
+                          <div className="flex items-center gap-2 text-[15px] font-semibold text-white">
+                            <CalendarDays className="h-4 w-4 text-cyan-300" />
+                            {meal?.nome ?? meal?.name ?? `Refeição ${idx + 1}`}
+                          </div>
 
-                      {Array.isArray(meal?.alimentos) && meal.alimentos.length > 0 ? (
-                        <div className="mt-3 space-y-2">
-                          {meal.alimentos.map((item: any, i: number) => (
-                            <div
-                              key={i}
-                              className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white/75"
-                            >
-                              {item?.nome ?? item?.name ?? "Alimento"}
-                              {item?.gramas ? ` • ${item.gramas}g` : ""}
+                          <div className="mt-1 text-[13px] text-white/50">
+                            {meal?.horario ?? meal?.time ?? "Horário a definir"}
+                          </div>
+
+                          {Array.isArray(meal?.alimentos) && meal.alimentos.length > 0 ? (
+                            <div className="mt-3 space-y-2">
+                              {meal.alimentos.map((item: any, i: number) => (
+                                <div
+                                  key={i}
+                                  className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-3 text-[13px] text-white/80"
+                                >
+                                  <div className="font-medium text-white">
+                                    {item?.nome ?? item?.name ?? "Alimento"}
+                                  </div>
+
+                                  <div className="mt-1 text-[12px] text-white/50">
+                                    {item?.gramas ? `${item.gramas}g` : ""}
+                                    {item?.calorias ? ` • ${item.calorias} kcal` : ""}
+                                  </div>
+
+                                  <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                                    {(item?.proteinas ?? item?.proteina ?? item?.protein ?? item?.proteinG) ? (
+                                      <span className="rounded-full border border-red-400/20 bg-red-400/10 px-2 py-1 text-red-300">
+                                        P {item?.proteinas ?? item?.proteina ?? item?.protein ?? item?.proteinG}g
+                                      </span>
+                                    ) : null}
+
+                                    {(item?.carboidratos ?? item?.carbs ?? item?.carbsG) ? (
+                                      <span className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-2 py-1 text-yellow-300">
+                                        C {item?.carboidratos ?? item?.carbs ?? item?.carbsG}g
+                                      </span>
+                                    ) : null}
+
+                                    {(item?.gorduras ?? item?.fat ?? item?.fatG) ? (
+                                      <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-cyan-300">
+                                        G {item?.gorduras ?? item?.fat ?? item?.fatG}g
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          ) : (
+                            <div className="mt-3 text-[13px] text-white/45">
+                              Nenhum alimento listado.
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="mt-3 text-[13px] text-white/45">
-                          Nenhum alimento listado.
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+                      ))
+                    ) : (
+                      <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-sm text-white/50">
+                        Nenhuma refeição encontrada no plano ativo.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      onClick={() => navigate("/edit-diet")}
+                      className="w-full rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:brightness-110"
+                    >
+                      Editar dieta
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
@@ -862,17 +983,7 @@ export function DashboardPremium() {
                 onClick={() => setShowWorkoutWeek((v) => !v)}
                 className="w-full rounded-[18px] border-white/15 bg-black/20 text-white hover:bg-white/5"
               >
-                {showWorkoutWeek ? (
-                  <>
-                    <ChevronUp className="w-4 h-4 mr-2" />
-                    Ocultar semana de treino
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4 mr-2" />
-                    Ver semana de treino
-                  </>
-                )}
+                {showWorkoutWeek ? "Ocultar semana de treino" : "Ver semana de treino"}
               </Button>
 
               {showWorkoutWeek ? (

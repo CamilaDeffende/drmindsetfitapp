@@ -18,9 +18,11 @@ import { ErrorBoundary } from "@/components/system/ErrorBoundary";
 import { Login } from "@/pages/Login";
 import { SignUp } from "@/pages/SignUp";
 import { Pricing } from "@/pages/Pricing";
+import Checkout from "@/pages/Checkout";
 
 // Páginas Protegidas
 import { OnboardingFlow } from "@/pages/OnboardingFlow";
+import { Dashboard } from "@/pages/Dashboard";
 import { DashboardPremium } from "@/pages/DashboardPremium";
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import StyleGuidePage from "@/pages/StyleGuidePage";
@@ -65,12 +67,10 @@ const LazyCardioPlan = React.lazy(() => import("@/pages/CardioPlan").then((m) =>
 const LazyHiitPlan = React.lazy(() => import("@/pages/HiitPlan").then((m) => ({ default: m.default })));
 const LazyCorridaPro = React.lazy(() => import("@/pages/CorridaPro").then((m) => ({ default: m.default })));
 
-const MF_METABOLIC_ENGINE_V1_ENABLED = (import.meta as any).env?.VITE_MF_METABOLIC_ENGINE_V1_ENABLED === "true";
+const MF_METABOLIC_ENGINE_V1_ENABLED =
+  (import.meta as any).env?.VITE_MF_METABOLIC_ENGINE_V1_ENABLED === "true";
 
 function App() {
-  // MF_LIVEPILL_GUARD: GPS UI só nas telas de corrida (não pode bloquear onboarding)
-
-  // reset premium via URL: /?reset=soft | /?reset=hard
   React.useEffect(() => {
     maybeResetFromUrl();
   }, []);
@@ -84,26 +84,27 @@ function App() {
   ) : (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <DrMindSetfitProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} data-testid="mf-router">
+        <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+          data-testid="mf-router"
+        >
           <RouteGuard />
           <OfflineIndicator />
           <LiveLocationPill />
 
           <Routes>
-            
-          {MF_METABOLIC_ENGINE_V1_ENABLED ? (<Route path="/__engine-preview" element={<EnginePreviewPage />} />) : null}
-{/* MF_STYLEGUIDE_ROUTE_V2 */}
+            {MF_METABOLIC_ENGINE_V1_ENABLED ? (
+              <Route path="/__engine-preview" element={<EnginePreviewPage />} />
+            ) : null}
+
             <Route path="/styleguide" element={<StyleGuidePage />} />
 
-            {/* Suite / Core */}
             <Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
             <Route path="/perfil" element={<Navigate to="/onboarding/step-1" replace />} />
             <Route path="/profile" element={<Navigate to="/onboarding/step-1" replace />} />
 
-            {/* Diagnóstico */}
             <Route path="/diagnostic" element={<DiagnosticPage />} />
 
-            {/* INÍCIO OBRIGATÓRIO DO FUNIL */}
             <Route path="/" element={<Navigate to="/onboarding/step-1" replace />} />
 
             {/* Públicas */}
@@ -111,6 +112,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/checkout" element={<Checkout />} />
 
             {/* Corrida Pro */}
             <Route
@@ -124,29 +126,36 @@ function App() {
               }
             />
 
-            {/* Onboarding (Premium) — etapas 1..8 */}
-            <Route
-              path="/onboarding/*"
-              element={
-                <OnboardingFlow />
-              }
-            />
-            <Route
-              path="/onboarding/step-:step"
-              element={
-                <OnboardingFlow />
-              }
-            />
+            {/* Onboarding */}
+            <Route path="/onboarding/*" element={<OnboardingFlow />} />
+            <Route path="/onboarding/step-:step" element={<OnboardingFlow />} />
 
-            {/* Dashboard */}
+            {/* Dashboard Free */}
             <Route
               path="/dashboard"
               element={
-                <ErrorBoundary name="DashboardPremium">
-                  <DashboardPremium />
-                </ErrorBoundary>
+                <ProtectedRoute>
+                  <ErrorBoundary name="Dashboard">
+                    <Dashboard />
+                  </ErrorBoundary>
+                </ProtectedRoute>
               }
             />
+
+            {/* Dashboard Premium */}
+            <Route
+              path="/dashboardpremium"
+              element={
+                <ProtectedRoute requiresPremium>
+                  <ErrorBoundary name="DashboardPremium">
+                    <DashboardPremium />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Compat para maiúsculas antigas */}
+            <Route path="/DashboardPremium" element={<Navigate to="/dashboardpremium" replace />} />
 
             {/* Premium */}
             <Route

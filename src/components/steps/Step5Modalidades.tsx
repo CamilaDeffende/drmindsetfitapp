@@ -1,45 +1,15 @@
 // MF_ONBOARDING_CONTRACT_V2
-// Step5Modalidades – agora captura:
-// - múltiplas modalidades
-// - dias por modalidade (seg..dom)
-// - nível/condicionamento por modalidade (iniciante/intermediario/avancado)
-// Persistência canônica no mf_onboarding_draft:
-//   modalidadesSelecionadas: string[]
-//   diasPorModalidade: Record<string, string[]>
-//   condicionamentoPorModalidade: Record<string, "iniciante"|"intermediario"|"avancado">
-// Mantém compatibilidade: step5Modalidades (inclui primary/secondary)
-
-import React, { useCallback, useEffect, useMemo } from "react";
+// Step5Modalidades – múltiplas modalidades + dias por modalidade + nível por modalidade
+// Compat com primary/secondary
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
-
-
-// MF_STEP5_PERSIST_DRAFT_V1
-function mfPersistDraftModalidadesDias(payload: any) {
-  try {
-    const rawA = localStorage.getItem("mf_onboarding_draft") || "{}";
-    const rawB = localStorage.getItem("MF_ONBOARDING_DRAFT") || "{}";
-    const a = JSON.parse(rawA);
-    const b = JSON.parse(rawB);
-
-    const nextA = { ...a, ...payload };
-    const nextB = { ...b, ...payload };
-
-    localStorage.setItem("mf_onboarding_draft", JSON.stringify(nextA));
-    localStorage.setItem("MF_ONBOARDING_DRAFT", JSON.stringify(nextB));
-  } catch {
-    // noop
-  }
-}
 
 type MF_Level = "iniciante" | "intermediario" | "avancado";
 
 type Step5Value = {
-  // compat legado
   primary: string | null;
   secondary?: string | null;
-
-  // novo
-  modalidades: string[]; // multi-select
+  modalidades: string[];
   diasPorModalidade: Record<string, string[]>;
   condicionamentoPorModalidade: Record<string, MF_Level>;
 };
@@ -77,14 +47,13 @@ function writeDraft(patch: any) {
     const prev = readDraft();
     const next = { ...prev, ...patch };
     localStorage.setItem(LS_KEY, JSON.stringify(next));
-  } catch {
-    // DEMO-safe: não quebra
-  }
+  } catch {}
 }
 
 function uniqStable(arr: string[]): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
+
   for (const x of arr) {
     const k = String(x || "").trim();
     if (!k) continue;
@@ -92,6 +61,7 @@ function uniqStable(arr: string[]): string[] {
     seen.add(k);
     out.push(k);
   }
+
   return out;
 }
 
@@ -102,18 +72,12 @@ function normalizeLevel(v: any): MF_Level {
   return "iniciante";
 }
 
-export default function Step5Modalidades({ value, onChange, onBack}: Props) {
-  // MF_STEP5_PERSIST_EFFECT_V1
-  // Persistência contínua do draft: ao mudar seleção, salva modalidades + diasSemana.
-  useEffect(() => {
-    try {
-      const v: any = value ?? {};
-      const modalidades = v.modalidades ?? v.selectedModalidades ?? v.modalities ?? v.selectedModalities ?? [];
-      const diasSemana = v.diasSemana ?? v.selectedDays ?? v.weekDays ?? v.trainingDays ?? [];
-      mfPersistDraftModalidadesDias({ modalidades, diasSemana });
-    } catch {}
-  }, [value]);
-
+export default function Step5Modalidades({
+  value,
+  onChange,
+  onNext,
+  onBack,
+}: Props) {
   const options = useMemo(
     () => [
       { key: "musculacao", label: "Musculação" },
@@ -125,52 +89,72 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
     []
   );
 
-  // hidrata do draft canônico + props.value (sem depender do shell)
   const initial = useMemo<Step5Value>(() => {
     const draft = readDraft();
 
-    const modalitiesFromDraft = uniqStable(
+    const modalidadesFromDraft = uniqStable(
       (Array.isArray(draft?.modalidadesSelecionadas) ? draft.modalidadesSelecionadas : [])
         .map((x: any) => String(x || ""))
         .filter(Boolean)
     );
 
-    const diasFromDraft = (draft?.diasPorModalidade && typeof draft.diasPorModalidade === "object")
-      ? (draft.diasPorModalidade as Record<string, string[]>)
-      : {};
+    const diasFromDraft =
+      draft?.diasPorModalidade && typeof draft.diasPorModalidade === "object"
+        ? (draft.diasPorModalidade as Record<string, string[]>)
+        : {};
 
-    const condFromDraftRaw = (draft?.condicionamentoPorModalidade && typeof draft.condicionamentoPorModalidade === "object")
-      ? (draft.condicionamentoPorModalidade as Record<string, any>)
-      : {};
+    const condFromDraftRaw =
+      draft?.condicionamentoPorModalidade &&
+      typeof draft.condicionamentoPorModalidade === "object"
+        ? (draft.condicionamentoPorModalidade as Record<string, any>)
+        : {};
 
     const condFromDraft: Record<string, MF_Level> = {};
-    for (const k of Object.keys(condFromDraftRaw)) condFromDraft[k] = normalizeLevel(condFromDraftRaw[k]);
+    for (const k of Object.keys(condFromDraftRaw)) {
+      condFromDraft[k] = normalizeLevel(condFromDraftRaw[k]);
+    }
 
-    const modalitiesFromProps = uniqStable(
+    const modalidadesFromProps = uniqStable(
       (Array.isArray(value?.modalidades) ? (value?.modalidades as string[]) : [])
         .map((x) => String(x || ""))
         .filter(Boolean)
     );
 
-    const modalities = uniqStable([...modalitiesFromDraft, ...modalitiesFromProps]);
+    const modalidades = uniqStable([...modalidadesFromDraft, ...modalidadesFromProps]);
 
-    // compat: primary/secondary
-    const primary = (value?.primary ?? draft?.step5Modalidades?.primary ?? (modalities[0] ?? null)) as string | null;
-    const secondary = (value?.secondary ?? draft?.step5Modalidades?.secondary ?? (modalities[1] ?? null)) as string | null;
+    const primary = (value?.primary ??
+      draft?.step5Modalidades?.primary ??
+      modalidades[0] ??
+      null) as string | null;
 
-    const diasPorModalidade: Record<string, string[]> = { ...diasFromDraft, ...(value?.diasPorModalidade ?? {}) } as any;
-    const condicionamentoPorModalidade: Record<string, MF_Level> = { ...condFromDraft, ...(value?.condicionamentoPorModalidade ?? {}) } as any;
+    const secondary = (value?.secondary ??
+      draft?.step5Modalidades?.secondary ??
+      modalidades[1] ??
+      null) as string | null;
 
-    // defaults: se modalidade existe e não tem nível, assume iniciante
-    for (const m of modalities) {
-      if (!condicionamentoPorModalidade[m]) condicionamentoPorModalidade[m] = "iniciante";
-      if (!Array.isArray(diasPorModalidade[m])) diasPorModalidade[m] = [];
+    const diasPorModalidade: Record<string, string[]> = {
+      ...diasFromDraft,
+      ...(value?.diasPorModalidade ?? {}),
+    };
+
+    const condicionamentoPorModalidade: Record<string, MF_Level> = {
+      ...condFromDraft,
+      ...(value?.condicionamentoPorModalidade ?? {}),
+    };
+
+    for (const m of modalidades) {
+      if (!condicionamentoPorModalidade[m]) {
+        condicionamentoPorModalidade[m] = "iniciante";
+      }
+      if (!Array.isArray(diasPorModalidade[m])) {
+        diasPorModalidade[m] = [];
+      }
     }
 
     return {
       primary,
       secondary: secondary ?? null,
-      modalidades: modalities,
+      modalidades,
       diasPorModalidade,
       condicionamentoPorModalidade,
     };
@@ -178,49 +162,95 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
 
   const [state, setState] = React.useState<Step5Value>(initial);
 
-  // se mudar o initial (ex: refresh), re-hidrata uma vez
-  useEffect(() => {
-    setState(initial);
-  }, [JSON.stringify(initial)]);
-
   const safeOnChange = onChange ?? (() => {});
+  const lastSentRef = useRef("");
 
-  // persistência canônica + compat
   useEffect(() => {
-    // canônico para o motor do Step6
+    if (!value) return;
+
+    setState((prev) => {
+      const nextModalidades = Array.isArray(value.modalidades)
+        ? uniqStable(value.modalidades)
+        : prev.modalidades;
+
+      const nextDias =
+        value.diasPorModalidade && typeof value.diasPorModalidade === "object"
+          ? value.diasPorModalidade
+          : prev.diasPorModalidade;
+
+      const nextCond =
+        value.condicionamentoPorModalidade &&
+        typeof value.condicionamentoPorModalidade === "object"
+          ? value.condicionamentoPorModalidade
+          : prev.condicionamentoPorModalidade;
+
+      const nextPrimary =
+        value.primary !== undefined ? value.primary : prev.primary;
+
+      const nextSecondary =
+        value.secondary !== undefined ? value.secondary : prev.secondary;
+
+      const changed =
+        JSON.stringify(prev.modalidades) !== JSON.stringify(nextModalidades) ||
+        JSON.stringify(prev.diasPorModalidade) !== JSON.stringify(nextDias) ||
+        JSON.stringify(prev.condicionamentoPorModalidade) !== JSON.stringify(nextCond) ||
+        prev.primary !== nextPrimary ||
+        prev.secondary !== nextSecondary;
+
+      if (!changed) return prev;
+
+      return {
+        ...prev,
+        modalidades: nextModalidades,
+        diasPorModalidade: nextDias,
+        condicionamentoPorModalidade: nextCond,
+        primary: nextPrimary,
+        secondary: nextSecondary,
+      };
+    });
+  }, [value]);
+
+  useEffect(() => {
+    const payload: Step5Value = {
+      primary: state.primary,
+      secondary: state.secondary ?? null,
+      modalidades: state.modalidades,
+      diasPorModalidade: state.diasPorModalidade,
+      condicionamentoPorModalidade: state.condicionamentoPorModalidade,
+    };
+
+    const serialized = JSON.stringify(payload);
+    if (lastSentRef.current === serialized) return;
+    lastSentRef.current = serialized;
+
     writeDraft({
       modalidadesSelecionadas: state.modalidades,
       diasPorModalidade: state.diasPorModalidade,
       condicionamentoPorModalidade: state.condicionamentoPorModalidade,
-      step5Modalidades: {
-        primary: state.primary,
-        secondary: state.secondary ?? null,
-        modalidades: state.modalidades.map((k) => ({ key: k })),
-        diasPorModalidade: state.diasPorModalidade,
-        condicionamentoPorModalidade: state.condicionamentoPorModalidade,
-      },
+      step5Modalidades: payload,
     });
 
-    safeOnChange(state);
+    safeOnChange(payload);
   }, [state, safeOnChange]);
 
-  // autosave (mantém a infra existente)
   useOnboardingDraftSaver({ step5Modalidades: state } as any, 400);
 
   const toggleModality = useCallback((key: string) => {
     setState((prev) => {
       const has = prev.modalidades.includes(key);
-      const nextModalidades = has ? prev.modalidades.filter((m) => m !== key) : [...prev.modalidades, key];
-      const modalidades = uniqStable(nextModalidades);
+      const nextModalidades = has
+        ? prev.modalidades.filter((m) => m !== key)
+        : [...prev.modalidades, key];
 
+      const modalidades = uniqStable(nextModalidades);
       const diasPorModalidade = { ...prev.diasPorModalidade };
       const condicionamentoPorModalidade = { ...prev.condicionamentoPorModalidade };
 
-      // init defaults
       if (!diasPorModalidade[key]) diasPorModalidade[key] = [];
-      if (!condicionamentoPorModalidade[key]) condicionamentoPorModalidade[key] = "iniciante";
+      if (!condicionamentoPorModalidade[key]) {
+        condicionamentoPorModalidade[key] = "iniciante";
+      }
 
-      // se removeu, limpa mapas pra evitar lixo
       if (has) {
         delete diasPorModalidade[key];
         delete condicionamentoPorModalidade[key];
@@ -229,18 +259,32 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
       const primary = modalidades[0] ?? null;
       const secondary = modalidades[1] ?? null;
 
-      return { ...prev, modalidades, primary, secondary, diasPorModalidade, condicionamentoPorModalidade };
+      return {
+        ...prev,
+        modalidades,
+        primary,
+        secondary,
+        diasPorModalidade,
+        condicionamentoPorModalidade,
+      };
     });
   }, []);
 
   const toggleDay = useCallback((mod: string, day: string) => {
     setState((prev) => {
-      const cur = Array.isArray(prev.diasPorModalidade[mod]) ? prev.diasPorModalidade[mod] : [];
+      const cur = Array.isArray(prev.diasPorModalidade[mod])
+        ? prev.diasPorModalidade[mod]
+        : [];
+
       const has = cur.includes(day);
       const next = has ? cur.filter((d) => d !== day) : [...cur, day];
+
       return {
         ...prev,
-        diasPorModalidade: { ...prev.diasPorModalidade, [mod]: uniqStable(next) },
+        diasPorModalidade: {
+          ...prev.diasPorModalidade,
+          [mod]: uniqStable(next),
+        },
       };
     });
   }, []);
@@ -248,22 +292,26 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
   const setLevel = useCallback((mod: string, level: MF_Level) => {
     setState((prev) => ({
       ...prev,
-      condicionamentoPorModalidade: { ...prev.condicionamentoPorModalidade, [mod]: level },
+      condicionamentoPorModalidade: {
+        ...prev.condicionamentoPorModalidade,
+        [mod]: level,
+      },
     }));
   }, []);
 
   const hasAny = state.modalidades.length > 0;
+
   return (
-    <div data-testid="mf-step-root">
+    <div data-testid="mf-step-root" className="w-full text-white">
       <h2 className="text-xl font-semibold">Modalidades</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1 text-sm text-white/60">
         Selecione quantas modalidades quiser. Para cada uma, defina dias e condicionamento.
       </p>
 
-      {/* seleção multi */}
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         {options.map((o) => {
           const active = state.modalidades.includes(o.key);
+
           return (
             <button
               key={o.key}
@@ -278,14 +326,15 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium">{o.label}</span>
-                <span className="text-xs text-white/60">{active ? "Selecionado" : ""}</span>
+                <span className="text-xs text-white/60">
+                  {active ? "Selecionado" : ""}
+                </span>
               </div>
             </button>
           );
         })}
       </div>
 
-      {/* configurações por modalidade */}
       {hasAny ? (
         <div className="mt-6 space-y-4">
           {state.modalidades.map((mod) => {
@@ -299,15 +348,24 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
                   <div className="text-sm font-semibold">{label}</div>
                   <div className="text-xs text-white/60">
                     Dias: {days.length} • Nível:{" "}
-                    {level === "iniciante" ? "Iniciante" : level === "intermediario" ? "Intermediário" : "Avançado"}
+                    {level === "iniciante"
+                      ? "Iniciante"
+                      : level === "intermediario"
+                        ? "Intermediário"
+                        : "Avançado"}
                   </div>
                 </div>
 
-                {/* nível */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {(["iniciante", "intermediario", "avancado"] as const).map((lv) => {
                     const active = level === lv;
-                    const txt = lv === "iniciante" ? "Iniciante" : lv === "intermediario" ? "Intermediário" : "Avançado";
+                    const txt =
+                      lv === "iniciante"
+                        ? "Iniciante"
+                        : lv === "intermediario"
+                          ? "Intermediário"
+                          : "Avançado";
+
                     return (
                       <button
                         key={lv}
@@ -315,7 +373,9 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
                         onClick={() => setLevel(mod, lv)}
                         className={[
                           "px-3 py-2 rounded-xl border text-xs transition",
-                          active ? "border-white/30 bg-white/10" : "border-white/10 bg-white/5 hover:bg-white/10",
+                          active
+                            ? "border-white/30 bg-white/10"
+                            : "border-white/10 bg-white/5 hover:bg-white/10",
                         ].join(" ")}
                       >
                         {txt}
@@ -324,12 +384,12 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
                   })}
                 </div>
 
-                {/* dias */}
                 <div className="mt-3">
                   <div className="text-xs text-white/60">Dias da semana</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {WEEK.map((d) => {
                       const active = days.includes(d.key);
+
                       return (
                         <button
                           key={d.key}
@@ -337,7 +397,9 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
                           onClick={() => toggleDay(mod, d.key)}
                           className={[
                             "min-w-[52px] px-3 py-2 rounded-xl border text-xs transition",
-                            active ? "border-white/30 bg-white/10" : "border-white/10 bg-white/5 hover:bg-white/10",
+                            active
+                              ? "border-white/30 bg-white/10"
+                              : "border-white/10 bg-white/5 hover:bg-white/10",
                           ].join(" ")}
                         >
                           {d.label}
@@ -365,7 +427,14 @@ export default function Step5Modalidades({ value, onChange, onBack}: Props) {
           Voltar
         </button>
 
-
+        <button
+          type="button"
+          onClick={() => onNext?.()}
+          disabled={!hasAny}
+          className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Continuar
+        </button>
       </div>
     </div>
   );

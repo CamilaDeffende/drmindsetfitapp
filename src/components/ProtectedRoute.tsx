@@ -1,48 +1,11 @@
 import * as React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
+import { readSubscription, isActiveSubscription } from "@/lib/subscription/storage";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiresPremium?: boolean;
-}
-
-function readLocalPremiumFlag(): boolean {
-  try {
-    const subscribed = localStorage.getItem("mindsetfit:isSubscribed") === "true";
-
-    const rawSub = localStorage.getItem("mindsetfit:subscription:v1");
-    const parsedSub = rawSub ? JSON.parse(rawSub) : null;
-
-    const activeSub = Boolean(parsedSub?.active);
-    const kind = String(parsedSub?.kind ?? "");
-    const trialEndsAt = Number(parsedSub?.trialEndsAt ?? 0);
-
-    const trialActive =
-      kind === "trial" &&
-      activeSub &&
-      Number.isFinite(trialEndsAt) &&
-      trialEndsAt > Date.now();
-
-    const paidActive =
-      kind !== "trial" &&
-      activeSub;
-
-    const devPremium = (() => {
-      try {
-        const rawFlags = localStorage.getItem("mindsetfit:featureFlags");
-        const flags = rawFlags ? JSON.parse(rawFlags) : null;
-        return Boolean(flags?.premiumUnlocked);
-      } catch {
-        return false;
-      }
-    })();
-
-    return subscribed || paidActive || trialActive || devPremium;
-  } catch {
-    return false;
-  }
 }
 
 export function ProtectedRoute({
@@ -55,12 +18,32 @@ export function ProtectedRoute({
   const authLoading = Boolean(auth?.loading ?? auth?.isLoading ?? false);
   const user = auth?.user ?? null;
 
-  const { status, loading: subLoading } = useSubscriptionStatus();
+  const [isPremium, setIsPremium] = React.useState(false);
+  const [subLoading, setSubLoading] = React.useState(true);
 
-  const localPremium = readLocalPremiumFlag();
-  const isPremium = Boolean(status?.isPremium) || localPremium;
+  React.useEffect(() => {
+    const refreshPremium = () => {
+      try {
+        const sub = readSubscription();
+        setIsPremium(isActiveSubscription(sub));
+      } catch {
+        setIsPremium(false);
+      } finally {
+        setSubLoading(false);
+      }
+    };
 
-  if (authLoading || (requiresPremium && subLoading && !localPremium)) {
+    refreshPremium();
+
+    const onStorage = () => {
+      refreshPremium();
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  if (authLoading || (requiresPremium && subLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-sm opacity-70">Carregando...</div>

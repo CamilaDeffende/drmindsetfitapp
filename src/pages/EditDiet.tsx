@@ -1,14 +1,16 @@
 import { useDrMindSetfit } from '@/contexts/DrMindSetfitContext'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import {
-ArrowLeft,
+  ArrowLeft,
   UtensilsCrossed,
   RefreshCw,
   Info,
-  Search
+  Search,
+  Download,
+  Save
 } from 'lucide-react'
 import { sumKcalFromRefeicoes } from "@/engine/nutrition/NutritionEngine";
 
@@ -24,6 +26,7 @@ import type { AlimentoRefeicao, Refeicao } from '@/types'
 import { useToast } from '@/hooks/use-toast'
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
+import { BrandIcon } from "@/components/branding/BrandIcon";
 
 function buildDietExportText() {
   const lines = [
@@ -65,7 +68,15 @@ async function downloadPdfPremiumDiet() {
   });
 }
 
-// Banco de dados de substitutos por categoria
+function mfNum(x: unknown, fallback = 0): number {
+  const n = typeof x === "number" ? x : Number(x);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function safeFixed(value: unknown, digits = 0): string {
+  return mfNum(value, 0).toFixed(digits);
+}
+
 const SUBSTITUTOS_DATABASE: Record<string, { nome: string; calorias: number; proteinas: number; carboidratos: number; gorduras: number }[]> = {
   'proteina-animal': [
     { nome: 'Peito de Frango Grelhado', calorias: 165, proteinas: 31, carboidratos: 0, gorduras: 3.6 },
@@ -153,9 +164,10 @@ const SUBSTITUTOS_DATABASE: Record<string, { nome: string; calorias: number; pro
   ]
 }
 
-// Função para identificar categoria de alimento
+type SubstitutoItem = (typeof SUBSTITUTOS_DATABASE)['proteina-animal'][number];
+
 function identificarCategoria(nomeAlimento: string): string {
-  const nome = nomeAlimento.toLowerCase()
+  const nome = (nomeAlimento || '').toLowerCase()
 
   if (nome.includes('frango') || nome.includes('peixe') || nome.includes('atum') || nome.includes('salmão') ||
       nome.includes('ovo') || nome.includes('carne') || nome.includes('peru')) {
@@ -177,9 +189,13 @@ function identificarCategoria(nomeAlimento: string): string {
   return 'vegetais'
 }
 
-// Função para ajustar gramas para igualar calorias
-function ajustarGramas(alimentoOriginal: AlimentoRefeicao, substituto: typeof SUBSTITUTOS_DATABASE.proteina_animal[0]): number {
-  const proporacao = alimentoOriginal.calorias / substituto.calorias
+function ajustarGramas(alimentoOriginal: AlimentoRefeicao, substituto: SubstitutoItem): number {
+  const caloriasOriginais = mfNum(alimentoOriginal?.calorias, 0)
+  const caloriasSubstituto = mfNum(substituto?.calorias, 0)
+
+  if (caloriasOriginais <= 0 || caloriasSubstituto <= 0) return 100
+
+  const proporacao = caloriasOriginais / caloriasSubstituto
   return Math.round(100 * proporacao)
 }
 
@@ -187,15 +203,14 @@ export function EditDiet() {
   const { state, updateState } = useDrMindSetfit()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const [refeicoes, setRefeicoes] = useState<Refeicao[]>(state.dietaAtiva?.nutricao.refeicoes || [])
+  const [refeicoes, setRefeicoes] = useState<Refeicao[]>(
+    Array.isArray(state.dietaAtiva?.nutricao?.refeicoes) ? state.dietaAtiva!.nutricao.refeicoes : []
+  )
 
   if (!state.dietaAtiva) {
-    
-  
-  
-return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <Card className="w-full max-w-md mx-4 glass-effect neon-border">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-black text-white">
+        <Card className="w-full max-w-md mx-4 glass-effect neon-border border-white/10 bg-black/40">
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Nenhuma Dieta Ativa</h2>
             <p className="text-gray-400 mb-6">Configure seu planejamento primeiro</p>
@@ -208,11 +223,13 @@ return (
     )
   }
 
-  const handleSubstituir = (refeicaoIdx: number, alimentoIdx: number, substituto: typeof SUBSTITUTOS_DATABASE.proteina_animal[0]) => {
+  const handleSubstituir = (refeicaoIdx: number, alimentoIdx: number, substituto: SubstitutoItem) => {
     const novasRefeicoes = [...refeicoes]
-    const alimentoOriginal = novasRefeicoes[refeicaoIdx].alimentos[alimentoIdx]
-    const gramasAjustadas = ajustarGramas(alimentoOriginal, substituto)
+    const alimentoOriginal = novasRefeicoes?.[refeicaoIdx]?.alimentos?.[alimentoIdx]
 
+    if (!alimentoOriginal) return
+
+    const gramasAjustadas = ajustarGramas(alimentoOriginal, substituto)
     const fatorAjuste = gramasAjustadas / 100
 
     novasRefeicoes[refeicaoIdx].alimentos[alimentoIdx] = {
@@ -234,29 +251,33 @@ return (
   }
 
   const handleSalvar = () => {
-  void handleSalvar;
-    if (state.dietaAtiva) {
-      updateState({
-        dietaAtiva: {
-          ...state.dietaAtiva,
-          nutricao: {
-            ...state.dietaAtiva.nutricao,
-            refeicoes
-          }
+    if (!state.dietaAtiva) return
+
+    updateState({
+      nutricao: {
+        ...state.nutricao,
+        ...state.dietaAtiva.nutricao,
+        refeicoes
+      },
+      dietaAtiva: {
+        ...state.dietaAtiva,
+        nutricao: {
+          ...state.dietaAtiva.nutricao,
+          refeicoes
         }
-      })
+      }
+    })
 
-      toast({
-        title: "Dieta salva com sucesso!",
-        description: "Suas alterações foram aplicadas.",
-      })
+    toast({
+      title: "Dieta salva com sucesso!",
+      description: "Suas alterações foram aplicadas.",
+    })
 
-      navigate('/nutrition')
-    }
+    navigate('/nutrition')
   }
 
   const handleResetar = () => {
-    if (state.nutricao) {
+    if (state.nutricao?.refeicoes) {
       setRefeicoes(state.nutricao.refeicoes)
       toast({
         title: "Dieta resetada",
@@ -265,131 +286,210 @@ return (
     }
   }
 
-  const totalCalorias = sumKcalFromRefeicoes(refeicoes)
+  const totalCalorias = mfNum(sumKcalFromRefeicoes(refeicoes), 0)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
-      {/* Header */}
       <header className="sticky top-0 z-50 glass-effect border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/nutrition')}>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          
+          {/* ESQUERDA — BACK + LOGO + TEXTO */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/nutrition')}
+              className="hover:bg-white/10"
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="text-center">
-              <h1 className="text-xl font-bold text-neon">Editar Minha Dieta</h1>
 
-          <div className="mt-4 flex gap-2 flex-wrap">
-            <button type="button" onClick={downloadPdfPremiumDiet} className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60">Baixar PDF Premium</button>
+            <div className="flex items-center gap-3">
+              <BrandIcon className="h-12 w-12" />
+
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-neon">
+                  Editar Minha Dieta
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">
+                  {refeicoes.length} refeições • {safeFixed(totalCalorias, 0)} kcal totais
+                </p>
+              </div>
+            </div>
           </div>
 
-              <p className="text-xs text-gray-400">{totalCalorias.toFixed(0)} kcal totais</p>
-            </div>
-            <Button variant="ghost" size="icon" onClick={handleResetar}>
-              <RefreshCw className="w-5 h-5 text-yellow-400" />
+          {/* DIREITA — AÇÕES */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              onClick={downloadPdfPremiumDiet}
+              className="h-10 px-4 text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar PDF
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleResetar}
+              className="h-10 border-white/15 text-white hover:bg-white/10"
+            >
+              <RefreshCw className="w-4 h-4 mr-2 text-yellow-400" />
+              Resetar
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Info Card */}
-        <Card className="glass-effect border-[#1E6BFF]/30">
+      <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8 space-y-6">
+        <Card className="glass-effect border-white/10 bg-black/30">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-[#1E6BFF] mt-0.5" />
+              <Info className="w-5 h-5 text-[#1E6BFF] mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-[#1E6BFF] mb-1">Personalize sua dieta</p>
-                <p className="text-xs text-gray-400">
-                  Cada alimento possui pelo menos 10 substitutos respeitando a mesma categoria e calorias equivalentes.
-                  As gramas são ajustadas automaticamente para manter o valor calórico.
+                <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                  Cada alimento possui substitutos respeitando a mesma categoria e calorias equivalentes.
+                  As gramas são ajustadas automaticamente para manter o valor calórico do plano.
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Refeições Editáveis */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {refeicoes.map((refeicao, refIdx) => (
-            <Card key={refIdx} className="glass-effect border-green-500/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UtensilsCrossed className="w-4 h-4 text-green-400" />
-                  {refeicao.nome}
-                </CardTitle>
-                <p className="text-xs text-gray-400">{refeicao.horario}</p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {refeicao.alimentos.map((alimento, alimIdx) => (
-                  <div key={alimIdx} className="p-3 rounded-lg bg-black/30 border border-white/10">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{alimento.nome}</p>
-                        <p className="text-xs text-gray-500">{alimento.gramas}g • {alimento.calorias.toFixed(0)} kcal</p>
-                      </div>
-
-                      {/* Dialog de Substitutos */}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline" className="text-xs h-7">
-                            <Search className="w-3 h-3 mr-1" />
-                            Substituir
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl bg-gray-900 text-white border-white/10">
-                          <DialogHeader>
-                            <DialogTitle>Substituir: {alimento.nome}</DialogTitle>
-                          </DialogHeader>
-                          <ScrollArea className="h-96 pr-4">
-                            <div className="space-y-2">
-                              {SUBSTITUTOS_DATABASE[identificarCategoria(alimento.nome)].map((substituto, subIdx) => {
-                                const gramasAjustadas = ajustarGramas(alimento, substituto)
-                                const fator = gramasAjustadas / 100
-
-                                return (
-                                  <button
-                                    key={subIdx}
-                                    onClick={() => handleSubstituir(refIdx, alimIdx, substituto)}
-                                    className="w-full p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-colors"
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex-1">
-                                        <p className="font-medium text-sm">{substituto.nome}</p>
-                                        <p className="text-xs text-gray-400">
-                                          {gramasAjustadas}g • {(substituto.calorias * fator).toFixed(0)} kcal
-                                        </p>
-                                      </div>
-                                      <div className="flex gap-2 text-xs">
-                                        <span className="text-red-400">{(substituto.proteinas * fator).toFixed(1)}g P</span>
-                                        <span className="text-yellow-400">{(substituto.carboidratos * fator).toFixed(1)}g C</span>
-                                        <span className="text-[#1E6BFF]">{(substituto.gorduras * fator).toFixed(1)}g G</span>
-                                      </div>
-                                    </div>
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </ScrollArea>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-
-                    <div className="flex gap-3 text-xs mt-2 pt-2 border-t border-white/5">
-                      <span className="text-red-400">Proteínas: {alimento.proteinas.toFixed(1)}g</span>
-                      <span className="text-yellow-400">Carbo: {alimento.carboidratos.toFixed(1)}g</span>
-                      <span className="text-[#1E6BFF]">Gordura: {alimento.gorduras.toFixed(1)}g</span>
-                    </div>
+            <Card key={refIdx} className="glass-effect border-white/10 bg-black/30">
+              <CardHeader className="pb-3">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-xl text-gray-100">
+                      <UtensilsCrossed className="w-4 h-4 text-green-400" />
+                      {refeicao?.nome || `Refeição ${refIdx + 1}`}
+                    </CardTitle>
+                    <CardDescription className="text-sm text-gray-400 mt-1">
+                      {refeicao?.horario || '--:--'}
+                    </CardDescription>
                   </div>
-                ))}
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                {(Array.isArray(refeicao?.alimentos) ? refeicao.alimentos : []).map((alimento, alimIdx) => {
+                  const categoria = identificarCategoria(alimento?.nome || '')
+                  const substitutos = SUBSTITUTOS_DATABASE[categoria] || []
+
+                  return (
+                    <div
+                      key={alimIdx}
+                      className="p-4 rounded-2xl bg-black/20 border border-white/10 hover:bg-black/35 transition-all"
+                    >
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <div>
+                              <p className="font-semibold text-base text-gray-100">
+                                {alimento?.nome || `Alimento ${alimIdx + 1}`}
+                              </p>
+                              <p className="text-sm text-[#1E6BFF] font-medium mt-1">
+                                {mfNum(alimento?.gramas, 0)}g
+                              </p>
+                            </div>
+
+                            <div className="rounded-full border border-green-500/30 bg-green-500/15 px-3 py-1 text-xs font-medium text-green-400">
+                              {safeFixed(alimento?.calorias, 0)} kcal
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 text-xs sm:text-sm">
+                            <div className="rounded-xl bg-white/5 border border-white/10 p-2">
+                              <span className="text-red-400 font-medium">P:</span>{" "}
+                              <span className="text-gray-200">{safeFixed(alimento?.proteinas, 1)}g</span>
+                            </div>
+                            <div className="rounded-xl bg-white/5 border border-white/10 p-2">
+                              <span className="text-yellow-400 font-medium">C:</span>{" "}
+                              <span className="text-gray-200">{safeFixed(alimento?.carboidratos, 1)}g</span>
+                            </div>
+                            <div className="rounded-xl bg-white/5 border border-white/10 p-2">
+                              <span className="text-[#1E6BFF] font-medium">G:</span>{" "}
+                              <span className="text-gray-200">{safeFixed(alimento?.gorduras, 1)}g</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full lg:w-auto text-xs bg-[#1E6BFF]/20 border-[#1E6BFF]/30 text-[#1E6BFF] hover:bg-[#1E6BFF]/30"
+                            >
+                              <Search className="w-3 h-3 mr-1" />
+                              Substituir
+                            </Button>
+                          </DialogTrigger>
+
+                          <DialogContent className="max-w-2xl bg-[#0b1118] text-white border-white/10">
+                            <DialogHeader>
+                              <DialogTitle className="text-lg text-neon">
+                                Substituir: {alimento?.nome || 'Alimento'}
+                              </DialogTitle>
+                            </DialogHeader>
+
+                            <ScrollArea className="h-96 pr-4">
+                              <div className="space-y-2">
+                                {substitutos.map((substituto, subIdx) => {
+                                  const gramasAjustadas = ajustarGramas(alimento, substituto)
+                                  const fator = gramasAjustadas / 100
+
+                                  return (
+                                    <button
+                                      key={subIdx}
+                                      onClick={() => handleSubstituir(refIdx, alimIdx, substituto)}
+                                      className="w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-colors"
+                                    >
+                                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                        <div className="flex-1">
+                                          <p className="font-medium text-sm text-gray-100">{substituto.nome}</p>
+                                          <p className="text-xs text-gray-400 mt-1">
+                                            {gramasAjustadas}g • {safeFixed(substituto.calorias * fator, 0)} kcal
+                                          </p>
+                                        </div>
+
+                                        <div className="flex gap-2 text-xs flex-wrap">
+                                          <span className="rounded-full bg-red-500/10 border border-red-500/20 px-2 py-1 text-red-400">
+                                            {safeFixed(substituto.proteinas * fator, 1)}g P
+                                          </span>
+                                          <span className="rounded-full bg-yellow-500/10 border border-yellow-500/20 px-2 py-1 text-yellow-400">
+                                            {safeFixed(substituto.carboidratos * fator, 1)}g C
+                                          </span>
+                                          <span className="rounded-full bg-[#1E6BFF]/10 border border-[#1E6BFF]/20 px-2 py-1 text-[#1E6BFF]">
+                                            {safeFixed(substituto.gorduras * fator, 1)}g G
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </ScrollArea>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </div>
+                  )
+                })}
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Botão Salvar */}
         <div className="sticky bottom-0 pb-6 pt-4 bg-gradient-to-t from-black via-black to-transparent">
-          </div>
+          <Button onClick={handleSalvar} className="w-full h-12 glow-blue font-semibold text-base">
+            <Save className="w-4 h-4 mr-2" />
+            Salvar alterações
+          </Button>
+        </div>
       </main>
     </div>
   )

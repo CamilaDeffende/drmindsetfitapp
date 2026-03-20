@@ -20,9 +20,7 @@ import type {
   PlanejamentoNutricional,
   Restricao,
   TipoRefeicao,
-  AlimentoRefeicao,
 } from "@/types";
-import { ALIMENTOS_DATABASE, calcularMacros } from "@/types/alimentos";
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
@@ -76,6 +74,63 @@ const mfStrategyPercent = (e: string) => {
       return 0;
   }
 };
+
+function toNum(v: unknown, fallback = 0) {
+  const n = Number(String(v ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function loadOnboardingDraftSafe() {
+  try {
+    const raw = localStorage.getItem("mf:onboarding:draft:v1");
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function getUserTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo";
+  } catch {
+    return "America/Sao_Paulo";
+  }
+}
+
+function formatTimeInZone(date: Date, timeZone: string) {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone,
+    }).format(date);
+  } catch {
+    return "00:00";
+  }
+}
+
+function formatDateInZone(date: Date, timeZone: string) {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "2-digit",
+      timeZone,
+    }).format(date);
+  } catch {
+    return "";
+  }
+}
+
+function timeStringToMinutes(value: string) {
+  const match = String(value).trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  return h * 60 + m;
+}
 
 function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
   const sexo = (anyForm?.sexo ??
@@ -152,6 +207,50 @@ export function Step4Nutricao({
   const { state, updateState, nextStep } = useDrMindSetfit();
   const { actions: __mfGActions } = useGamification();
 
+  const draft = useMemo(() => loadOnboardingDraftSafe(), []);
+  const draftStep1 = draft?.step1 ?? {};
+  const draftStep2 = draft?.step2 ?? {};
+  const draftStep3 =
+    draft?.step3 ??
+    draft?.step3Metabolismo ??
+    {};
+
+  const [timeZone, setTimeZone] = useState(() => {
+    try {
+      return localStorage.getItem("mf:user:timezone") || getUserTimeZone();
+    } catch {
+      return getUserTimeZone();
+    }
+  });
+
+  const [horaAtual, setHoraAtual] = useState(new Date());
+
+  useEffect(() => {
+    const detected = getUserTimeZone();
+    setTimeZone((prev) => prev || detected);
+
+    try {
+      localStorage.setItem("mf:user:timezone", detected);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setHoraAtual(new Date());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const syncUserTimeZone = () => {
+    const detected = getUserTimeZone();
+    setTimeZone(detected);
+
+    try {
+      localStorage.setItem("mf:user:timezone", detected);
+    } catch {}
+  };
+
   useEffect(() => {
     try {
       const kcal = Number(
@@ -203,6 +302,7 @@ export function Step4Nutricao({
     {
       step4: (state as any).nutricao ?? (state as any).nutrition ?? {},
       nutricao: (state as any).nutricao,
+      timezone: timeZone,
     } as any,
     400
   );
@@ -231,10 +331,11 @@ export function Step4Nutricao({
           (state as any)?.nutricao?.macros ??
           (state as any)?.macros ??
           undefined,
+        refeicoesSelecionadas:
+          currentNutricao?.refeicoesSelecionadas ?? [],
         refeicoes:
-          currentNutricao?.refeicoes ??
-          (state as any)?.nutricao?.refeicoes ??
-          [],
+          currentNutricao?.refeicoes ?? [],
+        timezone: timeZone,
       };
 
       saveOnboardingProgress({ step: 4, data: payload } as any);
@@ -259,12 +360,54 @@ export function Step4Nutricao({
     "deficit-leve" | "deficit-moderado" | "deficit-agressivo" | "manutencao" | "superavit"
   >("manutencao");
 
+  const pesoFromState =
+    toNum((draftStep1 as any)?.peso) ||
+    toNum((draftStep1 as any)?.pesoAtual) ||
+    toNum((state as any)?.perfil?.peso) ||
+    toNum((state as any)?.avaliacao?.peso) ||
+    toNum(draftStep2?.peso) ||
+    70;
+
+  const alturaFromState =
+    toNum((draftStep1 as any)?.altura) ||
+    toNum((state as any)?.perfil?.altura) ||
+    toNum((state as any)?.avaliacao?.altura) ||
+    toNum(draftStep2?.altura) ||
+    170;
+
+  const sexoFromState = String(
+    (state as any)?.perfil?.sexo ??
+      (draftStep1 as any)?.sexo ??
+      "masculino"
+  ).toLowerCase();
+
+  const idadeFromState = toNum(
+    (state as any)?.perfil?.idade ??
+      (draftStep1 as any)?.idade ??
+      30
+  );
+
+  const tmbFromDraftOrState =
+    toNum((state as any)?.metabolismo?.tmb) ||
+    toNum(draftStep3?.tmb);
+
+  const metaFromDraftOrState =
+    toNum((state as any)?.metabolismo?.caloriasAlvo) ||
+    toNum((state as any)?.metabolismo?.metaDiaria) ||
+    toNum((state as any)?.metabolismo?.get) ||
+    toNum(draftStep3?.metaCalorica);
+
+  const computedTmb =
+    sexoFromState === "masculino"
+      ? 10 * pesoFromState + 6.25 * alturaFromState - 5 * idadeFromState + 5
+      : 10 * pesoFromState + 6.25 * alturaFromState - 5 * idadeFromState - 161;
+
+  const tmbBase = Math.round(tmbFromDraftOrState || computedTmb || 0);
+
   const __mfBaseKcalFromMetabolic =
-    Number(
-      (state as any)?.metabolismo?.caloriasAlvo ??
-        (state as any)?.metabolismo?.get ??
-        0
-    ) || 2000;
+    metaFromDraftOrState ||
+    Math.round(tmbBase * 1.35) ||
+    2000;
 
   const __mfBaseKcal =
     Number(
@@ -302,10 +445,13 @@ export function Step4Nutricao({
     try {
       const peso =
         Number(
-          (state as any)?.perfil?.peso ??
+          (draftStep1 as any)?.peso ??
+            (draftStep1 as any)?.pesoAtual ??
+            (state as any)?.perfil?.peso ??
             (state as any)?.perfil?.pesoKg ??
             (state as any)?.peso ??
             (state as any)?.avaliacao?.peso ??
+            draftStep2?.peso ??
             0
         ) || 70;
 
@@ -334,8 +480,14 @@ export function Step4Nutricao({
         goalType: __mfGoalType,
         sex: (state as any)?.avaliacao?.sexo ?? (state as any)?.avaliacao?.sex,
         age: (state as any)?.avaliacao?.idade ?? (state as any)?.avaliacao?.age,
-        weightKg: (state as any)?.avaliacao?.peso,
-        heightCm: (state as any)?.avaliacao?.altura,
+        weightKg:
+          (state as any)?.avaliacao?.peso ??
+          (draftStep1 as any)?.peso ??
+          draftStep2?.peso,
+        heightCm:
+          (state as any)?.avaliacao?.altura ??
+          (draftStep1 as any)?.altura ??
+          draftStep2?.altura,
       });
 
       const kcalGuarded = mfClampSSOT(__mfGuard.kcalTarget, 800, 6500);
@@ -386,6 +538,13 @@ export function Step4Nutricao({
       const kcalFinalGuarded = mfClampSSOT(Math.round(kcalFinal2), 800, 6500);
 
       updateState({
+        metabolismo: {
+          ...(state as any)?.metabolismo,
+          tmb: tmbBase,
+          caloriasAlvo: __mfBaseKcalFromMetabolic,
+          metaDiaria: __mfBaseKcalFromMetabolic,
+          get: __mfBaseKcalFromMetabolic,
+        },
         nutricao: {
           ...(state as any)?.nutricao,
           estrategia,
@@ -403,7 +562,16 @@ export function Step4Nutricao({
     } catch (e) {
       console.error("[MF] Step4 dynamic kcal strategy error:", e);
     }
-  }, [estrategia, __mfBaseKcalFromMetabolic, __mfKcalAlvo, state, updateState]);
+  }, [
+    estrategia,
+    __mfBaseKcalFromMetabolic,
+    __mfKcalAlvo,
+    state,
+    updateState,
+    draftStep1,
+    draftStep2,
+    tmbBase,
+  ]);
 
   const [restricoes, setRestricoes] = useState<Restricao[]>([]);
   const [refeicoesSelecionadas, setRefeicoesSelecionadas] = useState<
@@ -451,7 +619,11 @@ export function Step4Nutricao({
     }
   };
 
-  const pesoAtual = Number((state as any)?.avaliacao?.peso ?? 70);
+  const pesoAtual =
+    toNum((draftStep1 as any)?.peso, 0) ||
+    toNum((state as any)?.avaliacao?.peso, 0) ||
+    toNum(draftStep2?.peso, 70);
+
   const proteinaPreview = Math.round(pesoAtual * 2);
   const gorduraPreview = Math.round(pesoAtual * 1);
   const carboPreview = Math.round(
@@ -460,7 +632,7 @@ export function Step4Nutricao({
 
   const safeFaixaMin = Number(__mfFaixa?.minimo ?? Math.round(__mfKcalAlvo * 0.92));
   const safeFaixaMax = Number(__mfFaixa?.maximo ?? Math.round(__mfKcalAlvo * 1.08));
-  const tmb = Number((state as any)?.metabolismo?.tmb ?? 0) || Math.round(__mfBaseKcal * 0.66);
+  const tmb = tmbBase || Math.round(__mfBaseKcal * 0.66);
 
   const strategyCards = [
     {
@@ -492,91 +664,43 @@ export function Step4Nutricao({
 
   const gerarPlanejamento = () => {
     try {
-      const calorias = state.metabolismo?.caloriasAlvo || __mfKcalAlvo || 2000;
-      const peso = state.avaliacao?.peso || 70;
+      const caloriasBase = state.metabolismo?.caloriasAlvo || __mfKcalAlvo || 2000;
+      const peso =
+        (draftStep1 as any)?.peso ||
+        state.avaliacao?.peso ||
+        draftStep2?.peso ||
+        70;
 
-      let caloriasFinais = calorias;
       const pct = mfStrategyPercent(estrategia);
-      caloriasFinais = calorias * (1 + pct / 100);
+      const caloriasAjustadas = caloriasBase * (1 + pct / 100);
 
-      const proteina = Math.round(peso * 2);
-      const gorduras = Math.round(peso * 1);
+      const proteina = Math.round(Number(peso) * 2);
+      const gorduras = Math.round(Number(peso) * 1);
+
       const kcalFixas = proteina * 4 + gorduras * 9;
-
-      const kcalTarget = Math.round(caloriasFinais);
+      const kcalTarget = Math.round(caloriasAjustadas);
       const kcalRest = Math.max(0, kcalTarget - kcalFixas);
       const carboFix = Math.max(0, Math.round(kcalRest / 4));
       const carboidratos = mfClampSSOT(carboFix, 0, 900);
 
       const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
-      caloriasFinais = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
+      const caloriasFinais = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
 
       try {
         const inputs = __mfBuildNutritionInputs(state, undefined);
         saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
       } catch {}
 
-      let alimentosPermitidos = ALIMENTOS_DATABASE;
-      const isVegano = restricoes.includes("vegano");
-      const isVegetariano = restricoes.includes("vegetariano");
-
-      if (isVegano) {
-        alimentosPermitidos = alimentosPermitidos.filter((a) => a.vegano);
-      } else if (isVegetariano) {
-        alimentosPermitidos = alimentosPermitidos.filter((a) => a.vegetariano);
-      }
-
-      const addAlimento = (
-        lista: AlimentoRefeicao[],
-        alimentoId: string,
-        gramas: number
-      ) => {
-        const base = alimentosPermitidos.find((a) => a.id === alimentoId);
-        if (!base) return;
-
-        const macros = calcularMacros(base.id, gramas);
-        if (!macros) return;
-
-        lista.push({
-          ...macros,
-          alimentoId: base.id,
-          nome: base.nome,
-          gramas,
-        });
-      };
-
-      const refeicoes = refeicoesSelecionadas.map((tipoRefeicao) => {
+      const refeicoesPreview = refeicoesSelecionadas.map((tipoRefeicao) => {
         const infoRefeicao = refeicoesDiponiveis.find(
           (r) => r.value === tipoRefeicao
         )!;
-
-        const alimentos: AlimentoRefeicao[] = [];
-
-        if (tipoRefeicao === "desjejum" || tipoRefeicao === "cafe-da-manha") {
-          addAlimento(alimentos, "aveia", 50);
-          addAlimento(alimentos, "banana", 100);
-          addAlimento(alimentos, isVegano ? "tofu" : "iogurte-grego", isVegano ? 100 : 150);
-          addAlimento(alimentos, "castanhas", 20);
-        } else if (tipoRefeicao === "almoco" || tipoRefeicao === "jantar") {
-          addAlimento(alimentos, "arroz-integral", 150);
-          addAlimento(alimentos, isVegano ? "tofu" : "frango-peito", 150);
-          addAlimento(alimentos, "brocolis", 100);
-          addAlimento(alimentos, "alface", 50);
-          addAlimento(alimentos, "azeite", 10);
-        } else if (tipoRefeicao === "lanche-tarde") {
-          addAlimento(alimentos, "maca", 150);
-          addAlimento(alimentos, isVegano ? "tofu" : "iogurte-grego", isVegano ? 100 : 150);
-          addAlimento(alimentos, "castanhas", 20);
-        } else if (tipoRefeicao === "ceia") {
-          addAlimento(alimentos, isVegano ? "tofu" : "queijo-cottage", 100);
-          addAlimento(alimentos, "morango", 100);
-        }
 
         return {
           tipo: tipoRefeicao,
           horario: infoRefeicao.horarioPadrao,
           nome: infoRefeicao.label,
-          alimentos,
+          alimentos: [],
         };
       });
 
@@ -592,10 +716,17 @@ export function Step4Nutricao({
           calorias: Math.round(caloriasFinais),
         },
         refeicoesSelecionadas,
-        refeicoes,
+        refeicoes: refeicoesPreview,
       };
 
       updateState({
+        metabolismo: {
+          ...(state as any)?.metabolismo,
+          tmb: tmbBase,
+          caloriasAlvo: __mfBaseKcalFromMetabolic,
+          metaDiaria: __mfBaseKcalFromMetabolic,
+          get: __mfBaseKcalFromMetabolic,
+        },
         nutricao: planejamento,
         dieta: planejamento,
         planoDieta: planejamento,
@@ -611,10 +742,18 @@ export function Step4Nutricao({
         saveOnboardingProgress({
           step: 4,
           data: {
+            metabolismo: {
+              tmb: tmbBase,
+              caloriasAlvo: __mfBaseKcalFromMetabolic,
+              metaDiaria: __mfBaseKcalFromMetabolic,
+              get: __mfBaseKcalFromMetabolic,
+            },
             nutricao: planejamento,
             dieta: planejamento,
             macros: planejamento?.macros,
+            refeicoesSelecionadas: planejamento?.refeicoesSelecionadas ?? [],
             refeicoes: planejamento?.refeicoes ?? [],
+            timezone: timeZone,
           },
         } as any);
       } catch {}
@@ -626,16 +765,31 @@ export function Step4Nutricao({
   };
 
   const nextMealPreview = useMemo(() => {
-    const first = refeicoesDiponiveis.find((r) =>
-      refeicoesSelecionadas.includes(r.value)
-    );
-    return first ?? null;
-  }, [refeicoesSelecionadas]);
+    const selectedMeals = refeicoesDiponiveis
+      .filter((r) => refeicoesSelecionadas.includes(r.value))
+      .map((meal) => ({
+        ...meal,
+        minutes: timeStringToMinutes(meal.horarioPadrao),
+      }))
+      .filter((meal) => meal.minutes != null)
+      .sort((a, b) => a.minutes! - b.minutes!);
+
+    if (!selectedMeals.length) return null;
+
+    const currentTime = formatTimeInZone(horaAtual, timeZone);
+    const currentMinutes = timeStringToMinutes(currentTime);
+
+    if (currentMinutes == null) {
+      return selectedMeals[0];
+    }
+
+    const nextToday = selectedMeals.find((meal) => meal.minutes! >= currentMinutes);
+    return nextToday ?? selectedMeals[0];
+  }, [refeicoesSelecionadas, horaAtual, timeZone]);
 
   return (
     <div className="w-full text-white" data-testid="mf-step-root">
       <div className="space-y-6">
-        {/* HERO */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00D7FF] shadow-[0_0_20px_rgba(0,149,255,0.22)]">
@@ -680,7 +834,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* FAIXA SEGURA */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4 flex items-center gap-2">
             <Flame className="h-4 w-4 text-cyan-300" />
@@ -725,7 +878,6 @@ export function Step4Nutricao({
           </p>
         </section>
 
-        {/* ESTRATÉGIA */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4">
             <h3 className="text-[22px] font-semibold tracking-tight text-white">
@@ -778,7 +930,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* REFEIÇÕES */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4">
             <h3 className="text-[22px] font-semibold tracking-tight text-white">
@@ -816,7 +967,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* RESTRIÇÕES */}
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4">
             <h3 className="text-[22px] font-semibold tracking-tight text-white">
@@ -855,7 +1005,51 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* PREVIEW */}
+        <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-[18px] font-semibold text-white">
+                Horário local do plano
+              </h3>
+              <p className="mt-1 text-[13px] leading-5 text-white/48">
+                Usamos seu fuso atual para estimar corretamente a próxima refeição.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={syncUserTimeZone}
+              className="rounded-[16px] border border-white/15 bg-black/20 text-white hover:bg-white/5"
+            >
+              Usar meu fuso atual
+            </Button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+              <div className="text-[12px] text-white/45">Hora local</div>
+              <div className="mt-2 text-[24px] font-semibold text-cyan-300">
+                {formatTimeInZone(horaAtual, timeZone)}
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+              <div className="text-[12px] text-white/45">Data local</div>
+              <div className="mt-2 text-[16px] font-semibold text-white capitalize">
+                {formatDateInZone(horaAtual, timeZone)}
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+              <div className="text-[12px] text-white/45">Fuso detectado</div>
+              <div className="mt-2 text-[14px] font-semibold text-white break-all">
+                {timeZone}
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
           <div className="mb-4">
             <h3 className="text-[22px] font-semibold tracking-tight text-white">
@@ -900,7 +1094,6 @@ export function Step4Nutricao({
           </div>
         </section>
 
-        {/* CTA */}
         <div className="pt-1 flex gap-3">
           {onBack && (
             <Button
@@ -918,7 +1111,8 @@ export function Step4Nutricao({
             type="button"
             onClick={gerarPlanejamento}
             disabled={refeicoesSelecionadas.length === 0}
-            className="h-14 flex-1 rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 disabled:opacity-50"
+            variant="ghost"
+            className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent disabled:opacity-50"
           >
             Gerar planejamento
             <ArrowRight className="ml-2 h-4 w-4" />

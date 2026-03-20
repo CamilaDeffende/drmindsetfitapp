@@ -8,26 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Mail, ChevronLeft } from "lucide-react";
 
-function getNext(search: string) {
-  try {
-    return new URLSearchParams(search).get("next") || "/dashboard";
-  } catch {
-    return "/dashboard";
-  }
-}
 
-function hasNext(search: string) {
+function getParams(search: string) {
   try {
-    return !!new URLSearchParams(search).get("next");
+    return new URLSearchParams(search);
   } catch {
-    return false;
+    return new URLSearchParams();
   }
 }
 
 export function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const next = getNext(location.search);
+  const params = React.useMemo(() => getParams(location.search), [location.search]);
+
+  const next = params.get("next") || "/dashboard";
+  const premiumFromUrl = params.get("premium") === "1";
+  const planFromUrl = params.get("plan") || "mensal";
 
   const { user, signIn, signOut, loading } = useAuth();
 
@@ -36,13 +33,41 @@ export function Login() {
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const signupHref = React.useMemo(() => {
+    const nextParams = new URLSearchParams();
+    nextParams.set("next", next);
+
+    if (premiumFromUrl) nextParams.set("premium", "1");
+    if (planFromUrl) nextParams.set("plan", planFromUrl);
+
+    return `/signup?${nextParams.toString()}`;
+  }, [next, premiumFromUrl, planFromUrl]);
+
   React.useEffect(() => {
     if (!loading && user) {
+      if (premiumFromUrl) {
+        try {
+          localStorage.setItem("mindsetfit:isSubscribed", "true");
+        } catch {}
+
+        try {
+          localStorage.setItem(
+            "mindsetfit:subscription:v1",
+            JSON.stringify({
+              planId: planFromUrl,
+              kind: "paid",
+              active: true,
+              activatedAt: Date.now(),
+            })
+          );
+        } catch {}
+      }
+
       navigate(next, { replace: true });
     }
-  }, [user, loading, next, navigate]);
+  }, [user, loading, next, navigate, premiumFromUrl, planFromUrl]);
 
-  const backTarget = hasNext(location.search) ? "/assinatura" : "/onboarding/step-1";
+  const backTarget = params.get("next") ? "/assinatura" : "/onboarding/step-1";
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +95,24 @@ export function Login() {
         return;
       }
 
+      if (premiumFromUrl) {
+        try {
+          localStorage.setItem("mindsetfit:isSubscribed", "true");
+        } catch {}
+
+        try {
+          localStorage.setItem(
+            "mindsetfit:subscription:v1",
+            JSON.stringify({
+              planId: planFromUrl,
+              kind: "paid",
+              active: true,
+              activatedAt: Date.now(),
+            })
+          );
+        } catch {}
+      }
+
       navigate(next, { replace: true });
     } catch (err: any) {
       setError(err?.message || "Não foi possível entrar. Tente novamente.");
@@ -82,7 +125,7 @@ export function Login() {
     <div className="min-h-dvh mf-app-bg mf-bg-neon text-white">
       <div className="mx-auto w-full max-w-[520px] px-4 pb-10 pt-8">
         <div className="flex items-center gap-3">
-          <BrandIcon size={28} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
+          <BrandIcon size={80} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
 
           <div className="min-w-0">
             <div className="text-[16px] font-semibold tracking-tight text-white/90">
@@ -105,9 +148,10 @@ export function Login() {
 
         <div className="mt-6 rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-6 shadow-[0_0_40px_rgba(0,149,255,0.08)]">
           <div className="mb-5 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-400/10">
-              <BrandIcon size={24} />
-            </div>
+            <BrandIcon
+              size={120}
+              className="mx-auto mb-4 drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]"
+            />
 
             <h1 className="text-[24px] font-semibold tracking-tight text-white">
               Bem-vinda de volta
@@ -165,7 +209,8 @@ export function Login() {
             <Button
               type="submit"
               disabled={loading || submitting}
-              className="mt-2 h-12 w-full rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)]"
+              variant="ghost"
+              className="mt-2 h-12 w-full overflow-hidden rounded-2xl border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent"
             >
               {submitting ? "Entrando..." : "Entrar"}
             </Button>
@@ -174,7 +219,7 @@ export function Login() {
               Não tem conta?{" "}
               <Link
                 className="font-semibold text-white/85 hover:text-white"
-                to={`/signup?next=${encodeURIComponent(next)}`}
+                to={signupHref}
               >
                 Criar conta
               </Link>

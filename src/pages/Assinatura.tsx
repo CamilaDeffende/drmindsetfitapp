@@ -6,6 +6,10 @@ import { Check, ChevronLeft, Crown, ShieldCheck, Sparkles } from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscriptionService } from "@/services/subscription/SubscriptionService";
+import {
+  setFreeSubscription,
+  setTrialSubscription,
+} from "@/lib/subscription/storage";
 
 type Plan = {
   id: "mensal" | "anual";
@@ -168,12 +172,16 @@ export default function Assinatura() {
 
     try {
       setStartingTrial(true);
+
       await subscriptionService.startTrial(user.id);
+
+      setTrialSubscription();
 
       const cleanParams = new URLSearchParams(location.search);
       cleanParams.delete("autostartTrial");
 
       const cleanSearch = cleanParams.toString();
+
       navigate(
         {
           pathname: "/dashboardpremium",
@@ -255,13 +263,7 @@ export default function Assinatura() {
   };
 
   const continueFree = () => {
-    try {
-      localStorage.setItem("mindsetfit:isSubscribed", "false");
-    } catch {}
-
-    try {
-      localStorage.removeItem("mindsetfit:subscription:v1");
-    } catch {}
+    setFreeSubscription();
 
     if (source === "onboarding") {
       navigate(`/signup?next=${encodeURIComponent("/dashboard")}`, { replace: true });
@@ -274,7 +276,7 @@ export default function Assinatura() {
     }
 
     if (source === "premium") {
-      navigate("/dashboardpremium", { replace: true });
+      navigate("/dashboard", { replace: true });
       return;
     }
 
@@ -285,7 +287,7 @@ export default function Assinatura() {
     <div className="min-h-dvh mf-app-bg mf-bg-neon text-white">
       <div className="mx-auto w-full max-w-[560px] px-4 pb-10 pt-8">
         <div className="flex items-center gap-3">
-          <BrandIcon size={28} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
+          <BrandIcon size={80} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
 
           <div className="min-w-0">
             <div className="text-[14px] font-semibold tracking-tight text-white/90">
@@ -407,7 +409,7 @@ export default function Assinatura() {
             type="button"
             onClick={startFreeTrial}
             disabled={startingTrial}
-            className="mt-5 inline-flex w-full items-center justify-center rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-5 inline-flex w-full items-center justify-center overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {startingTrial ? "Ativando trial..." : "Testar grátis por 7 dias"}
           </button>
@@ -458,7 +460,7 @@ export default function Assinatura() {
                   className={[
                     "inline-flex w-full items-center justify-center rounded-[20px] px-4 py-3 text-[14px] font-semibold transition-all active:scale-[0.99]",
                     pl.highlight
-                      ? "border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
+                      ? "overflow-hidden border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
                       : "bg-white text-black hover:opacity-95",
                   ].join(" ")}
                   onClick={() => goToCheckout(pl.id)}
@@ -575,7 +577,7 @@ export default function Assinatura() {
         </div>
 
         <div className="mt-6 text-center text-[11px] text-white/40">
-          MindsetFit • Premium Layer
+          MindsetFit • Premium
         </div>
       </div>
     </div>

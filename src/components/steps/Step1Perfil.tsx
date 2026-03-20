@@ -507,7 +507,8 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
           <div className="pt-1">
             <Button
               type="submit"
-              className="h-14 w-full rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110"
+              variant="ghost"
+              className="h-14 w-full overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent"
             >
               Continuar
             </Button>

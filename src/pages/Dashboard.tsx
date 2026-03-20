@@ -31,6 +31,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { loadActivePlan } from "@/services/plan.service";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 function getNextMealByTime(meals: any[]) {
   if (!Array.isArray(meals) || meals.length === 0) return null;
@@ -300,7 +301,7 @@ export function Dashboard() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => navigate("/")}
+                onClick={() => navigate(getHomeRoute())}
                 className="border-white/10 bg-black/20 text-white hover:bg-white/5"
               >
                 <Home className="w-4 h-4" />

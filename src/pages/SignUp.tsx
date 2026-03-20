@@ -28,19 +28,55 @@ export function SignUp() {
   const { signUp, user, loading } = useAuth();
   const { toast } = useToast();
 
+  const searchParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
+
   const next = useMemo(() => {
     try {
-      return new URLSearchParams(location.search).get("next") || "/dashboard";
+      return searchParams.get("next") || "/assinatura?source=onboarding";
     } catch {
-      return "/dashboard";
+      return "/assinatura?source=onboarding";
     }
-  }, [location.search]);
+  }, [searchParams]);
+
+  const premiumFromUrl = searchParams.get("premium") === "1";
+  const planFromUrl = searchParams.get("plan") || "mensal";
+
+  const loginHref = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("next", next);
+
+    if (premiumFromUrl) params.set("premium", "1");
+    if (planFromUrl) params.set("plan", planFromUrl);
+
+    return `/login?${params.toString()}`;
+  }, [next, premiumFromUrl, planFromUrl]);
 
   useEffect(() => {
     if (!loading && user) {
+      if (premiumFromUrl) {
+        try {
+          localStorage.setItem("mindsetfit:isSubscribed", "true");
+        } catch {}
+
+        try {
+          localStorage.setItem(
+            "mindsetfit:subscription:v1",
+            JSON.stringify({
+              planId: planFromUrl,
+              kind: "paid",
+              active: true,
+              activatedAt: Date.now(),
+            })
+          );
+        } catch {}
+      }
+
       navigate(next, { replace: true });
     }
-  }, [user, loading, next, navigate]);
+  }, [user, loading, next, navigate, premiumFromUrl, planFromUrl]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -106,7 +142,7 @@ export function SignUp() {
     <div className="min-h-dvh mf-app-bg mf-bg-neon text-white">
       <div className="mx-auto w-full max-w-[520px] px-4 pb-10 pt-8">
         <div className="flex items-center gap-3">
-          <BrandIcon size={28} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
+          <BrandIcon size={80} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
 
           <div className="min-w-0">
             <div className="text-[16px] font-semibold tracking-tight text-white/90">
@@ -119,7 +155,7 @@ export function SignUp() {
 
           <button
             type="button"
-            onClick={() => navigate(`/login?next=${encodeURIComponent(next)}`)}
+            onClick={() => navigate(loginHref)}
             className="ml-auto inline-flex items-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-semibold text-white/85 hover:bg-white/10 active:scale-[0.99]"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
@@ -130,9 +166,10 @@ export function SignUp() {
         <Card className="mt-6 rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white shadow-[0_0_40px_rgba(0,149,255,0.08)]">
           <CardContent className="p-6">
             <div className="mb-5 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-400/10">
-                <BrandIcon size={24} />
-              </div>
+              <BrandIcon
+                size={120}
+                className="mx-auto mb-4 drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]"
+              />
 
               <h1 className="text-[24px] font-semibold tracking-tight text-white">
                 Crie sua conta
@@ -157,7 +194,7 @@ export function SignUp() {
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="Camila Magalhães"
+                  placeholder="Digite o seu Nome"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
@@ -221,7 +258,8 @@ export function SignUp() {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="mt-2 h-12 w-full rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)]"
+                variant="ghost"
+                className="mt-2 h-12 w-full overflow-hidden rounded-2xl border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent"
               >
                 {submitting ? "Criando conta..." : "Criar conta"}
               </Button>
@@ -229,7 +267,7 @@ export function SignUp() {
               <div className="pt-1 text-center text-[12px] text-white/60">
                 Já tem uma conta?{" "}
                 <Link
-                  to={`/login?next=${encodeURIComponent(next)}`}
+                  to={loginHref}
                   className="font-semibold text-white/85 hover:text-white"
                 >
                   Fazer login

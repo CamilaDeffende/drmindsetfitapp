@@ -1,6 +1,7 @@
 // MF_ONBOARDING_CONTRACT_V1
-// PREMIUM_REFINEMENT_PHASE3_STEP8_UI_V3
-// FIX_STEP8_NUTRICAO_SOURCE_V1
+// PREMIUM_REFINEMENT_PHASE3_STEP8_UI_V4
+// FIX_STEP8_NUTRICAO_SOURCE_V2
+// WEEKLY_DAYS_BY_MODALITY_SUMMARY_V1
 
 import { useMemo } from "react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
@@ -13,6 +14,14 @@ type Props = {
   onBack?: () => void;
 };
 
+const MODALITY_LABELS: Record<string, string> = {
+  musculacao: "Musculação",
+  corrida: "Corrida",
+  bike: "Bike",
+  funcional: "Funcional",
+  cross: "Cross",
+};
+
 export default function Step8Confirmacao({
   summary,
   onConfirm,
@@ -20,21 +29,13 @@ export default function Step8Confirmacao({
 }: Props) {
   const { state } = useDrMindSetfit();
 
-  // =========================
-  // FONTES PRINCIPAIS
-  // =========================
   const metabolismo =
     (state as any)?.metabolismo ??
     (state as any)?.resultadoMetabolico ??
     {};
 
-  // IMPORTANTE:
-  // usar state.nutricao como fonte canônica para evitar ler estrutura antiga
   const nutricao = (state as any)?.nutricao ?? {};
 
-  // =========================
-  // CALORIAS / TMB
-  // =========================
   const kcalAlvo: number | null =
     nutricao?.kcalAlvo ??
     nutricao?.macros?.calorias ??
@@ -42,13 +43,8 @@ export default function Step8Confirmacao({
     metabolismo?.get ??
     null;
 
-  const tmb: number | null =
-    metabolismo?.tmb ??
-    null;
+  const tmb: number | null = metabolismo?.tmb ?? null;
 
-  // =========================
-  // MACROS
-  // =========================
   const macros = nutricao?.macros ?? {};
 
   const proteina: number | null =
@@ -72,9 +68,6 @@ export default function Step8Confirmacao({
       ? Number(macros.gordura)
       : null;
 
-  // =========================
-  // REFEIÇÕES
-  // =========================
   const refeicoes: any[] = Array.isArray(nutricao?.refeicoes)
     ? nutricao.refeicoes
     : [];
@@ -84,9 +77,6 @@ export default function Step8Confirmacao({
     return refeicoes[0];
   }, [refeicoes]);
 
-  // =========================
-  // DADOS DO ONBOARDING
-  // =========================
   const step1 = (summary as any)?.step1 ?? {};
   const step5 = (summary as any)?.step5 ?? {};
   const step6 = (summary as any)?.step6 ?? {};
@@ -111,7 +101,12 @@ export default function Step8Confirmacao({
   const objetivoLabel =
     objetivoLabelMap[step1?.objetivo] ?? "Não informado";
 
-  const modalidadeLabel =
+  const selectedModalities: string[] = Array.isArray(step5?.selected)
+    ? step5.selected
+    : [step5?.primary, step5?.secondary].filter(Boolean);
+
+  const modalidadePrincipalLabel =
+    MODALITY_LABELS[step5?.primary] ??
     step5?.primary ??
     step1?.modalidadePrincipal ??
     "Não informado";
@@ -119,13 +114,32 @@ export default function Step8Confirmacao({
   const dietaLabel =
     dietaLabelMap[step7?.dieta] ?? "Flexível";
 
-  const diasTreino = Array.isArray(step6?.days)
-    ? step6.days
-    : [];
+  const weeklyDaysByModality =
+    (step6?.weeklyDaysByModality as Record<string, string[]>) ?? {};
+
+  const groupedDaysSummary = selectedModalities.map((modalityId) => ({
+    modalityId,
+    label: MODALITY_LABELS[modalityId] ?? modalityId,
+    days: Array.isArray(weeklyDaysByModality?.[modalityId])
+      ? weeklyDaysByModality[modalityId]
+      : [],
+  }));
+
+  const fallbackDays = Array.isArray(step6?.days) ? step6.days : [];
 
   const diasTreinoLabel =
-    diasTreino.length > 0
-      ? diasTreino.map((d: string) => d.toUpperCase()).join(" • ")
+    groupedDaysSummary.length > 0
+      ? groupedDaysSummary
+          .map((item) =>
+            `${item.label}: ${
+              item.days.length > 0
+                ? item.days.map((d: string) => d.toUpperCase()).join(" • ")
+                : "sem dias"
+            }`
+          )
+          .join(" | ")
+      : fallbackDays.length > 0
+      ? fallbackDays.map((d: string) => d.toUpperCase()).join(" • ")
       : "Não definido";
 
   const nomeUsuario =
@@ -133,9 +147,6 @@ export default function Step8Confirmacao({
     (state as any)?.perfil?.nomeCompleto ||
     "seu plano";
 
-  // =========================
-  // FORMATADORES
-  // =========================
   const fmtKcal = (n: number | null) =>
     n == null || Number.isNaN(n) ? "–––" : `${Math.round(n)}`;
 
@@ -144,7 +155,6 @@ export default function Step8Confirmacao({
 
   return (
     <div className="w-full text-white space-y-6" data-testid="mf-step-root">
-      {/* HERO */}
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <h2 className="text-[22px] font-semibold tracking-tight">
           Plano calibrado
@@ -154,7 +164,6 @@ export default function Step8Confirmacao({
         </p>
       </section>
 
-      {/* CALORIAS */}
       <section className="grid grid-cols-2 gap-4">
         <div className="rounded-[22px] border border-white/10 bg-black/30 p-5">
           <div className="text-white/50 text-[12px]">TMB (repouso)</div>
@@ -173,7 +182,6 @@ export default function Step8Confirmacao({
         </div>
       </section>
 
-      {/* MACROS */}
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <h3 className="text-[18px] font-semibold">Distribuição de macros</h3>
 
@@ -201,7 +209,6 @@ export default function Step8Confirmacao({
         </div>
       </section>
 
-      {/* RESUMO */}
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <h3 className="text-[18px] font-semibold">Estrutura do plano</h3>
 
@@ -217,8 +224,17 @@ export default function Step8Confirmacao({
           </div>
 
           <div>
-            <span className="text-white/40">Modalidade:</span>{" "}
-            {modalidadeLabel}
+            <span className="text-white/40">Modalidade principal:</span>{" "}
+            {modalidadePrincipalLabel}
+          </div>
+
+          <div>
+            <span className="text-white/40">Modalidades selecionadas:</span>{" "}
+            {selectedModalities.length > 0
+              ? selectedModalities
+                  .map((key) => MODALITY_LABELS[key] ?? key)
+                  .join(" • ")
+              : "Não informado"}
           </div>
 
           <div>
@@ -231,9 +247,24 @@ export default function Step8Confirmacao({
             {dietaLabel}
           </div>
         </div>
+
+        {groupedDaysSummary.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            {groupedDaysSummary.map((item) => (
+              <div
+                key={item.modalityId}
+                className="rounded-[16px] border border-white/10 bg-black/20 px-4 py-3 text-[13px] text-white/72"
+              >
+                <span className="font-semibold text-white">{item.label}:</span>{" "}
+                {item.days.length > 0
+                  ? item.days.map((d) => d.toUpperCase()).join(" • ")
+                  : "Sem dias definidos"}
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
 
-      {/* PRÓXIMA REFEIÇÃO */}
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <h3 className="text-[18px] font-semibold">Próxima refeição</h3>
 
@@ -267,7 +298,6 @@ export default function Step8Confirmacao({
         </div>
       </section>
 
-      {/* CTA */}
       <div className="flex gap-3 pt-2">
         {onBack && (
           <Button
@@ -282,7 +312,8 @@ export default function Step8Confirmacao({
 
         <Button
           onClick={onConfirm}
-          className="h-14 flex-1 rounded-[20px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
+          variant="ghost"
+          className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent"
         >
           Finalizar plano
           <Check className="ml-2 h-4 w-4" />

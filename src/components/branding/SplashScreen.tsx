@@ -34,7 +34,7 @@ export function SplashScreen() {
         {/* Logo */}
         <div className="animate-pulse">
           <BrandIcon
-            size={64}
+            size={200}
             className="drop-shadow-[0_0_20px_rgba(0,200,255,0.7)]"
           />
         </div>
