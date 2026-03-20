@@ -155,6 +155,19 @@ export function ensureTrainingPlanInActivePlan(activePlan: any): any {
 
   activePlan.training.smartPlan = smartPlan ?? null;
   activePlan.training.workouts = workouts;
+  activePlan.training.execution =
+    isObject(activePlan.training.execution)
+      ? {
+          currentSession: activePlan.training.execution.currentSession ?? null,
+          history: safeArray(activePlan.training.execution.history),
+          exercisePerformance: safeArray(activePlan.training.execution.exercisePerformance),
+        }
+      : {
+          currentSession: null,
+          history: [],
+          exercisePerformance: [],
+        };
+
   activePlan.workout.week = canonicalWorkoutsToLegacyWeek(workouts);
 
   return activePlan;

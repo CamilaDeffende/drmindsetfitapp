@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { useState, useEffect, useMemo } from "react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -18,6 +17,13 @@ import {
   getCanonicalTrainingExercises,
   getCanonicalTrainingSessionByIndex,
 } from "@/services/training/activeTrainingSessions.bridge";
+import {
+  beginTrainingExecutionSession,
+  completeTrainingExecutionSession,
+  getCanonicalTrainingLoadHistory,
+  type TrainingExecutionExercise,
+  type TrainingExecutionSet,
+} from "@/services/training/trainingExecution.service";
 
 function buildWorkoutExportText() {
   const lines = [
@@ -40,10 +46,7 @@ async function downloadPdfPremiumWorkout() {
     signatureLines: mindsetfitSignatureLines,
     wordmarkText: "MindSetFit",
     reportLabel: "RELATÓRIO TREINO",
-    metaLines: [
-      "Módulo: Treino",
-      "Template: MindSetFit Premium (PDF)",
-    ],
+    metaLines: ["Módulo: Treino", "Template: MindSetFit Premium (PDF)"],
     bodyText: buildWorkoutExportText(),
     layout: {
       logoW: 220,
@@ -82,12 +85,14 @@ type CanonicalExerciseView = {
 type CanonicalWorkoutDayView = {
   id: string;
   dia: string;
+  dayKey?: string;
   modalidade: string;
   titulo: string;
   grupamentos: string[];
   exercicios: CanonicalExerciseView[];
   intensidade?: string;
   duracaoMin?: number;
+  rationale?: string;
 };
 
 function safeNum(value: unknown, fallback: number) {
@@ -100,11 +105,13 @@ function normalizeLegacyDays(state: any): CanonicalWorkoutDayView[] {
   return treinos.map((t: any, idx: number) => ({
     id: String(t?.id ?? `legacy-day-${idx + 1}`),
     dia: String(t?.dia ?? `Dia ${idx + 1}`),
+    dayKey: String(t?.dayKey ?? ""),
     modalidade: String(t?.modalidade ?? "musculacao"),
     titulo: String(t?.titulo ?? t?.dia ?? `Treino ${idx + 1}`),
     grupamentos: Array.isArray(t?.grupamentos) ? t.grupamentos.map(String) : [],
     intensidade: t?.intensidade,
     duracaoMin: safeNum(t?.duracaoMin, 45),
+    rationale: t?.rationale,
     exercicios: Array.isArray(t?.exercicios)
       ? t.exercicios.map((ex: any, exIdx: number) => ({
           id: String(ex?.exercicio?.id ?? `legacy-ex-${idx + 1}-${exIdx + 1}`),
@@ -124,8 +131,10 @@ function normalizeLegacyDays(state: any): CanonicalWorkoutDayView[] {
 
 function normalizeCanonicalDays(): CanonicalWorkoutDayView[] {
   const options = getCanonicalTrainingDayOptions();
+
   return options.map((opt, idx) => {
     const session = getCanonicalTrainingSessionByIndex(opt.index);
+
     const exercises = getCanonicalTrainingExercises(session).map((ex) => ({
       id: String(ex.exerciseId),
       nome: String(ex.name),
@@ -146,41 +155,123 @@ function normalizeCanonicalDays(): CanonicalWorkoutDayView[] {
     return {
       id: String(session?.id ?? `session-${idx + 1}`),
       dia: String(opt.dayLabel ?? `Dia ${idx + 1}`),
+      dayKey: String(session?.dayKey ?? ""),
       modalidade: String(opt.modality ?? "musculacao"),
       titulo: String(opt.title ?? `Treino ${idx + 1}`),
       grupamentos,
       intensidade: session?.intensity,
       duracaoMin: opt.estimatedDurationMin,
+      rationale: session?.rationale,
       exercicios: exercises,
     };
   });
 }
 
+function buildInitialSeries(exercicio: CanonicalExerciseView): SerieDados[] {
+  return Array.from({ length: exercicio.series }, (_, i) => ({
+    numero: i + 1,
+    carga: 0,
+    tempoDescanso: exercicio.descanso,
+    completa: false,
+  }));
+}
+
 export function TreinoAtivo() {
-  const { state, updateState } = useDrMindSetfit();
+  const { state } = useDrMindSetfit();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [treinoSelecionado, setTreinoSelecionado] = useState(0);
   const [exercicioAtual, setExercicioAtual] = useState(0);
-  const [series, setSeries] = useState<SerieDados[]>([]);
+  const [exerciseLogs, setExerciseLogs] = useState<Record<string, SerieDados[]>>({});
   const [tempoDecorrido, setTempoDecorrido] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
 
   const canonicalDays = useMemo(() => normalizeCanonicalDays(), []);
   const legacyDays = useMemo(() => normalizeLegacyDays(state), [state]);
   const treinoDias = canonicalDays.length ? canonicalDays : legacyDays;
-
   const isCanonicalSource = canonicalDays.length > 0;
 
   const treino = treinoDias[treinoSelecionado];
   const exercicio = treino?.exercicios?.[exercicioAtual];
 
   const historicoCargas = useMemo(() => {
-    return Array.isArray((state as any)?.treino?.historicoCargas)
-      ? (state as any).treino.historicoCargas
-      : [];
+    const canonicalHistory = getCanonicalTrainingLoadHistory();
+    if (canonicalHistory.length) return canonicalHistory;
+    return Array.isArray((state as any)?.treino?.historicoCargas) ? (state as any).treino.historicoCargas : [];
   }, [state]);
+
+  useEffect(() => {
+    if (!treino) return;
+    setExerciseLogs({});
+    setExercicioAtual(0);
+    setTempoDecorrido(0);
+    setTimerAtivo(false);
+
+    beginTrainingExecutionSession({
+      sessionId: `${treino.id}-${Date.now()}`,
+      trainingId: treino.id,
+      source: isCanonicalSource ? "training.workouts" : "state.treino",
+      dayLabel: treino.dia,
+      dayKey: treino.dayKey,
+      modality: treino.modalidade,
+      title: treino.titulo,
+      intensity: treino.intensidade,
+      durationMin: treino.duracaoMin,
+      plannedExercises: treino.exercicios.length,
+      exercises: treino.exercicios.map((item) => ({
+        exerciseId: item.id,
+        exerciseName: item.nome,
+        muscleGroup: item.grupoMuscular,
+        equipment: item.equipamento,
+        notes: item.observacoes,
+        plannedSets: item.series,
+        plannedReps: item.repeticoes,
+        plannedRestSec: item.descanso,
+        performedSets: [],
+        completed: false,
+      })),
+    });
+  }, [treinoSelecionado, isCanonicalSource, treino?.id]);
+
+  useEffect(() => {
+    if (!exercicio) return;
+    setExerciseLogs((prev) => {
+      if (prev[exercicio.id]) return prev;
+      return { ...prev, [exercicio.id]: buildInitialSeries(exercicio) };
+    });
+    setTempoDecorrido(0);
+    setTimerAtivo(false);
+  }, [exercicio?.id, exercicio?.series, exercicio?.descanso]);
+
+  const series = exercicio ? exerciseLogs[exercicio.id] ?? [] : [];
+
+  const progressoTreino = treino?.exercicios?.length
+    ? Math.round(((exercicioAtual + 1) / treino.exercicios.length) * 100)
+    : 0;
+
+  const seriesCompletas = series.filter((s) => s.completa).length;
+  const progressoSeries = exercicio?.series ? Math.round((seriesCompletas / exercicio.series) * 100) : 0;
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (timerAtivo && tempoDecorrido > 0) {
+      interval = setInterval(() => {
+        setTempoDecorrido((prev) => {
+          if (prev <= 1) {
+            setTimerAtivo(false);
+            toast({
+              title: "Descanso concluído!",
+              description: "Hora da próxima série.",
+            });
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerAtivo, tempoDecorrido, toast]);
 
   if (!treinoDias.length || !treino || !exercicio) {
     return (
@@ -201,129 +292,127 @@ export function TreinoAtivo() {
     );
   }
 
-  const progressoTreino = Math.round(((exercicioAtual + 1) / treino.exercicios.length) * 100);
-  const seriesCompletas = series.filter((s) => s.completa).length;
-  const progressoSeries = Math.round((seriesCompletas / exercicio.series) * 100);
-
-  useEffect(() => {
-    const novasSeries: SerieDados[] = Array.from({ length: exercicio.series }, (_, i) => ({
-      numero: i + 1,
-      carga: 0,
-      tempoDescanso: exercicio.descanso,
-      completa: false,
+  const updateCurrentExerciseSeries = (updater: (current: SerieDados[]) => SerieDados[]) => {
+    setExerciseLogs((prev) => ({
+      ...prev,
+      [exercicio.id]: updater(prev[exercicio.id] ?? buildInitialSeries(exercicio)),
     }));
-    setSeries(novasSeries);
-    setTempoDecorrido(0);
-    setTimerAtivo(false);
-  }, [exercicioAtual, treinoSelecionado, exercicio.series, exercicio.descanso]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (timerAtivo && tempoDecorrido > 0) {
-      interval = setInterval(() => {
-        setTempoDecorrido((prev) => {
-          if (prev <= 1) {
-            setTimerAtivo(false);
-            toast({
-              title: "Descanso concluído!",
-              description: "Hora da próxima série",
-            });
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [timerAtivo, tempoDecorrido, toast]);
+  };
 
   const atualizarSerie = (indice: number, campo: "carga" | "tempoDescanso", valor: number) => {
-    const novasSeries = [...series];
-    novasSeries[indice][campo] = valor;
-    setSeries(novasSeries);
+    updateCurrentExerciseSeries((current) => {
+      const next = [...current];
+      next[indice] = { ...next[indice], [campo]: valor };
+      return next;
+    });
   };
 
   const marcarSerieCompleta = (indice: number) => {
-    const novasSeries = [...series];
-    novasSeries[indice].completa = !novasSeries[indice].completa;
+    updateCurrentExerciseSeries((current) => {
+      const next = [...current];
+      const target = next[indice];
+      next[indice] = { ...target, completa: !target.completa };
 
-    if (novasSeries[indice].completa && indice < series.length - 1) {
-      setTempoDecorrido(novasSeries[indice].tempoDescanso);
-      setTimerAtivo(true);
-    }
+      if (!target.completa && indice < next.length - 1) {
+        setTempoDecorrido(next[indice].tempoDescanso);
+        setTimerAtivo(true);
+      }
 
-    setSeries(novasSeries);
+      if (!target.completa) {
+        toast({
+          title: `Série ${indice + 1} concluída!`,
+          description: indice < next.length - 1 ? "Timer de descanso iniciado." : "Todas as séries completas!",
+        });
+      }
 
-    if (novasSeries[indice].completa) {
-      toast({
-        title: `Série ${indice + 1} concluída!`,
-        description: indice < series.length - 1 ? "Timer de descanso iniciado" : "Todas as séries completas!",
-      });
-    }
+      return next;
+    });
+  };
+
+  const exercicioAnterior = () => {
+    if (exercicioAtual > 0) setExercicioAtual((prev) => prev - 1);
   };
 
   const proximoExercicio = () => {
     if (exercicioAtual < treino.exercicios.length - 1) {
-      setExercicioAtual(exercicioAtual + 1);
-    } else {
-      finalizarTreino();
+      setExercicioAtual((prev) => prev + 1);
+      return;
     }
-  };
-
-  const finalizarTreino = () => {
-    const dataHoje = new Date().toISOString().split("T")[0];
-    const historicoAtual = Array.isArray((state as any)?.treino?.historicoCargas)
-      ? [...(state as any).treino.historicoCargas]
-      : [];
-
-    const cargaTotal = series.reduce((acc, s) => acc + s.carga, 0);
-
-    if (cargaTotal > 0) {
-      historicoAtual.push({
-        data: dataHoje,
-        exercicioId: exercicio.id,
-        exercicioNome: exercicio.nome,
-        cargaTotal,
-        detalhes: series.map((s) => ({
-          serie: s.numero,
-          carga: s.carga,
-          repeticoes: parseInt(exercicio.repeticoes, 10) || 10,
-        })),
-      });
-    }
-
-    updateState({
-      treino: {
-        ...((state as any).treino ?? {}),
-        historicoCargas: historicoAtual,
-      },
-    });
-
-    toast({
-      title: "Treino Concluído!",
-      description: isCanonicalSource
-        ? "Sessão do plano oficial concluída. Histórico salvo."
-        : "Treino concluído. Dados salvos com sucesso.",
-    });
-
-    navigate("/dashboard");
-  };
-
-  const exercicioAnterior = () => {
-    if (exercicioAtual > 0) {
-      setExercicioAtual(exercicioAtual - 1);
-    }
+    finalizarTreino();
   };
 
   const selecionarTreino = (index: number) => {
     setTreinoSelecionado(index);
-    setExercicioAtual(0);
   };
 
   const formatarTempo = (segundos: number) => {
     const mins = Math.floor(segundos / 60);
     const secs = segundos % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const finalizarTreino = () => {
+    const performedExercises: TrainingExecutionExercise[] = treino.exercicios.map((item) => {
+      const performedSets = (exerciseLogs[item.id] ?? buildInitialSeries(item)).map<TrainingExecutionSet>((setItem) => ({
+        setNumber: setItem.numero,
+        loadKg: Number(setItem.carga ?? 0) || 0,
+        restSec: Number(setItem.tempoDescanso ?? item.descanso) || item.descanso,
+        completed: !!setItem.completa,
+        repsTarget: item.repeticoes,
+        repsPerformed: Number.parseInt(String(item.repeticoes).split("-")[0] ?? "0", 10) || null,
+      }));
+
+      return {
+        exerciseId: item.id,
+        exerciseName: item.nome,
+        muscleGroup: item.grupoMuscular,
+        equipment: item.equipamento,
+        notes: item.observacoes,
+        plannedSets: item.series,
+        plannedReps: item.repeticoes,
+        plannedRestSec: item.descanso,
+        performedSets,
+        completed: performedSets.some((setItem) => setItem.completed),
+      };
+    });
+
+    const completedExercises = performedExercises.filter((exerciseItem) => exerciseItem.completed).length;
+    const totalVolumeLoad = performedExercises.reduce(
+      (acc, exerciseItem) =>
+        acc + exerciseItem.performedSets.reduce((setAcc, setItem) => setAcc + (Number(setItem.loadKg ?? 0) || 0), 0),
+      0
+    );
+
+    const adherencePct =
+      performedExercises.length > 0 ? Math.round((completedExercises / performedExercises.length) * 100) : 0;
+
+    completeTrainingExecutionSession({
+      sessionId: `${treino.id}-${Date.now()}`,
+      trainingId: treino.id,
+      source: isCanonicalSource ? "training.workouts" : "state.treino",
+      dayLabel: treino.dia,
+      dayKey: treino.dayKey,
+      modality: treino.modalidade,
+      title: treino.titulo,
+      intensity: treino.intensidade,
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString(),
+      durationMin: treino.duracaoMin,
+      plannedExercises: treino.exercicios.length,
+      completedExercises,
+      totalVolumeLoad,
+      adherencePct,
+      exercises: performedExercises,
+    });
+
+    toast({
+      title: "Treino concluído!",
+      description: isCanonicalSource
+        ? "Sessão oficial salva no histórico canônico."
+        : "Sessão salva no histórico canônico com origem legada.",
+    });
+
+    navigate("/dashboard");
   };
 
   return (
@@ -397,7 +486,9 @@ export function TreinoAtivo() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex-1">
                 <CardTitle className="text-lg sm:text-xl">{exercicio.nome}</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">{exercicio.equipamento ?? "Equipamento livre"}</CardDescription>
+                <CardDescription className="text-xs sm:text-sm">
+                  {exercicio.equipamento ?? "Equipamento livre"}
+                </CardDescription>
               </div>
               <Badge variant="outline" className="self-start sm:self-auto text-xs">
                 {exercicio.grupoMuscular ?? treino.modalidade}
@@ -514,37 +605,38 @@ export function TreinoAtivo() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {treino.exercicios.map((ex, idx) => (
-                <div
-                  key={ex.id ?? idx}
-                  onClick={() => setExercicioAtual(idx)}
-                  className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                    idx === exercicioAtual
-                      ? "bg-[#1E6BFF] dark:bg-[#1E6BFF] border-[#1E6BFF]"
-                      : idx < exercicioAtual
-                        ? "bg-green-50 dark:bg-green-950 border-green-600"
-                        : "hover:bg-muted/50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm sm:text-base truncate">{ex.nome}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        {ex.series}x{ex.repeticoes} • {ex.descanso}s
-                      </p>
-                    </div>
-                    <div className="ml-2 shrink-0">
-                      {idx < exercicioAtual ? (
-                        <Check className="w-5 h-5 text-green-600" />
-                      ) : idx === exercicioAtual ? (
-                        <Badge variant="default" className="text-xs">Atual</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">{idx + 1}</Badge>
-                      )}
+              {treino.exercicios.map((ex, idx) => {
+                const performed = exerciseLogs[ex.id] ?? [];
+                const completedSets = performed.filter((item) => item.completa).length;
+
+                return (
+                  <div
+                    key={ex.id ?? idx}
+                    onClick={() => setExercicioAtual(idx)}
+                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                      idx === exercicioAtual
+                        ? "bg-[#1E6BFF] dark:bg-[#1E6BFF] border-[#1E6BFF]"
+                        : idx < exercicioAtual
+                          ? "bg-green-50 dark:bg-green-950 border-green-600"
+                          : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm sm:text-base truncate">{ex.nome}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          {ex.series}x{ex.repeticoes} • {ex.descanso}s
+                        </p>
+                      </div>
+
+                      <div className="ml-3 text-right">
+                        <p className="text-xs text-muted-foreground">{completedSets}/{ex.series}</p>
+                        {idx < exercicioAtual && <Check className="w-4 h-4 text-green-500 ml-auto" />}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -554,9 +646,9 @@ export function TreinoAtivo() {
         <div className="max-w-3xl mx-auto flex gap-2 sm:gap-3">
           <Button
             variant="outline"
-            className="flex-1"
             onClick={exercicioAnterior}
             disabled={exercicioAtual === 0}
+            className="flex-1 text-sm sm:text-base"
           >
             <ArrowLeft className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Anterior</span>
@@ -565,7 +657,6 @@ export function TreinoAtivo() {
           <Button
             className="flex-[2] bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] text-sm sm:text-base hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0"
             onClick={proximoExercicio}
-            disabled={seriesCompletas < exercicio.series}
           >
             {exercicioAtual < treino.exercicios.length - 1 ? (
               <>

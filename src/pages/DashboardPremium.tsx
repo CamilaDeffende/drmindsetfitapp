@@ -34,6 +34,7 @@ import { ptBR } from "date-fns/locale";
 import { loadActivePlan } from "@/services/plan.service";
 import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+import { getCanonicalTrainingLoadHistory } from "@/services/training/trainingExecution.service";
 
 type PassosDia = { data: string; passos: number };
 type ConsumoDia = { data: string; consumido: number };
@@ -169,9 +170,13 @@ export function DashboardPremium() {
     ? ((state as any).consumoCalorias as ConsumoDia[])
     : [];
 
-  const historicoCargas: CargaDia[] = Array.isArray((state as any)?.treino?.historicoCargas)
-    ? ((state as any).treino.historicoCargas as CargaDia[])
-    : [];
+  const historicoCargas: CargaDia[] = (() => {
+    const canonical = getCanonicalTrainingLoadHistory();
+    if (Array.isArray(canonical) && canonical.length) return canonical as CargaDia[];
+    return Array.isArray((state as any)?.treino?.historicoCargas)
+      ? ((state as any).treino.historicoCargas as CargaDia[])
+      : [];
+  })();
 
   const nutrition = useMemo(() => {
     return (

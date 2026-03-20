@@ -29,6 +29,11 @@ export type ActivePlanV1 = {
   training?: {
     smartPlan?: any;
     workouts?: any[];
+    execution?: {
+      currentSession?: any | null;
+      history?: any[];
+      exercisePerformance?: any[];
+    };
     [k: string]: any;
   };
   draft?: PlanDraft;
