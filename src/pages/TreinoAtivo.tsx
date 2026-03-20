@@ -182,6 +182,17 @@ function buildInitialSeries(exercicio: CanonicalExerciseView): SerieDados[] {
   }));
 }
 
+function normalizeMotorDecisionConfidence(value: unknown): "high" | "medium" | "low" {
+  const v = String(value ?? "").trim().toLowerCase();
+
+  if (v === "alta" || v === "high") return "high";
+  if (v === "baixa" || v === "low") return "low";
+  if (v === "media" || v === "média" || v === "medium") return "medium";
+
+  return "medium";
+}
+
+
 export function TreinoAtivo() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
@@ -438,18 +449,7 @@ export function TreinoAtivo() {
       progressionApplied: !!progressionSuggestion,
       suggestedLoadKg: progressionSuggestion?.suggestedLoadKg ?? null,
       lastAverageLoadKg: progressionSuggestion?.lastAverageLoadKg ?? null,
-      confidence:
-        progressionSuggestion?.confidence === "alta"
-          ? "high"
-          : progressionSuggestion?.confidence === "baixa"
-            ? "low"
-            : progressionSuggestion?.confidence === "media"
-              ? "medium"
-              : progressionSuggestion?.confidence === "high"
-                ? "high"
-                : progressionSuggestion?.confidence === "low"
-                  ? "low"
-                  : "medium",
+      confidence: normalizeMotorDecisionConfidence(progressionSuggestion?.confidence),
     });
 
     if (decision) {
