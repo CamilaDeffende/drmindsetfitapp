@@ -1,6 +1,7 @@
 // MF_NUTRITION_ENGINE_V1
 // Motor nutricional puro: REE/TDEE/macros + heurística de biotipo (sem pseudociência).
 // Regras: funções puras, sem side-effects, sem depender de store/UI.
+// ***********NÃO ESTÁ SENDO USADO!!!!********************
 
 export type Sex = "masculino" | "feminino";
 export type Goal = "emagrecimento" | "manutencao" | "ganho";

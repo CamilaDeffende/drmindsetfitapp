@@ -20,9 +20,7 @@ import type {
   PlanejamentoNutricional,
   Restricao,
   TipoRefeicao,
-  AlimentoRefeicao,
 } from "@/types";
-import { ALIMENTOS_DATABASE, calcularMacros } from "@/types/alimentos";
 import { saveOnboardingProgress } from "@/lib/onboardingProgress";
 import { saveActivePlanNutrition } from "@/services/plan/activePlanNutrition.writer";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
@@ -333,10 +331,10 @@ export function Step4Nutricao({
           (state as any)?.nutricao?.macros ??
           (state as any)?.macros ??
           undefined,
+        refeicoesSelecionadas:
+          currentNutricao?.refeicoesSelecionadas ?? [],
         refeicoes:
-          currentNutricao?.refeicoes ??
-          (state as any)?.nutricao?.refeicoes ??
-          [],
+          currentNutricao?.refeicoes ?? [],
         timezone: timeZone,
       };
 
@@ -666,95 +664,43 @@ export function Step4Nutricao({
 
   const gerarPlanejamento = () => {
     try {
-      const calorias = state.metabolismo?.caloriasAlvo || __mfKcalAlvo || 2000;
+      const caloriasBase = state.metabolismo?.caloriasAlvo || __mfKcalAlvo || 2000;
       const peso =
         (draftStep1 as any)?.peso ||
         state.avaliacao?.peso ||
         draftStep2?.peso ||
         70;
 
-      let caloriasFinais = calorias;
       const pct = mfStrategyPercent(estrategia);
-      caloriasFinais = calorias * (1 + pct / 100);
+      const caloriasAjustadas = caloriasBase * (1 + pct / 100);
 
       const proteina = Math.round(Number(peso) * 2);
       const gorduras = Math.round(Number(peso) * 1);
-      const kcalFixas = proteina * 4 + gorduras * 9;
 
-      const kcalTarget = Math.round(caloriasFinais);
+      const kcalFixas = proteina * 4 + gorduras * 9;
+      const kcalTarget = Math.round(caloriasAjustadas);
       const kcalRest = Math.max(0, kcalTarget - kcalFixas);
       const carboFix = Math.max(0, Math.round(kcalRest / 4));
       const carboidratos = mfClampSSOT(carboFix, 0, 900);
 
       const kcalFinal = mfKcalFromMacros(proteina, carboidratos, gorduras);
-      caloriasFinais = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
+      const caloriasFinais = mfClampSSOT(Math.round(kcalFinal), 800, 6500);
 
       try {
         const inputs = __mfBuildNutritionInputs(state, undefined);
         saveActivePlanNutrition(inputs.body as any, inputs.opts as any);
       } catch {}
 
-      let alimentosPermitidos = ALIMENTOS_DATABASE;
-      const isVegano = restricoes.includes("vegano");
-      const isVegetariano = restricoes.includes("vegetariano");
-
-      if (isVegano) {
-        alimentosPermitidos = alimentosPermitidos.filter((a) => a.vegano);
-      } else if (isVegetariano) {
-        alimentosPermitidos = alimentosPermitidos.filter((a) => a.vegetariano);
-      }
-
-      const addAlimento = (
-        lista: AlimentoRefeicao[],
-        alimentoId: string,
-        gramas: number
-      ) => {
-        const base = alimentosPermitidos.find((a) => a.id === alimentoId);
-        if (!base) return;
-
-        const macros = calcularMacros(base.id, gramas);
-        if (!macros) return;
-
-        lista.push({
-          ...macros,
-          alimentoId: base.id,
-          nome: base.nome,
-          gramas,
-        });
-      };
-
-      const refeicoes = refeicoesSelecionadas.map((tipoRefeicao) => {
+      const refeicoesPreview = refeicoesSelecionadas.map((tipoRefeicao) => {
         const infoRefeicao = refeicoesDiponiveis.find(
           (r) => r.value === tipoRefeicao
         )!;
-
-        const alimentos: AlimentoRefeicao[] = [];
-
-        if (tipoRefeicao === "desjejum" || tipoRefeicao === "cafe-da-manha") {
-          addAlimento(alimentos, "aveia", 50);
-          addAlimento(alimentos, "banana", 100);
-          addAlimento(alimentos, isVegano ? "tofu" : "iogurte-grego", isVegano ? 100 : 150);
-          addAlimento(alimentos, "castanhas", 20);
-        } else if (tipoRefeicao === "almoco" || tipoRefeicao === "jantar") {
-          addAlimento(alimentos, "arroz-integral", 150);
-          addAlimento(alimentos, isVegano ? "tofu" : "frango-peito", 150);
-          addAlimento(alimentos, "brocolis", 100);
-          addAlimento(alimentos, "alface", 50);
-          addAlimento(alimentos, "azeite", 10);
-        } else if (tipoRefeicao === "lanche-tarde") {
-          addAlimento(alimentos, "maca", 150);
-          addAlimento(alimentos, isVegano ? "tofu" : "iogurte-grego", isVegano ? 100 : 150);
-          addAlimento(alimentos, "castanhas", 20);
-        } else if (tipoRefeicao === "ceia") {
-          addAlimento(alimentos, isVegano ? "tofu" : "queijo-cottage", 100);
-          addAlimento(alimentos, "morango", 100);
-        }
 
         return {
           tipo: tipoRefeicao,
           horario: infoRefeicao.horarioPadrao,
           nome: infoRefeicao.label,
-          alimentos,
+          alimentos: [],
         };
       });
 
@@ -770,7 +716,7 @@ export function Step4Nutricao({
           calorias: Math.round(caloriasFinais),
         },
         refeicoesSelecionadas,
-        refeicoes,
+        refeicoes: refeicoesPreview,
       };
 
       updateState({
@@ -805,6 +751,7 @@ export function Step4Nutricao({
             nutricao: planejamento,
             dieta: planejamento,
             macros: planejamento?.macros,
+            refeicoesSelecionadas: planejamento?.refeicoesSelecionadas ?? [],
             refeicoes: planejamento?.refeicoes ?? [],
             timezone: timeZone,
           },

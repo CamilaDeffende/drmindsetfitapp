@@ -1,6 +1,12 @@
 import { computeMetabolic } from "@/engine/metabolic/MetabolicEngine";
-import { computeMacros, buildMealPlan } from "@/engine/nutrition/NutritionEngine";
+import { computeMacros } from "@/engine/nutrition/NutritionEngine";
 import { buildWorkoutWeek, Modality } from "@/engine/workout/WorkoutEngine";
+import {
+  ALIMENTOS_DATABASE,
+  buscarAlimento,
+  calcularMacros,
+  type AlimentoDatabase,
+} from "@/types/alimentos";
 
 import { persistTrainingPlanToActivePlan } from "./training/activePlan.trainingWriter";
 
@@ -46,6 +52,7 @@ export type ActivePlanV1 = {
     meals?: any[];
     strategy?: string;
     preference?: string;
+    restrictions?: string[];
     [k: string]: any;
   };
 
@@ -129,11 +136,15 @@ function normalizeGoal(goalRaw: string): "cut" | "bulk" | "maintain" {
   return "maintain";
 }
 
-function normalizePreference(prefRaw: string): "flexivel" | "lowcarb" | "vegetariana" {
+function normalizePreference(
+  prefRaw: string
+): "flexivel" | "lowcarb" | "vegetariana" | "vegana" | "onivoro" {
   const p = String(prefRaw || "").toLowerCase();
 
   if (p.includes("low")) return "lowcarb";
-  if (p.includes("veg")) return "vegetariana";
+  if (p.includes("vegano")) return "vegana";
+  if (p.includes("veget")) return "vegetariana";
+  if (p.includes("oniv")) return "onivoro";
   return "flexivel";
 }
 
@@ -161,13 +172,228 @@ function normalizeLevel(raw: any): "iniciante" | "intermediario" | "avancado" {
   return "iniciante";
 }
 
+function normalizeRestrictions(raw: any): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((x) => String(x || "").toLowerCase()).filter(Boolean);
+}
+
+function pickAllowedFoods(params: {
+  preference: string;
+  restrictions: string[];
+}): AlimentoDatabase[] {
+  const { preference, restrictions } = params;
+
+  return ALIMENTOS_DATABASE.filter((food) => {
+    if (preference === "vegana" && !food.vegano) return false;
+    if (preference === "vegetariana" && !food.vegetariano) return false;
+
+    if (restrictions.includes("lactose") && food.semLactose === false) return false;
+    if (restrictions.includes("gluten") && food.semGluten === false) return false;
+    if (restrictions.includes("ovo") && food.semOvo === false) return false;
+    if (restrictions.includes("acucar") && food.semAcucar === false) return false;
+    if (restrictions.includes("oleaginosas") && food.semOleaginosas === false) return false;
+    if (restrictions.includes("low-sodium") && food.baixoSodio === false) return false;
+    if (restrictions.includes("diabetes") && food.baixoIndiceGlicemico === false) return false;
+
+    return true;
+  });
+}
+
+function pickFoodByIdOrFallback(
+  allowedFoods: AlimentoDatabase[],
+  preferredIds: string[],
+  fallbackCategory?: AlimentoDatabase["categoria"]
+): AlimentoDatabase | null {
+  for (const id of preferredIds) {
+    const found = allowedFoods.find((f) => f.id === id);
+    if (found) return found;
+  }
+
+  if (fallbackCategory) {
+    const fallback = allowedFoods.find((f) => f.categoria === fallbackCategory);
+    if (fallback) return fallback;
+  }
+
+  return allowedFoods[0] ?? null;
+}
+
+function buildFoodItem(foodId: string, grams?: number) {
+  const food = buscarAlimento(foodId);
+  if (!food) return null;
+
+  const useGrams = Number(grams || food.porcaoPadrao || 100);
+  const macros = calcularMacros(foodId, useGrams);
+  if (!macros) return null;
+
+  return {
+    alimentoId: food.id,
+    nome: food.nome,
+    gramas: useGrams,
+    calorias: macros.calorias,
+    proteinas: macros.proteinas,
+    carboidratos: macros.carboidratos,
+    gorduras: macros.gorduras,
+  };
+}
+
+function buildMeal(
+  name: string,
+  horario: string,
+  selectedFoods: Array<{ id: string; grams?: number }>
+) {
+  const alimentos = selectedFoods
+    .map((x) => buildFoodItem(x.id, x.grams))
+    .filter(Boolean);
+
+  return {
+    nome: name,
+    horario,
+    alimentos,
+  };
+}
+
+function buildRealMealPlan(params: {
+  kcalTarget: number;
+  preference: "flexivel" | "lowcarb" | "vegetariana" | "vegana" | "onivoro";
+  restrictions: string[];
+  selectedMealTypes: string[];
+}) {
+  const { preference, restrictions, selectedMealTypes } = params;
+
+  const allowedFoods = pickAllowedFoods({ preference, restrictions });
+
+  const isLowCarb = preference === "lowcarb";
+  const isVeg = preference === "vegetariana" || preference === "vegana";
+
+  const breakfastProtein = isVeg
+    ? pickFoodByIdOrFallback(allowedFoods, ["tofu", "proteina-texturizada"], "proteina-vegetal")
+    : pickFoodByIdOrFallback(allowedFoods, ["iogurte-grego", "ovo", "queijo-cottage", "tofu"], "proteina");
+
+  const lunchProtein = isVeg
+    ? pickFoodByIdOrFallback(allowedFoods, ["tofu", "proteina-texturizada", "lentilha", "grao-de-bico"], "proteina-vegetal")
+    : pickFoodByIdOrFallback(allowedFoods, ["frango-peito", "peixe-tilapia", "atum", "peru"], "proteina");
+
+  const dinnerProtein = isVeg
+    ? pickFoodByIdOrFallback(allowedFoods, ["tofu", "lentilha", "grao-de-bico", "feijao-preto"], "proteina-vegetal")
+    : pickFoodByIdOrFallback(allowedFoods, ["frango-peito", "peixe-salmao", "peixe-tilapia", "atum"], "proteina");
+
+  const breakfastCarb = isLowCarb
+    ? pickFoodByIdOrFallback(allowedFoods, ["morango", "maca", "abacate"], "fruta")
+    : pickFoodByIdOrFallback(allowedFoods, ["aveia", "banana", "maca"], "carboidrato");
+
+  const lunchCarb = isLowCarb
+    ? pickFoodByIdOrFallback(allowedFoods, ["brocolis", "abobrinha", "couve-flor"], "legume")
+    : pickFoodByIdOrFallback(allowedFoods, ["arroz-integral", "quinoa", "batata-doce", "arroz-branco"], "carboidrato");
+
+  const dinnerCarb = isLowCarb
+    ? pickFoodByIdOrFallback(allowedFoods, ["abobrinha", "brocolis", "couve-flor"], "legume")
+    : pickFoodByIdOrFallback(allowedFoods, ["batata-doce", "quinoa", "arroz-integral", "arroz-branco"], "carboidrato");
+
+  const fruitSnack = pickFoodByIdOrFallback(
+    allowedFoods,
+    ["morango", "maca", "mamao", "banana", "abacaxi"],
+    "fruta"
+  );
+
+  const goodFat = pickFoodByIdOrFallback(
+    allowedFoods,
+    ["castanhas", "abacate", "azeite"],
+    "gordura"
+  );
+
+  const greens = pickFoodByIdOrFallback(
+    allowedFoods,
+    ["alface", "rucula", "espinafre", "couve", "agriao"],
+    "folhoso"
+  );
+
+  const legumes = pickFoodByIdOrFallback(
+    allowedFoods,
+    ["brocolis", "abobrinha", "couve-flor", "vagem", "cenoura"],
+    "legume"
+  );
+
+  const mealTemplates: Record<string, any> = {};
+
+  if (selectedMealTypes.includes("desjejum")) {
+    mealTemplates["desjejum"] = buildMeal("Desjejum", "06:00", [
+      ...(fruitSnack ? [{ id: fruitSnack.id, grams: fruitSnack.porcaoPadrao }] : []),
+    ]);
+  }
+
+  if (selectedMealTypes.includes("cafe-da-manha")) {
+    mealTemplates["cafe-da-manha"] = buildMeal("Café da Manhã", "08:00", [
+      ...(breakfastCarb ? [{ id: breakfastCarb.id, grams: breakfastCarb.porcaoPadrao }] : []),
+      ...(breakfastProtein ? [{ id: breakfastProtein.id, grams: breakfastProtein.porcaoPadrao }] : []),
+      ...(goodFat ? [{ id: goodFat.id, grams: Math.min(goodFat.porcaoPadrao, 30) }] : []),
+    ]);
+  }
+
+  if (selectedMealTypes.includes("almoco")) {
+    mealTemplates["almoco"] = buildMeal("Almoço", "12:00", [
+      ...(lunchCarb ? [{ id: lunchCarb.id, grams: lunchCarb.porcaoPadrao }] : []),
+      ...(lunchProtein ? [{ id: lunchProtein.id, grams: lunchProtein.porcaoPadrao }] : []),
+      ...(greens ? [{ id: greens.id, grams: greens.porcaoPadrao }] : []),
+      ...(legumes ? [{ id: legumes.id, grams: legumes.porcaoPadrao }] : []),
+      ...(goodFat?.id === "azeite" ? [{ id: "azeite", grams: 10 }] : []),
+    ]);
+  }
+
+  if (selectedMealTypes.includes("lanche-tarde")) {
+    mealTemplates["lanche-tarde"] = buildMeal("Lanche da Tarde", "16:00", [
+      ...(fruitSnack ? [{ id: fruitSnack.id, grams: fruitSnack.porcaoPadrao }] : []),
+      ...(breakfastProtein ? [{ id: breakfastProtein.id, grams: Math.min(breakfastProtein.porcaoPadrao, 120) }] : []),
+      ...(goodFat && goodFat.id !== "azeite" ? [{ id: goodFat.id, grams: Math.min(goodFat.porcaoPadrao, 20) }] : []),
+    ]);
+  }
+
+  if (selectedMealTypes.includes("jantar")) {
+    mealTemplates["jantar"] = buildMeal("Jantar", "20:00", [
+      ...(dinnerCarb ? [{ id: dinnerCarb.id, grams: dinnerCarb.porcaoPadrao }] : []),
+      ...(dinnerProtein ? [{ id: dinnerProtein.id, grams: dinnerProtein.porcaoPadrao }] : []),
+      ...(greens ? [{ id: greens.id, grams: greens.porcaoPadrao }] : []),
+      ...(legumes ? [{ id: legumes.id, grams: legumes.porcaoPadrao }] : []),
+    ]);
+  }
+
+  if (selectedMealTypes.includes("ceia")) {
+    mealTemplates["ceia"] = buildMeal("Ceia", "22:00", [
+      ...(isVeg
+        ? (breakfastProtein ? [{ id: breakfastProtein.id, grams: Math.min(breakfastProtein.porcaoPadrao, 100) }] : [])
+        : (pickFoodByIdOrFallback(allowedFoods, ["queijo-cottage", "iogurte-grego", "tofu"], "laticinio")
+          ? [{
+              id: (pickFoodByIdOrFallback(allowedFoods, ["queijo-cottage", "iogurte-grego", "tofu"], "laticinio") as AlimentoDatabase).id,
+              grams: 100
+            }]
+          : [])),
+      ...(fruitSnack ? [{ id: fruitSnack.id, grams: 80 }] : []),
+    ]);
+  }
+
+  const orderedMealTypes = [
+    "desjejum",
+    "cafe-da-manha",
+    "almoco",
+    "lanche-tarde",
+    "jantar",
+    "ceia",
+  ];
+
+  const refeicoes = orderedMealTypes
+    .filter((key) => selectedMealTypes.includes(key))
+    .map((key) => mealTemplates[key])
+    .filter(Boolean);
+
+  return refeicoes;
+}
+
 export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
   const anyDraft: any = draft || {};
 
   const step1 = anyDraft.step1 || {};
   const step2 = anyDraft.step2 || {};
   const step3 = anyDraft.step3 || {};
-  const step4 = anyDraft.step4 || {};
+  const step4 = anyDraft.step4 ?? {};
   const step5 = anyDraft.step5 ?? anyDraft.step5Modalidades ?? {};
   const step6 = anyDraft.step6 ?? anyDraft.step6DiasSemana ?? {};
   const step7 = anyDraft.step7 ?? anyDraft.step7Preferencias ?? {};
@@ -202,6 +428,10 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
 
   const preference = normalizePreference(
     step7?.dieta ?? step7?.preference ?? "flexivel"
+  );
+
+  const restrictions = normalizeRestrictions(
+    step4?.restricoes ?? step4?.restrictions ?? []
   );
 
   const metabolic = computeMetabolic({
@@ -250,7 +480,12 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
     targetKcal: (metabolic as any)?.targetKcal,
     goal,
     weightKg,
-    preference,
+    preference:
+      preference === "vegana" || preference === "vegetariana"
+        ? "vegetariana"
+        : preference === "lowcarb"
+        ? "lowcarb"
+        : "flexivel",
   });
 
   const normalizedComputedMacros = {
@@ -281,15 +516,16 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
       }
     : normalizedComputedMacros;
 
-  const hasRealMeals =
-    Array.isArray(step4?.refeicoes) && step4.refeicoes.length > 0;
+  const selectedMealTypes = Array.isArray(step4?.refeicoesSelecionadas)
+    ? step4.refeicoesSelecionadas
+    : ["cafe-da-manha", "almoco", "lanche-tarde", "jantar"];
 
-  const meals = hasRealMeals
-    ? step4.refeicoes
-    : buildMealPlan(
-        Number(step4?.kcalAlvo ?? (metabolic as any)?.targetKcal),
-        macros as any
-      );
+  const meals = buildRealMealPlan({
+    kcalTarget: Number(step4?.kcalAlvo ?? (metabolic as any)?.targetKcal ?? 2000),
+    preference,
+    restrictions,
+    selectedMealTypes,
+  });
 
   const primaryModality = mapPrimaryModality(step5?.primary);
   const modalities: Modality[] = [primaryModality];
@@ -366,6 +602,7 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
       meals: normalizedMeals,
       strategy: step4?.estrategia ?? goal,
       preference,
+      restrictions,
     },
 
     training: {

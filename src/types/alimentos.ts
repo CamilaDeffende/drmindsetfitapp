@@ -1,9 +1,17 @@
-// Database de alimentos com macros e substituições
+// Database de alimentos com macros, substituições e flags de restrição
 
 export interface AlimentoDatabase {
   id: string
   nome: string
-  categoria: 'carboidrato' | 'proteina' | 'proteina-vegetal' | 'legume' | 'folhoso' | 'fruta' | 'gordura' | 'laticinio'
+  categoria:
+    | 'carboidrato'
+    | 'proteina'
+    | 'proteina-vegetal'
+    | 'legume'
+    | 'folhoso'
+    | 'fruta'
+    | 'gordura'
+    | 'laticinio'
   porcaoPadrao: number // gramas
   macrosPor100g: {
     calorias: number
@@ -11,9 +19,18 @@ export interface AlimentoDatabase {
     carboidratos: number
     gorduras: number
   }
-  substituicoes: string[] // IDs de outros alimentos que podem substituir
+  substituicoes: string[]
   vegano: boolean
   vegetariano: boolean
+
+  // NOVO — flags para restrições
+  semLactose?: boolean
+  semGluten?: boolean
+  semOvo?: boolean
+  semAcucar?: boolean
+  semOleaginosas?: boolean
+  baixoSodio?: boolean
+  baixoIndiceGlicemico?: boolean
 }
 
 export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
@@ -26,7 +43,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 130, proteinas: 2.7, carboidratos: 28, gorduras: 0.3 },
     substituicoes: ['arroz-integral', 'batata-doce', 'batata-inglesa', 'macarrao-integral', 'quinoa'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: false,
   },
   {
     id: 'arroz-integral',
@@ -36,7 +60,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 123, proteinas: 2.6, carboidratos: 25.8, gorduras: 1 },
     substituicoes: ['arroz-branco', 'batata-doce', 'quinoa', 'macarrao-integral', 'aveia'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'batata-doce',
@@ -46,7 +77,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 86, proteinas: 1.6, carboidratos: 20, gorduras: 0.1 },
     substituicoes: ['batata-inglesa', 'mandioca', 'inhame', 'arroz-branco', 'macarrao'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'batata-inglesa',
@@ -56,7 +94,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 77, proteinas: 2, carboidratos: 17, gorduras: 0.1 },
     substituicoes: ['batata-doce', 'mandioca', 'inhame', 'arroz-branco', 'macarrao'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: false,
   },
   {
     id: 'macarrao-integral',
@@ -64,9 +109,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'carboidrato',
     porcaoPadrao: 100,
     macrosPor100g: { calorias: 124, proteinas: 5, carboidratos: 26, gorduras: 0.5 },
-    substituicoes: ['macarrao', 'arroz-integral', 'quinoa', 'batata-doce', 'aveia'],
+    substituicoes: ['arroz-integral', 'quinoa', 'batata-doce', 'aveia'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: false,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'macarrao',
@@ -74,9 +126,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'carboidrato',
     porcaoPadrao: 100,
     macrosPor100g: { calorias: 131, proteinas: 5, carboidratos: 25, gorduras: 1.1 },
-    substituicoes: ['macarrao-integral', 'arroz-branco', 'batata-inglesa', 'quinoa', 'aveia'],
+    substituicoes: ['arroz-branco', 'batata-inglesa', 'quinoa', 'aveia'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: false,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: false,
   },
   {
     id: 'quinoa',
@@ -84,9 +143,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'carboidrato',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 120, proteinas: 4.4, carboidratos: 21.3, gorduras: 1.9 },
-    substituicoes: ['arroz-integral', 'arroz-branco', 'macarrao-integral', 'batata-doce', 'aveia'],
+    substituicoes: ['arroz-integral', 'arroz-branco', 'batata-doce', 'aveia'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'aveia',
@@ -94,9 +160,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'carboidrato',
     porcaoPadrao: 50,
     macrosPor100g: { calorias: 389, proteinas: 16.9, carboidratos: 66.3, gorduras: 6.9 },
-    substituicoes: ['granola', 'tapioca', 'pao-integral', 'batata-doce', 'quinoa'],
+    substituicoes: ['tapioca', 'pao-integral', 'batata-doce', 'quinoa'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: false,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'mandioca',
@@ -106,7 +179,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 125, proteinas: 0.6, carboidratos: 30, gorduras: 0.4 },
     substituicoes: ['batata-doce', 'batata-inglesa', 'inhame', 'arroz-branco', 'macarrao'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: false,
   },
   {
     id: 'inhame',
@@ -116,7 +196,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 118, proteinas: 1.5, carboidratos: 27.6, gorduras: 0.2 },
     substituicoes: ['batata-doce', 'batata-inglesa', 'mandioca', 'arroz-integral', 'quinoa'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
 
   // PROTEÍNAS ANIMAIS
@@ -128,7 +215,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 165, proteinas: 31, carboidratos: 0, gorduras: 3.6 },
     substituicoes: ['carne-bovina', 'peixe-tilapia', 'atum', 'carne-suina', 'peru'],
     vegano: false,
-    vegetariano: false
+    vegetariano: false,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'carne-bovina',
@@ -136,9 +230,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 250, proteinas: 26, carboidratos: 0, gorduras: 15 },
-    substituicoes: ['frango-peito', 'carne-suina', 'peixe-salmao', 'peru', 'patinho'],
+    substituicoes: ['frango-peito', 'carne-suina', 'peixe-salmao', 'peru'],
     vegano: false,
-    vegetariano: false
+    vegetariano: false,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: false,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'peixe-tilapia',
@@ -146,9 +247,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 96, proteinas: 20, carboidratos: 0, gorduras: 1.7 },
-    substituicoes: ['peixe-salmao', 'atum', 'frango-peito', 'carne-bovina', 'bacalhau'],
+    substituicoes: ['peixe-salmao', 'atum', 'frango-peito', 'carne-bovina'],
     vegano: false,
-    vegetariano: false
+    vegetariano: false,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'peixe-salmao',
@@ -156,9 +264,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 208, proteinas: 22, carboidratos: 0, gorduras: 13 },
-    substituicoes: ['peixe-tilapia', 'atum', 'bacalhau', 'frango-peito', 'carne-bovina'],
+    substituicoes: ['peixe-tilapia', 'atum', 'frango-peito', 'carne-bovina'],
     vegano: false,
-    vegetariano: false
+    vegetariano: false,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'carne-suina',
@@ -166,9 +281,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 242, proteinas: 27, carboidratos: 0, gorduras: 14 },
-    substituicoes: ['frango-peito', 'carne-bovina', 'peru', 'peixe-salmao', 'patinho'],
+    substituicoes: ['frango-peito', 'carne-bovina', 'peru', 'peixe-salmao'],
     vegano: false,
-    vegetariano: false
+    vegetariano: false,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: false,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'atum',
@@ -176,9 +298,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina',
     porcaoPadrao: 120,
     macrosPor100g: { calorias: 116, proteinas: 26, carboidratos: 0, gorduras: 0.8 },
-    substituicoes: ['peixe-tilapia', 'peixe-salmao', 'sardinha', 'frango-peito', 'bacalhau'],
+    substituicoes: ['peixe-tilapia', 'peixe-salmao', 'frango-peito'],
     vegano: false,
-    vegetariano: false
+    vegetariano: false,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: false,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'peru',
@@ -186,9 +315,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 135, proteinas: 30, carboidratos: 0, gorduras: 1.5 },
-    substituicoes: ['frango-peito', 'carne-bovina', 'peixe-tilapia', 'atum', 'carne-suina'],
+    substituicoes: ['frango-peito', 'carne-bovina', 'peixe-tilapia', 'atum'],
     vegano: false,
-    vegetariano: false
+    vegetariano: false,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: false,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'ovo',
@@ -198,7 +334,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 155, proteinas: 13, carboidratos: 1.1, gorduras: 11 },
     substituicoes: ['frango-peito', 'queijo-cottage', 'tofu', 'iogurte-grego', 'proteina-texturizada'],
     vegano: false,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: false,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
 
   // PROTEÍNAS VEGETAIS
@@ -210,7 +353,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 76, proteinas: 8, carboidratos: 1.9, gorduras: 4.8 },
     substituicoes: ['proteina-texturizada', 'tempeh', 'seitan', 'grao-de-bico', 'lentilha'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'proteina-texturizada',
@@ -220,7 +370,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 336, proteinas: 52, carboidratos: 30, gorduras: 0.5 },
     substituicoes: ['tofu', 'tempeh', 'seitan', 'grao-de-bico', 'lentilha'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: false,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'tempeh',
@@ -230,7 +387,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 193, proteinas: 20, carboidratos: 9, gorduras: 11 },
     substituicoes: ['tofu', 'proteina-texturizada', 'seitan', 'grao-de-bico', 'lentilha'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: false,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'seitan',
@@ -240,7 +404,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 370, proteinas: 75, carboidratos: 14, gorduras: 1.9 },
     substituicoes: ['tofu', 'tempeh', 'proteina-texturizada', 'grao-de-bico', 'lentilha'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: false,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: false,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'grao-de-bico',
@@ -248,9 +419,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina-vegetal',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 164, proteinas: 8.9, carboidratos: 27.4, gorduras: 2.6 },
-    substituicoes: ['lentilha', 'feijao-preto', 'tofu', 'proteina-texturizada', 'ervilha'],
+    substituicoes: ['lentilha', 'feijao-preto', 'tofu', 'proteina-texturizada'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'lentilha',
@@ -258,9 +436,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina-vegetal',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 116, proteinas: 9, carboidratos: 20, gorduras: 0.4 },
-    substituicoes: ['grao-de-bico', 'feijao-preto', 'tofu', 'proteina-texturizada', 'ervilha'],
+    substituicoes: ['grao-de-bico', 'feijao-preto', 'tofu', 'proteina-texturizada'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'feijao-preto',
@@ -268,9 +453,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'proteina-vegetal',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 132, proteinas: 8.9, carboidratos: 23.7, gorduras: 0.5 },
-    substituicoes: ['lentilha', 'grao-de-bico', 'feijao-carioca', 'ervilha', 'tofu'],
+    substituicoes: ['lentilha', 'grao-de-bico', 'tofu'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
 
   // LEGUMES
@@ -282,7 +474,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 34, proteinas: 2.8, carboidratos: 7, gorduras: 0.4 },
     substituicoes: ['couve-flor', 'aspargo', 'abobrinha', 'vagem', 'cenoura'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'couve-flor',
@@ -292,7 +491,14 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     macrosPor100g: { calorias: 25, proteinas: 1.9, carboidratos: 5, gorduras: 0.3 },
     substituicoes: ['brocolis', 'abobrinha', 'aspargo', 'vagem', 'cenoura'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'cenoura',
@@ -300,9 +506,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'legume',
     porcaoPadrao: 100,
     macrosPor100g: { calorias: 41, proteinas: 0.9, carboidratos: 10, gorduras: 0.2 },
-    substituicoes: ['beterraba', 'abobrinha', 'vagem', 'brocolis', 'pepino'],
+    substituicoes: ['abobrinha', 'vagem', 'brocolis'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'abobrinha',
@@ -310,9 +523,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'legume',
     porcaoPadrao: 100,
     macrosPor100g: { calorias: 17, proteinas: 1.2, carboidratos: 3.1, gorduras: 0.3 },
-    substituicoes: ['brocolis', 'couve-flor', 'berinjela', 'vagem', 'cenoura'],
+    substituicoes: ['brocolis', 'couve-flor', 'vagem', 'cenoura'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'vagem',
@@ -320,9 +540,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'legume',
     porcaoPadrao: 100,
     macrosPor100g: { calorias: 31, proteinas: 1.8, carboidratos: 7, gorduras: 0.1 },
-    substituicoes: ['brocolis', 'aspargo', 'abobrinha', 'couve-flor', 'cenoura'],
+    substituicoes: ['brocolis', 'abobrinha', 'couve-flor', 'cenoura'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
 
   // FOLHOSOS
@@ -332,9 +559,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'folhoso',
     porcaoPadrao: 50,
     macrosPor100g: { calorias: 15, proteinas: 1.4, carboidratos: 2.9, gorduras: 0.2 },
-    substituicoes: ['rucula', 'agriao', 'espinafre', 'couve', 'acelga'],
+    substituicoes: ['rucula', 'agriao', 'espinafre', 'couve'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'rucula',
@@ -342,9 +576,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'folhoso',
     porcaoPadrao: 50,
     macrosPor100g: { calorias: 25, proteinas: 2.6, carboidratos: 3.7, gorduras: 0.7 },
-    substituicoes: ['alface', 'agriao', 'espinafre', 'couve', 'acelga'],
+    substituicoes: ['alface', 'agriao', 'espinafre', 'couve'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'espinafre',
@@ -352,9 +593,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'folhoso',
     porcaoPadrao: 50,
     macrosPor100g: { calorias: 23, proteinas: 2.9, carboidratos: 3.6, gorduras: 0.4 },
-    substituicoes: ['couve', 'acelga', 'alface', 'rucula', 'agriao'],
+    substituicoes: ['couve', 'alface', 'rucula', 'agriao'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'couve',
@@ -362,9 +610,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'folhoso',
     porcaoPadrao: 50,
     macrosPor100g: { calorias: 49, proteinas: 4.3, carboidratos: 10, gorduras: 0.9 },
-    substituicoes: ['espinafre', 'acelga', 'rucula', 'alface', 'agriao'],
+    substituicoes: ['espinafre', 'rucula', 'alface', 'agriao'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'agriao',
@@ -372,9 +627,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'folhoso',
     porcaoPadrao: 50,
     macrosPor100g: { calorias: 11, proteinas: 2.3, carboidratos: 1.3, gorduras: 0.1 },
-    substituicoes: ['rucula', 'alface', 'espinafre', 'couve', 'acelga'],
+    substituicoes: ['rucula', 'alface', 'espinafre', 'couve'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
 
   // FRUTAS
@@ -384,9 +646,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'fruta',
     porcaoPadrao: 100,
     macrosPor100g: { calorias: 89, proteinas: 1.1, carboidratos: 23, gorduras: 0.3 },
-    substituicoes: ['maca', 'mamao', 'morango', 'abacaxi', 'manga'],
+    substituicoes: ['maca', 'mamao', 'morango', 'abacaxi'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: false,
   },
   {
     id: 'maca',
@@ -394,9 +663,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'fruta',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 52, proteinas: 0.3, carboidratos: 14, gorduras: 0.2 },
-    substituicoes: ['banana', 'pera', 'morango', 'laranja', 'mamao'],
+    substituicoes: ['banana', 'morango', 'mamao'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'mamao',
@@ -404,9 +680,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'fruta',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 43, proteinas: 0.5, carboidratos: 11, gorduras: 0.3 },
-    substituicoes: ['banana', 'maca', 'abacaxi', 'melancia', 'manga'],
+    substituicoes: ['banana', 'maca', 'abacaxi'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'morango',
@@ -414,9 +697,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'fruta',
     porcaoPadrao: 100,
     macrosPor100g: { calorias: 32, proteinas: 0.7, carboidratos: 7.7, gorduras: 0.3 },
-    substituicoes: ['mirtilo', 'framboesa', 'maca', 'banana', 'abacaxi'],
+    substituicoes: ['maca', 'banana', 'abacaxi'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'abacaxi',
@@ -424,21 +714,35 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'fruta',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 50, proteinas: 0.5, carboidratos: 13, gorduras: 0.1 },
-    substituicoes: ['mamao', 'manga', 'melancia', 'banana', 'laranja'],
+    substituicoes: ['mamao', 'maca', 'banana'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: false,
   },
 
-  // LATICÍNIOS E DERIVADOS
+  // LATICÍNIOS
   {
     id: 'iogurte-grego',
     nome: 'Iogurte Grego Natural',
     categoria: 'laticinio',
     porcaoPadrao: 150,
     macrosPor100g: { calorias: 59, proteinas: 10, carboidratos: 3.6, gorduras: 0.4 },
-    substituicoes: ['queijo-cottage', 'iogurte-natural', 'leite-desnatado', 'kefir', 'ricota'],
+    substituicoes: ['queijo-cottage', 'tofu'],
     vegano: false,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: false,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'queijo-cottage',
@@ -446,9 +750,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'laticinio',
     porcaoPadrao: 100,
     macrosPor100g: { calorias: 98, proteinas: 11, carboidratos: 3.4, gorduras: 4.3 },
-    substituicoes: ['iogurte-grego', 'ricota', 'queijo-minas', 'tofu', 'ovo'],
+    substituicoes: ['iogurte-grego', 'tofu', 'ovo'],
     vegano: false,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: false,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: false,
+    baixoIndiceGlicemico: true,
   },
 
   // GORDURAS SAUDÁVEIS
@@ -458,9 +769,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'gordura',
     porcaoPadrao: 10,
     macrosPor100g: { calorias: 884, proteinas: 0, carboidratos: 0, gorduras: 100 },
-    substituicoes: ['oleo-coco', 'abacate', 'castanhas', 'amendoim', 'amêndoas'],
+    substituicoes: ['abacate'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'abacate',
@@ -468,9 +786,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'gordura',
     porcaoPadrao: 70,
     macrosPor100g: { calorias: 160, proteinas: 2, carboidratos: 8.5, gorduras: 14.7 },
-    substituicoes: ['azeite', 'castanhas', 'amendoim', 'oleo-coco', 'amêndoas'],
+    substituicoes: ['azeite'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: true,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   },
   {
     id: 'castanhas',
@@ -478,9 +803,16 @@ export const ALIMENTOS_DATABASE: AlimentoDatabase[] = [
     categoria: 'gordura',
     porcaoPadrao: 30,
     macrosPor100g: { calorias: 607, proteinas: 20, carboidratos: 21, gorduras: 50 },
-    substituicoes: ['amendoim', 'amêndoas', 'nozes', 'abacate', 'azeite'],
+    substituicoes: ['abacate', 'azeite'],
     vegano: true,
-    vegetariano: true
+    vegetariano: true,
+    semLactose: true,
+    semGluten: true,
+    semOvo: true,
+    semAcucar: true,
+    semOleaginosas: false,
+    baixoSodio: true,
+    baixoIndiceGlicemico: true,
   }
 ]
 

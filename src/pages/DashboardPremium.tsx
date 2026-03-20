@@ -15,8 +15,6 @@ import {
   CalendarDays,
   Download,
   Home,
-  ChevronDown,
-  ChevronUp,
   Crown,
   LogOut,
 } from "lucide-react";
@@ -36,6 +34,14 @@ import { loadActivePlan } from "@/services/plan.service";
 import { ACTIVE_PLAN_KEY } from "../services/activePlan.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type PassosDia = { data: string; passos: number };
 type ConsumoDia = { data: string; consumido: number };
@@ -169,7 +175,6 @@ export function DashboardPremium() {
   const [cargaSemana, setCargaSemana] = useState(0);
   const [horaAtual, setHoraAtual] = useState(new Date());
 
-  const [showFullMeals, setShowFullMeals] = useState(false);
   const [showWorkoutWeek, setShowWorkoutWeek] = useState(false);
   const [premiumStatus, setPremiumStatus] = useState<PremiumStatus>(null);
 
@@ -737,61 +742,70 @@ export function DashboardPremium() {
                 </div>
               )}
 
-              <Button
-                variant="outline"
-                onClick={() => setShowFullMeals((v) => !v)}
-                className="w-full rounded-[18px] border-white/15 bg-black/20 text-white hover:bg-white/5"
-              >
-                {showFullMeals ? (
-                  <>
-                    <ChevronUp className="w-4 h-4 mr-2" />
-                    Ocultar plano alimentar
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4 mr-2" />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-[18px] border-white/15 bg-black/20 text-white hover:bg-white/5"
+                  >
+                    <CalendarDays className="w-4 h-4 mr-2" />
                     Ver plano alimentar
-                  </>
-                )}
-              </Button>
+                  </Button>
+                </DialogTrigger>
 
-              {showFullMeals ? (
-                <div className="space-y-4">
-                  {meals.map((meal: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="rounded-[20px] border border-white/10 bg-black/20 p-4"
-                    >
-                      <div className="flex items-center gap-2 text-[14px] font-semibold text-white">
-                        <CalendarDays className="h-4 w-4 text-cyan-300" />
-                        {meal?.nome ?? meal?.name ?? `Refeição ${idx + 1}`}
-                      </div>
+                <DialogContent className="max-w-3xl border-white/10 bg-[rgba(8,10,18,0.96)] text-white">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl">
+                      <UtensilsCrossed className="w-5 h-5 text-cyan-300" />
+                      Plano alimentar
+                    </DialogTitle>
+                  </DialogHeader>
 
-                      <div className="mt-1 text-[13px] text-white/50">
-                        {meal?.horario ?? meal?.time ?? "Horário a definir"}
-                      </div>
-
-                      {Array.isArray(meal?.alimentos) && meal.alimentos.length > 0 ? (
-                        <div className="mt-3 space-y-2">
-                          {meal.alimentos.map((item: any, i: number) => (
-                            <div
-                              key={i}
-                              className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white/75"
-                            >
-                              {item?.nome ?? item?.name ?? "Alimento"}
-                              {item?.gramas ? ` • ${item.gramas}g` : ""}
+                  <ScrollArea className="max-h-[70vh] pr-4">
+                    <div className="space-y-4">
+                      {Array.isArray(meals) && meals.length > 0 ? (
+                        meals.map((meal: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="rounded-[20px] border border-white/10 bg-black/20 p-4"
+                          >
+                            <div className="flex items-center gap-2 text-[15px] font-semibold text-white">
+                              <CalendarDays className="h-4 w-4 text-cyan-300" />
+                              {meal?.nome ?? meal?.name ?? `Refeição ${idx + 1}`}
                             </div>
-                          ))}
-                        </div>
+
+                            <div className="mt-1 text-[13px] text-white/50">
+                              {meal?.horario ?? meal?.time ?? "Horário a definir"}
+                            </div>
+
+                            {Array.isArray(meal?.alimentos) && meal.alimentos.length > 0 ? (
+                              <div className="mt-3 space-y-2">
+                                {meal.alimentos.map((item: any, i: number) => (
+                                  <div
+                                    key={i}
+                                    className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white/75"
+                                  >
+                                    {item?.nome ?? item?.name ?? "Alimento"}
+                                    {item?.gramas ? ` • ${item.gramas}g` : ""}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="mt-3 text-[13px] text-white/45">
+                                Nenhum alimento listado.
+                              </div>
+                            )}
+                          </div>
+                        ))
                       ) : (
-                        <div className="mt-3 text-[13px] text-white/45">
-                          Nenhum alimento listado.
+                        <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-sm text-white/50">
+                          Nenhuma refeição encontrada no plano ativo.
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              ) : null}
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
@@ -821,17 +835,7 @@ export function DashboardPremium() {
                 onClick={() => setShowWorkoutWeek((v) => !v)}
                 className="w-full rounded-[18px] border-white/15 bg-black/20 text-white hover:bg-white/5"
               >
-                {showWorkoutWeek ? (
-                  <>
-                    <ChevronUp className="w-4 h-4 mr-2" />
-                    Ocultar semana de treino
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4 mr-2" />
-                    Ver semana de treino
-                  </>
-                )}
+                {showWorkoutWeek ? "Ocultar semana de treino" : "Ver semana de treino"}
               </Button>
 
               {showWorkoutWeek ? (
