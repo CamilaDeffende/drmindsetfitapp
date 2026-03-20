@@ -184,3 +184,5 @@ coverage
 # android
 .idea
 android/.idea
+
+.vercel_preview_url.txt
