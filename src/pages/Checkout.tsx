@@ -4,6 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import {
+  setMonthlySubscription,
+  setAnnualSubscription,
+} from "@/lib/subscription/storage";
 
 type PlanId = "mensal" | "anual";
 type SourceId = "onboarding" | "dashboard" | "premium" | null;
@@ -78,21 +82,11 @@ export default function Checkout() {
   const plan = PLANS[planId];
 
   const handleConfirmPayment = () => {
-    try {
-      localStorage.setItem("mindsetfit:isSubscribed", "true");
-    } catch {}
-
-    try {
-      localStorage.setItem(
-        "mindsetfit:subscription:v1",
-        JSON.stringify({
-          planId: plan.id,
-          kind: "paid",
-          active: true,
-          activatedAt: Date.now(),
-        })
-      );
-    } catch {}
+    if (plan.id === "mensal") {
+      setMonthlySubscription();
+    } else {
+      setAnnualSubscription();
+    }
 
     if (user) {
       navigate("/dashboardpremium", { replace: true });

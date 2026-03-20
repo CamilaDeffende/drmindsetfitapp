@@ -325,7 +325,6 @@ function resolveMealTimes(mealNames: string[]) {
 export function buildRealMealPlan(input: BuildRealMealPlanInput): Meal[] {
   const {
     targetKcal,
-    macros,
     preference,
     mealNames = ["Café da manhã", "Almoço", "Lanche", "Jantar"],
     foodDatabase,

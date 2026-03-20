@@ -41,6 +41,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 type PassosDia = { data: string; passos: number };
 type ConsumoDia = { data: string; consumido: number };
@@ -52,8 +53,7 @@ type CargaDia = {
 };
 
 type PremiumStatus = {
-  kind: string;
-  planId: string;
+  plan: "free" | "trial" | "monthly" | "annual";
   daysLeft: number;
 } | null;
 
@@ -127,33 +127,21 @@ function getPremiumStatus(): PremiumStatus {
     if (!raw) return null;
 
     const sub = JSON.parse(raw);
-    const activatedAt = Number(sub?.activatedAt);
-    const planId = String(sub?.planId || "");
-    const kind = String(sub?.kind || "");
+    const plan = String(sub?.plan ?? "free") as "free" | "trial" | "monthly" | "annual";
+    const expiresAtISO = sub?.expiresAtISO ? String(sub.expiresAtISO) : "";
+    const active = Boolean(sub?.active);
 
-    if (!activatedAt) return null;
+    if (!active || plan === "free" || !expiresAtISO) return null;
 
-    let durationDays = 0;
-
-    if (kind === "trial" || planId === "trial") {
-      durationDays = 7;
-    } else if (planId === "anual") {
-      durationDays = 365;
-    } else if (planId === "mensal") {
-      durationDays = 30;
-    } else {
-      return null;
-    }
+    const expiresAt = Date.parse(expiresAtISO);
+    if (!Number.isFinite(expiresAt)) return null;
 
     const msPerDay = 1000 * 60 * 60 * 24;
-    const expiresAt = activatedAt + durationDays * msPerDay;
-    const now = Date.now();
-    const diff = expiresAt - now;
+    const diff = expiresAt - Date.now();
     const daysLeft = Math.max(Math.ceil(diff / msPerDay), 0);
 
     return {
-      kind,
-      planId,
+      plan,
       daysLeft,
     };
   } catch {
@@ -500,7 +488,7 @@ export function DashboardPremium() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => navigate("/")}
+                onClick={() => navigate(getHomeRoute())}
                 className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
               >
                 <Home className="h-4 w-4" />
@@ -536,7 +524,7 @@ export function DashboardPremium() {
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold text-cyan-300">
                   <Crown className="h-3.5 w-3.5" />
                   {premiumStatus
-                    ? `Premium ativo • ${premiumStatus.daysLeft} dia${premiumStatus.daysLeft === 1 ? "" : "s"} restantes`
+                    ? `${premiumStatus.plan === "trial" ? "Trial ativo" : "Premium ativo"} • ${premiumStatus.daysLeft} dia${premiumStatus.daysLeft === 1 ? "" : "s"} restantes`
                     : "Premium ativo"}
                 </div>
 

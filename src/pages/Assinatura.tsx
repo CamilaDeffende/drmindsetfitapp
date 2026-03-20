@@ -6,6 +6,10 @@ import { Check, ChevronLeft, Crown, ShieldCheck, Sparkles } from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscriptionService } from "@/services/subscription/SubscriptionService";
+import {
+  setFreeSubscription,
+  setTrialSubscription,
+} from "@/lib/subscription/storage";
 
 type Plan = {
   id: "mensal" | "anual";
@@ -171,26 +175,13 @@ export default function Assinatura() {
 
       await subscriptionService.startTrial(user.id);
 
-      try {
-        localStorage.setItem("mindsetfit:isSubscribed", "true");
-      } catch {}
-
-      try {
-        localStorage.setItem(
-          "mindsetfit:subscription:v1",
-          JSON.stringify({
-            planId: "trial",
-            kind: "trial",
-            active: true,
-            activatedAt: Date.now(),
-          })
-        );
-      } catch {}
+      setTrialSubscription();
 
       const cleanParams = new URLSearchParams(location.search);
       cleanParams.delete("autostartTrial");
 
       const cleanSearch = cleanParams.toString();
+
       navigate(
         {
           pathname: "/dashboardpremium",
@@ -272,13 +263,7 @@ export default function Assinatura() {
   };
 
   const continueFree = () => {
-    try {
-      localStorage.setItem("mindsetfit:isSubscribed", "false");
-    } catch {}
-
-    try {
-      localStorage.removeItem("mindsetfit:subscription:v1");
-    } catch {}
+    setFreeSubscription();
 
     if (source === "onboarding") {
       navigate(`/signup?next=${encodeURIComponent("/dashboard")}`, { replace: true });
@@ -291,7 +276,7 @@ export default function Assinatura() {
     }
 
     if (source === "premium") {
-      navigate("/dashboardpremium", { replace: true });
+      navigate("/dashboard", { replace: true });
       return;
     }
 

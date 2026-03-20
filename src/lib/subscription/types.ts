@@ -1,8 +1,8 @@
-export type SubscriptionPlan = "monthly" | "annual";
+export type SubscriptionPlan = "free" | "trial" | "monthly" | "annual";
 
 export type SubscriptionStatus = {
   plan: SubscriptionPlan;
-  startedAtISO: string; // ISO
-  expiresAtISO: string; // ISO
+  startedAtISO: string;
+  expiresAtISO?: string;
   active: boolean;
 };

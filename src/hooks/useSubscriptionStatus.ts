@@ -1,27 +1,43 @@
 import * as React from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { subscriptionService, type SubscriptionStatus } from "@/services/subscription/SubscriptionService";
+import { readSubscription, isActiveSubscription } from "@/lib/subscription/storage";
 
 export function useSubscriptionStatus() {
-  const { user } = useAuth() as any; // keep compat with your current AuthContext typing
-  const userId: string | null = user?.id ?? null;
-
-  const [status, setStatus] = React.useState<SubscriptionStatus>({
-    isPremium: false,
-    source: "none",
-    checkedAtIso: new Date().toISOString(),
+  const [loading, setLoading] = React.useState(true);
+  const [status, setStatus] = React.useState(() => {
+    const sub = readSubscription();
+    return {
+      isPremium: isActiveSubscription(sub),
+      source: "local-subscription",
+      checkedAtIso: new Date().toISOString(),
+      plan: sub.plan,
+      active: sub.active,
+    };
   });
-  const [loading, setLoading] = React.useState<boolean>(true);
 
   const refresh = React.useCallback(async () => {
     setLoading(true);
-    const s = await subscriptionService.getStatus(userId);
-    setStatus(s);
+    const sub = readSubscription();
+
+    setStatus({
+      isPremium: isActiveSubscription(sub),
+      source: "local-subscription",
+      checkedAtIso: new Date().toISOString(),
+      plan: sub.plan,
+      active: sub.active,
+    });
+
     setLoading(false);
-  }, [userId]);
+  }, []);
 
   React.useEffect(() => {
-    refresh();
+    void refresh();
+
+    const onStorage = () => {
+      void refresh();
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, [refresh]);
 
   return { status, loading, refresh };

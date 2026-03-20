@@ -138,12 +138,12 @@ function normalizeGoal(goalRaw: string): "cut" | "bulk" | "maintain" {
 
 function normalizePreference(
   prefRaw: string
-): "flexivel" | "lowcarb" | "vegetariana" | "vegana" | "onivoro" {
+): "flexivel" | "lowcarb" | "vegetariano" | "vegana" | "onivoro" {
   const p = String(prefRaw || "").toLowerCase();
 
   if (p.includes("low")) return "lowcarb";
   if (p.includes("vegano")) return "vegana";
-  if (p.includes("veget")) return "vegetariana";
+  if (p.includes("veget")) return "vegetariano";
   if (p.includes("oniv")) return "onivoro";
   return "flexivel";
 }
@@ -185,7 +185,7 @@ function pickAllowedFoods(params: {
 
   return ALIMENTOS_DATABASE.filter((food) => {
     if (preference === "vegana" && !food.vegano) return false;
-    if (preference === "vegetariana" && !food.vegetariano) return false;
+    if (preference === "vegetariano" && !food.vegetariano) return false;
 
     if (restrictions.includes("lactose") && food.semLactose === false) return false;
     if (restrictions.includes("gluten") && food.semGluten === false) return false;
@@ -254,7 +254,7 @@ function buildMeal(
 
 function buildRealMealPlan(params: {
   kcalTarget: number;
-  preference: "flexivel" | "lowcarb" | "vegetariana" | "vegana" | "onivoro";
+  preference: "flexivel" | "lowcarb" | "vegetariano" | "vegana" | "onivoro";
   restrictions: string[];
   selectedMealTypes: string[];
 }) {
@@ -263,7 +263,7 @@ function buildRealMealPlan(params: {
   const allowedFoods = pickAllowedFoods({ preference, restrictions });
 
   const isLowCarb = preference === "lowcarb";
-  const isVeg = preference === "vegetariana" || preference === "vegana";
+  const isVeg = preference === "vegetariano" || preference === "vegana";
 
   const breakfastProtein = isVeg
     ? pickFoodByIdOrFallback(allowedFoods, ["tofu", "proteina-texturizada"], "proteina-vegetal")
@@ -481,8 +481,8 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
     goal,
     weightKg,
     preference:
-      preference === "vegana" || preference === "vegetariana"
-        ? "vegetariana"
+      preference === "vegana" || preference === "vegetariano"
+        ? "vegetariano"
         : preference === "lowcarb"
         ? "lowcarb"
         : "flexivel",
