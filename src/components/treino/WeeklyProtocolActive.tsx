@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { toWeekdayKey } from "@/utils/strength/weekdayMap";
 import { loadWeekPlan } from "@/utils/strength/strengthWeekStorage";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 
 type Session = {
   day: string;
@@ -19,23 +20,29 @@ type Session = {
 };
 
 const LABEL: Record<string, string> = {
-  musculacao: "musculacao",
+  musculacao: "Musculação",
   funcional: "Funcional",
   corrida: "Corrida",
+  bike: "Bike",
   bike_indoor: "Bike Indoor",
   crossfit: "CrossFit",
 };
 
 const ORDER: Record<string, number> = {
-  "Segunda": 1,
-  "Terça": 2,
-  "Terca": 2,
-  "Quarta": 3,
-  "Quinta": 4,
-  "Sexta": 5,
-  "Sábado": 6,
-  "Sabado": 6,
-  "Domingo": 7,
+  Segunda: 1,
+  "Segunda-feira": 1,
+  Terça: 2,
+  Terca: 2,
+  "Terça-feira": 2,
+  Quarta: 3,
+  "Quarta-feira": 3,
+  Quinta: 4,
+  "Quinta-feira": 4,
+  Sexta: 5,
+  "Sexta-feira": 5,
+  Sábado: 6,
+  Sabado: 6,
+  Domingo: 7,
 };
 
 function fmt(v: unknown) {
@@ -43,15 +50,17 @@ function fmt(v: unknown) {
   return s.length ? s : "-";
 }
 
-
-
-/* MF_FOCO_DO_DIA_CHIPS_V1
-   Chips premium de "Foco do dia" (Musculação), lendo weekPlan salvo (StrengthWeekPlan).
-   - Tolerante a variações de shape do weekPlan (tentativas em cascata).
-   - Nunca quebra a UI se não houver dados.
-*/
-function getFocusGroupsFromWeekPlan(dayLabel: string): string[] {
-  return getStrengthFocusGroupsForDay(dayLabel);
+function getStrengthFocusGroupsForDay(dayLabel: string): string[] {
+  try {
+    const plan = loadWeekPlan();
+    if (!plan) return [];
+    const k = toWeekdayKey(dayLabel);
+    if (!k) return [];
+    const arr = (plan as any)[k];
+    return Array.isArray(arr) ? arr.map(String).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
 }
 
 function focusChip(groups: string[]) {
@@ -73,28 +82,55 @@ function chip(label: string, value: string) {
     </div>
   );
 }
-function getStrengthFocusGroupsForDay(dayLabel: string): string[] {
-  try {
-        const plan = loadWeekPlan();
-        if (!plan) return [];
-    const k = toWeekdayKey(dayLabel);
-    if (!k) return [];
-    const arr = (plan as any)[k];
-    return Array.isArray(arr) ? arr.map(String).filter(Boolean) : [];
-  } catch {
-    return [];
-  }
+
+function buildSessionsFromCanonicalWorkouts(): Session[] {
+  const workouts = getCanonicalTrainingWorkouts();
+  if (!workouts.length) return [];
+
+  return workouts.map((w) => {
+    const firstBlock = Array.isArray(w.blocks) ? w.blocks[0] : null;
+    const exercises = Array.isArray(firstBlock?.exercises) ? firstBlock.exercises : [];
+    const descanso =
+      exercises.length && typeof exercises[0]?.restSec === "number"
+        ? `${exercises[0].restSec}s`
+        : "";
+
+    return {
+      day: String(w.dayLabel ?? w.dayKey ?? "Dia"),
+      modality: String(w.modality ?? "musculacao"),
+      modalityLevel: String(w.level ?? "auto"),
+      strategy: String(w.title ?? "Sessão planejada"),
+      rationale: w.rationale ? String(w.rationale) : null,
+      structure: {
+        type: String(firstBlock?.label ?? "Bloco principal"),
+        intensidade: String(w.intensity ?? ""),
+        descanso,
+        duracaoEstimada: w.estimatedDurationMin ? `${w.estimatedDurationMin} min` : "",
+      },
+      plan: {
+        blocks: w.blocks ?? [],
+        focus: w.focus ?? "",
+        tags: w.tags ?? [],
+      },
+    };
+  });
 }
 
 export function WeeklyProtocolActive() {
   const { state } = useDrMindSetfit();
 
+  const canonicalSessions = useMemo(() => buildSessionsFromCanonicalWorkouts(), []);
   const protocol = (state as any)?.workoutProtocolWeekly ?? null;
+
   const sessions = useMemo(() => {
+    if (canonicalSessions.length) {
+      return [...canonicalSessions].sort((a, b) => (ORDER[a.day] ?? 99) - (ORDER[b.day] ?? 99));
+    }
+
     const raw = protocol?.sessions;
     const arr: Session[] = Array.isArray(raw) ? raw : [];
     return [...arr].sort((a, b) => (ORDER[a.day] ?? 99) - (ORDER[b.day] ?? 99));
-  }, [protocol]);
+  }, [canonicalSessions, protocol]);
 
   const grouped = useMemo(() => {
     const map: Record<string, Session[]> = {};
@@ -107,35 +143,51 @@ export function WeeklyProtocolActive() {
   }, [sessions]);
 
   const modalities = useMemo(() => {
+    if (canonicalSessions.length) {
+      return Array.from(new Set(canonicalSessions.map((s) => String(s.modality)).filter(Boolean)));
+    }
     const m = protocol?.modalities;
     const arr: string[] = Array.isArray(m) ? m.map(String) : [];
     return arr.filter(Boolean);
-  }, [protocol]);
+  }, [canonicalSessions, protocol]);
 
   const strategiesByModality = useMemo(() => {
-    const s = protocol?.modalityStrategies;
-    return (s && typeof s === "object") ? s : {};
-  }, [protocol]);
+    if (canonicalSessions.length) {
+      const out: Record<string, any> = {};
+      for (const s of canonicalSessions) {
+        if (!out[s.modality]) {
+          out[s.modality] = {
+            strategy: s.strategy ?? "Sessão planejada",
+            rationale: s.rationale ?? "Plano derivado do contrato oficial salvo.",
+          };
+        }
+      }
+      return out;
+    }
+    const st = protocol?.modalityStrategies;
+    return st && typeof st === "object" ? st : {};
+  }, [canonicalSessions, protocol]);
 
-  if (!protocol) return null;
+  if (!sessions.length) return null;
 
   return (
     <div className="mt-4 space-y-4">
-      {/* Header ultra clean */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-sm font-semibold">Treinos Ativos</div>
             <div className="mt-1 text-xs text-muted-foreground">
-              Plano semanal gerado automaticamente a partir das modalidades, níveis e dias selecionados.
+              Plano semanal gerado automaticamente.
+            </div>
+            <div className="mt-1 text-[11px] text-white/45">
+              Fonte: <span className="font-semibold text-white/70">{canonicalSessions.length ? "training.workouts" : "workoutProtocolWeekly"}</span>
             </div>
           </div>
           <div className="text-[11px] text-muted-foreground">
-            Atualizado: <span className="font-semibold">{fmt(protocol?.generatedAt).slice(0, 10)}</span>
+            Atualizado: <span className="font-semibold">{canonicalSessions.length ? "plano ativo" : fmt(protocol?.generatedAt).slice(0, 10)}</span>
           </div>
         </div>
 
-        {/* Modalidades ativas (chips) */}
         {modalities.length ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {modalities.map((k) => (
@@ -147,12 +199,11 @@ export function WeeklyProtocolActive() {
         ) : null}
       </div>
 
-      {/* Estratégia por modalidade (sempre para todas as selecionadas) */}
       {modalities.length ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
           <div className="text-sm font-semibold">Estratégia por modalidade</div>
           <div className="mt-1 text-xs text-muted-foreground">
-            Resumo do racional aplicado pelo motor (determinístico) para cada modalidade escolhida.
+            Resumo do racional aplicado ao plano atual.
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-3">
@@ -181,7 +232,6 @@ export function WeeklyProtocolActive() {
         </div>
       ) : null}
 
-      {/* Accordion por dia */}
       {grouped.length ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-2 sm:p-3">
           {grouped.map(([day, items]) => (
@@ -200,7 +250,7 @@ export function WeeklyProtocolActive() {
               <div className="mt-3 grid grid-cols-1 gap-3">
                 {items.map((s, idx) => {
                   const modKey = String(s.modality ?? "");
-                  const focusGroups = (modKey === "musculacao") ? getFocusGroupsFromWeekPlan(day) : [];
+                  const focusGroups = modKey === "musculacao" ? getStrengthFocusGroupsForDay(day) : [];
 
                   const modLabel = LABEL[modKey] ?? modKey;
                   const lvl = fmt(s.modalityLevel);
@@ -224,13 +274,12 @@ export function WeeklyProtocolActive() {
                         <div className="flex flex-wrap gap-2">
                           {focusChip(focusGroups)}
                           {chip("Tipo", type)}
-                          {chip("Intensidade", intensidade ? intensidade : "")}
+                          {chip("Intensidade", intensidade)}
                           {chip("Descanso", descanso)}
                           {chip("Duração", duracao)}
                         </div>
                       </div>
 
-                      {/* Observação/racional curto (se existir por sessão) */}
                       {s.rationale ? (
                         <div className="mt-3 text-xs text-muted-foreground leading-relaxed">
                           {String(s.rationale)}

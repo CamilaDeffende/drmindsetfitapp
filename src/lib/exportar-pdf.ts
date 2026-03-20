@@ -184,8 +184,63 @@ yPos += 7
     }
   }
 
+  function __mfBuildCanonicalTrainingForPdf() {
+    try {
+      const __mfRaw = (typeof window !== "undefined") ? localStorage.getItem("mf:activePlan:v1") : null;
+      const __mfAp = __mfRaw ? JSON.parse(__mfRaw) : null;
+      const __mfW = (__mfAp && __mfAp.training && Array.isArray(__mfAp.training.workouts)) ? __mfAp.training.workouts : [];
+      if (!__mfW.length) return null;
+
+      const __createdAt = __mfAp?.createdAt ?? new Date().toISOString();
+      const __start = new Date(__createdAt);
+      const __end = new Date(__start.getTime() + 28 * 24 * 60 * 60 * 1000);
+
+      return {
+        estrategia: "Treino oficial do plano ativo",
+        dataInicio: __start.toISOString(),
+        dataFim: __end.toISOString(),
+        duracaoSemanas: 4,
+        treino: {
+          divisao: {
+            tipo: "Plano semanal ativo",
+            intensidade: String(__mfW[0]?.intensity ?? "auto"),
+          },
+          frequencia: __mfW.length,
+          treinos: __mfW.map((w: any, idx: number) => {
+            const exercises = (Array.isArray(w?.blocks) ? w.blocks : [])
+              .flatMap((b: any) => Array.isArray(b?.exercises) ? b.exercises : []);
+
+            const grupamentos = Array.from(
+              new Set(exercises.map((ex: any) => ex?.muscleGroup).filter(Boolean).map(String))
+            );
+
+            return {
+              dia: String(w?.dayLabel ?? w?.dayKey ?? `Dia ${idx + 1}`),
+              grupamentos,
+              exercicios: exercises.map((ex: any, exIdx: number) => ({
+                exercicio: {
+                  id: String(ex?.exerciseId ?? `ex-${idx + 1}-${exIdx + 1}`),
+                  nome: String(ex?.name ?? `Exercício ${exIdx + 1}`),
+                  grupoMuscular: ex?.muscleGroup,
+                },
+                series: Number(ex?.sets ?? 0) || 0,
+                repeticoes: String(ex?.reps ?? "—"),
+                descanso: Number(ex?.restSec ?? 0) || 0,
+                observacoes: ex?.notes,
+              })),
+            };
+          }),
+        },
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  const __mfPdfTraining = __mfBuildCanonicalTrainingForPdf() ?? state.treinoAtivo;
+
   // ===== PLANO ATIVO - TREINO =====
-  if (state.treinoAtivo && state.treinoAtivo.treino) {
+  if (__mfPdfTraining && __mfPdfTraining.treino) {
     checkPageBreak(100)
     doc.addPage()
     yPos = 20
@@ -196,33 +251,33 @@ yPos += 7
     yPos += 10
 
     const { semanaAtual, totalSemanas, status } = calcularSemanaAtual(
-      state.treinoAtivo.dataInicio,
-      state.treinoAtivo.dataFim,
-      state.treinoAtivo.duracaoSemanas
+      __mfPdfTraining.dataInicio,
+      __mfPdfTraining.dataFim,
+      __mfPdfTraining.duracaoSemanas
     )
 
     doc.setFontSize(11)
     doc.setTextColor(60, 60, 60)
-    doc.text(`Estratégia: ${state.treinoAtivo.estrategia}`, 25, yPos)
+    doc.text(`Estratégia: ${__mfPdfTraining.estrategia}`, 25, yPos)
     yPos += 7
-    doc.text(`Período: ${formatarPeriodo(state.treinoAtivo.dataInicio, state.treinoAtivo.dataFim)}`, 25, yPos)
+    doc.text(`Período: ${formatarPeriodo(__mfPdfTraining.dataInicio, __mfPdfTraining.dataFim)}`, 25, yPos)
     yPos += 7
     doc.text(`Semana Atual: ${semanaAtual} de ${totalSemanas}`, 25, yPos)
     yPos += 7
     doc.text(`Status: ${status === 'ativo' ? 'Em andamento' : status === 'finalizado' ? 'Finalizado' : 'Aguardando'}`, 25, yPos)
     yPos += 7
-    doc.text(`Divisão: ${state.treinoAtivo.treino.divisao.tipo}`, 25, yPos)
+    doc.text(`Divisão: ${__mfPdfTraining.treino.divisao.tipo}`, 25, yPos)
     yPos += 7
-    doc.text(`Frequência: ${state.treinoAtivo.treino.frequencia}x por semana`, 25, yPos)
+    doc.text(`Frequência: ${__mfPdfTraining.treino.frequencia}x por semana`, 25, yPos)
     yPos += 7
-    doc.text(`Intensidade: ${state.treinoAtivo.treino.divisao.intensidade}`, 25, yPos)
+    doc.text(`Intensidade: ${__mfPdfTraining.treino.divisao.intensidade}`, 25, yPos)
     yPos += 12
 
     // Carregar cargas salvas
     const cargasSalvas = obterTodasCargas()
 
     // Treinos por dia
-    state.treinoAtivo.treino.treinos.forEach((treinoDia) => {
+    __mfPdfTraining.treino.treinos.forEach((treinoDia: any) => {
       checkPageBreak(80)
 
       doc.setFontSize(14)
@@ -230,7 +285,7 @@ yPos += 7
       doc.text(`${treinoDia.dia} - ${treinoDia.grupamentos.join(', ')}`, 25, yPos)
       yPos += 8
 
-      treinoDia.exercicios.forEach((exercicioTreino, indexEx) => {
+      treinoDia.exercicios.forEach((exercicioTreino: any, indexEx: number) => {
         checkPageBreak(30)
 
         doc.setFontSize(11)
@@ -334,51 +389,6 @@ yPos += 7
   } catch {}
 
 // Salvar PDF
-
-  // MF_PDF_TRAINING_V3 (Treinos da semana via SSOT)
-  try {
-    const __mfRaw = (typeof window !== "undefined") ? localStorage.getItem("mf:activePlan:v1") : null;
-    const __mfAp = __mfRaw ? JSON.parse(__mfRaw) : null;
-    const __mfW = (__mfAp && __mfAp.training && Array.isArray(__mfAp.training.workouts)) ? __mfAp.training.workouts : [];
-
-    if (__mfW.length) {
-      const __doc: any = doc; // jsPDF instance (template uses 'doc')
-      let yPdf = 20;          // cursor local (não depende do template)
-      const xPdf = 14;
-
-      // título
-      __doc.setFontSize(14);
-      __doc.text("Treinos da semana", xPdf, yPdf);
-      yPdf += 8;
-
-      __doc.setFontSize(10);
-
-      for (let i = 0; i < __mfW.length; i++) {
-        const w = __mfW[i] || {};
-        const line =
-          `${w.day || "DIA"} • ${w.modality || "Atividade"} — ${w.title || "Treino do dia"}` +
-          (w.durationMin ? ` (${w.durationMin} min)` : "");
-
-        // quebra de página simples (A4 mm ~ 297; margem segura)
-        if (yPdf > 285) {
-          __doc.addPage();
-          yPdf = 20;
-          __doc.setFontSize(14);
-          __doc.text("Treinos da semana (cont.)", xPdf, yPdf);
-          yPdf += 8;
-          __doc.setFontSize(10);
-        }
-
-        yPdf += 6;
-        __doc.text(line, xPdf, yPdf);
-      }
-
-      yPdf += 8;
-    }
-  
-  } catch(_e) {
-    __mfPdfDiag('MF_PDF_TRAINING_V3 error', String(_e));
-  }
 
   // MF_PDF_NUTRITION_SSOT_V1 (Dieta do dia via SSOT / localStorage)
   // Motivo: no export, state.dietaAtiva pode não estar populado. Fonte da verdade: mf:activePlan:v1.

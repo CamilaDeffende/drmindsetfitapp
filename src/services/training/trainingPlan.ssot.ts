@@ -1,109 +1,161 @@
 /**
- * trainingPlan.ssot.ts
- * Normaliza e gera um "training plan" mínimo dentro do SSOT (mf:activePlan:v1)
- * Regras:
- * - Não fala de dor/lesão
- * - Defensivo: se não tiver modalidade/dias/intensidade, cria defaults suaves
+ * SSOT TREINO OFICIAL
+ * Fonte primária:
+ * - activePlan.training.smartPlan
+ * - activePlan.training.workouts
+ *
+ * Compatibilidade derivada temporária:
+ * - activePlan.workout.week
+ *
+ * state.treino/state.treinoAtivo e builders legados NÃO são fonte principal.
  */
-export type MFDay = "SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM";
 
-export type MFWorkoutItem = {
-  day: MFDay;
-  modality: string;
-  title: string;      // Ex: "Base + Técnica", "Força Full Body A"
-  intensity: string;  // Ex: "Leve", "Moderada", "Alta"
-  level: string;      // Ex: "Iniciante", "Intermediário", "Avançado"
-  durationMin?: number;
-  focus?: string;
-};
+import { generateSmartTraining } from "@/engine/training/orchestrator/generateSmartTraining";
+import {
+  trainingPlanToActiveWorkoutsAdapter,
+  type ActiveWorkoutSession,
+} from "@/engine/training/adapters/trainingPlanToActiveWorkoutsAdapter";
+import { canonicalWorkoutsToLegacyWeek } from "@/engine/training/adapters/canonicalWorkoutsToLegacyWeek";
 
-const ALL_DAYS: MFDay[] = ["SEG","TER","QUA","QUI","SEX","SAB","DOM"];
+type AnyObj = Record<string, any>;
 
-function to3(d: any): string {
-  return String(d ?? "").trim().slice(0, 3).toUpperCase();
+function isObject(value: unknown): value is AnyObj {
+  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function isMFDay(x: any): x is MFDay {
-  return ALL_DAYS.includes(x as MFDay);
+function safeArray<T = any>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
 }
 
-
-function pickDays(n: number): MFDay[] {
-  const base: MFDay[] = ["SEG","QUA","SEX","SAB","TER","QUI","DOM"];
-  return base.slice(0, Math.max(1, Math.min(7, n)));
+function hasCanonicalWorkouts(activePlan: AnyObj): boolean {
+  return Array.isArray(activePlan?.training?.workouts) && activePlan.training.workouts.length > 0;
 }
 
-function defaultTitle(modality: string, idx: number) {
-  const m = modality.toLowerCase();
-  if (m.includes("corrida")) return idx % 2 === 0 ? "Base + Técnica" : "Ritmo controlado";
-  if (m.includes("bike") || m.includes("cicl")) return idx % 2 === 0 ? "Endurance" : "Intervalado controlado";
-  if (m.includes("cross")) return idx % 2 === 0 ? "Força + MetCon" : "Engine";
-  if (m.includes("func")) return idx % 2 === 0 ? "Full Body" : "Condicionamento";
-  return idx % 2 === 0 ? "Força Full Body A" : "Força Full Body B";
+function hasSmartPlan(activePlan: AnyObj): boolean {
+  return isObject(activePlan?.training?.smartPlan);
 }
 
-function defaultFocus(modality: string) {
-  const m = modality.toLowerCase();
-  if (m.includes("corrida")) return "Economia + consistência";
-  if (m.includes("bike") || m.includes("cicl")) return "Base aeróbia + cadência";
-  if (m.includes("cross")) return "Capacidade de trabalho";
-  if (m.includes("func")) return "Aptidão geral";
-  return "Hipertrofia/força";
+function extractDraft(activePlan: AnyObj): AnyObj | null {
+  if (isObject(activePlan?.draft)) return activePlan.draft;
+  if (isObject(activePlan?.onboardingDraft)) return activePlan.onboardingDraft;
+  return null;
 }
 
-function normalizeStr(x: any, fallback: string) {
-  const s = String(x ?? "").trim();
-  return s ? s : fallback;
+function normalizeExistingCanonicalWorkouts(activePlan: AnyObj): ActiveWorkoutSession[] {
+  const existing = safeArray<any>(activePlan?.training?.workouts);
+  if (!existing.length) return [];
+
+  return existing.map((session, index) => {
+    const blocks = safeArray<any>(session?.blocks).length
+      ? safeArray<any>(session.blocks).map((block) => ({
+          type: String(block?.type ?? "main"),
+          label: String(block?.label ?? "Bloco principal"),
+          exercises: safeArray<any>(block?.exercises).map((ex, exIndex) => ({
+            exerciseId: String(ex?.exerciseId ?? ex?.id ?? `ex-${index + 1}-${exIndex + 1}`),
+            name: String(ex?.name ?? ex?.titulo ?? `Exercício ${exIndex + 1}`),
+            muscleGroup: ex?.muscleGroup ?? ex?.group ?? ex?.target,
+            equipment: ex?.equipment,
+            sets: typeof ex?.sets === "number" ? ex.sets : undefined,
+            reps: ex?.reps != null ? String(ex.reps) : undefined,
+            restSec: typeof ex?.restSec === "number" ? ex.restSec : undefined,
+            rir: typeof ex?.rir === "number" ? ex.rir : undefined,
+            rpe: typeof ex?.rpe === "number" ? ex.rpe : undefined,
+            notes: ex?.notes,
+            substitutions: safeArray<string>(ex?.substitutions),
+          })),
+        }))
+      : [
+          {
+            type: "main",
+            label: "Bloco principal",
+            exercises: safeArray<any>(session?.exercises).map((ex, exIndex) => ({
+              exerciseId: String(ex?.exerciseId ?? ex?.id ?? `ex-${index + 1}-${exIndex + 1}`),
+              name: String(ex?.name ?? ex?.titulo ?? `Exercício ${exIndex + 1}`),
+              muscleGroup: ex?.muscleGroup ?? ex?.group ?? ex?.target,
+              equipment: ex?.equipment,
+              sets: typeof ex?.sets === "number" ? ex.sets : undefined,
+              reps: ex?.reps != null ? String(ex.reps) : undefined,
+              restSec: typeof ex?.restSec === "number" ? ex.restSec : undefined,
+              rir: typeof ex?.rir === "number" ? ex.rir : undefined,
+              rpe: typeof ex?.rpe === "number" ? ex.rpe : undefined,
+              notes: ex?.notes,
+              substitutions: safeArray<string>(ex?.substitutions),
+            })),
+          },
+        ];
+
+    return {
+      id: String(session?.id ?? `session-${index + 1}`),
+      dayKey: (session?.dayKey ?? "seg") as ActiveWorkoutSession["dayKey"],
+      dayLabel: String(session?.dayLabel ?? session?.dia ?? "Sessão"),
+      modality: String(session?.modality ?? "musculacao"),
+      title: String(session?.title ?? session?.titulo ?? `Treino ${index + 1}`),
+      focus: String(session?.focus ?? session?.foco ?? "geral"),
+      level:
+        session?.level === "iniciante" ||
+        session?.level === "intermediario" ||
+        session?.level === "avancado" ||
+        session?.level === "auto"
+          ? session.level
+          : "auto",
+      intensity: String(session?.intensity ?? session?.intensidade ?? "moderada"),
+      estimatedDurationMin:
+        typeof session?.estimatedDurationMin === "number"
+          ? session.estimatedDurationMin
+          : typeof session?.duracaoMin === "number"
+            ? session.duracaoMin
+            : 45,
+      rationale: session?.rationale,
+      blocks,
+      tags: safeArray<string>(session?.tags),
+    };
+  });
+}
+
+function buildFromSmartPlan(activePlan: AnyObj): { smartPlan: AnyObj | null; workouts: ActiveWorkoutSession[] } {
+  const existingSmartPlan = isObject(activePlan?.training?.smartPlan) ? activePlan.training.smartPlan : null;
+
+  if (existingSmartPlan) {
+    return {
+      smartPlan: existingSmartPlan,
+      workouts: trainingPlanToActiveWorkoutsAdapter(existingSmartPlan),
+    };
+  }
+
+  const draft = extractDraft(activePlan);
+  if (!draft) {
+    return { smartPlan: null, workouts: [] };
+  }
+
+  try {
+    const smartPlan = generateSmartTraining(draft);
+    const workouts = trainingPlanToActiveWorkoutsAdapter(smartPlan);
+    return { smartPlan, workouts };
+  } catch {
+    return { smartPlan: null, workouts: [] };
+  }
 }
 
 export function ensureTrainingPlanInActivePlan(activePlan: any): any {
-  if (!activePlan || typeof activePlan !== "object") return activePlan;
+  if (!isObject(activePlan)) return activePlan;
 
-  const activities = Array.isArray(activePlan.activities) ? activePlan.activities
-    : Array.isArray(activePlan.modalities) ? activePlan.modalities
-    : Array.isArray(activePlan?.training?.activities) ? activePlan.training.activities
-    : Array.isArray(activePlan?.training?.modalities) ? activePlan.training.modalities
+  activePlan.training = isObject(activePlan.training) ? activePlan.training : {};
+  activePlan.workout = isObject(activePlan.workout) ? activePlan.workout : {};
+
+  let smartPlan = hasSmartPlan(activePlan) ? activePlan.training.smartPlan : null;
+  let workouts = hasCanonicalWorkouts(activePlan)
+    ? normalizeExistingCanonicalWorkouts(activePlan)
     : [];
 
-  const normalizedActs = activities.map((a: any) => {
-    const modality = normalizeStr(a?.name || a?.modality || a?.type || a, "Atividade");
-    const level = normalizeStr(a?.level, normalizeStr(activePlan?.level, "Auto"));
-    const intensity = normalizeStr(a?.intensity || a?.effort, normalizeStr(activePlan?.intensity, "Auto"));
-    const daysRaw = a?.days || a?.weekDays || a?.schedule?.days;
-    const days: MFDay[] = (Array.isArray(daysRaw) && daysRaw.length)
-      ? (daysRaw
-          .map(to3)
-          .filter(isMFDay) as MFDay[])
-      : pickDays(3);
-return { modality, level, intensity, days };
-  });
-
-  // Se ainda não tem nada, não inventa modalidades: só cria training vazio
-  if (!normalizedActs.length) {
-    activePlan.training = activePlan.training || {};
-    activePlan.training.workouts = activePlan.training.workouts || [];
-    return activePlan;
+  if (!smartPlan || !workouts.length) {
+    const built = buildFromSmartPlan(activePlan);
+    smartPlan = smartPlan ?? built.smartPlan;
+    workouts = workouts.length ? workouts : built.workouts;
   }
 
-  // Cria workouts por dia/modality (mínimo)
-  const workouts: MFWorkoutItem[] = [];
-  for (const act of normalizedActs) {
-    act.days.forEach((day: MFDay, idx: number) => {
-      workouts.push({
-        day,
-        modality: act.modality,
-        level: act.level,
-        intensity: act.intensity,
-        title: defaultTitle(act.modality, idx),
-        durationMin: act.modality.toLowerCase().includes("corrida") ? 35 : 45,
-        focus: defaultFocus(act.modality),
-      });
-    });
-  }
-
-  activePlan.training = activePlan.training || {};
+  activePlan.training.smartPlan = smartPlan ?? null;
   activePlan.training.workouts = workouts;
-  activePlan.training.activitiesNormalized = normalizedActs;
+  activePlan.workout.week = canonicalWorkoutsToLegacyWeek(workouts);
 
   return activePlan;
 }

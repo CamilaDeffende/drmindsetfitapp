@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 
 type AnyObj = Record<string, any>;
 
@@ -21,8 +22,42 @@ function safeArray(v: any): any[] {
   return Array.isArray(v) ? v : [];
 }
 
+function buildViewFromCanonicalWorkouts() {
+  const workouts = getCanonicalTrainingWorkouts();
+  if (!workouts.length) return null;
+
+  const dias = workouts.map((session, idx) => {
+    const exercicios = safeArray(session?.blocks)
+      .flatMap((block) => safeArray(block?.exercises))
+      .map((ex: AnyObj, j: number) => {
+        const nome = ex?.name ?? ex?.nome ?? ex?.titulo ?? `Exercício ${j + 1}`;
+        const series = ex?.sets ?? ex?.series;
+        const reps = ex?.reps ?? ex?.repeticoes;
+        const obs = ex?.notes ?? ex?.observacao ?? ex?.note ?? "";
+        return { nome: String(nome), series, reps, obs: String(obs || "") };
+      });
+
+    return {
+      label: String(session?.dayLabel ?? session?.dayKey ?? `Dia ${idx + 1}`),
+      exercicios,
+    };
+  });
+
+  return {
+    estrategia: "Treino oficial do plano ativo",
+    dataInicio: null,
+    dataFim: null,
+    duracaoSemanas: 4,
+    dias,
+    source: "training.workouts",
+  };
+}
+
 export function TreinoAtivoView({ treinoAtivo }: TreinoAtivoViewProps) {
   const view = useMemo(() => {
+    const canonical = buildViewFromCanonicalWorkouts();
+    if (canonical) return canonical;
+
     const t = (treinoAtivo || {}) as AnyObj;
 
     const treino = (t.treino || t.plan || t.programa || {}) as AnyObj;
@@ -32,10 +67,6 @@ export function TreinoAtivoView({ treinoAtivo }: TreinoAtivoViewProps) {
     const dataFim = t.dataFim ?? t.fim ?? treino.dataFim;
     const duracaoSemanas = Number.isFinite(t.duracaoSemanas) ? t.duracaoSemanas : (Number.isFinite(t.semanas) ? t.semanas : 4);
 
-    // tentativas comuns de estrutura:
-    // treino.treinos[] => [{ dia: "A", exercicios: [...] }]
-    // treino.dias[]    => [{ nome: "Seg", exercicios: [...] }]
-    // weekPlan[]       => [{ dayLabel, exercises: [...] }]
     const dias =
       safeArray(treino.treinos).length ? safeArray(treino.treinos) :
       safeArray(treino.dias).length ? safeArray(treino.dias) :
@@ -68,6 +99,7 @@ export function TreinoAtivoView({ treinoAtivo }: TreinoAtivoViewProps) {
       dataFim,
       duracaoSemanas,
       dias: diasFmt,
+      source: "treinoAtivo.treino",
     };
   }, [treinoAtivo]);
 
@@ -84,6 +116,9 @@ export function TreinoAtivoView({ treinoAtivo }: TreinoAtivoViewProps) {
               Período: <span className="text-white/80">{fmtDate(view.dataInicio)} → {fmtDate(view.dataFim)}</span>
               {" • "}
               Semanas: <span className="text-white/80">{view.duracaoSemanas}</span>
+            </div>
+            <div className="mt-1 text-[11px] text-white/45">
+              Fonte: <span className="text-white/70">{view.source}</span>
             </div>
           </div>
 

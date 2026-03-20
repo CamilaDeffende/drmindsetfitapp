@@ -2,9 +2,7 @@ import { computeMetabolic } from "@/engine/metabolic/MetabolicEngine";
 import { computeMacros, buildMealPlan } from "@/engine/nutrition/NutritionEngine";
 import { buildWorkoutWeek, Modality } from "@/engine/workout/WorkoutEngine";
 import { generateSmartTraining } from "@/engine/training/orchestrator/generateSmartTraining";
-import { trainingPlanToWorkoutAdapter } from "@/engine/training/adapters/trainingPlanToWorkoutAdapter";
-
-import { persistTrainingPlanToActivePlan } from "./training/activePlan.trainingWriter";
+import { ensureTrainingPlanInActivePlan } from "./training/trainingPlan.ssot";
 
 export type ActivePlanV1 = {
   version: "v1";
@@ -28,6 +26,11 @@ export type ActivePlanV1 = {
 
   meals?: any;
   workout?: any;
+  training?: {
+    smartPlan?: any;
+    workouts?: any[];
+    [k: string]: any;
+  };
   draft?: PlanDraft;
 };
 
@@ -45,15 +48,16 @@ const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
 
 export function saveActivePlan(plan: ActivePlanV1) {
   try {
-    localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(plan));
-    try { persistTrainingPlanToActivePlan(); } catch {}
+    const normalized = ensureTrainingPlanInActivePlan(plan);
+    localStorage.setItem(ACTIVE_PLAN_KEY, JSON.stringify(normalized));
   } catch {}
 }
 
 export function loadActivePlan(): ActivePlanV1 | null {
   try {
     const r = localStorage.getItem(ACTIVE_PLAN_KEY);
-    return r ? (JSON.parse(r) as ActivePlanV1) : null;
+    if (!r) return null;
+    return ensureTrainingPlanInActivePlan(JSON.parse(r) as ActivePlanV1) as ActivePlanV1;
   } catch {
     return null;
   }
@@ -93,17 +97,34 @@ function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
   return buildWorkoutWeek({ modalities, level, daysByModality });
 }
 
-function buildWorkoutFromSmartEngine(draft: PlanDraft, step3: any, step5: any, step6: any) {
+function buildTrainingPayloadFromSmartEngine(draft: PlanDraft, step3: any, step5: any, step6: any) {
   try {
     const smartPlan = generateSmartTraining(draft as any);
-    const adaptedWorkout = trainingPlanToWorkoutAdapter(smartPlan);
+
+    const base = {
+      training: {
+        smartPlan,
+      },
+      workout: {
+        legacyFallbackShape: buildLegacyWorkoutFallback(step3, step5, step6),
+      },
+      draft,
+    };
+
+    const normalized = ensureTrainingPlanInActivePlan(base as any);
 
     return {
-      ...adaptedWorkout,
-      legacyFallbackShape: buildLegacyWorkoutFallback(step3, step5, step6),
+      training: normalized.training,
+      workout: normalized.workout,
     };
   } catch {
-    return buildLegacyWorkoutFallback(step3, step5, step6);
+    return {
+      training: {
+        smartPlan: null,
+        workouts: [],
+      },
+      workout: buildLegacyWorkoutFallback(step3, step5, step6),
+    };
   }
 }
 
@@ -187,16 +208,18 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
   });
 
   const meals = buildMealPlan(metabolic.targetKcal, macros);
+  const trainingPayload = buildTrainingPayloadFromSmartEngine(draft, step3, step5, step6);
 
-  const workout = buildWorkoutFromSmartEngine(draft, step3, step5, step6);
-
-  return {
+  const plan: ActivePlanV1 = {
     version: "v1",
     createdAt: new Date().toISOString(),
     metabolic,
     macros,
     meals,
-    workout,
+    training: trainingPayload.training,
+    workout: trainingPayload.workout,
     draft,
   };
+
+  return ensureTrainingPlanInActivePlan(plan) as ActivePlanV1;
 }

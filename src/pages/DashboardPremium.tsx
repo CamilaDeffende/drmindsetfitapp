@@ -32,7 +32,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { loadActivePlan } from "@/services/plan.service";
-import { ACTIVE_PLAN_KEY } from "../services/activePlan.bridge";
+import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
 type PassosDia = { data: string; passos: number };
@@ -142,34 +142,20 @@ export function DashboardPremium() {
   }, []);
 
   useEffect(() => {
-    const ls = (k: string) => {
+    const hasCanonicalPlan = () => {
       try {
-        return localStorage.getItem(k);
+        const ap = loadActivePlan();
+        const workouts = getCanonicalTrainingWorkouts();
+        return !!ap || workouts.length > 0;
       } catch {
-        return null;
+        return false;
       }
     };
 
-    const hasPlan =
-      !!ls(ACTIVE_PLAN_KEY) ||
-      !!ls("mindsetfit_active_plan_v1") ||
-      !!ls("mindsetfit_activePlanV1") ||
-      !!ls("activePlanV1") ||
-      !!ls("planV1") ||
-      !!ls("planoAtivo");
-
-    setNoPlan(!hasPlan);
+    setNoPlan(!hasCanonicalPlan());
 
     const interval = window.setInterval(() => {
-      const hasNow =
-        !!ls(ACTIVE_PLAN_KEY) ||
-        !!ls("mindsetfit_active_plan_v1") ||
-        !!ls("mindsetfit_activePlanV1") ||
-        !!ls("activePlanV1") ||
-        !!ls("planV1") ||
-        !!ls("planoAtivo");
-
-      setNoPlan(!hasNow);
+      setNoPlan(!hasCanonicalPlan());
     }, 1500);
 
     return () => window.clearInterval(interval);
