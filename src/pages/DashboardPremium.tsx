@@ -35,6 +35,7 @@ import { loadActivePlan } from "@/services/plan.service";
 import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
+import { getLatestTrainingMotorDecisions } from "@/services/training/trainingDecision.service";
 import { getCanonicalTrainingLoadHistory } from "@/services/training/trainingExecution.service";
 
 type PassosDia = { data: string; passos: number };
@@ -208,6 +209,8 @@ export function DashboardPremium() {
 
     return suggestions.slice(0, 3);
   }, []);
+
+  const latestMotorDecisions = useMemo(() => getLatestTrainingMotorDecisions(4), []);
 
   const nutrition = useMemo(() => {
     return (
@@ -665,7 +668,28 @@ export function DashboardPremium() {
             </CardHeader>
 
             <CardContent className="space-y-4">
-            {progressionHighlights.length ? (
+                        {latestMotorDecisions.length ? (
+              <Card className="glass-effect border-cyan-500/20">
+                <CardHeader>
+                  <CardTitle className="text-base">Últimas decisões do motor</CardTitle>
+                  <CardDescription>Resumo explicável do raciocínio aplicado nas sessões recentes.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {latestMotorDecisions.map((item, idx) => (
+                    <div key={item.id ?? idx} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold">{item.title ?? item.modality ?? "Sessão"}</div>
+                        <div className="text-[11px] text-muted-foreground capitalize">{item.confidence}</div>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">{item.decisionType}</div>
+                      <div className="mt-2 text-sm">{item.rationale}</div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
+
+{progressionHighlights.length ? (
               <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                 <div className="text-sm font-semibold">Próximas progressões sugeridas</div>
                 <div className="mt-2 space-y-2">

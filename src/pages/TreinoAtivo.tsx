@@ -11,6 +11,11 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import ProgressaoCargaHint from "@/components/ProgressaoCargaHint";
 import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
+import {
+  appendTrainingMotorDecision,
+  buildTrainingMotorDecisionForSession,
+  getTrainingMotorDecisionPreview,
+} from "@/services/training/trainingDecision.service";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import {
@@ -205,6 +210,8 @@ export function TreinoAtivo() {
       currentReps: exercicio?.repeticoes,
     });
   }, [exercicio?.id, exercicio?.nome, exercicio?.series, exercicio?.repeticoes]);
+
+  const motorDecisionPreview = useMemo(() => getTrainingMotorDecisionPreview(), []);
 
 
   const historicoCargas = useMemo(() => {
@@ -417,6 +424,39 @@ export function TreinoAtivo() {
       exercises: performedExercises,
     });
 
+    const decision = buildTrainingMotorDecisionForSession({
+      session: {
+        id: treino.id,
+        dayKey: treino.dia,
+        modality: treino.modalidade,
+        title: treino.titulo,
+        focus: treino.grupamentos.join(", "),
+        intensity: treino.intensidade,
+        estimatedDurationMin: treino.duracaoMin,
+      },
+      usedFallback: !isCanonicalSource,
+      progressionApplied: !!progressionSuggestion,
+      suggestedLoadKg: progressionSuggestion?.suggestedLoadKg ?? null,
+      lastAverageLoadKg: progressionSuggestion?.lastAverageLoadKg ?? null,
+      confidence:
+        progressionSuggestion?.confidence === "alta"
+          ? "high"
+          : progressionSuggestion?.confidence === "baixa"
+            ? "low"
+            : progressionSuggestion?.confidence === "media"
+              ? "medium"
+              : progressionSuggestion?.confidence === "high"
+                ? "high"
+                : progressionSuggestion?.confidence === "low"
+                  ? "low"
+                  : "medium",
+    });
+
+    if (decision) {
+      appendTrainingMotorDecision(decision);
+    }
+
+
     toast({
       title: "Treino concluído!",
       description: isCanonicalSource
@@ -534,7 +574,19 @@ export function TreinoAtivo() {
               <Progress value={progressoSeries} className="h-2 mb-3" />
             </div>
 
-            {progressionSuggestion ? (
+                        {motorDecisionPreview ? (
+              <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+                <div className="text-sm font-semibold">Última decisão do motor</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Tipo: <span className="font-semibold">{motorDecisionPreview.decisionType}</span>
+                  {" • "}
+                  Confiança: <span className="font-semibold capitalize">{motorDecisionPreview.confidence}</span>
+                </div>
+                <div className="mt-2 text-sm">{motorDecisionPreview.rationale}</div>
+              </div>
+            ) : null}
+
+{progressionSuggestion ? (
               <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-semibold">Sugestão de progressão automática</div>
