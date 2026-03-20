@@ -17,7 +17,7 @@
     "predeploy": "npm run verify",
     "dev:green": "npm run verify && npm run dev",
     "analyze:bundle": "ANALYZE_BUNDLE=1 npm run build",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test tests/e2e --project=chromium",
     "test:e2e:ui": "playwright test --ui",
     "test:runpro": "node scripts/runpro_selftest.cjs",
     "mf:running:demo": "tsx scripts/running_demo.ts",
@@ -27,7 +27,9 @@
     "lint:strict": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
     "test:e2e:headed": "playwright test --headed",
     "test": "vitest --config vitest.config.ts",
-    "test:run": "vitest run --config vitest.config.ts"
+    "test:run": "vitest run --config vitest.config.ts",
+    "test:visual": "playwright test tests/visual --project=chromium",
+    "test:mf": "playwright test tests/mf --project=chromium"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",
