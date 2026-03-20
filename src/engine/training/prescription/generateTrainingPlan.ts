@@ -1,43 +1,42 @@
+import { DEFAULT_BLOCK_WEEKS } from "../core/constants";
 import { TrainingPlan, TrainingProfile } from "../core/types";
-import { safePlanId } from "../core/utils";
+import { WEEKLY_TEMPLATES } from "../library/weeklyTemplates";
+import { buildSessionPlan } from "./buildSessionPlan";
+import { assignCardioPlan } from "./assignCardioPlan";
 import { distributeWeeklyVolume } from "./distributeWeeklyVolume";
 import { selectTrainingSplit } from "./selectTrainingSplit";
-import { selectWeeklyTemplate } from "./selectWeeklyTemplate";
-import { selectSessionTemplates } from "./selectSessionTemplates";
-import { buildSessionPlan } from "./buildSessionPlan";
-import { buildPlanRationale } from "./buildPlanRationale";
-import { assignCardioPlan } from "./assignCardioPlan";
-import { buildProgressionModel } from "../progression/buildProgressionModel";
-import { validateTrainingPlan } from "../validation/validateTrainingPlan";
 
 export function generateTrainingPlan(profile: TrainingProfile): TrainingPlan {
   const split = selectTrainingSplit(profile);
-  const weeklyTemplate = selectWeeklyTemplate(split);
-  const sessionTemplates = selectSessionTemplates(weeklyTemplate);
-  const sessions = sessionTemplates.map((template) => buildSessionPlan(template, profile));
-  const volume = distributeWeeklyVolume(profile);
-  const cardioPlan = assignCardioPlan(profile);
-  const progressionModel = buildProgressionModel(profile);
-  const rationale = buildPlanRationale(profile, sessions);
+  const weeklyTemplate = WEEKLY_TEMPLATES[split].slice(0, profile.weeklyDays);
+  const weeklyVolumeTarget = distributeWeeklyVolume(profile);
 
-  const draftPlan: TrainingPlan = {
-    id: safePlanId(),
-    profile,
-    split,
-    sessions,
-    weeklyVolumeByMuscle: volume.weeklyVolumeByMuscle,
-    cardioPlan,
-    progressionModel,
-    validationFlags: [],
-    rationale,
-    version: 1,
-    createdAt: new Date().toISOString(),
-  };
-
-  const validationFlags = validateTrainingPlan(draftPlan);
+  const sessions = weeklyTemplate.map((focus, idx) => buildSessionPlan(idx + 1, focus, profile));
+  const cardioPrescription = assignCardioPlan(profile);
 
   return {
-    ...draftPlan,
-    validationFlags,
+    profile,
+    split,
+    weeklyVolumeTarget,
+    weeklyVolumeByMuscle: { chest: Math.round(weeklyVolumeTarget * 0.18), back: Math.round(weeklyVolumeTarget * 0.22), quadriceps: Math.round(weeklyVolumeTarget * 0.2), hamstrings: Math.round(weeklyVolumeTarget * 0.16), shoulders: Math.round(weeklyVolumeTarget * 0.12), arms: Math.round(weeklyVolumeTarget * 0.12) },
+    sessions,
+    cardioPrescription,
+    cardioPlan:
+      String(profile.goal) === "FAT_LOSS" || profile.goal === "CARDIO_CONDITIONING"
+        ? ["2x/sem 20-30min Z2 ou intervalado leve-moderado"]
+        : [],
+    block: {
+      weeks: DEFAULT_BLOCK_WEEKS,
+      progressionModel: String(profile.goal) === "STRENGTH" ? "LOAD_PROGRESSION" : "DOUBLE_PROGRESSION",
+      deloadWeek: 4,
+    },
+    rationale: [
+      "Plano gerado a partir do perfil treinável.",
+      "Split, volume e seleção de exercícios foram organizados por objetivo, nível, recuperação e contexto.",
+    ],
+    warnings: [],
+    validations: [],
+    createdAt: new Date().toISOString(),
+    version: 1,
   };
 }

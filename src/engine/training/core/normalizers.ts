@@ -1,44 +1,64 @@
-import { TrainingEnvironment, TrainingGoal } from "./enums";
-import { clamp, normalizeText } from "./utils";
+import {
+  DEFAULT_AVAILABLE_DAYS,
+  DEFAULT_SESSION_DURATION_MIN,
+  MAX_SESSION_DURATION_MIN,
+  MIN_SESSION_DURATION_MIN,
+} from "./constants";
+import { clamp } from "./utils";
+import { OnboardingTrainingInput } from "./types";
 
-export function normalizeGoal(raw: unknown): TrainingGoal {
-  const value = normalizeText(raw);
-  if (value.includes("hipert")) return TrainingGoal.HYPERTROPHY;
-  if (value.includes("emag") || value.includes("cut") || value.includes("perda")) return TrainingGoal.FAT_LOSS;
-  if (value.includes("recomp")) return TrainingGoal.BODY_RECOMPOSITION;
-  if (value.includes("for")) return TrainingGoal.STRENGTH;
-  if (value.includes("corr")) return TrainingGoal.RUN_SUPPORT;
-  if (value.includes("bike") || value.includes("cicl")) return TrainingGoal.CYCLING_SUPPORT;
-  if (value.includes("retorno")) return TrainingGoal.RETURN_TO_TRAINING;
-  if (value.includes("hibr")) return TrainingGoal.HYBRID_PERFORMANCE;
-  return TrainingGoal.GENERAL_FITNESS;
+export function normalizeDays(value: unknown): number {
+  return clamp(Number(value ?? DEFAULT_AVAILABLE_DAYS), 2, 6);
 }
 
-export function normalizeEnvironment(raw: unknown): TrainingEnvironment {
-  const value = normalizeText(raw);
-  if (value.includes("academia completa") || value.includes("full gym")) return TrainingEnvironment.FULL_GYM;
-  if (value.includes("academia")) return TrainingEnvironment.BASIC_GYM;
-  if (value.includes("halter")) return TrainingEnvironment.HOME_DUMBBELLS;
-  if (value.includes("casa")) return TrainingEnvironment.HOME_BASIC;
-  if (value.includes("outdoor") || value.includes("rua")) return TrainingEnvironment.OUTDOOR;
-  if (value.includes("hybrid") || value.includes("hibr")) return TrainingEnvironment.HYBRID;
-  return TrainingEnvironment.BASIC_GYM;
+export function normalizeDuration(value: unknown): number {
+  return clamp(Number(value ?? DEFAULT_SESSION_DURATION_MIN), MIN_SESSION_DURATION_MIN, MAX_SESSION_DURATION_MIN);
 }
 
-export function normalizeScore(raw: unknown, fallback = 3): number {
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return fallback;
-  return clamp(parsed, 1, 5);
+export function normalizeEnvironment(value: unknown): string {
+  const v = String(value ?? "gym").toLowerCase();
+  if (["home", "casa"].includes(v)) return "home";
+  if (["outdoor", "rua", "externo"].includes(v)) return "outdoor";
+  if (["hybrid", "hibrido"].includes(v)) return "hybrid";
+  return "gym";
 }
 
-export function normalizeDays(raw: unknown, fallback = 3): number {
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return fallback;
-  return clamp(Math.round(parsed), 1, 7);
+export function normalizeGoal(value: unknown): string {
+  return String(value ?? "GENERAL_FITNESS").toUpperCase();
 }
 
-export function normalizeDuration(raw: unknown, fallback = 45): number {
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return fallback;
-  return clamp(Math.round(parsed), 20, 120);
+export function normalizeScore(value: unknown, fallback = 3): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return clamp(n, 1, 5);
+}
+
+export function normalizeOnboardingTrainingInput(input: unknown): OnboardingTrainingInput {
+  const raw = (input ?? {}) as Record<string, unknown>;
+
+  return {
+    age: Number(raw.age ?? raw.idade ?? 30),
+    objective: String(raw.objective ?? raw.goal ?? raw.primaryGoal ?? "GENERAL_FITNESS"),
+    primaryGoal: String(raw.primaryGoal ?? raw.objective ?? raw.goal ?? "GENERAL_FITNESS"),
+    secondaryGoal: raw.secondaryGoal ? String(raw.secondaryGoal) : undefined,
+    experienceLevel: String(raw.experienceLevel ?? raw.level ?? "BEGINNER"),
+    weeklyDays: normalizeDays(raw.weeklyDays ?? raw.frequency),
+    availableDays: normalizeDays(raw.availableDays ?? raw.weeklyDays ?? raw.frequency),
+    sessionDurationMin: normalizeDuration(raw.sessionDurationMin ?? raw.timeAvailableMin),
+    availableEquipment: Array.isArray(raw.availableEquipment) ? raw.availableEquipment.map(String) : [],
+    constraints: Array.isArray(raw.constraints) ? raw.constraints.map(String) : [],
+    limitations: Array.isArray(raw.limitations) ? raw.limitations.map(String) : [],
+    painFlags: Array.isArray(raw.painFlags) ? raw.painFlags.map(String) : [],
+    environment: normalizeEnvironment(raw.environment),
+    modality: String(raw.modality ?? "strength"),
+    sleepQualityScore: normalizeScore(raw.sleepQualityScore, 3),
+    stressScore: normalizeScore(raw.stressScore, 3),
+    recoveryScore: normalizeScore(raw.recoveryScore, 3),
+    adherenceHistoryScore: normalizeScore(raw.adherenceHistoryScore, 3),
+    monthsDetrained: Number(raw.monthsDetrained ?? 0),
+    trainingExperienceMonths: Number(raw.trainingExperienceMonths ?? 0),
+    runningInterest: Boolean(raw.runningInterest ?? false),
+    cyclingInterest: Boolean(raw.cyclingInterest ?? false),
+    cardioInterest: Boolean(raw.cardioInterest ?? false),
+  };
 }

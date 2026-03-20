@@ -1,18 +1,17 @@
-import { TrainingLevel, TrainingSplit } from "../core/enums";
+import { SPLIT_PRIORITY_BY_DAYS } from "../core/constants";
+import { TrainingGoal, TrainingSplitType } from "../core/enums";
 import { TrainingProfile } from "../core/types";
 
-export function selectTrainingSplit(profile: TrainingProfile): TrainingSplit {
-  if (profile.availableDays <= 2) {
-    return profile.timeConstraintScore >= 70 ? TrainingSplit.MINIMALIST_2X : TrainingSplit.FULL_BODY_2X;
+export function selectTrainingSplit(profile: TrainingProfile): TrainingSplitType {
+  const ordered = SPLIT_PRIORITY_BY_DAYS[profile.weeklyDays] ?? SPLIT_PRIORITY_BY_DAYS[3];
+
+  if (profile.goal === TrainingGoal.STRENGTH && profile.weeklyDays >= 4) {
+    return TrainingSplitType.UPPER_LOWER;
   }
-  if (profile.availableDays === 3) {
-    return profile.hybridCandidate ? TrainingSplit.HYBRID_3X : TrainingSplit.FULL_BODY_3X;
+
+  if (profile.weeklyDays <= 3) {
+    return TrainingSplitType.FULL_BODY;
   }
-  if (profile.availableDays === 4) {
-    return profile.hybridCandidate ? TrainingSplit.HYBRID_4X : TrainingSplit.UPPER_LOWER_4X;
-  }
-  if (profile.availableDays >= 5 && profile.level === TrainingLevel.ADVANCED) {
-    return TrainingSplit.PUSH_PULL_LEGS_6X;
-  }
-  return TrainingSplit.ABCD_4X;
+
+  return ordered[0] ?? TrainingSplitType.FULL_BODY;
 }

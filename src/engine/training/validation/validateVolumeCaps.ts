@@ -3,12 +3,11 @@ import { SafetyFlag, TrainingPlan } from "../core/types";
 
 export function validateVolumeCaps(plan: TrainingPlan): SafetyFlag[] {
   const flags: SafetyFlag[] = [];
-  Object.entries(plan.weeklyVolumeByMuscle).forEach(([muscle, volume]) => {
-    if (volume > 22) {
+  Object.entries(plan.weeklyVolumeByMuscle ?? {}).forEach(([muscle, volume]) => {
+    if (Number(volume) > 22) {
       flags.push({
-        code: "volume_cap",
-        severity: SafetySeverity.WARNING,
-        message: `volume semanal de ${muscle} está alto para MVP (${volume}).`,
+        severity: SafetySeverity.MODERATE,
+        message: `Volume semanal de ${muscle} acima do teto prudente inicial.`,
       });
     }
   });

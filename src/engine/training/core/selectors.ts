@@ -1,6 +1,5 @@
 import { Exercise } from "./types";
-import { MovementPattern } from "./enums";
 
-export function pickByPattern(exercises: Exercise[], pattern: MovementPattern): Exercise[] {
-  return exercises.filter((exercise) => exercise.movementPattern === pattern);
+export function findExerciseById(exercises: Exercise[], id: string): Exercise | undefined {
+  return exercises.find((item) => item.id === id);
 }

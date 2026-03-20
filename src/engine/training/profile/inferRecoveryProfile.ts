@@ -1,7 +1,7 @@
 import { RecoveryLevel } from "../core/enums";
 
-export function inferRecoveryProfile(recoveryScore: number): RecoveryLevel {
-  if (recoveryScore < 45) return RecoveryLevel.LOW;
-  if (recoveryScore < 70) return RecoveryLevel.MODERATE;
-  return RecoveryLevel.HIGH;
+export function inferRecoveryProfile(score: number): RecoveryLevel {
+  if (score >= 4) return RecoveryLevel.HIGH;
+  if (score >= 2.75) return RecoveryLevel.MODERATE;
+  return RecoveryLevel.LOW;
 }

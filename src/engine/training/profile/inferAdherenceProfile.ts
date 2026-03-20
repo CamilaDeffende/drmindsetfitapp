@@ -1,7 +1,7 @@
 import { AdherenceLevel } from "../core/enums";
 
-export function inferAdherenceProfile(adherenceScore: number): AdherenceLevel {
-  if (adherenceScore < 45) return AdherenceLevel.LOW;
-  if (adherenceScore < 70) return AdherenceLevel.MEDIUM;
-  return AdherenceLevel.HIGH;
+export function inferAdherenceProfile(score: number): AdherenceLevel {
+  if (score >= 4) return AdherenceLevel.HIGH;
+  if (score >= 2.75) return AdherenceLevel.MODERATE;
+  return AdherenceLevel.LOW;
 }

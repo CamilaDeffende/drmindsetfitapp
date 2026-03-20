@@ -1,7 +1,6 @@
-import { TrainingFeedbackEntry } from "../core/types";
+import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
 
-export function calculateAdherenceTrend(history: TrainingFeedbackEntry[]): number {
-  if (!history.length) return 70;
-  const completed = history.filter((item) => item.completed).length;
-  return Math.round((completed / history.length) * 100);
+export function calculateAdherenceTrend(): number {
+  const snapshot = getTrainingReadinessSnapshot();
+  return Math.max(0, Math.min(100, snapshot.avgAdherencePct ?? 0));
 }

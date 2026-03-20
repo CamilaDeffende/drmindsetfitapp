@@ -1,20 +1,21 @@
-import { TrainingSession } from "../core/types";
-import { safePlanId } from "../core/utils";
+import { SessionFocus } from "../core/enums";
+import { SessionPlan, TrainingProfile } from "../core/types";
 import { assignSetRepSchemes } from "./assignSetRepSchemes";
 import { selectExercises } from "./selectExercises";
-import { SessionTemplate, TrainingProfile } from "../core/types";
 
-export function buildSessionPlan(template: SessionTemplate, profile: TrainingProfile): TrainingSession {
-  const selected = selectExercises(template.requiredPatterns, profile);
+export function buildSessionPlan(dayIndex: number, focus: SessionFocus, profile: TrainingProfile): SessionPlan {
+  const selected = selectExercises(focus, profile);
   const exercises = assignSetRepSchemes(selected, profile);
-  const estimatedDurationMin = Math.min(profile.sessionDurationMin, template.targetDurationMin);
 
   return {
-    id: safePlanId(),
-    name: template.name,
-    focus: template.focus,
-    estimatedDurationMin,
+    name: `Sessão ${dayIndex} - ${focus}`,
+    dayIndex,
+    focus,
+    estimatedDurationMin: Math.min(profile.sessionDurationMin, Math.max(30, exercises.length * 12)),
     exercises,
-    rationale: `sessão construída para ${template.focus.toLowerCase()} com ${exercises.length} exercícios`,
+    rationale: [
+      `Sessão construída para foco ${focus}.`,
+      "Exercícios escolhidos por compatibilidade com equipamento, padrão motor e objetivo.",
+    ],
   };
 }

@@ -2,11 +2,14 @@ import { SafetySeverity } from "../core/enums";
 import { SafetyFlag, TrainingPlan } from "../core/types";
 
 export function validateSessionDuration(plan: TrainingPlan): SafetyFlag[] {
-  return plan.sessions
-    .filter((session) => session.estimatedDurationMin > plan.profile.sessionDurationMin + 5)
-    .map((session) => ({
-      code: "session_duration_over",
-      severity: SafetySeverity.WARNING,
-      message: `${session.name} pode passar da janela de tempo disponível.`,
-    }));
+  const flags: SafetyFlag[] = [];
+  for (const session of plan.sessions) {
+    if (session.estimatedDurationMin > plan.profile.sessionDurationMin + 10) {
+      flags.push({
+        severity: SafetySeverity.MODERATE,
+        message: `${session.name ?? "Sessão " + session.dayIndex} pode passar da janela de tempo disponível.`,
+      });
+    }
+  }
+  return flags;
 }

@@ -2,10 +2,8 @@ import { TrainingProfile, TrainingSession } from "../core/types";
 
 export function buildPlanRationale(profile: TrainingProfile, sessions: TrainingSession[]): string[] {
   return [
-    `split escolhido respeitando ${profile.availableDays} dias disponíveis`,
-    `janela média por sessão: ${profile.sessionDurationMin} min`,
-    `recuperação classificada como ${profile.recoveryLevel}`,
-    `nível classificado como ${profile.level}`,
-    `sessões montadas: ${sessions.length}`,
+    `split escolhido respeitando ${profile.availableDays ?? profile.weeklyDays} dias disponíveis`,
+    `recuperação classificada como ${profile.recoveryLevel ?? profile.recoveryProfile}`,
+    `plano inicial com ${sessions.length} sessões`,
   ];
 }

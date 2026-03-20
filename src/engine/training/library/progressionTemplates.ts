@@ -1,8 +1,16 @@
 import { ProgressionType } from "../core/enums";
 
-export const PROGRESSION_TEMPLATE_NOTES: Record<ProgressionType, string[]> = {
-  [ProgressionType.DOUBLE_PROGRESSION]: ["aumentar reps dentro da faixa antes de subir carga"],
-  [ProgressionType.LOAD_PROGRESSION]: ["subir carga em pequenos incrementos mantendo técnica"],
-  [ProgressionType.DENSITY_PROGRESSION]: ["mesmo trabalho em menos tempo quando recuperação permitir"],
-  [ProgressionType.HYBRID_SIMPLE]: ["alternar foco de carga e densidade por bloco curto"],
+export const PROGRESSION_TEMPLATES: Record<string, { type: ProgressionType; notes: string[] }> = {
+  beginner: {
+    type: ProgressionType.DOUBLE_PROGRESSION,
+    notes: ["progredir reps antes de carga", "manter margem técnica"],
+  },
+  intermediate: {
+    type: ProgressionType.LOAD_PROGRESSION,
+    notes: ["alternar microprogressão de carga e reps"],
+  },
+  advanced: {
+    type: ProgressionType.DENSITY,
+    notes: ["controlar estímulo com densidade e gestão fina de fadiga"],
+  },
 };

@@ -1,23 +1,16 @@
+import { SessionFocus, TrainingSplitType } from "../core/enums";
 import { WeeklyTemplate } from "../core/types";
-import { SESSION_TEMPLATES } from "./sessionTemplates";
-import { TrainingSplit } from "../core/enums";
 
-function bySplit(split: TrainingSplit) {
-  return SESSION_TEMPLATES
-    .filter((x) => x.split === split)
-    .map((x) => ({
-      dayIndex: x.dayIndex,
-      name: x.name,
-      focus: x.focus,
-      requiredPatterns: x.requiredPatterns,
-      targetDurationMin: x.targetDurationMin,
-      targetVolume: x.volumeTarget,
-    }));
-}
+export const WEEKLY_TEMPLATES: Record<TrainingSplitType, SessionFocus[]> = {
+  FULL_BODY: [SessionFocus.FULL_BODY, SessionFocus.FULL_BODY, SessionFocus.FULL_BODY, SessionFocus.FULL_BODY, SessionFocus.FULL_BODY, SessionFocus.FULL_BODY],
+  UPPER_LOWER: [SessionFocus.UPPER, SessionFocus.LOWER, SessionFocus.UPPER, SessionFocus.LOWER, SessionFocus.UPPER, SessionFocus.LOWER],
+  PUSH_PULL_LEGS: [SessionFocus.PUSH, SessionFocus.PULL, SessionFocus.LEGS, SessionFocus.PUSH, SessionFocus.PULL, SessionFocus.LEGS],
+  BODY_PART: [SessionFocus.PUSH, SessionFocus.PULL, SessionFocus.LEGS, SessionFocus.UPPER, SessionFocus.CONDITIONING, SessionFocus.RECOVERY],
+};
 
-export const WEEKLY_TEMPLATES: WeeklyTemplate[] = [
-  { name: "Minimalist 2x", split: TrainingSplit.MINIMALIST_2X, days: bySplit(TrainingSplit.MINIMALIST_2X) },
-  { name: "Full Body 3x", split: TrainingSplit.FULL_BODY_3X, days: bySplit(TrainingSplit.FULL_BODY_3X) },
-  { name: "Upper Lower 4x", split: TrainingSplit.UPPER_LOWER_4X, days: bySplit(TrainingSplit.UPPER_LOWER_4X) },
-  { name: "Hybrid 4x", split: TrainingSplit.HYBRID_4X, days: bySplit(TrainingSplit.HYBRID_4X) },
+export const WEEKLY_TEMPLATE_LIST: WeeklyTemplate[] = [
+  { split: TrainingSplitType.FULL_BODY, days: WEEKLY_TEMPLATES.FULL_BODY },
+  { split: TrainingSplitType.UPPER_LOWER, days: WEEKLY_TEMPLATES.UPPER_LOWER },
+  { split: TrainingSplitType.PUSH_PULL_LEGS, days: WEEKLY_TEMPLATES.PUSH_PULL_LEGS },
+  { split: TrainingSplitType.BODY_PART, days: WEEKLY_TEMPLATES.BODY_PART },
 ];
