@@ -266,7 +266,7 @@ function App() {
             <Route path="/conflicts" element={<MFSuspense><LazyConflictsPage /></MFSuspense>} />
             <Route path="/progress" element={<MFSuspense><LazyProgressPage /></MFSuspense>} />
             <Route path="/workout/:id" element={<MFSuspense><LazyWorkoutDetailsPage /></MFSuspense>} />
-            <Route path="/live-workout" element={<MFSuspense><LazyLiveWorkoutPage /></MFSuspense>} />
+            <Route path="/live-workout" element={<MFSuspense><LazyLiveWorkoutPage /></MFSuspense>} />      
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/diagnostic" replace />} />
