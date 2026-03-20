@@ -1,22 +1,24 @@
-import { SafetyFlag, TrainingPlan } from "../core/types";
-import { validateEquipmentCompatibility } from "./validateEquipmentCompatibility";
-import { validateExerciseComplexity } from "./validateExerciseComplexity";
-import { validateMovementBalance } from "./validateMovementBalance";
-import { validateRecoveryCompatibility } from "./validateRecoveryCompatibility";
-import { validateSessionDuration } from "./validateSessionDuration";
-import { validateSplitCoherence } from "./validateSplitCoherence";
-import { validateVolumeCaps } from "./validateVolumeCaps";
+import { ValidationResult, TrainingPlan } from "../core/types";
 
-export function validateTrainingPlan(plan: TrainingPlan): SafetyFlag[] {
-  const flags: SafetyFlag[] = [
-    ...validateSplitCoherence(plan),
-    ...validateEquipmentCompatibility(plan),
-    ...validateSessionDuration(plan),
-    ...validateVolumeCaps(plan),
-    ...validateExerciseComplexity(plan),
-    ...validateMovementBalance(plan),
-    ...validateRecoveryCompatibility(plan),
-  ];
+export function validateTrainingPlan(plan: TrainingPlan): ValidationResult {
+  const messages: string[] = [];
 
-  return flags;
+  if (!plan.sessions.length) messages.push("Plano sem sessões.");
+  if (plan.profile.weeklyDays !== plan.sessions.length) {
+    messages.push("Número de sessões não corresponde à frequência semanal.");
+  }
+
+  for (const session of plan.sessions) {
+    if (!session.exercises.length) {
+      messages.push(`Sessão ${session.dayIndex} sem exercícios.`);
+    }
+    if (session.estimatedDurationMin > plan.profile.sessionDurationMin + 15) {
+      messages.push(`Sessão ${session.dayIndex} excede duração esperada.`);
+    }
+  }
+
+  return {
+    valid: messages.length === 0,
+    messages: messages.length ? messages : ["Plano validado com sucesso."],
+  };
 }

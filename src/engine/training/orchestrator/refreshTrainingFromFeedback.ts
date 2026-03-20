@@ -1,14 +1,33 @@
-import { TrainingFeedbackEntry, TrainingPlan } from "../core/types";
-import { analyzeTrainingFeedback } from "../adaptation/analyzeTrainingFeedback";
+import { applyAdaptiveAdjustments } from "../adaptation/applyAdaptiveAdjustments";
 import { adaptTrainingPlan } from "../adaptation/adaptTrainingPlan";
+import { TrainingFeedbackInput, TrainingPlan } from "../core/types";
 import { validateTrainingPlan } from "../validation/validateTrainingPlan";
+import {
+  appendTrainingDecision,
+  saveSmartTrainingPlan,
+} from "@/services/training/trainingEngine.storage";
 
-export function refreshTrainingFromFeedback(plan: TrainingPlan, feedbackHistory: TrainingFeedbackEntry[]): TrainingPlan {
-  const analysis = analyzeTrainingFeedback(feedbackHistory);
-  const adapted = adaptTrainingPlan(plan, analysis);
+export function refreshTrainingFromFeedback(plan: TrainingPlan, feedback: TrainingFeedbackInput) {
+  const result = adaptTrainingPlan(plan, feedback);
+  const adaptedPlan = applyAdaptiveAdjustments(result.plan, result.decision);
+  const validation = validateTrainingPlan(adaptedPlan);
+
+  const persistedDecision = {
+    id: `decision-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    actions: result.decision.actions.map(String),
+    recommendedLoadAdjustmentPct: result.decision.recommendedLoadAdjustmentPct,
+    recommendedVolumeAdjustmentPct: result.decision.recommendedVolumeAdjustmentPct,
+    confidence: result.decision.confidence,
+    rationale: result.decision.rationale,
+  };
+
+  appendTrainingDecision(persistedDecision);
+  saveSmartTrainingPlan(adaptedPlan);
+
   return {
-    ...adapted,
-    validationFlags: validateTrainingPlan(adapted),
-    version: plan.version + 1,
+    plan: adaptedPlan,
+    decision: result.decision,
+    validation,
   };
 }

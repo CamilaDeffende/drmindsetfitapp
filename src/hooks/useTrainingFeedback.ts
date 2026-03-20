@@ -1,11 +1,19 @@
+import { refreshTrainingFromFeedback } from "@/engine/training/orchestrator/refreshTrainingFromFeedback";
+import { TrainingFeedbackInput } from "@/engine/training/core/types";
+import { saveSmartTrainingPlan } from "@/services/training/trainingEngine.storage";
 import { useTrainingEngineStore } from "@/store/trainingEngineStore";
 
 export function useTrainingFeedback() {
-  const feedbackHistory = useTrainingEngineStore((state) => state.feedbackHistory);
-  const submitFeedback = useTrainingEngineStore((state) => state.submitFeedback);
+  const { currentPlan, setCurrentPlan, setLastDecision } = useTrainingEngineStore();
 
   return {
-    feedbackHistory,
-    submitFeedback,
+    applyFeedback: (feedback: TrainingFeedbackInput) => {
+      if (!currentPlan) return null;
+      const result = refreshTrainingFromFeedback(currentPlan, feedback);
+      saveSmartTrainingPlan(result.plan);
+      setCurrentPlan(result.plan);
+      setLastDecision(result.decision);
+      return result;
+    },
   };
 }

@@ -1,182 +1,172 @@
 import {
-  AdherenceLevel,
+  AdherenceProfile,
+  AdaptationAction,
+  EquipmentProfile,
+  ExerciseComplexity,
   MovementPattern,
   ProgressionType,
-  RecoveryLevel,
+  RecoveryProfile,
   SafetySeverity,
-  SessionBlockType,
-  TrainingEnvironment,
+  SessionFocus,
   TrainingGoal,
   TrainingLevel,
-  TrainingSplit,
+  TrainingSplitType,
 } from "./enums";
 
-export interface OnboardingTrainingInput {
-  age: number;
-  sex: string;
-  heightCm: number;
-  weightKg: number;
-  primaryGoal: TrainingGoal;
-  secondaryGoal?: TrainingGoal;
-  availableDays: number;
+export type OnboardingTrainingInput = {
+  age?: number;
+  objective?: string;
+  primaryGoal?: string;
+  secondaryGoal?: string;
+  experienceLevel?: string;
+  weeklyDays?: number;
+  availableDays?: number;
+  sessionDurationMin?: number;
+  availableEquipment?: string[];
+  constraints?: string[];
+  limitations?: string[];
+  painFlags?: string[];
+  environment?: string;
+  modality?: string;
+  sleepQualityScore?: number;
+  stressScore?: number;
+  recoveryScore?: number;
+  adherenceHistoryScore?: number;
+  monthsDetrained?: number;
+  trainingExperienceMonths?: number;
+  runningInterest?: boolean;
+  cyclingInterest?: boolean;
+  cardioInterest?: boolean;
+};
+
+export type TrainingProfile = {
+  goal: TrainingGoal;
+  primaryGoal?: TrainingGoal;
+  level: TrainingLevel;
+  recoveryProfile: RecoveryProfile;
+  recoveryLevel?: RecoveryProfile;
+  adherenceProfile: AdherenceProfile;
+  adherenceLevel?: AdherenceProfile;
+  equipmentProfile: EquipmentProfile;
+  weeklyDays: number;
+  availableDays?: number;
   sessionDurationMin: number;
-  trainingExperienceMonths: number;
-  monthsDetrained: number;
-  preferredEnvironment: TrainingEnvironment;
-  availableEquipment: string[];
-  preferredModalities: string[];
-  dislikedExercises: string[];
-  favoriteExercises: string[];
-  sleepQualityScore: number;
-  stressLevelScore: number;
-  dailyEnergyScore: number;
-  recoveryPerceptionScore: number;
-  cardioInterest: boolean;
-  runningInterest: boolean;
-  cyclingInterest: boolean;
-  bodyFocusAreas: string[];
-  limitations: string[];
-  painFlags: string[];
-}
+  constraints: string[];
+  environment: string;
+  preferredModality: string;
+  cardioCompatible?: boolean;
+  hybridCandidate?: boolean;
+};
 
-export interface SafetyFlag {
-  code: string;
-  severity: SafetySeverity;
-  message: string;
-}
-
-export interface Exercise {
+export type ExerciseDefinition = {
   id: string;
   name: string;
+  movementPattern: MovementPattern;
   primaryMuscles: string[];
   secondaryMuscles: string[];
-  movementPattern: MovementPattern;
-  equipment: string[];
-  environmentTags: TrainingEnvironment[];
-  technicalLevel: TrainingLevel;
-  difficultyScore: number;
-  isCompound: boolean;
-  substitutions: string[];
-  executionCues: string[];
-}
+  equipmentTags: string[];
+  environmentTags?: string[];
+  complexity: ExerciseComplexity;
+  difficultyScore?: number;
+  unilateral?: boolean;
+  homeFriendly?: boolean;
+};
 
-export interface PrescribedExercise {
+export type Exercise = ExerciseDefinition;
+
+export type ExercisePrescription = {
   exerciseId: string;
-  name: string;
-  blockType: SessionBlockType;
+  exerciseName: string;
+  name?: string;
   sets: number;
-  reps?: string;
-  durationSec?: number;
+  repRange: string;
   restSec: number;
-  rir?: number;
-  rpe?: number;
-  rationale?: string;
-}
+  targetRir: number;
+  notes?: string[];
+};
 
-export interface TrainingSession {
-  id: string;
-  name: string;
-  focus: string;
+export type PrescribedExercise = ExercisePrescription;
+
+export type SessionPlan = {
+  dayIndex: number;
+  name?: string;
+  focus: SessionFocus;
   estimatedDurationMin: number;
-  exercises: PrescribedExercise[];
-  rationale?: string;
-}
+  exercises: ExercisePrescription[];
+  rationale: string[];
+};
 
-export interface WeeklyTemplateDay {
-  dayIndex: number;
-  name: string;
-  focus: string;
+export type TrainingSession = SessionPlan;
+
+export type SessionTemplate = {
+  split: string;
+  focus: SessionFocus;
   requiredPatterns: MovementPattern[];
-  targetDurationMin: number;
-  targetVolume: Record<string, number>;
-}
+  optionalPatterns?: MovementPattern[];
+  estimatedDurationMin?: number;
+};
 
-export interface WeeklyTemplate {
-  name: string;
-  split: TrainingSplit;
-  days: WeeklyTemplateDay[];
-}
+export type WeeklyTemplate = {
+  split: TrainingSplitType;
+  days: SessionFocus[];
+};
 
-export interface SessionTemplate {
-  name: string;
-  split: TrainingSplit;
-  dayIndex: number;
-  focus: string;
-  requiredPatterns: MovementPattern[];
-  volumeTarget: Record<string, number>;
-  targetDurationMin: number;
-}
-
-export interface VolumeDistributionResult {
-  weeklyVolumeByMuscle: Record<string, number>;
-}
-
-export interface ProgressionModel {
-  type: ProgressionType;
-  strategyLabel: string;
-  deloadEveryWeeks?: number;
-  notes: string[];
-}
-
-export interface CardioPrescription {
-  type: "steady" | "interval";
+export type CardioPrescription = {
   modality: string;
-  minutes: number;
-  rationale: string;
-}
+  frequencyPerWeek: number;
+  durationMin: number;
+  intensity: string;
+};
 
-export interface TrainingProfile {
-  level: TrainingLevel;
-  recoveryLevel: RecoveryLevel;
-  adherenceLevel: AdherenceLevel;
-  primaryGoal: TrainingGoal;
-  secondaryGoal?: TrainingGoal;
-  environment: TrainingEnvironment;
-  availableDays: number;
-  sessionDurationMin: number;
-  equipmentTierScore: number;
-  recoveryScore: number;
-  adherenceScore: number;
-  timeConstraintScore: number;
-  complexityToleranceScore: number;
-  cardioCompatible: boolean;
-  hybridCandidate: boolean;
-  bodyFocusAreas: string[];
-  restrictions: string[];
-  excludedExercises: string[];
-  rationale: string[];
-}
-
-export interface TrainingPlan {
-  id: string;
-  profile: TrainingProfile;
-  split: TrainingSplit;
-  sessions: TrainingSession[];
-  weeklyVolumeByMuscle: Record<string, number>;
-  cardioPlan?: CardioPrescription[];
-  progressionModel: ProgressionModel;
-  validationFlags: SafetyFlag[];
-  rationale: string[];
-  version: number;
-  createdAt: string;
-}
-
-export interface TrainingFeedbackEntry {
-  sessionId?: string;
-  completed: boolean;
-  perceivedEffort?: number;
-  recoveryScore?: number;
-  fatigueScore?: number;
-  durationCompletedMin?: number;
-  notes?: string;
-  createdAt: string;
-}
-
-export interface FeedbackAnalysis {
-  recoveryTrend: number;
-  fatigueTrend: number;
-  adherenceTrend: number;
-  shouldReduceVolume: boolean;
-  shouldCompressTime: boolean;
+export type ProgressionModel = {
+  type: ProgressionType;
   notes: string[];
-}
+};
+
+export type TrainingBlock = {
+  weeks: number;
+  progressionModel: "DOUBLE_PROGRESSION" | "LOAD_PROGRESSION" | "DENSITY";
+  deloadWeek?: number | null;
+};
+
+export type TrainingPlan = {
+  profile: TrainingProfile;
+  split: TrainingSplitType;
+  weeklyVolumeTarget: number;
+  weeklyVolumeByMuscle: Record<string, number>;
+  sessions: SessionPlan[];
+  cardioPlan: string[];
+  cardioPrescription?: CardioPrescription;
+  block: TrainingBlock;
+  rationale: string[];
+  warnings: string[];
+  validations: string[];
+  createdAt?: string;
+  version: number;
+};
+
+export type TrainingFeedbackInput = {
+  sessionScore?: number;
+  adherencePct?: number;
+  perceivedRecovery?: number;
+  timeConstraintMin?: number;
+  flaggedExercises?: string[];
+};
+
+export type AdaptationDecision = {
+  actions: AdaptationAction[];
+  recommendedLoadAdjustmentPct: number;
+  recommendedVolumeAdjustmentPct: number;
+  rationale: string[];
+  confidence: number;
+};
+
+export type ValidationResult = {
+  valid: boolean;
+  messages: string[];
+};
+
+export type SafetyFlag = {
+  severity: SafetySeverity;
+  message: string;
+};

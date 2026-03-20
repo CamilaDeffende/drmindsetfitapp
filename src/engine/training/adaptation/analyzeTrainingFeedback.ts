@@ -1,24 +1,17 @@
-import { FeedbackAnalysis, TrainingFeedbackEntry } from "../core/types";
-import { calculateAdherenceTrend } from "./calculateAdherenceTrend";
-import { calculateFatigueTrend } from "./calculateFatigueTrend";
-import { calculateRecoveryScore } from "./calculateRecoveryScore";
+import { TrainingFeedbackInput } from "../core/types";
+import { safeNum } from "../core/utils";
 
-export function analyzeTrainingFeedback(history: TrainingFeedbackEntry[]): FeedbackAnalysis {
-  const recoveryTrend = calculateRecoveryScore(history);
-  const fatigueTrend = calculateFatigueTrend(history);
-  const adherenceTrend = calculateAdherenceTrend(history);
-
-  const notes: string[] = [];
-  if (recoveryTrend < 45) notes.push("recuperação baixa");
-  if (fatigueTrend > 70) notes.push("fadiga elevada");
-  if (adherenceTrend < 60) notes.push("adesão em queda");
+export function analyzeTrainingFeedback(feedback: TrainingFeedbackInput) {
+  const sessionScore = safeNum(feedback.sessionScore, 75);
+  const adherencePct = safeNum(feedback.adherencePct, 85);
+  const perceivedRecovery = safeNum(feedback.perceivedRecovery, 70);
+  const timeConstraintMin = safeNum(feedback.timeConstraintMin, 0);
 
   return {
-    recoveryTrend,
-    fatigueTrend,
-    adherenceTrend,
-    shouldReduceVolume: recoveryTrend < 45 || fatigueTrend > 70,
-    shouldCompressTime: adherenceTrend < 60,
-    notes,
+    sessionScore,
+    adherencePct,
+    perceivedRecovery,
+    timeConstraintMin,
+    flaggedExercises: feedback.flaggedExercises ?? [],
   };
 }

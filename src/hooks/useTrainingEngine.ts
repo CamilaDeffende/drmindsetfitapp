@@ -1,19 +1,21 @@
+import { generateSmartTraining } from "@/engine/training/orchestrator/generateSmartTraining";
+import {
+  loadSmartTrainingPlan,
+  saveSmartTrainingPlan,
+} from "@/services/training/trainingEngine.storage";
 import { useTrainingEngineStore } from "@/store/trainingEngineStore";
 
 export function useTrainingEngine() {
-  const onboardingInput = useTrainingEngineStore((state) => state.onboardingInput);
-  const currentPlan = useTrainingEngineStore((state) => state.currentPlan);
-  const generatePlan = useTrainingEngineStore((state) => state.generatePlan);
-  const regeneratePlan = useTrainingEngineStore((state) => state.regeneratePlan);
-  const adaptPlan = useTrainingEngineStore((state) => state.adaptPlan);
-  const resetTrainingEngine = useTrainingEngineStore((state) => state.resetTrainingEngine);
+  const { currentPlan, setCurrentPlan, setLastDecision } = useTrainingEngineStore();
 
   return {
-    onboardingInput,
-    currentPlan,
-    generatePlan,
-    regeneratePlan,
-    adaptPlan,
-    resetTrainingEngine,
+    currentPlan: currentPlan ?? loadSmartTrainingPlan(),
+    generate: (input: unknown) => {
+      const result = generateSmartTraining(input);
+      saveSmartTrainingPlan(result.plan);
+      setCurrentPlan(result.plan);
+      setLastDecision(null);
+      return result;
+    },
   };
 }

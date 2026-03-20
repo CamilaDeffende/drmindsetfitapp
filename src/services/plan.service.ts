@@ -219,6 +219,8 @@ function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
 function buildTrainingPayloadFromSmartEngine(draft: PlanDraft, step3: any, step5: any, step6: any) {
   try {
     const smartPlan = generateSmartTraining(draft as any);
+    saveSmartTrainingPlan(smartPlan.plan);
+    saveSmartTrainingPlan(smartPlan.plan);
 
     const base = {
       training: {

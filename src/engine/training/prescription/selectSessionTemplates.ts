@@ -1,13 +1,14 @@
 import { SessionTemplate, WeeklyTemplate } from "../core/types";
+import { SESSION_TEMPLATES } from "../library/sessionTemplates";
 
 export function selectSessionTemplates(template: WeeklyTemplate): SessionTemplate[] {
-  return template.days.map((day) => ({
-    name: day.name,
-    split: template.split,
-    dayIndex: day.dayIndex,
-    focus: day.focus,
-    requiredPatterns: day.requiredPatterns,
-    volumeTarget: day.targetVolume,
-    targetDurationMin: day.targetDurationMin,
-  }));
+  return template.days.map((day) => {
+    return (
+      SESSION_TEMPLATES.find((item) => item.focus === day) ?? {
+        split: String(template.split),
+        focus: day,
+        requiredPatterns: [],
+      }
+    );
+  });
 }
