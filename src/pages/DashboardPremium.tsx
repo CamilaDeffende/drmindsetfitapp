@@ -1,4 +1,6 @@
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+import TrainingEngineInsightsCard from "@/components/training/TrainingEngineInsightsCard";
+import TrainingEngineDecisionCard from "@/components/training/TrainingEngineDecisionCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/branding/BrandIcon";
@@ -958,7 +960,13 @@ export function DashboardPremium() {
             </div>
           </CardContent>
         </Card>
-      </main>
+      
+      <div className="mt-6 space-y-4">
+        <TrainingEngineInsightsCard />
+        <TrainingEngineDecisionCard />
+      </div>
+
+</main>
     </div>
   );
 }

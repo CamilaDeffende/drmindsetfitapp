@@ -1,3 +1,4 @@
+import { saveSmartTrainingPlan } from "@/services/training/trainingEngine.storage";
 /**
  * SSOT TREINO OFICIAL
  * Fonte primária:
@@ -129,6 +130,7 @@ function buildFromSmartPlan(activePlan: AnyObj): { smartPlan: AnyObj | null; wor
 
   try {
     const smartPlan = generateSmartTraining(draft);
+    saveSmartTrainingPlan(smartPlan.plan);
     const workouts = trainingPlanToActiveWorkoutsAdapter(smartPlan);
     return { smartPlan, workouts };
   } catch {

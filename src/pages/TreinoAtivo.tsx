@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import TrainingEngineInsightsCard from "@/components/training/TrainingEngineInsightsCard";
+import TrainingEngineDecisionCard from "@/components/training/TrainingEngineDecisionCard";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -844,7 +846,13 @@ export function TreinoAtivo() {
             </div>
           </CardContent>
         </Card>
-      </main>
+      
+      <div className="mt-6 space-y-4">
+        <TrainingEngineInsightsCard />
+        <TrainingEngineDecisionCard />
+      </div>
+
+</main>
 
       <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t">
         <div className="max-w-3xl mx-auto flex gap-2 sm:gap-3">

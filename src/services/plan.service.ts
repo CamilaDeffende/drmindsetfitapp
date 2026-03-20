@@ -1,4 +1,5 @@
 import { computeMetabolic } from "@/engine/metabolic/MetabolicEngine";
+import { saveSmartTrainingPlan } from "@/services/training/trainingEngine.storage";
 import { computeMacros, buildMealPlan } from "@/engine/nutrition/NutritionEngine";
 import { buildWorkoutWeek, Modality } from "@/engine/workout/WorkoutEngine";
 import { generateSmartTraining } from "@/engine/training/orchestrator/generateSmartTraining";
@@ -105,6 +106,7 @@ function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
 function buildTrainingPayloadFromSmartEngine(draft: PlanDraft, step3: any, step5: any, step6: any) {
   try {
     const smartPlan = generateSmartTraining(draft as any);
+    saveSmartTrainingPlan(smartPlan.plan);
 
     const base = {
       training: {
