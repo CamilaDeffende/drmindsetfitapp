@@ -695,6 +695,9 @@ export function DashboardPremium() {
         <Card className="mb-4 border-white/10">
           <CardHeader>
             <CardTitle className="text-base">Prontidão + deload inteligente</CardTitle>
+                <CardDescription>
+                  Fadiga regional e decisão de deload do microciclo atual.
+                </CardDescription>
             <CardDescription>
               Leitura viva do motor baseada nas execuções canônicas recentes.
             </CardDescription>

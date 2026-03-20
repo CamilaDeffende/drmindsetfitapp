@@ -1,11 +1,16 @@
 import { loadActivePlan } from "../plan.service";
 
+import { getMicrocycleDeloadSnapshot, getMuscleFatigueSnapshots } from "@/services/training/trainingFatigue.service";
+
 type AnyObj = Record<string, any>;
 
 export type TrainingReadinessLevel = "high" | "moderate" | "low";
 export type TrainingAdaptiveRecommendation = "progress" | "maintain" | "deload";
 
 export type TrainingReadinessSnapshot = {
+  fatigueHotspots: ReturnType<typeof getMuscleFatigueSnapshots>;
+  microcycle: ReturnType<typeof getMicrocycleDeloadSnapshot>;
+
   score: number;
   level: TrainingReadinessLevel;
   recommendation: TrainingAdaptiveRecommendation;
@@ -65,6 +70,8 @@ function getRecentSessionPerformance(limit = 7): SessionPerformance[] {
 }
 
 export function getTrainingReadinessSnapshot(): TrainingReadinessSnapshot {
+  const fatigueHotspots = getMuscleFatigueSnapshots(10);
+  const microcycle = getMicrocycleDeloadSnapshot();
   const sessions = getRecentSessionPerformance(7);
 
   if (!sessions.length) {
@@ -80,6 +87,8 @@ export function getTrainingReadinessSnapshot(): TrainingReadinessSnapshot {
       avgSessionScore: 0,
       avgVolumeLoad: 0,
       recommendedLoadAdjustmentPct: 0,
+    fatigueHotspots,
+    microcycle,
     };
   }
 
@@ -166,6 +175,8 @@ export function getTrainingReadinessSnapshot(): TrainingReadinessSnapshot {
     level,
     recommendation,
     rationale,
+    fatigueHotspots,
+    microcycle,
     flags,
     recentSessions: sessions.length,
     avgAdherencePct: Math.round(avgAdherencePct),

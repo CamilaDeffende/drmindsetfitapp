@@ -520,6 +520,9 @@ export function TreinoAtivo() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base sm:text-lg">Prontidão da Sessão</CardTitle>
             <CardDescription>
+              Leitura adaptativa do motor com fadiga regional e microciclo.
+            </CardDescription>
+            <CardDescription>
               Leitura adaptativa baseada nas últimas execuções canônicas do treino.
             </CardDescription>
           </CardHeader>
@@ -629,7 +632,47 @@ export function TreinoAtivo() {
               <Progress value={progressoSeries} className="h-2 mb-3" />
             </div>
 
-                        {motorDecisionPreview ? (
+                        
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-sm font-semibold">Fadiga por grupamento</div>
+                <div className="mt-2 space-y-2">
+                  {readinessSnapshot.fatigueHotspots?.length ? (
+                    readinessSnapshot.fatigueHotspots.map((item, idx) => (
+                      <div key={`${item.muscleGroup}-${idx}`} className="flex items-center justify-between text-sm">
+                        <span>{item.muscleGroup}</span>
+                        <span className="font-semibold">
+                          {item.fatigueScore}/100 • {item.status}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground">Sem hotspots relevantes.</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-sm font-semibold">Deload inteligente do microciclo</div>
+                <div className="mt-2 text-sm">
+                  Status:{" "}
+                  <span className="font-semibold">
+                    {readinessSnapshot.microcycle?.deloadRecommended ? "recomendado" : "não necessário"}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {readinessSnapshot.microcycle?.deloadReason}
+                </div>
+                <div className="mt-2 text-sm">
+                  Redução sugerida de volume:{" "}
+                  <span className="font-semibold">
+                    {readinessSnapshot.microcycle?.suggestedVolumeReductionPct ?? 0}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {motorDecisionPreview ? (
               <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
                 <div className="text-sm font-semibold">Última decisão do motor</div>
                 <div className="mt-1 text-xs text-muted-foreground">
