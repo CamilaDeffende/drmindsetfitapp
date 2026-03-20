@@ -35,6 +35,7 @@ import { loadActivePlan } from "@/services/plan.service";
 import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
+import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
 import { getLatestTrainingMotorDecisions } from "@/services/training/trainingDecision.service";
 import { getCanonicalTrainingLoadHistory } from "@/services/training/trainingExecution.service";
 
@@ -180,6 +181,8 @@ export function DashboardPremium() {
       : [];
   })();
 
+
+  const readinessSnapshot = useMemo(() => getTrainingReadinessSnapshot(), []);
 
   const progressionHighlights = useMemo(() => {
     const workouts = getCanonicalTrainingWorkouts();
@@ -689,7 +692,45 @@ export function DashboardPremium() {
               </Card>
             ) : null}
 
-{progressionHighlights.length ? (
+        <Card className="mb-4 border-white/10">
+          <CardHeader>
+            <CardTitle className="text-base">Prontidão + deload inteligente</CardTitle>
+            <CardDescription>
+              Leitura viva do motor baseada nas execuções canônicas recentes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Score</div>
+                <div className="mt-1 text-xl font-bold">{readinessSnapshot.score}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Nível</div>
+                <div className="mt-1 text-sm font-semibold capitalize">{readinessSnapshot.level}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Recomendação</div>
+                <div className="mt-1 text-sm font-semibold capitalize">{readinessSnapshot.recommendation}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Ajuste</div>
+                <div className="mt-1 text-sm font-semibold">
+                  {readinessSnapshot.recommendedLoadAdjustmentPct > 0
+                    ? `+${readinessSnapshot.recommendedLoadAdjustmentPct}%`
+                    : `${readinessSnapshot.recommendedLoadAdjustmentPct}%`}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="text-xs text-muted-foreground">Racional</div>
+              <div className="mt-1 text-sm">{readinessSnapshot.rationale}</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {progressionHighlights.length ? (
               <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                 <div className="text-sm font-semibold">Próximas progressões sugeridas</div>
                 <div className="mt-2 space-y-2">

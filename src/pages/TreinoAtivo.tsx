@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import ProgressaoCargaHint from "@/components/ProgressaoCargaHint";
 import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
+import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
 import {
   appendTrainingMotorDecision,
   buildTrainingMotorDecisionForSession,
@@ -230,6 +231,11 @@ export function TreinoAtivo() {
     if (canonicalHistory.length) return canonicalHistory;
     return Array.isArray((state as any)?.treino?.historicoCargas) ? (state as any).treino.historicoCargas : [];
   }, [state]);
+
+  const readinessSnapshot = useMemo(() => {
+    return getTrainingReadinessSnapshot();
+  }, [historicoCargas.length]);
+
 
   useEffect(() => {
     if (!treino) return;
@@ -510,6 +516,55 @@ export function TreinoAtivo() {
       </header>
 
       <main className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24">
+        <Card className="mb-4 border-white/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base sm:text-lg">Prontidão da Sessão</CardTitle>
+            <CardDescription>
+              Leitura adaptativa baseada nas últimas execuções canônicas do treino.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Score</div>
+                <div className="mt-1 text-xl font-bold">{readinessSnapshot.score}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Nível</div>
+                <div className="mt-1 text-sm font-semibold capitalize">{readinessSnapshot.level}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Recomendação</div>
+                <div className="mt-1 text-sm font-semibold capitalize">{readinessSnapshot.recommendation}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-[11px] text-muted-foreground">Ajuste sugerido</div>
+                <div className="mt-1 text-sm font-semibold">
+                  {readinessSnapshot.recommendedLoadAdjustmentPct > 0
+                    ? `+${readinessSnapshot.recommendedLoadAdjustmentPct}%`
+                    : `${readinessSnapshot.recommendedLoadAdjustmentPct}%`}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="text-xs text-muted-foreground">Racional do motor</div>
+              <div className="mt-1 text-sm">{readinessSnapshot.rationale}</div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {readinessSnapshot.flags.map((flag, idx) => (
+                <span
+                  key={`${flag}-${idx}`}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px]"
+                >
+                  {flag}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="mb-4">
           <CardHeader className="pb-3">
             <CardTitle className="text-base sm:text-lg">Selecione o Treino</CardTitle>
