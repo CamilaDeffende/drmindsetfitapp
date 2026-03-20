@@ -1,4 +1,4 @@
-import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
+import { getTrainingReadinessSnapshot } from "../../../services/training/trainingReadiness.service";
 import { AdaptationDecision, TrainingFeedbackInput, TrainingPlan } from "../core/types";
 import { AdaptationAction } from "../core/enums";
 import { analyzeTrainingFeedback } from "./analyzeTrainingFeedback";

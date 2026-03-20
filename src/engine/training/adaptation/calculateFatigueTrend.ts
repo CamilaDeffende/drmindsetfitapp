@@ -1,4 +1,4 @@
-import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
+import { getTrainingReadinessSnapshot } from "../../../services/training/trainingReadiness.service";
 
 export function calculateFatigueTrend(): number {
   const snapshot = getTrainingReadinessSnapshot();

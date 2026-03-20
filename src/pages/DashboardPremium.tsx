@@ -1071,7 +1071,7 @@ export function DashboardPremium() {
             </div>
           </CardContent>
         </Card>
-      
+
       <div className="mt-6 space-y-4">
         <TrainingEngineInsightsCard />
         <TrainingEngineDecisionCard />

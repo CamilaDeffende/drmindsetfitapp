@@ -5,7 +5,7 @@ import { validateTrainingPlan } from "../validation/validateTrainingPlan";
 import {
   appendTrainingDecision,
   saveSmartTrainingPlan,
-} from "@/services/training/trainingEngine.storage";
+} from "../../../services/training/trainingEngine.storage";
 
 export function refreshTrainingFromFeedback(plan: TrainingPlan, feedback: TrainingFeedbackInput) {
   const result = adaptTrainingPlan(plan, feedback);
