@@ -131,6 +131,7 @@ function buildFromSmartPlan(activePlan: AnyObj): { smartPlan: AnyObj | null; wor
   try {
     const smartPlan = generateSmartTraining(draft);
     saveSmartTrainingPlan(smartPlan.plan);
+    saveSmartTrainingPlan(smartPlan.plan);
     const workouts = trainingPlanToActiveWorkoutsAdapter(smartPlan);
     return { smartPlan, workouts };
   } catch {
