@@ -41,7 +41,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 type PassosDia = { data: string; passos: number };
 type ConsumoDia = { data: string; consumido: number };
@@ -731,6 +730,7 @@ export function DashboardPremium() {
                           className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white/75"
                         >
                           {item?.nome ?? item?.name ?? "Alimento"}
+                          {item?.gramas ? ` • ${item.gramas}g` : ""}
                         </div>
                       ))}
                     </div>
@@ -748,62 +748,94 @@ export function DashboardPremium() {
                     variant="outline"
                     className="w-full rounded-[18px] border-white/15 bg-black/20 text-white hover:bg-white/5"
                   >
-                    <CalendarDays className="w-4 h-4 mr-2" />
-                    Ver plano alimentar
+                    Ver plano alimentar completo
                   </Button>
                 </DialogTrigger>
 
                 <DialogContent className="max-w-3xl border-white/10 bg-[rgba(8,10,18,0.96)] text-white">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl">
-                      <UtensilsCrossed className="w-5 h-5 text-cyan-300" />
-                      Plano alimentar
+                      <UtensilsCrossed className="h-5 w-5 text-cyan-300" />
+                      Plano alimentar completo
                     </DialogTitle>
                   </DialogHeader>
 
-                  <ScrollArea className="max-h-[70vh] pr-4">
-                    <div className="space-y-4">
-                      {Array.isArray(meals) && meals.length > 0 ? (
-                        meals.map((meal: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="rounded-[20px] border border-white/10 bg-black/20 p-4"
-                          >
-                            <div className="flex items-center gap-2 text-[15px] font-semibold text-white">
-                              <CalendarDays className="h-4 w-4 text-cyan-300" />
-                              {meal?.nome ?? meal?.name ?? `Refeição ${idx + 1}`}
-                            </div>
-
-                            <div className="mt-1 text-[13px] text-white/50">
-                              {meal?.horario ?? meal?.time ?? "Horário a definir"}
-                            </div>
-
-                            {Array.isArray(meal?.alimentos) && meal.alimentos.length > 0 ? (
-                              <div className="mt-3 space-y-2">
-                                {meal.alimentos.map((item: any, i: number) => (
-                                  <div
-                                    key={i}
-                                    className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white/75"
-                                  >
-                                    {item?.nome ?? item?.name ?? "Alimento"}
-                                    {item?.gramas ? ` • ${item.gramas}g` : ""}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="mt-3 text-[13px] text-white/45">
-                                Nenhum alimento listado.
-                              </div>
-                            )}
+                  <div className="max-h-[70vh] overflow-y-auto pr-2 space-y-4">
+                    {meals.length > 0 ? (
+                      meals.map((meal: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="rounded-[20px] border border-white/10 bg-black/20 p-4"
+                        >
+                          <div className="flex items-center gap-2 text-[15px] font-semibold text-white">
+                            <CalendarDays className="h-4 w-4 text-cyan-300" />
+                            {meal?.nome ?? meal?.name ?? `Refeição ${idx + 1}`}
                           </div>
-                        ))
-                      ) : (
-                        <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-sm text-white/50">
-                          Nenhuma refeição encontrada no plano ativo.
+
+                          <div className="mt-1 text-[13px] text-white/50">
+                            {meal?.horario ?? meal?.time ?? "Horário a definir"}
+                          </div>
+
+                          {Array.isArray(meal?.alimentos) && meal.alimentos.length > 0 ? (
+                            <div className="mt-3 space-y-2">
+                              {meal.alimentos.map((item: any, i: number) => (
+                                <div
+                                  key={i}
+                                  className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-3 text-[13px] text-white/80"
+                                >
+                                  <div className="font-medium text-white">
+                                    {item?.nome ?? item?.name ?? "Alimento"}
+                                  </div>
+
+                                  <div className="mt-1 text-[12px] text-white/50">
+                                    {item?.gramas ? `${item.gramas}g` : ""}
+                                    {item?.calorias ? ` • ${item.calorias} kcal` : ""}
+                                  </div>
+
+                                  <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                                    {(item?.proteinas ?? item?.proteina ?? item?.protein ?? item?.proteinG) ? (
+                                      <span className="rounded-full border border-red-400/20 bg-red-400/10 px-2 py-1 text-red-300">
+                                        P {item?.proteinas ?? item?.proteina ?? item?.protein ?? item?.proteinG}g
+                                      </span>
+                                    ) : null}
+
+                                    {(item?.carboidratos ?? item?.carbs ?? item?.carbsG) ? (
+                                      <span className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-2 py-1 text-yellow-300">
+                                        C {item?.carboidratos ?? item?.carbs ?? item?.carbsG}g
+                                      </span>
+                                    ) : null}
+
+                                    {(item?.gorduras ?? item?.fat ?? item?.fatG) ? (
+                                      <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-cyan-300">
+                                        G {item?.gorduras ?? item?.fat ?? item?.fatG}g
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="mt-3 text-[13px] text-white/45">
+                              Nenhum alimento listado.
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </ScrollArea>
+                      ))
+                    ) : (
+                      <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-sm text-white/50">
+                        Nenhuma refeição encontrada no plano ativo.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      onClick={() => navigate("/edit-diet")}
+                      className="w-full rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:brightness-110"
+                    >
+                      Editar dieta
+                    </Button>
+                  </div>
                 </DialogContent>
               </Dialog>
             </CardContent>
