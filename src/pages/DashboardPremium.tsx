@@ -34,6 +34,7 @@ import { ptBR } from "date-fns/locale";
 import { loadActivePlan } from "@/services/plan.service";
 import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
 import { getCanonicalTrainingLoadHistory } from "@/services/training/trainingExecution.service";
 
 type PassosDia = { data: string; passos: number };
@@ -177,6 +178,36 @@ export function DashboardPremium() {
       ? ((state as any).treino.historicoCargas as CargaDia[])
       : [];
   })();
+
+
+  const progressionHighlights = useMemo(() => {
+    const workouts = getCanonicalTrainingWorkouts();
+    const exercises = workouts.flatMap((w: any) =>
+      Array.isArray(w?.blocks)
+        ? w.blocks.flatMap((b: any) => (Array.isArray(b?.exercises) ? b.exercises : []))
+        : []
+    );
+
+    const seen = new Set<string>();
+    const suggestions = exercises
+      .map((ex: any) =>
+        getExerciseProgressionSuggestion({
+          exerciseId: ex?.exerciseId ?? ex?.id,
+          exerciseName: ex?.name ?? ex?.nome,
+          currentSets: ex?.sets,
+          currentReps: ex?.reps,
+        })
+      )
+      .filter(Boolean)
+      .filter((sug: any) => {
+        const key = String(sug?.exerciseId ?? "");
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+    return suggestions.slice(0, 3);
+  }, []);
 
   const nutrition = useMemo(() => {
     return (
@@ -634,6 +665,21 @@ export function DashboardPremium() {
             </CardHeader>
 
             <CardContent className="space-y-4">
+            {progressionHighlights.length ? (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-sm font-semibold">Próximas progressões sugeridas</div>
+                <div className="mt-2 space-y-2">
+                  {progressionHighlights.map((item: any, idx: number) => (
+                    <div key={`${item.exerciseId}-${idx}`} className="rounded-lg bg-black/20 p-2 text-xs sm:text-sm">
+                      <span className="font-semibold">
+                        {item.suggestedLoadKg != null ? `${item.suggestedLoadKg} kg` : "Manter"}
+                      </span>
+                      <span className="text-muted-foreground"> • {item.rationale}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
               {nextMeal ? (
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                   <div className="text-[16px] font-semibold text-white">

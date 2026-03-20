@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import ProgressaoCargaHint from "@/components/ProgressaoCargaHint";
+import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import {
@@ -194,6 +195,17 @@ export function TreinoAtivo() {
 
   const treino = treinoDias[treinoSelecionado];
   const exercicio = treino?.exercicios?.[exercicioAtual];
+
+
+  const progressionSuggestion = useMemo(() => {
+    return getExerciseProgressionSuggestion({
+      exerciseId: exercicio?.id,
+      exerciseName: exercicio?.nome,
+      currentSets: exercicio?.series,
+      currentReps: exercicio?.repeticoes,
+    });
+  }, [exercicio?.id, exercicio?.nome, exercicio?.series, exercicio?.repeticoes]);
+
 
   const historicoCargas = useMemo(() => {
     const canonicalHistory = getCanonicalTrainingLoadHistory();
@@ -521,6 +533,48 @@ export function TreinoAtivo() {
               </div>
               <Progress value={progressoSeries} className="h-2 mb-3" />
             </div>
+
+            {progressionSuggestion ? (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm font-semibold">Sugestão de progressão automática</div>
+                  <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[11px]">
+                    Confiança: <span className="font-semibold capitalize">{progressionSuggestion.confidence}</span>
+                  </div>
+                </div>
+
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs sm:text-sm">
+                  <div className="rounded-lg bg-black/20 p-2">
+                    <span className="text-muted-foreground">Última carga média:</span>{" "}
+                    <span className="font-semibold">
+                      {progressionSuggestion.lastAverageLoadKg != null
+                        ? `${progressionSuggestion.lastAverageLoadKg} kg`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-black/20 p-2">
+                    <span className="text-muted-foreground">Carga sugerida:</span>{" "}
+                    <span className="font-semibold">
+                      {progressionSuggestion.suggestedLoadKg != null
+                        ? `${progressionSuggestion.suggestedLoadKg} kg`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-black/20 p-2">
+                    <span className="text-muted-foreground">Progressão:</span>{" "}
+                    <span className="font-semibold">
+                      {progressionSuggestion.progressionPercent > 0
+                        ? `+${progressionSuggestion.progressionPercent}%`
+                        : "manter"}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                  {progressionSuggestion.rationale}
+                </p>
+              </div>
+            ) : null}
 
             <div className="space-y-3">
               <Label className="text-sm sm:text-base font-semibold">Registrar Séries</Label>
