@@ -156,6 +156,15 @@ export function OnboardingFlow() {
   const location = useLocation();
   const params = useParams();
   const { appReady } = useApp();
+  void appReady;
+
+  const onboardingDone = isOnboardingDone();
+
+  useEffect(() => {
+    if (onboardingDone) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [onboardingDone, navigate]);
 
   const mfClampStep = (n: number) => Math.max(1, Math.min(8, n));
 
@@ -207,7 +216,9 @@ export function OnboardingFlow() {
   }, []);
 
   const SHOW_LEGACY_NAV = false;
-  const mfAppReady = Boolean(appReady) || Boolean(import.meta.env.DEV);
+
+  // temporariamente liberado para evitar travamento no deploy
+  const mfAppReady = true;
 
   const [draft, setDraft] = useState<Draft>(() => loadDraft());
   const [active, setActive] = useState<number>(() => {
@@ -280,8 +291,7 @@ export function OnboardingFlow() {
     );
   }
 
-  if (isOnboardingDone()) {
-    navigate("/dashboard", { replace: true });
+  if (onboardingDone) {
     return null;
   }
 
