@@ -184,11 +184,37 @@ export function DashboardPremium() {
   };
 
   useEffect(() => {
-    try {
-      setActivePlan(loadActivePlan());
-    } catch {
-      setActivePlan(null);
-    }
+    const syncActivePlan = () => {
+      try {
+        setActivePlan(loadActivePlan());
+      } catch {
+        setActivePlan(null);
+      }
+    };
+
+    syncActivePlan();
+
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "mf:activePlan:v1") {
+        syncActivePlan();
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncActivePlan();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", syncActivePlan);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", syncActivePlan);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -360,6 +386,14 @@ export function DashboardPremium() {
   const userFirstName =
     (state as any)?.perfil?.nomeCompleto?.split(" ")?.[0] ?? "Usuário";
 
+  const onboardingDone = (() => {
+    try {
+      return localStorage.getItem("mf:onboarding:done:v1") === "1";
+    } catch {
+      return false;
+    }
+  })();
+
   useEffect(() => {
     const dataHoje = format(new Date(), "yyyy-MM-dd");
     const passosDia = passosDiarios.find((p) => p.data === dataHoje);
@@ -433,7 +467,7 @@ export function DashboardPremium() {
     }
   };
 
-  if (!state.concluido) {
+  if (!state.concluido && !onboardingDone) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <Card className="w-full max-w-md mx-4 border-white/10 bg-white/5 text-white">

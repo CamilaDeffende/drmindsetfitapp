@@ -82,11 +82,37 @@ export function Dashboard() {
   const [activePlan, setActivePlan] = useState<any>(null);
 
   useEffect(() => {
-    try {
-      setActivePlan(loadActivePlan());
-    } catch {
-      setActivePlan(null);
-    }
+    const syncActivePlan = () => {
+      try {
+        setActivePlan(loadActivePlan());
+      } catch {
+        setActivePlan(null);
+      }
+    };
+
+    syncActivePlan();
+
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "mf:activePlan:v1") {
+        syncActivePlan();
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncActivePlan();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", syncActivePlan);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", syncActivePlan);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   const consumoCalorias = Array.isArray((state as any)?.consumoCalorias)

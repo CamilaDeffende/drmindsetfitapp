@@ -101,7 +101,9 @@ export default function Step8Confirmacao({
   const objetivoLabel =
     objetivoLabelMap[step1?.objetivo] ?? "Não informado";
 
-  const selectedModalities: string[] = Array.isArray(step5?.selected)
+  const selectedModalities: string[] = Array.isArray(step5?.modalidades)
+    ? step5.modalidades
+    : Array.isArray(step5?.selected)
     ? step5.selected
     : [step5?.primary, step5?.secondary].filter(Boolean);
 
@@ -115,7 +117,9 @@ export default function Step8Confirmacao({
     dietaLabelMap[step7?.dieta] ?? "Flexível";
 
   const weeklyDaysByModality =
-    (step6?.weeklyDaysByModality as Record<string, string[]>) ?? {};
+    (step5?.diasPorModalidade as Record<string, string[]>) ??
+    (step6?.weeklyDaysByModality as Record<string, string[]>) ??
+    {};
 
   const groupedDaysSummary = selectedModalities.map((modalityId) => ({
     modalityId,

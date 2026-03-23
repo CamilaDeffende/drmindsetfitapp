@@ -392,11 +392,13 @@ export default function Step5Modalidades({
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[16px] font-semibold text-white">{o.label}</span>
-                      <span className="text-[11px] text-white/55">{active ? "Selecionada" : ""}</span>
-                    </div>
+                    <div className="text-[16px] font-semibold text-white">{o.label}</div>
                     <div className="mt-1 text-[12px] leading-5 text-white/48">{o.desc}</div>
+                    {active ? (
+                      <div className="mt-3 inline-flex max-w-full items-center rounded-full border border-cyan-300/20 bg-cyan-400/10 px-2.5 py-1 text-[11px] text-cyan-200">
+                        Selecionada
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </button>
