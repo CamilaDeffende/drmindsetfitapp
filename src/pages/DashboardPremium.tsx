@@ -1,4 +1,4 @@
-import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+﻿import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import TrainingEngineInsightsCard from "@/components/training/TrainingEngineInsightsCard";
 import TrainingEngineDecisionCard from "@/components/training/TrainingEngineDecisionCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +70,7 @@ function toNum(v: unknown, fallback = 0) {
 
 function formatMetricValue(value: unknown, unit = "") {
   const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0) return "—";
+  if (!Number.isFinite(n) || n <= 0) return "-";
   return `${Math.round(n)}${unit}`;
 }
 
@@ -128,6 +128,23 @@ function deriveWorkoutModality(activePlan: any) {
       draftModalities[0],
     "musculacao"
   );
+}
+
+function deriveFirstName(activePlan: any, state: any) {
+  const candidates = [
+    state?.perfil?.nomeCompleto,
+    state?.perfil?.nome,
+    activePlan?.draft?.step1?.nomeCompleto,
+    activePlan?.draft?.step1?.nome,
+    activePlan?.draft?.step1?.fullName,
+  ];
+
+  for (const candidate of candidates) {
+    const first = String(candidate ?? "").trim().split(/\s+/)[0];
+    if (first) return first;
+  }
+
+  return "Usuario";
 }
 
 function sumMealMacros(meals: any[]) {
@@ -443,6 +460,9 @@ export function DashboardPremium() {
   const nextMeal = useMemo(() => getNextMealByTime(meals), [meals]);
 
   const workoutWeek =
+    (Array.isArray(activePlan?.training?.workouts) && activePlan.training.workouts.length
+      ? activePlan.training.workouts
+      : null) ??
     activePlan?.training?.week ??
     activePlan?.training?.days ??
     activePlan?.workout?.week ??
@@ -460,9 +480,7 @@ export function DashboardPremium() {
   const workoutModality =
     deriveWorkoutModality(activePlan);
 
-  const userFirstName =
-    (state as any)?.perfil?.nomeCompleto?.split(" ")?.[0] ?? "Usuário";
-
+  const userFirstName = deriveFirstName(activePlan, state);
   const onboardingDone = (() => {
     try {
       return localStorage.getItem("mf:onboarding:done:v1") === "1";
@@ -551,7 +569,7 @@ export function DashboardPremium() {
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold mb-4">Complete seu Perfil</h2>
             <p className="text-gray-400 mb-6">
-              Inicie o questionário para desbloquear sua experiência premium
+              Inicie o questionario para desbloquear sua experiencia premium
             </p>
             <Button
               variant="ghost"
@@ -575,7 +593,7 @@ export function DashboardPremium() {
               <div>
                 <h2 className="text-xl font-bold">Nenhum plano ativo encontrado</h2>
                 <p className="mt-2 text-sm text-gray-400">
-                  Finalize a criação do seu plano ou abra um plano ativo para desbloquear o Dashboard Premium.
+                  Finalize a criacao do seu plano ou abra um plano ativo para desbloquear o Dashboard Premium.
                 </p>
               </div>
               <Target className="w-6 h-6 text-white/80" />
@@ -626,11 +644,11 @@ export function DashboardPremium() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-cyan-300/10 bg-[rgba(10,18,30,0.92)] px-2.5 py-1.5 text-center shadow-[0_0_18px_rgba(0,149,255,0.10)]">
-              <div className="text-[13px] font-semibold leading-none tracking-[0.05em] text-cyan-300 sm:text-[15px]">
+            <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-center">
+              <div className="text-[13px] font-semibold leading-none text-white sm:text-[15px]">
                 {format(horaAtual, "HH:mm:ss")}
               </div>
-              <div className="mt-1 text-[8px] leading-none text-white/45 sm:text-[9px]">
+              <div className="mt-1 text-[9px] leading-none text-white/50">
                 {format(horaAtual, "dd/MM", { locale: ptBR })}
               </div>
             </div>
@@ -680,17 +698,17 @@ export function DashboardPremium() {
                 </div>
 
                 <h2 className="mt-3 text-[28px] leading-[1.05] font-semibold tracking-tight text-white">
-                  Olá, {userFirstName}
+                  Oi, {userFirstName}
                 </h2>
 
                 <p className="mt-2 text-[14px] leading-6 text-white/60">
-                  Seu plano completo já está liberado com alimentação, treino e acompanhamento.
+                  Seu plano completo ja esta liberado com alimentacao, treino e acompanhamento.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 md:min-w-[320px]">
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
-                  <div className="text-[11px] text-white/40">Meta diária</div>
+                  <div className="text-[11px] text-white/40">Meta diaria</div>
                   <div className="mt-1 text-[24px] font-semibold text-white">{formatMetricValue(kcal)}</div>
                   <div className="text-[11px] text-white/40">kcal</div>
                 </div>
@@ -709,7 +727,7 @@ export function DashboardPremium() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
-                <h2 className="text-[20px] font-semibold text-white">Resumo metabólico</h2>
+                <h2 className="text-[20px] font-semibold text-white">Resumo metabolico</h2>
                 <p className="text-[13px] text-white/55 mt-1">
                   Base principal do seu plano atual.
                 </p>
@@ -719,7 +737,7 @@ export function DashboardPremium() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
-                <div className="text-[11px] text-white/40">Proteína</div>
+                <div className="text-[11px] text-white/40">Proteina</div>
                 <div className="mt-1 text-[24px] font-semibold text-cyan-300">{formatMetricValue(protein, "g")}</div>
               </div>
 
@@ -734,7 +752,7 @@ export function DashboardPremium() {
               </div>
 
               <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
-                <div className="text-[11px] text-white/40">Refeições</div>
+                <div className="text-[11px] text-white/40">Refeicoes</div>
                 <div className="mt-1 text-[24px] font-semibold text-white">{meals.length}</div>
               </div>
             </div>
@@ -803,7 +821,7 @@ export function DashboardPremium() {
           <Card className="rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white overflow-hidden shadow-[0_0_32px_rgba(0,149,255,0.04)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Evolução - 30 Dias</h3>
+                <h3 className="text-lg font-semibold">Evolucao - 30 Dias</h3>
                 <TrendingUp className="w-5 h-5 text-green-400" />
               </div>
 
@@ -844,7 +862,7 @@ export function DashboardPremium() {
                 <div>
                   <CardTitle className="text-xl">Plano alimentar</CardTitle>
                   <CardDescription className="text-white/60 mt-1">
-                    {meals.length} refeições • {formatMetricValue(kcal, " kcal")} /dia
+                    {meals.length} refeicoes • {formatMetricValue(kcal, " kcal")} /dia
                   </CardDescription>
                 </div>
                 <UtensilsCrossed className="w-5 h-5 text-cyan-300" />
@@ -855,9 +873,9 @@ export function DashboardPremium() {
               {latestMotorDecisions.length ? (
                 <Card className="border-cyan-500/20 bg-white/5">
                   <CardHeader>
-                    <CardTitle className="text-base">Últimas decisões do motor</CardTitle>
+                    <CardTitle className="text-base">Ultimas decisoes do motor</CardTitle>
                     <CardDescription>
-                      Resumo explicável do raciocínio aplicado nas sessões recentes.
+                      Resumo explicavel do raciocinio aplicado nas sessoes recentes.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -868,7 +886,7 @@ export function DashboardPremium() {
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-sm font-semibold">
-                            {item.title ?? item.modality ?? "Sessão"}
+                            {item.title ?? item.modality ?? "Sessao"}
                           </div>
                           <div className="text-[11px] text-white/50 capitalize">
                             {item.confidence}
@@ -886,9 +904,9 @@ export function DashboardPremium() {
 
               <Card className="border-white/10 bg-white/5">
                 <CardHeader>
-                  <CardTitle className="text-base">Prontidão + deload inteligente</CardTitle>
+                  <CardTitle className="text-base">Prontidao + deload inteligente</CardTitle>
                   <CardDescription>
-                    Fadiga regional e decisão de deload do microciclo atual.
+                    Fadiga regional e decisao de deload do microciclo atual.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -899,14 +917,14 @@ export function DashboardPremium() {
                     </div>
 
                     <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Nível</div>
+                      <div className="text-[11px] text-white/50">Nivel</div>
                       <div className="mt-1 text-sm font-semibold capitalize">
                         {readinessSnapshot.level}
                       </div>
                     </div>
 
                     <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Recomendação</div>
+                      <div className="text-[11px] text-white/50">Recomendacao</div>
                       <div className="mt-1 text-sm font-semibold capitalize">
                         {readinessSnapshot.recommendation}
                       </div>
@@ -931,7 +949,7 @@ export function DashboardPremium() {
 
               {progressionHighlights.length ? (
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <div className="text-sm font-semibold">Próximas progressões sugeridas</div>
+                  <div className="text-sm font-semibold">Proximas progressoes sugeridas</div>
                   <div className="mt-2 space-y-2">
                     {progressionHighlights.map((item: any, idx: number) => (
                       <div
@@ -951,10 +969,10 @@ export function DashboardPremium() {
               {nextMeal ? (
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                   <div className="text-[16px] font-semibold text-white">
-                    Próxima refeição: {nextMeal?.nome ?? nextMeal?.name ?? "Refeição"}
+                    Proxima refeicao: {nextMeal?.nome ?? nextMeal?.name ?? "Refeicao"}
                   </div>
                   <div className="mt-1 text-[13px] text-white/50">
-                    {nextMeal?.horario ?? nextMeal?.time ?? "Horário a definir"}
+                    {nextMeal?.horario ?? nextMeal?.time ?? "Horario a definir"}
                   </div>
 
                   {Array.isArray(nextMeal?.alimentos) && nextMeal.alimentos.length > 0 ? (
@@ -973,7 +991,7 @@ export function DashboardPremium() {
                 </div>
               ) : (
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-sm text-white/50">
-                  Nenhuma refeição encontrada no plano ativo.
+                  Nenhuma refeicao encontrada no plano ativo.
                 </div>
               )}
 
@@ -1004,11 +1022,11 @@ export function DashboardPremium() {
                         >
                           <div className="flex items-center gap-2 text-[15px] font-semibold text-white">
                             <CalendarDays className="h-4 w-4 text-cyan-300" />
-                            {meal?.nome ?? meal?.name ?? `Refeição ${idx + 1}`}
+                            {meal?.nome ?? meal?.name ?? `Refeicao ${idx + 1}`}
                           </div>
 
                           <div className="mt-1 text-[13px] text-white/50">
-                            {meal?.horario ?? meal?.time ?? "Horário a definir"}
+                            {meal?.horario ?? meal?.time ?? "Horario a definir"}
                           </div>
 
                           {Array.isArray(meal?.alimentos) && meal.alimentos.length > 0 ? (
@@ -1058,7 +1076,7 @@ export function DashboardPremium() {
                       ))
                     ) : (
                       <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-sm text-white/50">
-                        Nenhuma refeição encontrada no plano ativo.
+                        Nenhuma refeicao encontrada no plano ativo.
                       </div>
                     )}
                   </div>
@@ -1144,8 +1162,8 @@ export function DashboardPremium() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-100">Fases Avançadas</h2>
-                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso — acesso rápido</p>
+                <h2 className="text-lg font-semibold text-gray-100">Fases Avancadas</h2>
+                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso - acesso rapido</p>
               </div>
               <Target className="w-6 h-6 text-white/80" />
             </div>
@@ -1202,3 +1220,4 @@ export function DashboardPremium() {
 }
 
 export default DashboardPremium;
+

@@ -11,6 +11,7 @@ import { Home, Check, ArrowLeft, ArrowRight, Timer, Dumbbell } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { loadActivePlan } from "@/services/plan.service";
 import ProgressaoCargaHint from "@/components/ProgressaoCargaHint";
 import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
 import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
@@ -138,6 +139,49 @@ function normalizeLegacyDays(state: any): CanonicalWorkoutDayView[] {
   }));
 }
 
+function normalizeActivePlanLegacyDays(): CanonicalWorkoutDayView[] {
+  const activePlan = loadActivePlan();
+  const rawDays = Array.isArray(activePlan?.training?.week)
+    ? activePlan.training.week
+    : Array.isArray(activePlan?.training?.days)
+      ? activePlan.training.days
+      : Array.isArray(activePlan?.workout?.week)
+        ? activePlan.workout.week
+        : Array.isArray(activePlan?.workout?.days)
+          ? activePlan.workout.days
+          : [];
+
+  return rawDays.map((t: any, idx: number) => ({
+    id: String(t?.id ?? `activeplan-day-${idx + 1}`),
+    dia: String(t?.dia ?? t?.day ?? `Dia ${idx + 1}`),
+    dayKey: String(t?.dayKey ?? ""),
+    modalidade: String(t?.modalidade ?? t?.modality ?? "musculacao"),
+    titulo: String(t?.titulo ?? t?.title ?? t?.dia ?? `Treino ${idx + 1}`),
+    grupamentos: Array.isArray(t?.grupamentos)
+      ? t.grupamentos.map(String)
+      : Array.isArray(t?.focus)
+        ? t.focus.map(String)
+        : [],
+    intensidade: t?.intensidade ?? t?.intensity,
+    duracaoMin: safeNum(t?.duracaoMin ?? t?.estimatedDurationMin, 45),
+    rationale: t?.rationale,
+    exercicios: Array.isArray(t?.exercicios)
+      ? t.exercicios.map((ex: any, exIdx: number) => ({
+          id: String(ex?.exercicio?.id ?? ex?.id ?? `activeplan-ex-${idx + 1}-${exIdx + 1}`),
+          nome: String(ex?.exercicio?.nome ?? ex?.nome ?? ex?.name ?? `Exercicio ${exIdx + 1}`),
+          equipamento: ex?.exercicio?.equipamento ?? ex?.equipamento ?? ex?.equipment,
+          grupoMuscular: ex?.exercicio?.grupoMuscular ?? ex?.grupoMuscular ?? ex?.muscleGroup,
+          descricao: ex?.exercicio?.descricao ?? ex?.descricao ?? ex?.notes,
+          series: safeNum(ex?.series ?? ex?.sets, 3),
+          repeticoes: String(ex?.repeticoes ?? ex?.reps ?? "10-12"),
+          descanso: safeNum(ex?.descanso ?? ex?.restSec, 60),
+          rpe: ex?.rpe,
+          observacoes: ex?.observacoes ?? ex?.notes,
+        }))
+      : [],
+  }));
+}
+
 function normalizeCanonicalDays(): CanonicalWorkoutDayView[] {
   const options = getCanonicalTrainingDayOptions();
 
@@ -208,8 +252,13 @@ export function TreinoAtivo() {
   const [timerAtivo, setTimerAtivo] = useState(false);
 
   const canonicalDays = useMemo(() => normalizeCanonicalDays(), []);
+  const activePlanLegacyDays = useMemo(() => normalizeActivePlanLegacyDays(), []);
   const legacyDays = useMemo(() => normalizeLegacyDays(state), [state]);
-  const treinoDias = canonicalDays.length ? canonicalDays : legacyDays;
+  const treinoDias = canonicalDays.length
+    ? canonicalDays
+    : activePlanLegacyDays.length
+      ? activePlanLegacyDays
+      : legacyDays;
   const isCanonicalSource = canonicalDays.length > 0;
 
   const treino = treinoDias[treinoSelecionado];

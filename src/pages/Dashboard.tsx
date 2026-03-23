@@ -1,4 +1,4 @@
-import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+﻿import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/branding/BrandIcon";
@@ -98,6 +98,23 @@ function deriveWorkoutModality(activePlan: any, stateTreino: any) {
       stateTreino?.modalidade,
     "Treino personalizado"
   );
+}
+
+function deriveFirstName(activePlan: any, state: any) {
+  const candidates = [
+    state?.perfil?.nomeCompleto,
+    state?.perfil?.nome,
+    activePlan?.draft?.step1?.nomeCompleto,
+    activePlan?.draft?.step1?.nome,
+    activePlan?.draft?.step1?.fullName,
+  ];
+
+  for (const candidate of candidates) {
+    const first = String(candidate ?? "").trim().split(/\s+/)[0];
+    if (first) return first;
+  }
+
+  return "Usuario";
 }
 
 function getNextMealByTime(meals: any[]) {
@@ -259,9 +276,7 @@ export function Dashboard() {
 
   const treinoModalidade = deriveWorkoutModality(activePlan, (state as any)?.treino);
 
-  const nomeUsuario =
-    (state as any)?.perfil?.nomeCompleto?.split(" ")?.[0] ?? "Usuário";
-
+  const nomeUsuario = deriveFirstName(activePlan, state);
   const onboardingDone = (() => {
     try {
       return localStorage.getItem("mf:onboarding:done:v1") === "1";
@@ -357,7 +372,7 @@ export function Dashboard() {
           <CardHeader>
             <CardTitle>Complete seu perfil</CardTitle>
             <CardDescription className="text-white/60">
-              Você precisa completar o questionário inicial para acessar o dashboard.
+              Voce precisa completar o questionario inicial para acessar o dashboard.
             </CardDescription>
           </CardHeader>
 
@@ -367,7 +382,7 @@ export function Dashboard() {
               onClick={() => navigate("/onboarding/step-1")}
               className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
             >
-              Iniciar questionário
+              Iniciar questionario
             </Button>
           </CardContent>
         </Card>
@@ -383,7 +398,7 @@ export function Dashboard() {
             <div className="flex items-center gap-3">
               <BrandIcon size={32} className="drop-shadow-[0_0_12px_rgba(0,190,255,0.35)]" />
               <h1 className="text-[30px] font-semibold tracking-tight text-white">
-                Olá, {nomeUsuario}
+                Oi, {nomeUsuario}
               </h1>
             </div>
 
@@ -425,15 +440,15 @@ export function Dashboard() {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-400/10 px-3 py-1 text-[11px] font-semibold text-amber-200">
                 <Crown className="h-3.5 w-3.5" />
-                Upgrade disponível
+                Upgrade disponivel
               </div>
 
               <h2 className="mt-3 text-[24px] font-semibold tracking-tight text-white">
-                Seu plano premium está pronto
+                Seu plano premium esta pronto
               </h2>
 
               <p className="mt-2 text-[14px] leading-6 text-white/60">
-                Desbloqueie treino completo, plano alimentar detalhado e recursos avançados do MindsetFit.
+                Desbloqueie treino completo, plano alimentar detalhado e recursos avancados do MindsetFit.
               </p>
             </div>
 
@@ -507,9 +522,9 @@ export function Dashboard() {
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="rounded-[28px] border border-white/10 bg-[rgba(8,10,18,0.82)] text-white">
             <CardHeader>
-              <CardTitle>Consumo calórico · últimos 7 dias</CardTitle>
+              <CardTitle>Consumo calorico · ultimos 7 dias</CardTitle>
               <CardDescription className="text-white/60">
-                Acompanhe seu consumo vs meta diária
+                Acompanhe seu consumo vs meta diaria
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -568,7 +583,7 @@ export function Dashboard() {
                 <div>
                   <CardTitle className="text-xl">Resumo da dieta gerada</CardTitle>
                   <CardDescription className="text-white/60 mt-1">
-                    Prévia do plano alimentar estruturado no onboarding
+                    Previa do plano alimentar estruturado no onboarding
                   </CardDescription>
                 </div>
 
@@ -582,23 +597,23 @@ export function Dashboard() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 text-center">
-                  <div className="text-[11px] text-white/40">Proteína</div>
+                  <div className="text-[11px] text-white/40">Proteina</div>
                   <div className="mt-1 text-[22px] font-semibold text-cyan-300">
-                    {proteina || "—"}g
+                    {proteina || "-"}g
                   </div>
                 </div>
 
                 <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 text-center">
                   <div className="text-[11px] text-white/40">Carbo</div>
                   <div className="mt-1 text-[22px] font-semibold text-cyan-300">
-                    {carboidratos || "—"}g
+                    {carboidratos || "-"}g
                   </div>
                 </div>
 
                 <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 text-center">
                   <div className="text-[11px] text-white/40">Gorduras</div>
                   <div className="mt-1 text-[22px] font-semibold text-cyan-300">
-                    {gorduras || "—"}g
+                    {gorduras || "-"}g
                   </div>
                 </div>
               </div>
@@ -606,7 +621,7 @@ export function Dashboard() {
               <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                 <div className="flex items-center gap-2 text-[13px] font-medium text-white/80">
                   <Flame className="h-4 w-4 text-orange-300" />
-                  Meta diária
+                  Meta diaria
                 </div>
 
                 <div className="mt-2 text-[28px] font-semibold text-white">
@@ -614,7 +629,7 @@ export function Dashboard() {
                 </div>
 
                 <div className="mt-1 text-[12px] text-white/45">
-                  {refeicoes.length} refeições planejadas
+                  {refeicoes.length} refeicoes planejadas
                 </div>
               </div>
 
@@ -634,9 +649,9 @@ export function Dashboard() {
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <CardTitle className="text-xl">Próxima refeição</CardTitle>
+                  <CardTitle className="text-xl">Proxima refeicao</CardTitle>
                   <CardDescription className="text-white/60 mt-1">
-                    Preview do que já foi gerado para o seu plano
+                    Preview do que ja foi gerado para o seu plano
                   </CardDescription>
                 </div>
 
@@ -653,11 +668,11 @@ export function Dashboard() {
                   <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                     <div className="flex items-center gap-2 text-[13px] font-medium text-white/80">
                       <CalendarDays className="h-4 w-4 text-cyan-300" />
-                      {proximaRefeicao.nome ?? proximaRefeicao.name ?? "Refeição"}
+                      {proximaRefeicao.nome ?? proximaRefeicao.name ?? "Refeicao"}
                     </div>
 
                     <div className="mt-2 text-[14px] text-white/50">
-                      {proximaRefeicao.horario ?? proximaRefeicao.time ?? "Horário a definir"}
+                      {proximaRefeicao.horario ?? proximaRefeicao.time ?? "Horario a definir"}
                     </div>
 
                     {Array.isArray(proximaRefeicao.alimentos) &&
@@ -691,7 +706,7 @@ export function Dashboard() {
               ) : (
                 <div className="space-y-4">
                   <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-[13px] text-white/50">
-                    Ainda não encontramos a próxima refeição no plano salvo.
+                    Ainda nao encontramos a proxima refeicao no plano salvo.
                   </div>
 
                   <Button
@@ -745,7 +760,7 @@ export function Dashboard() {
                 <div>
                   <CardTitle className="text-xl">Planejamento nutricional</CardTitle>
                   <CardDescription className="text-white/60 mt-1">
-                    {refeicoes.length} refeições • {caloriasMeta} kcal/dia
+                    {refeicoes.length} refeicoes • {caloriasMeta} kcal/dia
                   </CardDescription>
                 </div>
 
@@ -775,3 +790,5 @@ export function Dashboard() {
 }
 
 export default Dashboard;
+
+

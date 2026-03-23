@@ -437,7 +437,7 @@ export default function Assinatura() {
               key={pl.id}
               className={[
                 "relative flex h-full flex-col overflow-hidden rounded-[26px] border shadow-[0_0_32px_rgba(0,149,255,0.06)]",
-                pl.id === "mensal" ? "p-4" : "p-5",
+                pl.id === "mensal" ? "p-3.5 sm:p-4" : "p-4 sm:p-5",
                 pl.highlight
                   ? "border-emerald-400/30 bg-[linear-gradient(180deg,rgba(16,40,30,0.7),rgba(8,10,18,0.9))] shadow-[0_0_30px_rgba(34,197,94,0.10)]"
                   : "border-white/10 bg-[rgba(8,10,18,0.82)]",
@@ -449,32 +449,23 @@ export default function Assinatura() {
                 </div>
               ) : null}
 
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <div
                     className={[
                       "font-semibold text-white",
-                      pl.id === "mensal" ? "text-[16px]" : "text-[18px]",
+                      pl.id === "mensal" ? "text-[14px] leading-5 sm:text-[16px]" : "text-[16px] leading-5 sm:text-[18px]",
                     ].join(" ")}
                   >
                     {pl.title}
                   </div>
-
-                  <div
-                    className={[
-                      "mt-2 text-white/60",
-                      pl.id === "mensal" ? "text-[12px] leading-5" : "text-[13px] leading-5",
-                    ].join(" ")}
-                  >
-                    {pl.note}
-                  </div>
                 </div>
 
-                <div className="shrink-0 text-right">
+                <div className="shrink-0 text-left sm:text-right">
                   <div
                     className={[
                       "font-semibold tracking-tight text-white",
-                      pl.id === "mensal" ? "text-[24px]" : "text-[28px]",
+                      pl.id === "mensal" ? "text-[19px] sm:text-[24px]" : "text-[22px] sm:text-[28px]",
                     ].join(" ")}
                   >
                     {pl.price}
@@ -482,12 +473,21 @@ export default function Assinatura() {
                 </div>
               </div>
 
+              <div
+                className={[
+                  "mt-3 text-white/60",
+                  pl.id === "mensal" ? "text-[11px] leading-6 sm:text-[12px] sm:leading-5" : "text-[12px] leading-6 sm:text-[13px]",
+                ].join(" ")}
+              >
+                {pl.note}
+              </div>
+
               <div className="mt-auto flex flex-col gap-3 pt-5">
                 <button
                   type="button"
                   className={[
                     "inline-flex w-full items-center justify-center rounded-[20px] px-4 py-3 font-semibold transition-all active:scale-[0.99]",
-                    pl.id === "mensal" ? "text-[13px]" : "text-[14px]",
+                    pl.id === "mensal" ? "text-[12px] sm:text-[13px]" : "text-[12px] sm:text-[14px]",
                     pl.highlight
                       ? "overflow-hidden border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
                       : "bg-white text-black hover:opacity-95",
@@ -498,12 +498,12 @@ export default function Assinatura() {
                 </button>
 
                 {pl.id === "anual" ? (
-                  <div className="flex items-center gap-2 text-[11px] text-white/50">
+                  <div className="flex items-start gap-2 text-[10px] leading-5 text-white/50 sm:text-[11px]">
                     <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
                     Melhor valor para uso contínuo do app
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-[12px] text-white/50">
+                  <div className="flex items-start gap-2 text-[10px] leading-5 text-white/50 sm:text-[12px]">
                     <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
                     Flexibilidade para começar sem compromisso longo
                   </div>
