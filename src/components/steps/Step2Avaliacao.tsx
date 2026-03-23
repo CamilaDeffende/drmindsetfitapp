@@ -111,6 +111,81 @@ function toDisplay(value: unknown) {
   return String(value).trim();
 }
 
+function buildStep2Value(
+  value: Step2Value | undefined,
+  pesoFromStep1: string,
+  alturaFromStep1: string
+): Step2Value {
+  return {
+    biotipo: value?.biotipo ?? null,
+    peso: pesoFromStep1,
+    altura: alturaFromStep1,
+
+    cintura: value?.cintura ?? "",
+    pescoco: value?.pescoco ?? "",
+    quadril: value?.quadril ?? "",
+
+    atividadeHabitual: value?.atividadeHabitual ?? null,
+    metodoAvaliativo: value?.metodoAvaliativo ?? null,
+
+    percentualGordura: value?.percentualGordura ?? "",
+    massaMagra: value?.massaMagra ?? "",
+
+    dobraTriceps: value?.dobraTriceps ?? "",
+    dobraAbdomen: value?.dobraAbdomen ?? "",
+    dobraCoxa: value?.dobraCoxa ?? "",
+  };
+}
+
+function isSameStep2Value(a: Step2Value, b: Step2Value) {
+  return (
+    a.biotipo === b.biotipo &&
+    a.peso === b.peso &&
+    a.altura === b.altura &&
+    a.cintura === b.cintura &&
+    a.pescoco === b.pescoco &&
+    a.quadril === b.quadril &&
+    a.atividadeHabitual === b.atividadeHabitual &&
+    a.metodoAvaliativo === b.metodoAvaliativo &&
+    a.percentualGordura === b.percentualGordura &&
+    a.massaMagra === b.massaMagra &&
+    a.dobraTriceps === b.dobraTriceps &&
+    a.dobraAbdomen === b.dobraAbdomen &&
+    a.dobraCoxa === b.dobraCoxa
+  );
+}
+
+function MetricInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  unit,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  unit?: string;
+}) {
+  return (
+    <label className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+      <div className="mb-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
+        {label}
+      </div>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder ?? "Opcional"}
+        className="w-full bg-transparent text-[20px] font-semibold text-white outline-none placeholder:text-white/20"
+      />
+      <div className="mt-1 text-[12px] text-white/35">{unit ?? ""}</div>
+    </label>
+  );
+}
+
 export default function Step2Avaliacao({
   value,
   onChange,
@@ -139,97 +214,36 @@ export default function Step2Avaliacao({
       (step1Draft as any)?.heightCm
   );
 
-  const [local, setLocal] = useState<Step2Value>({
-    biotipo: value?.biotipo ?? null,
-    peso: pesoFromStep1,
-    altura: alturaFromStep1,
+  const incomingValue = useMemo(
+    () => buildStep2Value(value, pesoFromStep1, alturaFromStep1),
+    [value, pesoFromStep1, alturaFromStep1]
+  );
 
-    cintura: value?.cintura ?? "",
-    pescoco: value?.pescoco ?? "",
-    quadril: value?.quadril ?? "",
-
-    atividadeHabitual: value?.atividadeHabitual ?? null,
-    metodoAvaliativo: value?.metodoAvaliativo ?? null,
-
-    percentualGordura: value?.percentualGordura ?? "",
-    massaMagra: value?.massaMagra ?? "",
-
-    dobraTriceps: value?.dobraTriceps ?? "",
-    dobraAbdomen: value?.dobraAbdomen ?? "",
-    dobraCoxa: value?.dobraCoxa ?? "",
-  });
+  const [local, setLocal] = useState<Step2Value>(() => incomingValue);
 
   useEffect(() => {
-    setLocal((prev) => ({
-      biotipo: value?.biotipo ?? prev.biotipo ?? null,
-      peso: pesoFromStep1,
-      altura: alturaFromStep1,
-
-      cintura: value?.cintura ?? prev.cintura ?? "",
-      pescoco: value?.pescoco ?? prev.pescoco ?? "",
-      quadril: value?.quadril ?? prev.quadril ?? "",
-
-      atividadeHabitual: value?.atividadeHabitual ?? prev.atividadeHabitual ?? null,
-      metodoAvaliativo: value?.metodoAvaliativo ?? prev.metodoAvaliativo ?? null,
-
-      percentualGordura: value?.percentualGordura ?? prev.percentualGordura ?? "",
-      massaMagra: value?.massaMagra ?? prev.massaMagra ?? "",
-
-      dobraTriceps: value?.dobraTriceps ?? prev.dobraTriceps ?? "",
-      dobraAbdomen: value?.dobraAbdomen ?? prev.dobraAbdomen ?? "",
-      dobraCoxa: value?.dobraCoxa ?? prev.dobraCoxa ?? "",
-    }));
-  }, [value, pesoFromStep1, alturaFromStep1]);
+    setLocal((prev) => (isSameStep2Value(prev, incomingValue) ? prev : incomingValue));
+  }, [incomingValue]);
 
   const updateValue = (patch: Partial<Step2Value>) => {
-    const next = {
-      ...local,
-      ...patch,
-      peso: pesoFromStep1,
-      altura: alturaFromStep1,
-    };
-    setLocal(next);
-    onChange?.(next);
-  };
+    let nextValue = local;
 
-  useEffect(() => {
-    onChange?.({
-      ...(value ?? {}),
-      biotipo: local.biotipo ?? null,
-      peso: pesoFromStep1,
-      altura: alturaFromStep1,
+    setLocal((prev) => {
+      const next: Step2Value = {
+        ...prev,
+        ...patch,
+        peso: pesoFromStep1,
+        altura: alturaFromStep1,
+      };
 
-      cintura: local.cintura ?? "",
-      pescoco: local.pescoco ?? "",
-      quadril: local.quadril ?? "",
-
-      atividadeHabitual: local.atividadeHabitual ?? null,
-      metodoAvaliativo: local.metodoAvaliativo ?? null,
-
-      percentualGordura: local.percentualGordura ?? "",
-      massaMagra: local.massaMagra ?? "",
-
-      dobraTriceps: local.dobraTriceps ?? "",
-      dobraAbdomen: local.dobraAbdomen ?? "",
-      dobraCoxa: local.dobraCoxa ?? "",
+      nextValue = next;
+      return isSameStep2Value(prev, next) ? prev : next;
     });
-  }, [
-    onChange,
-    value,
-    local.biotipo,
-    local.cintura,
-    local.pescoco,
-    local.quadril,
-    local.atividadeHabitual,
-    local.metodoAvaliativo,
-    local.percentualGordura,
-    local.massaMagra,
-    local.dobraTriceps,
-    local.dobraAbdomen,
-    local.dobraCoxa,
-    pesoFromStep1,
-    alturaFromStep1,
-  ]);
+
+    if (!isSameStep2Value(local, nextValue)) {
+      onChange?.(nextValue);
+    }
+  };
 
   const cards = useMemo(
     () => [
@@ -258,48 +272,12 @@ export default function Step2Avaliacao({
     []
   );
 
-  const showBioimpedancia =
-    local.metodoAvaliativo === "bioimpedancia";
-
-  const showDobras =
-    local.metodoAvaliativo === "dobras-cutaneas";
-
-  const showMedidas =
-    local.metodoAvaliativo === "medidas-corporais";
-
-  const showVisual =
-    local.metodoAvaliativo === "visual";
+  const showBioimpedancia = local.metodoAvaliativo === "bioimpedancia";
+  const showDobras = local.metodoAvaliativo === "dobras-cutaneas";
+  const showMedidas = local.metodoAvaliativo === "medidas-corporais";
+  const showVisual = local.metodoAvaliativo === "visual";
 
   const canContinue = Boolean(local.biotipo) && Boolean(local.metodoAvaliativo);
-
-  const MetricInput = ({
-    label,
-    value,
-    onChange,
-    placeholder,
-    unit,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    placeholder?: string;
-    unit?: string;
-  }) => (
-    <label className="rounded-[18px] border border-white/10 bg-black/20 p-4">
-      <div className="mb-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
-        {label}
-      </div>
-      <input
-        type="text"
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? "Opcional"}
-        className="w-full bg-transparent text-[20px] font-semibold text-white outline-none placeholder:text-white/20"
-      />
-      <div className="mt-1 text-[12px] text-white/35">{unit ?? ""}</div>
-    </label>
-  );
 
   return (
     <div className="w-full text-white space-y-6">
@@ -474,7 +452,6 @@ export default function Step2Avaliacao({
               placeholder="Ex: 18"
               unit="%"
             />
-
             <MetricInput
               label="Massa magra"
               value={local.massaMagra ?? ""}
@@ -494,7 +471,6 @@ export default function Step2Avaliacao({
               placeholder="Ex: 12"
               unit="mm"
             />
-
             <MetricInput
               label="Dobra abdômen"
               value={local.dobraAbdomen ?? ""}
@@ -502,7 +478,6 @@ export default function Step2Avaliacao({
               placeholder="Ex: 18"
               unit="mm"
             />
-
             <MetricInput
               label="Dobra coxa"
               value={local.dobraCoxa ?? ""}
@@ -522,7 +497,6 @@ export default function Step2Avaliacao({
               placeholder="Ex: 82"
               unit="cm"
             />
-
             <MetricInput
               label="Pescoço"
               value={local.pescoco ?? ""}
@@ -530,7 +504,6 @@ export default function Step2Avaliacao({
               placeholder="Ex: 36"
               unit="cm"
             />
-
             <MetricInput
               label="Quadril"
               value={local.quadril ?? ""}
@@ -567,10 +540,10 @@ export default function Step2Avaliacao({
         </div>
 
         <p className="mt-1 text-[13px] text-white/50">
-          Peso e altura vêm do Step 1. Aqui você pode revisar os dados principais.
+          Peso e altura vêm do Step 1 e permanecem como base para os próximos cálculos.
         </p>
 
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
             <div className="mb-2 flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
               <Weight className="h-3.5 w-3.5" />
@@ -592,22 +565,6 @@ export default function Step2Avaliacao({
             </div>
             <div className="mt-1 text-[12px] text-white/35">cm</div>
           </div>
-
-          <label className="rounded-[18px] border border-white/10 bg-black/20 p-4">
-            <div className="mb-2 flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
-              <ScanLine className="h-3.5 w-3.5" />
-              Cintura
-            </div>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={local.cintura ?? ""}
-              onChange={(e) => updateValue({ cintura: e.target.value })}
-              placeholder="Opcional"
-              className="w-full bg-transparent text-[20px] font-semibold text-white outline-none placeholder:text-white/20"
-            />
-            <div className="mt-1 text-[12px] text-white/35">cm</div>
-          </label>
         </div>
       </section>
 

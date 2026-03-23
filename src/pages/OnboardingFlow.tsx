@@ -177,7 +177,6 @@ export function OnboardingFlow() {
         try {
           const ok = Boolean((guard as (x: string) => unknown)(to));
           if (ok) navigate(to, { replace: true });
-          else navigate(to, { replace: true });
         } catch {
           navigate(to, { replace: true });
         }
@@ -457,43 +456,6 @@ export function OnboardingFlow() {
             ok
           </span>
         </div>
-      </div>
-
-      <div className="mt-6 flex items-center justify-end">
-        <button
-          data-testid="onboarding-next"
-          data-mf="mf-next"
-          type="button"
-          onClick={() => {
-            try {
-              if (current?.key === "step1") {
-                const nome = String((draft as any).step1?.nomeCompleto || "").trim();
-                if (!nome || nome.length < 3) {
-                  alert("Digite seu nome completo antes de continuar.");
-                  return;
-                }
-              }
-            } catch {}
-
-            try {
-              goNext();
-            } catch {}
-
-            try {
-              const __path = window.location.pathname || "";
-              if (__path.startsWith("/onboarding")) {
-                const m = __path.match(/\/onboarding\/step-(\d+)\b/);
-                const __cur = m && m[1] ? Number(m[1]) || 1 : 1;
-                const __dest =
-                  __cur >= 8 ? "/dashboard" : `/onboarding/step-${__cur + 1}`;
-                mfSafeNavigate(__dest, { replace: true });
-              }
-            } catch {}
-          }}
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-        >
-          Continuar
-        </button>
       </div>
 
       {SHOW_LEGACY_NAV && (

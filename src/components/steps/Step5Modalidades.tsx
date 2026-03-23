@@ -1,8 +1,19 @@
 // MF_ONBOARDING_CONTRACT_V2
-// Step5Modalidades – múltiplas modalidades + dias por modalidade + nível por modalidade
+// Step5Modalidades - multiplas modalidades + dias por modalidade + nivel por modalidade
 // Compat com primary/secondary
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
+import { Button } from "@/components/ui/button";
+import {
+  Activity,
+  Bike,
+  ChevronLeft,
+  ChevronRight,
+  Dumbbell,
+  Flame,
+  PersonStanding,
+  Trophy,
+} from "lucide-react";
 
 type MF_Level = "iniciante" | "intermediario" | "avancado";
 
@@ -21,7 +32,8 @@ type Props = {
   onBack?: () => void;
 };
 
-const LS_KEY = "mf_onboarding_draft";
+const LS_KEY = "mf:onboarding:draft:v1";
+const LEGACY_LS_KEY = "mf_onboarding_draft";
 
 const WEEK = [
   { key: "seg", label: "SEG" },
@@ -33,9 +45,15 @@ const WEEK = [
   { key: "dom", label: "DOM" },
 ] as const;
 
+const LEVEL_OPTIONS: { key: MF_Level; label: string; desc: string }[] = [
+  { key: "iniciante", label: "Iniciante", desc: "Base tecnica e adaptacao." },
+  { key: "intermediario", label: "Intermediario", desc: "Mais volume e progressao." },
+  { key: "avancado", label: "Avancado", desc: "Maior intensidade e refinamento." },
+];
+
 function readDraft(): any {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(LS_KEY) ?? localStorage.getItem(LEGACY_LS_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -46,7 +64,9 @@ function writeDraft(patch: any) {
   try {
     const prev = readDraft();
     const next = { ...prev, ...patch };
-    localStorage.setItem(LS_KEY, JSON.stringify(next));
+    const serialized = JSON.stringify(next);
+    localStorage.setItem(LS_KEY, serialized);
+    localStorage.setItem(LEGACY_LS_KEY, serialized);
   } catch {}
 }
 
@@ -80,11 +100,36 @@ export default function Step5Modalidades({
 }: Props) {
   const options = useMemo(
     () => [
-      { key: "musculacao", label: "Musculação" },
-      { key: "corrida", label: "Corrida" },
-      { key: "bike", label: "Bike" },
-      { key: "funcional", label: "Funcional" },
-      { key: "cross", label: "Cross" },
+      {
+        key: "musculacao",
+        label: "Musculacao",
+        desc: "Forca, hipertrofia e estrutura.",
+        icon: Dumbbell,
+      },
+      {
+        key: "corrida",
+        label: "Corrida",
+        desc: "Base aerobica e performance.",
+        icon: Activity,
+      },
+      {
+        key: "bike",
+        label: "Bike",
+        desc: "Cardio com menor impacto articular.",
+        icon: Bike,
+      },
+      {
+        key: "funcional",
+        label: "Funcional",
+        desc: "Movimento global e condicionamento.",
+        icon: PersonStanding,
+      },
+      {
+        key: "cross",
+        label: "Cross",
+        desc: "Alta intensidade e variabilidade.",
+        icon: Trophy,
+      },
     ],
     []
   );
@@ -184,11 +229,8 @@ export default function Step5Modalidades({
           ? value.condicionamentoPorModalidade
           : prev.condicionamentoPorModalidade;
 
-      const nextPrimary =
-        value.primary !== undefined ? value.primary : prev.primary;
-
-      const nextSecondary =
-        value.secondary !== undefined ? value.secondary : prev.secondary;
+      const nextPrimary = value.primary !== undefined ? value.primary : prev.primary;
+      const nextSecondary = value.secondary !== undefined ? value.secondary : prev.secondary;
 
       const changed =
         JSON.stringify(prev.modalidades) !== JSON.stringify(nextModalidades) ||
@@ -272,10 +314,7 @@ export default function Step5Modalidades({
 
   const toggleDay = useCallback((mod: string, day: string) => {
     setState((prev) => {
-      const cur = Array.isArray(prev.diasPorModalidade[mod])
-        ? prev.diasPorModalidade[mod]
-        : [];
-
+      const cur = Array.isArray(prev.diasPorModalidade[mod]) ? prev.diasPorModalidade[mod] : [];
       const has = cur.includes(day);
       const next = has ? cur.filter((d) => d !== day) : [...cur, day];
 
@@ -302,139 +341,191 @@ export default function Step5Modalidades({
   const hasAny = state.modalidades.length > 0;
 
   return (
-    <div data-testid="mf-step-root" className="w-full text-white">
-      <h2 className="text-xl font-semibold">Modalidades</h2>
-      <p className="mt-1 text-sm text-white/60">
-        Selecione quantas modalidades quiser. Para cada uma, defina dias e condicionamento.
-      </p>
+    <div data-testid="mf-step-root" className="w-full text-white space-y-6">
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+        <h2 className="text-[22px] font-semibold tracking-tight">Estrutura de modalidades</h2>
 
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {options.map((o) => {
-          const active = state.modalidades.includes(o.key);
+        <p className="mt-1 text-[13px] leading-5 text-white/50">
+          Defina quais frentes de treino entram no seu plano e como cada uma será distribuída na semana.
+        </p>
 
-          return (
-            <button
-              key={o.key}
-              type="button"
-              onClick={() => toggleModality(o.key)}
-              className={[
-                "p-4 rounded-xl border text-left transition",
-                active
-                  ? "border-white/30 bg-white/10"
-                  : "border-white/10 bg-white/5 hover:bg-white/10",
-              ].join(" ")}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{o.label}</span>
-                <span className="text-xs text-white/60">
-                  {active ? "Selecionado" : ""}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+        <div className="mt-4 rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(20,30,56,0.55),rgba(8,10,18,0.9))] p-4">
+          <div className="text-[12px] uppercase tracking-[0.18em] text-white/35">
+            Montagem da rotina
+          </div>
+          <p className="mt-2 text-[14px] leading-6 text-white/72">
+            Você pode combinar modalidades e calibrar o nível de cada uma. Isso ajuda o app a gerar uma semana mais coerente no próximo step.
+          </p>
+        </div>
+      </section>
 
-      {hasAny ? (
-        <div className="mt-6 space-y-4">
-          {state.modalidades.map((mod) => {
-            const label = options.find((o) => o.key === mod)?.label ?? mod;
-            const level = state.condicionamentoPorModalidade[mod] ?? "iniciante";
-            const days = state.diasPorModalidade[mod] ?? [];
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-cyan-300" />
+          <h3 className="text-[18px] font-semibold">Selecione as modalidades</h3>
+        </div>
+
+        <p className="mt-1 text-[13px] text-white/50">
+          Escolha uma ou mais opções para construir sua semana de treino.
+        </p>
+
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {options.map((o) => {
+            const active = state.modalidades.includes(o.key);
+            const Icon = o.icon;
 
             return (
-              <div key={mod} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold">{label}</div>
-                  <div className="text-xs text-white/60">
-                    Dias: {days.length} • Nível:{" "}
-                    {level === "iniciante"
-                      ? "Iniciante"
-                      : level === "intermediario"
-                        ? "Intermediário"
-                        : "Avançado"}
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => toggleModality(o.key)}
+                className={[
+                  "rounded-[20px] border p-4 text-left transition-all",
+                  active
+                    ? "border-cyan-400/35 bg-cyan-400/10 shadow-[0_0_24px_rgba(0,183,255,0.12)]"
+                    : "border-white/10 bg-black/20 hover:bg-white/[0.04] hover:border-white/20",
+                ].join(" ")}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-white/10 bg-black/20 text-cyan-300">
+                    <Icon className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[16px] font-semibold text-white">{o.label}</span>
+                      <span className="text-[11px] text-white/55">{active ? "Selecionada" : ""}</span>
+                    </div>
+                    <div className="mt-1 text-[12px] leading-5 text-white/48">{o.desc}</div>
                   </div>
                 </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(["iniciante", "intermediario", "avancado"] as const).map((lv) => {
-                    const active = level === lv;
-                    const txt =
-                      lv === "iniciante"
-                        ? "Iniciante"
-                        : lv === "intermediario"
-                          ? "Intermediário"
-                          : "Avançado";
-
-                    return (
-                      <button
-                        key={lv}
-                        type="button"
-                        onClick={() => setLevel(mod, lv)}
-                        className={[
-                          "px-3 py-2 rounded-xl border text-xs transition",
-                          active
-                            ? "border-white/30 bg-white/10"
-                            : "border-white/10 bg-white/5 hover:bg-white/10",
-                        ].join(" ")}
-                      >
-                        {txt}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-3">
-                  <div className="text-xs text-white/60">Dias da semana</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {WEEK.map((d) => {
-                      const active = days.includes(d.key);
-
-                      return (
-                        <button
-                          key={d.key}
-                          type="button"
-                          onClick={() => toggleDay(mod, d.key)}
-                          className={[
-                            "min-w-[52px] px-3 py-2 rounded-xl border text-xs transition",
-                            active
-                              ? "border-white/30 bg-white/10"
-                              : "border-white/10 bg-white/5 hover:bg-white/10",
-                          ].join(" ")}
-                        >
-                          {d.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+              </button>
             );
           })}
         </div>
+      </section>
+
+      {hasAny ? (
+        <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+          <div className="flex items-center gap-2">
+            <Flame className="h-4 w-4 text-cyan-300" />
+            <h3 className="text-[18px] font-semibold">Configuração por modalidade</h3>
+          </div>
+
+          <p className="mt-1 text-[13px] text-white/50">
+            Ajuste o condicionamento e marque os dias de cada modalidade selecionada.
+          </p>
+
+          <div className="mt-5 space-y-4">
+            {state.modalidades.map((mod) => {
+              const label = options.find((o) => o.key === mod)?.label ?? mod;
+              const level = state.condicionamentoPorModalidade[mod] ?? "iniciante";
+              const days = state.diasPorModalidade[mod] ?? [];
+
+              return (
+                <div key={mod} className="rounded-[22px] border border-white/10 bg-black/20 p-4 sm:p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[16px] font-semibold text-white">{label}</div>
+                    <div className="text-[12px] text-white/55">
+                      Dias: {days.length} • Nível:{" "}
+                      {level === "iniciante"
+                        ? "Iniciante"
+                        : level === "intermediario"
+                        ? "Intermediario"
+                        : "Avancado"}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="mb-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
+                      Condicionamento
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {LEVEL_OPTIONS.map((lv) => {
+                        const active = level === lv.key;
+
+                        return (
+                          <button
+                            key={lv.key}
+                            type="button"
+                            onClick={() => setLevel(mod, lv.key)}
+                            className={[
+                              "rounded-[16px] border px-3 py-3 text-left transition-all",
+                              active
+                                ? "border-emerald-400/35 bg-emerald-400/10"
+                                : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]",
+                            ].join(" ")}
+                          >
+                            <div className="text-[13px] font-semibold text-white">{lv.label}</div>
+                            <div className="mt-1 text-[11px] leading-4 text-white/45">{lv.desc}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-[12px] uppercase tracking-[0.14em] text-white/35">
+                      Dias da semana
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {WEEK.map((d) => {
+                        const active = days.includes(d.key);
+
+                        return (
+                          <button
+                            key={d.key}
+                            type="button"
+                            onClick={() => toggleDay(mod, d.key)}
+                            className={[
+                              "min-w-[56px] rounded-[14px] border px-3 py-2 text-[12px] font-medium transition-all",
+                              active
+                                ? "border-cyan-400/35 bg-cyan-400/10 text-white"
+                                : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]",
+                            ].join(" ")}
+                          >
+                            {d.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       ) : (
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-          Selecione pelo menos uma modalidade para configurar dias e nível.
-        </div>
+        <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+          <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-[14px] text-white/70">
+            Selecione pelo menos uma modalidade para configurar dias e nível.
+          </div>
+        </section>
       )}
 
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => onBack?.()}
-          className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
-        >
-          Voltar
-        </button>
+      <div className="flex gap-3 pt-1">
+        {onBack ? (
+          <Button
+            type="button"
+            onClick={() => onBack?.()}
+            variant="outline"
+            className="h-14 w-[120px] rounded-[20px] border-white/15 bg-black/20 text-white hover:bg-white/5"
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Voltar
+          </Button>
+        ) : null}
 
-        <button
+        <Button
           type="button"
           onClick={() => onNext?.()}
           disabled={!hasAny}
-          className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="ghost"
+          className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent disabled:opacity-50"
         >
           Continuar
-        </button>
+          <ChevronRight className="ml-1 h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
