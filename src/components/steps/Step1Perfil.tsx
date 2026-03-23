@@ -30,7 +30,7 @@ import { useNavigate } from "react-router-dom";
 import { useOnboardingDraftSaver } from "@/store/onboarding/useOnboardingDraftSaver";
 import { useOnboardingStore } from "@/store/onboarding/onboardingStore";
 import { Button } from "@/components/ui/button";
-import { Check, Activity, Dumbbell, RefreshCw, Flame, HeartPulse } from "lucide-react";
+import { Check, Activity, Dumbbell, RefreshCw, Flame, HeartPulse, LogIn } from "lucide-react";
 
 type OnboardingStepProps = {
   value?: any;
@@ -227,6 +227,17 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
     <div className="w-full text-white" data-testid="mf-step-root">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => navigate("/login?next=%2Fdashboard")}
+              className="inline-flex items-center rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+            >
+              <LogIn className="mr-1.5 h-3.5 w-3.5" />
+              Já tenho conta
+            </button>
+          </div>
+
           {/* BLOCO 1 */}
           <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 sm:p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
             <div className="mb-4">

@@ -68,6 +68,12 @@ function toNum(v: unknown, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function formatMetricValue(value: unknown, unit = "") {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return "—";
+  return `${Math.round(n)}${unit}`;
+}
+
 function toTitleLabel(value: unknown, fallback: string) {
   const text = String(value ?? "")
     .replace(/[-_]+/g, " ")
@@ -547,7 +553,11 @@ export function DashboardPremium() {
             <p className="text-gray-400 mb-6">
               Inicie o questionário para desbloquear sua experiência premium
             </p>
-            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/onboarding/step-1")}
+              className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
+            >
               Iniciar Agora
             </Button>
           </CardContent>
@@ -572,7 +582,11 @@ export function DashboardPremium() {
             </div>
 
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button className="w-full" onClick={() => navigate("/onboarding/step-1")}>
+              <Button
+                variant="ghost"
+                className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
+                onClick={() => navigate("/onboarding/step-1")}
+              >
                 Criar / Recriar plano
               </Button>
               <Button
@@ -677,7 +691,7 @@ export function DashboardPremium() {
               <div className="grid grid-cols-2 gap-3 md:min-w-[320px]">
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                   <div className="text-[11px] text-white/40">Meta diária</div>
-                  <div className="mt-1 text-[24px] font-semibold text-white">{kcal || "—"}</div>
+                  <div className="mt-1 text-[24px] font-semibold text-white">{formatMetricValue(kcal)}</div>
                   <div className="text-[11px] text-white/40">kcal</div>
                 </div>
 
@@ -706,17 +720,17 @@ export function DashboardPremium() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                 <div className="text-[11px] text-white/40">Proteína</div>
-                <div className="mt-1 text-[24px] font-semibold text-cyan-300">{protein || "—"}g</div>
+                <div className="mt-1 text-[24px] font-semibold text-cyan-300">{formatMetricValue(protein, "g")}</div>
               </div>
 
               <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                 <div className="text-[11px] text-white/40">Carboidratos</div>
-                <div className="mt-1 text-[24px] font-semibold text-cyan-300">{carbs || "—"}g</div>
+                <div className="mt-1 text-[24px] font-semibold text-cyan-300">{formatMetricValue(carbs, "g")}</div>
               </div>
 
               <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                 <div className="text-[11px] text-white/40">Gorduras</div>
-                <div className="mt-1 text-[24px] font-semibold text-cyan-300">{fat || "—"}g</div>
+                <div className="mt-1 text-[24px] font-semibold text-cyan-300">{formatMetricValue(fat, "g")}</div>
               </div>
 
               <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
@@ -830,7 +844,7 @@ export function DashboardPremium() {
                 <div>
                   <CardTitle className="text-xl">Plano alimentar</CardTitle>
                   <CardDescription className="text-white/60 mt-1">
-                    {meals.length} refeições • {kcal || "—"} kcal/dia
+                    {meals.length} refeições • {formatMetricValue(kcal, " kcal")} /dia
                   </CardDescription>
                 </div>
                 <UtensilsCrossed className="w-5 h-5 text-cyan-300" />

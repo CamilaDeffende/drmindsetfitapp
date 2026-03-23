@@ -171,10 +171,6 @@ export default function Step6PlanoTreinos({ value, onChange, onNext, onBack }: P
                             );
                           })}
                         </div>
-
-                        <div className="mt-3 text-[11px] text-white/50">
-                          Banco: <code className="text-white/70">src/features/fitness-suite/data/exercises.ts</code>
-                        </div>
                       </div>
                     ))}
                   </div>
