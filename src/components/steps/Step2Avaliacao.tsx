@@ -1,14 +1,41 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Activity, Ruler, Weight, ScanLine } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Activity,
+  Ruler,
+  Weight,
+  ScanLine,
+  ClipboardList,
+} from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
+
+type MetodoAvaliativo =
+  | "bioimpedancia"
+  | "dobras-cutaneas"
+  | "medidas-corporais"
+  | "visual"
+  | "nenhum";
 
 type Step2Value = {
   biotipo?: string | null;
   peso?: string;
   altura?: string;
+
   cintura?: string;
+  pescoco?: string;
+  quadril?: string;
+
   atividadeHabitual?: string | null;
+  metodoAvaliativo?: MetodoAvaliativo | null;
+
+  percentualGordura?: string;
+  massaMagra?: string;
+
+  dobraTriceps?: string;
+  dobraAbdomen?: string;
+  dobraCoxa?: string;
 };
 
 type Props = {
@@ -35,6 +62,38 @@ const ACTIVITY_OPTIONS = [
     desc: "Muito deslocamento, treino ou trabalho físico",
   },
 ] as const;
+
+const METODO_OPTIONS: {
+  key: MetodoAvaliativo;
+  label: string;
+  desc: string;
+}[] = [
+  {
+    key: "bioimpedancia",
+    label: "Bioimpedância",
+    desc: "Quando você tem balança ou exame com composição corporal",
+  },
+  {
+    key: "dobras-cutaneas",
+    label: "Dobras cutâneas",
+    desc: "Quando a avaliação foi feita com adipômetro",
+  },
+  {
+    key: "medidas-corporais",
+    label: "Medidas corporais",
+    desc: "Usando perímetros como base inicial",
+  },
+  {
+    key: "visual",
+    label: "Estimativa visual",
+    desc: "Quando você quer apenas uma referência prática inicial",
+  },
+  {
+    key: "nenhum",
+    label: "Nenhum agora",
+    desc: "Seguir sem método específico nesta etapa",
+  },
+];
 
 function loadDraftStep1() {
   try {
@@ -84,8 +143,20 @@ export default function Step2Avaliacao({
     biotipo: value?.biotipo ?? null,
     peso: pesoFromStep1,
     altura: alturaFromStep1,
+
     cintura: value?.cintura ?? "",
+    pescoco: value?.pescoco ?? "",
+    quadril: value?.quadril ?? "",
+
     atividadeHabitual: value?.atividadeHabitual ?? null,
+    metodoAvaliativo: value?.metodoAvaliativo ?? null,
+
+    percentualGordura: value?.percentualGordura ?? "",
+    massaMagra: value?.massaMagra ?? "",
+
+    dobraTriceps: value?.dobraTriceps ?? "",
+    dobraAbdomen: value?.dobraAbdomen ?? "",
+    dobraCoxa: value?.dobraCoxa ?? "",
   });
 
   useEffect(() => {
@@ -93,8 +164,20 @@ export default function Step2Avaliacao({
       biotipo: value?.biotipo ?? prev.biotipo ?? null,
       peso: pesoFromStep1,
       altura: alturaFromStep1,
+
       cintura: value?.cintura ?? prev.cintura ?? "",
+      pescoco: value?.pescoco ?? prev.pescoco ?? "",
+      quadril: value?.quadril ?? prev.quadril ?? "",
+
       atividadeHabitual: value?.atividadeHabitual ?? prev.atividadeHabitual ?? null,
+      metodoAvaliativo: value?.metodoAvaliativo ?? prev.metodoAvaliativo ?? null,
+
+      percentualGordura: value?.percentualGordura ?? prev.percentualGordura ?? "",
+      massaMagra: value?.massaMagra ?? prev.massaMagra ?? "",
+
+      dobraTriceps: value?.dobraTriceps ?? prev.dobraTriceps ?? "",
+      dobraAbdomen: value?.dobraAbdomen ?? prev.dobraAbdomen ?? "",
+      dobraCoxa: value?.dobraCoxa ?? prev.dobraCoxa ?? "",
     }));
   }, [value, pesoFromStep1, alturaFromStep1]);
 
@@ -115,15 +198,35 @@ export default function Step2Avaliacao({
       biotipo: local.biotipo ?? null,
       peso: pesoFromStep1,
       altura: alturaFromStep1,
+
       cintura: local.cintura ?? "",
+      pescoco: local.pescoco ?? "",
+      quadril: local.quadril ?? "",
+
       atividadeHabitual: local.atividadeHabitual ?? null,
+      metodoAvaliativo: local.metodoAvaliativo ?? null,
+
+      percentualGordura: local.percentualGordura ?? "",
+      massaMagra: local.massaMagra ?? "",
+
+      dobraTriceps: local.dobraTriceps ?? "",
+      dobraAbdomen: local.dobraAbdomen ?? "",
+      dobraCoxa: local.dobraCoxa ?? "",
     });
   }, [
     onChange,
     value,
     local.biotipo,
     local.cintura,
+    local.pescoco,
+    local.quadril,
     local.atividadeHabitual,
+    local.metodoAvaliativo,
+    local.percentualGordura,
+    local.massaMagra,
+    local.dobraTriceps,
+    local.dobraAbdomen,
+    local.dobraCoxa,
     pesoFromStep1,
     alturaFromStep1,
   ]);
@@ -155,7 +258,48 @@ export default function Step2Avaliacao({
     []
   );
 
-  const canContinue = Boolean(local.biotipo);
+  const showBioimpedancia =
+    local.metodoAvaliativo === "bioimpedancia";
+
+  const showDobras =
+    local.metodoAvaliativo === "dobras-cutaneas";
+
+  const showMedidas =
+    local.metodoAvaliativo === "medidas-corporais";
+
+  const showVisual =
+    local.metodoAvaliativo === "visual";
+
+  const canContinue = Boolean(local.biotipo) && Boolean(local.metodoAvaliativo);
+
+  const MetricInput = ({
+    label,
+    value,
+    onChange,
+    placeholder,
+    unit,
+  }: {
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+    unit?: string;
+  }) => (
+    <label className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+      <div className="mb-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
+        {label}
+      </div>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder ?? "Opcional"}
+        className="w-full bg-transparent text-[20px] font-semibold text-white outline-none placeholder:text-white/20"
+      />
+      <div className="mt-1 text-[12px] text-white/35">{unit ?? ""}</div>
+    </label>
+  );
 
   return (
     <div className="w-full text-white space-y-6">
@@ -173,8 +317,8 @@ export default function Step2Avaliacao({
             Direcionamento premium
           </div>
           <p className="mt-2 text-[14px] leading-6 text-white/72">
-            O app combina biotipo, medidas base e atividade habitual para ajustar melhor
-            calorias, recuperação e estrutura do protocolo.
+            O app combina biotipo, método avaliativo, medidas base e atividade habitual
+            para ajustar melhor calorias, recuperação e estrutura do protocolo.
           </p>
         </div>
       </section>
@@ -290,12 +434,140 @@ export default function Step2Avaliacao({
 
       <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
         <div className="flex items-center gap-2">
+          <ClipboardList className="h-4 w-4 text-cyan-300" />
+          <h3 className="text-[18px] font-semibold">Método avaliativo</h3>
+        </div>
+
+        <p className="mt-1 text-[13px] text-white/50">
+          Escolha como sua composição corporal será estimada nesta etapa.
+        </p>
+
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {METODO_OPTIONS.map((item) => {
+            const active = local.metodoAvaliativo === item.key;
+
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => updateValue({ metodoAvaliativo: item.key })}
+                className={[
+                  "rounded-[20px] border p-4 text-left transition-all",
+                  active
+                    ? "border-cyan-400/35 bg-cyan-400/10 shadow-[0_0_24px_rgba(0,183,255,0.12)]"
+                    : "border-white/10 bg-black/20 hover:bg-white/[0.04] hover:border-white/20",
+                ].join(" ")}
+              >
+                <div className="text-[16px] font-semibold text-white">{item.label}</div>
+                <div className="mt-1 text-[12px] leading-5 text-white/48">{item.desc}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {showBioimpedancia ? (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <MetricInput
+              label="Percentual de gordura"
+              value={local.percentualGordura ?? ""}
+              onChange={(v) => updateValue({ percentualGordura: v })}
+              placeholder="Ex: 18"
+              unit="%"
+            />
+
+            <MetricInput
+              label="Massa magra"
+              value={local.massaMagra ?? ""}
+              onChange={(v) => updateValue({ massaMagra: v })}
+              placeholder="Ex: 62"
+              unit="kg"
+            />
+          </div>
+        ) : null}
+
+        {showDobras ? (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <MetricInput
+              label="Dobra tríceps"
+              value={local.dobraTriceps ?? ""}
+              onChange={(v) => updateValue({ dobraTriceps: v })}
+              placeholder="Ex: 12"
+              unit="mm"
+            />
+
+            <MetricInput
+              label="Dobra abdômen"
+              value={local.dobraAbdomen ?? ""}
+              onChange={(v) => updateValue({ dobraAbdomen: v })}
+              placeholder="Ex: 18"
+              unit="mm"
+            />
+
+            <MetricInput
+              label="Dobra coxa"
+              value={local.dobraCoxa ?? ""}
+              onChange={(v) => updateValue({ dobraCoxa: v })}
+              placeholder="Ex: 20"
+              unit="mm"
+            />
+          </div>
+        ) : null}
+
+        {showMedidas ? (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <MetricInput
+              label="Cintura"
+              value={local.cintura ?? ""}
+              onChange={(v) => updateValue({ cintura: v })}
+              placeholder="Ex: 82"
+              unit="cm"
+            />
+
+            <MetricInput
+              label="Pescoço"
+              value={local.pescoco ?? ""}
+              onChange={(v) => updateValue({ pescoco: v })}
+              placeholder="Ex: 36"
+              unit="cm"
+            />
+
+            <MetricInput
+              label="Quadril"
+              value={local.quadril ?? ""}
+              onChange={(v) => updateValue({ quadril: v })}
+              placeholder="Ex: 98"
+              unit="cm"
+            />
+          </div>
+        ) : null}
+
+        {showVisual ? (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <MetricInput
+              label="Percentual de gordura estimado"
+              value={local.percentualGordura ?? ""}
+              onChange={(v) => updateValue({ percentualGordura: v })}
+              placeholder="Ex: 20"
+              unit="%"
+            />
+
+            <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 flex items-center">
+              <p className="text-[13px] leading-5 text-white/48">
+                Use uma estimativa aproximada. O app pode recalibrar depois com dados mais precisos.
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+        <div className="flex items-center gap-2">
           <Weight className="h-4 w-4 text-cyan-300" />
           <h3 className="text-[18px] font-semibold">Base antropométrica</h3>
         </div>
 
         <p className="mt-1 text-[13px] text-white/50">
-          Peso e altura vêm do Step 1. Aqui você pode complementar com a cintura.
+          Peso e altura vêm do Step 1. Aqui você pode revisar os dados principais.
         </p>
 
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
