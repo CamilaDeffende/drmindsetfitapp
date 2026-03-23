@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
 const ONBOARDING_DONE_KEY = "mf:onboarding:done:v1";
 const ONBOARDING_DRAFT_KEY = "mf:onboarding:draft:v1";
+const PENDING_IMPORT_KEY = "mf:pendingProfileImport:v1";
 
 function readJsonStorage<T>(key: string): T | null {
   try {
@@ -18,6 +19,28 @@ function readJsonStorage<T>(key: string): T | null {
 function writeJsonStorage(key: string, value: unknown) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+function clearLocalAppState() {
+  try {
+    localStorage.removeItem(ACTIVE_PLAN_KEY);
+    localStorage.removeItem(ONBOARDING_DRAFT_KEY);
+    localStorage.removeItem(ONBOARDING_DONE_KEY);
+  } catch {}
+}
+
+function shouldImportPendingGuestState() {
+  try {
+    return localStorage.getItem(PENDING_IMPORT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function clearPendingGuestStateImport() {
+  try {
+    localStorage.removeItem(PENDING_IMPORT_KEY);
   } catch {}
 }
 
@@ -84,6 +107,8 @@ async function hydrateLocalAppStateFromProfile(userId: string) {
     const activePlan = appData?.activePlan ?? null;
     const onboardingDraft = appData?.onboardingDraft ?? null;
     const onboardingDone = Boolean(appData?.onboardingDone || activePlan);
+
+    clearLocalAppState();
 
     if (activePlan) writeJsonStorage(ACTIVE_PLAN_KEY, activePlan);
     if (onboardingDraft) writeJsonStorage(ONBOARDING_DRAFT_KEY, onboardingDraft);
@@ -205,8 +230,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Escutar mudanças de autenticação
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       void (async () => {
+        if (event === "SIGNED_OUT") {
+          clearPendingGuestStateImport();
+          clearLocalAppState();
+        }
         if (session?.user?.id) {
           await hydrateLocalAppStateFromProfile(session.user.id);
         }
@@ -259,7 +288,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (import.meta.env.DEV) console.warn("⚠️ Exceção ao upsert do profile, seguindo mesmo assim.", e);
         }
 
-        await syncLocalAppStateToProfile(data.user.id, fullName);
+        if (shouldImportPendingGuestState()) {
+          await syncLocalAppStateToProfile(data.user.id, fullName);
+        }
+        clearPendingGuestStateImport();
+        await hydrateLocalAppStateFromProfile(data.user.id);
       }
 
       return { error: null };
@@ -286,7 +319,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } = await supabase.auth.getUser();
 
         if (user?.id) {
-          await syncLocalAppStateToProfile(user.id, user.user_metadata?.full_name);
+          if (shouldImportPendingGuestState()) {
+            await syncLocalAppStateToProfile(user.id, user.user_metadata?.full_name);
+          }
+          clearPendingGuestStateImport();
           await hydrateLocalAppStateFromProfile(user.id);
         }
       }
@@ -299,6 +335,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     // Modo DEMO: apenas limpar estado local
     if (!isSupabaseConfigured) {
+      clearPendingGuestStateImport();
+      clearLocalAppState();
       setUser(null);
       setSession(null);
       if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Logout simulado");

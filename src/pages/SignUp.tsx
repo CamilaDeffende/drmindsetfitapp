@@ -27,6 +27,12 @@ const getPrefilledNameFromOnboarding = (): string => {
   }
 };
 
+const PENDING_IMPORT_KEY = "mf:pendingProfileImport:v1";
+
+const getDefaultPostAuthRoute = (): string => {
+  return "/onboarding/step-1";
+};
+
 export function SignUp() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,14 +46,15 @@ export function SignUp() {
 
   const next = useMemo(() => {
     try {
-      return searchParams.get("next") || "/assinatura?source=onboarding";
+      return searchParams.get("next") || getDefaultPostAuthRoute();
     } catch {
-      return "/assinatura?source=onboarding";
+      return getDefaultPostAuthRoute();
     }
   }, [searchParams]);
 
   const premiumFromUrl = searchParams.get("premium") === "1";
   const planFromUrl = searchParams.get("plan") || "mensal";
+  const shouldImportGuestState = searchParams.has("next");
 
   const loginHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -115,6 +122,14 @@ export function SignUp() {
       setSubmitting(false);
       return;
     }
+
+    try {
+      if (shouldImportGuestState) {
+        localStorage.setItem(PENDING_IMPORT_KEY, "1");
+      } else {
+        localStorage.removeItem(PENDING_IMPORT_KEY);
+      }
+    } catch {}
 
     const { error: signUpError } = await signUp(
       formData.email.trim(),
