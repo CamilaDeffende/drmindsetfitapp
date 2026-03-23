@@ -189,6 +189,35 @@ function normalizeRestrictions(raw: any): string[] {
   return raw.map((x) => String(x || "").toLowerCase()).filter(Boolean);
 }
 
+function getDaysByModalityFromDraft(step5: any, step6: any) {
+  const fromStep6 = step6?.diasPorModalidade || step6?.daysByModality;
+  if (fromStep6 && typeof fromStep6 === "object") return fromStep6;
+
+  const fromStep5 = step5?.diasPorModalidade || step5?.daysByModality;
+  if (fromStep5 && typeof fromStep5 === "object") return fromStep5;
+
+  return {};
+}
+
+function getSelectedDaysFromDraft(step5: any, step6: any): string[] {
+  if (Array.isArray(step6?.days) && step6.days.length) {
+    return step6.days.map(String);
+  }
+
+  const byModality = getDaysByModalityFromDraft(step5, step6);
+  const uniqueDays = new Set<string>();
+
+  for (const days of Object.values(byModality)) {
+    if (!Array.isArray(days)) continue;
+    for (const day of days) {
+      const value = String(day || "").trim();
+      if (value) uniqueDays.add(value);
+    }
+  }
+
+  return Array.from(uniqueDays);
+}
+
 function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
   const primary = mapPrimaryModality(step5?.primary);
   const modalidadesRaw = Array.isArray(step5?.modalidades)
@@ -206,9 +235,7 @@ function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
       "iniciante"
   );
 
-  const daysByModality = (step6?.diasPorModalidade ||
-    step6?.daysByModality ||
-    {}) as Record<Modality, string[]>;
+  const daysByModality = getDaysByModalityFromDraft(step5, step6) as Record<Modality, string[]>;
 
   return buildWorkoutWeek({
     modalities: modalities.length ? modalities : [primary],
@@ -224,7 +251,7 @@ function buildTrainingPayloadFromSmartEngine(draft: PlanDraft, step3: any, step5
 
     const base = {
       training: {
-        smartPlan,
+        smartPlan: smartPlan.plan,
       },
       workout: {
         legacyFallbackShape: buildLegacyWorkoutFallback(step3, step5, step6),
@@ -577,10 +604,9 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
       "iniciante"
   );
 
-  const selectedDays = Array.isArray(step6?.days) ? step6.days : [];
+  const selectedDays = getSelectedDaysFromDraft(step5, step6);
   const daysByModality = (
-    step6?.diasPorModalidade ||
-    step6?.daysByModality ||
+    getDaysByModalityFromDraft(step5, step6) ||
     { [modalities[0] ?? primaryModality]: selectedDays }
   ) as Record<Modality, string[]>;
 

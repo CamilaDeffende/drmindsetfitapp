@@ -1,6 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  SMART_TRAINING_PLAN_KEY,
+  TRAINING_DECISION_LOG_KEY,
+} from "@/services/training/trainingEngine.storage";
 
 const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
 const ONBOARDING_DONE_KEY = "mf:onboarding:done:v1";
@@ -27,6 +31,8 @@ function clearLocalAppState() {
     localStorage.removeItem(ACTIVE_PLAN_KEY);
     localStorage.removeItem(ONBOARDING_DRAFT_KEY);
     localStorage.removeItem(ONBOARDING_DONE_KEY);
+    localStorage.removeItem(SMART_TRAINING_PLAN_KEY);
+    localStorage.removeItem(TRAINING_DECISION_LOG_KEY);
   } catch {}
 }
 
@@ -107,6 +113,11 @@ async function hydrateLocalAppStateFromProfile(userId: string) {
     const activePlan = appData?.activePlan ?? null;
     const onboardingDraft = appData?.onboardingDraft ?? null;
     const onboardingDone = Boolean(appData?.onboardingDone || activePlan);
+    const hasProfileAppData = Boolean(activePlan || onboardingDraft || onboardingDone);
+
+    if (!hasProfileAppData) {
+      return;
+    }
 
     clearLocalAppState();
 

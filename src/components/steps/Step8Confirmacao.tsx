@@ -28,6 +28,7 @@ export default function Step8Confirmacao({
   onBack,
 }: Props) {
   const { state } = useDrMindSetfit();
+  const step4 = (summary as any)?.step4 ?? {};
 
   const metabolismo =
     (state as any)?.metabolismo ??
@@ -35,17 +36,30 @@ export default function Step8Confirmacao({
     {};
 
   const nutricao = (state as any)?.nutricao ?? {};
+  const summaryMacros = step4?.macros ?? {};
+  const summaryRefeicoes: any[] = Array.isArray(step4?.refeicoes)
+    ? step4.refeicoes
+    : Array.isArray(step4?.meals)
+      ? step4.meals
+      : Array.isArray(step4?.refeicoesSelecionadas)
+        ? step4.refeicoesSelecionadas
+        : [];
 
   const kcalAlvo: number | null =
     nutricao?.kcalAlvo ??
     nutricao?.macros?.calorias ??
+    summaryMacros?.calorias ??
+    step4?.kcalAlvo ??
     metabolismo?.caloriasAlvo ??
     metabolismo?.get ??
     null;
 
   const tmb: number | null = metabolismo?.tmb ?? null;
 
-  const macros = nutricao?.macros ?? {};
+  const macros =
+    (nutricao?.macros && Object.keys(nutricao.macros).length
+      ? nutricao.macros
+      : summaryMacros) ?? {};
 
   const proteina: number | null =
     macros?.proteina != null
@@ -70,6 +84,10 @@ export default function Step8Confirmacao({
 
   const refeicoes: any[] = Array.isArray(nutricao?.refeicoes)
     ? nutricao.refeicoes
+    : Array.isArray(nutricao?.meals)
+      ? nutricao.meals
+      : summaryRefeicoes
+        ? summaryRefeicoes
     : [];
 
   const proximaRefeicao = useMemo(() => {

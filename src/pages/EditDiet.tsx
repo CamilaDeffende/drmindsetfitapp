@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast'
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { loadActivePlan, saveActivePlan } from "@/services/plan.service";
 
 function buildDietExportText() {
   const lines = [
@@ -252,6 +253,21 @@ export function EditDiet() {
 
   const handleSalvar = () => {
     if (!state.dietaAtiva) return
+
+    const activePlan = loadActivePlan()
+    if (activePlan) {
+      const nextPlan = {
+        ...activePlan,
+        meals: refeicoes,
+        nutrition: {
+          ...(activePlan.nutrition ?? {}),
+          refeicoes,
+          meals: refeicoes,
+        },
+      }
+
+      saveActivePlan(nextPlan as any)
+    }
 
     updateState({
       nutricao: {

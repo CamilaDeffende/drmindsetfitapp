@@ -8,8 +8,7 @@ export function runMFDevBootstrap() {
       url.searchParams.get("reset") === "1";
 
     const marker = "mf_dev_bootstrap_v1";
-    const alreadyRan = sessionStorage.getItem(marker) === "1";
-    const shouldNuke = forceReset || !alreadyRan;
+    const shouldNuke = forceReset;
 
     if (shouldNuke) {
       const keysToRemove: string[] = [];
@@ -48,6 +47,8 @@ export function runMFDevBootstrap() {
         url.searchParams.delete("reset");
         window.history.replaceState({}, "", url.toString());
       }
+    } else {
+      try { sessionStorage.setItem(marker, "1"); } catch {}
     }
   } catch (err) {
     console.warn("[MF] devBootstrap falhou:", err);

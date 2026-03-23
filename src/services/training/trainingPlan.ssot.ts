@@ -114,7 +114,9 @@ function normalizeExistingCanonicalWorkouts(activePlan: AnyObj): ActiveWorkoutSe
 }
 
 function buildFromSmartPlan(activePlan: AnyObj): { smartPlan: AnyObj | null; workouts: ActiveWorkoutSession[] } {
-  const existingSmartPlan = isObject(activePlan?.training?.smartPlan) ? activePlan.training.smartPlan : null;
+  const existingSmartPlanRaw = isObject(activePlan?.training?.smartPlan) ? activePlan.training.smartPlan : null;
+  const existingSmartPlan =
+    isObject(existingSmartPlanRaw?.plan) ? existingSmartPlanRaw.plan : existingSmartPlanRaw;
 
   if (existingSmartPlan) {
     return {

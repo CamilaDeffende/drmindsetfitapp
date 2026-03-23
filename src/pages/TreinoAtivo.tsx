@@ -244,6 +244,7 @@ export function TreinoAtivo() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [planRefreshTick, setPlanRefreshTick] = useState(0);
 
   const [treinoSelecionado, setTreinoSelecionado] = useState(0);
   const [exercicioAtual, setExercicioAtual] = useState(0);
@@ -251,8 +252,34 @@ export function TreinoAtivo() {
   const [tempoDecorrido, setTempoDecorrido] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
 
-  const canonicalDays = useMemo(() => normalizeCanonicalDays(), []);
-  const activePlanLegacyDays = useMemo(() => normalizeActivePlanLegacyDays(), []);
+  useEffect(() => {
+    const refresh = () => setPlanRefreshTick((prev) => prev + 1);
+
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "mf:activePlan:v1") {
+        refresh();
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
+  const canonicalDays = useMemo(() => normalizeCanonicalDays(), [planRefreshTick]);
+  const activePlanLegacyDays = useMemo(() => normalizeActivePlanLegacyDays(), [planRefreshTick]);
   const legacyDays = useMemo(() => normalizeLegacyDays(state), [state]);
   const treinoDias = canonicalDays.length
     ? canonicalDays
@@ -540,9 +567,6 @@ export function TreinoAtivo() {
                 >
                   Baixar PDF Premium
                 </button>
-                <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px]">
-                  Fonte: <b>{isCanonicalSource ? "training.workouts" : "state.treino (fallback)"}</b>
-                </span>
               </div>
 
               <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
