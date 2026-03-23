@@ -68,6 +68,62 @@ function toNum(v: unknown, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function toTitleLabel(value: unknown, fallback: string) {
+  const text = String(value ?? "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return text || fallback;
+}
+
+function countSelectedWorkoutDays(activePlan: any) {
+  const directDays = Array.isArray(activePlan?.training?.selectedDays)
+    ? activePlan.training.selectedDays
+    : [];
+
+  if (directDays.length) return directDays.length;
+
+  const draftDays = Array.isArray(activePlan?.draft?.step6?.days)
+    ? activePlan.draft.step6.days
+    : [];
+
+  if (draftDays.length) return draftDays.length;
+
+  const byModality =
+    activePlan?.draft?.step5?.diasPorModalidade ??
+    activePlan?.draft?.step6?.diasPorModalidade ??
+    {};
+
+  const uniqueDays = new Set<string>();
+
+  if (byModality && typeof byModality === "object") {
+    for (const days of Object.values(byModality)) {
+      if (!Array.isArray(days)) continue;
+      for (const day of days) {
+        const value = String(day ?? "").trim();
+        if (value) uniqueDays.add(value);
+      }
+    }
+  }
+
+  return uniqueDays.size;
+}
+
+function deriveWorkoutModality(activePlan: any) {
+  const draftModalities = Array.isArray(activePlan?.draft?.step5?.modalidades)
+    ? activePlan.draft.step5.modalidades
+    : [];
+
+  return toTitleLabel(
+    activePlan?.training?.modality ??
+      activePlan?.workout?.modality ??
+      activePlan?.draft?.step5?.primary ??
+      draftModalities[0],
+    "musculacao"
+  );
+}
+
 function sumMealMacros(meals: any[]) {
   const safeMeals = Array.isArray(meals) ? meals : [];
 
@@ -237,23 +293,39 @@ export function DashboardPremium() {
   }, []);
 
   useEffect(() => {
-    const hasCanonicalPlan = () => {
+    const syncNoPlan = () => {
       try {
         const ap = loadActivePlan();
         const workouts = getCanonicalTrainingWorkouts();
-        return !!ap || workouts.length > 0;
+        setNoPlan(!(!!ap || workouts.length > 0));
       } catch {
-        return false;
+        setNoPlan(true);
       }
     };
 
-    setNoPlan(!hasCanonicalPlan());
+    syncNoPlan();
 
-    const interval = window.setInterval(() => {
-      setNoPlan(!hasCanonicalPlan());
-    }, 1500);
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "mf:activePlan:v1") {
+        syncNoPlan();
+      }
+    };
 
-    return () => window.clearInterval(interval);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncNoPlan();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", syncNoPlan);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", syncNoPlan);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   const passosDiarios: PassosDia[] = Array.isArray((state as any)?.passosDiarios)
@@ -376,12 +448,11 @@ export function DashboardPremium() {
     (Array.isArray(activePlan?.training?.selectedDays)
       ? activePlan.training.selectedDays.length
       : NaN) ||
+    countSelectedWorkoutDays(activePlan) ||
     (Array.isArray(workoutWeek) ? workoutWeek.length : 0);
 
   const workoutModality =
-    activePlan?.training?.modality ??
-    activePlan?.workout?.modality ??
-    "musculacao";
+    deriveWorkoutModality(activePlan);
 
   const userFirstName =
     (state as any)?.perfil?.nomeCompleto?.split(" ")?.[0] ?? "Usuário";
@@ -476,7 +547,7 @@ export function DashboardPremium() {
             <p className="text-gray-400 mb-6">
               Inicie o questionário para desbloquear sua experiência premium
             </p>
-            <Button onClick={() => navigate("/")} className="w-full">
+            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full">
               Iniciar Agora
             </Button>
           </CardContent>
@@ -501,7 +572,7 @@ export function DashboardPremium() {
             </div>
 
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button className="w-full" onClick={() => navigate("/")}>
+              <Button className="w-full" onClick={() => navigate("/onboarding/step-1")}>
                 Criar / Recriar plano
               </Button>
               <Button
@@ -981,7 +1052,7 @@ export function DashboardPremium() {
                   <div className="pt-2">
                     <Button
                       onClick={() => navigate("/edit-diet")}
-                      className="w-full rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:brightness-110"
+                      className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent hover:brightness-110"
                     >
                       Editar dieta
                     </Button>

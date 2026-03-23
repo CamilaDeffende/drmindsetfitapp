@@ -42,6 +42,11 @@ const readActivePlan = (): any | null => {
   }
 };
 
+const hasCompletedOnboardingData = (activePlan: any, onboardingDone: boolean): boolean => {
+  if (onboardingDone) return true;
+  return Boolean(activePlan);
+};
+
 const buildStateFromActivePlan = (activePlan: any): Partial<DrMindSetfitState> => {
   if (!activePlan) return {};
 
@@ -158,6 +163,7 @@ const loadStateFromStorage = (): DrMindSetfitState => {
     const onboardingDone = readOnboardingDoneFlag();
     const activePlan = readActivePlan();
     const activePlanState = buildStateFromActivePlan(activePlan);
+    const hasCompletedData = hasCompletedOnboardingData(activePlan, onboardingDone);
 
     if (stored) {
       const parsed = JSON.parse(stored) as DrMindSetfitState;
@@ -165,11 +171,11 @@ const loadStateFromStorage = (): DrMindSetfitState => {
         ...initialState,
         ...parsed,
         ...activePlanState,
-        concluido: Boolean(parsed?.concluido) || onboardingDone,
+        concluido: Boolean(parsed?.concluido) || hasCompletedData,
       };
     }
 
-    if (onboardingDone) {
+    if (hasCompletedData) {
       return {
         ...initialState,
         ...activePlanState,
@@ -180,7 +186,7 @@ const loadStateFromStorage = (): DrMindSetfitState => {
     return {
       ...initialState,
       ...activePlanState,
-      concluido: onboardingDone,
+      concluido: hasCompletedData,
     };
   } catch (error) {
     console.error("Erro ao carregar estado:", error);
@@ -188,7 +194,7 @@ const loadStateFromStorage = (): DrMindSetfitState => {
 
   return {
     ...initialState,
-    concluido: readOnboardingDoneFlag(),
+    concluido: hasCompletedOnboardingData(readActivePlan(), readOnboardingDoneFlag()),
   };
 };
 
@@ -209,8 +215,9 @@ export function DrMindSetfitProvider({ children }: { children: ReactNode }) {
     const onboardingDone = readOnboardingDoneFlag();
     const activePlan = readActivePlan();
     const activePlanState = buildStateFromActivePlan(activePlan);
+    const hasCompletedData = hasCompletedOnboardingData(activePlan, onboardingDone);
 
-    if (onboardingDone && !state.concluido) {
+    if (hasCompletedData && !state.concluido) {
       setState((prev) => ({
         ...prev,
         ...activePlanState,
@@ -232,7 +239,7 @@ export function DrMindSetfitProvider({ children }: { children: ReactNode }) {
         const merged = {
           ...prev,
           ...activePlanState,
-          concluido: prev.concluido || onboardingDone,
+          concluido: prev.concluido || hasCompletedData,
         };
         saveStateToStorage(merged);
         return merged;

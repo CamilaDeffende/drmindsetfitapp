@@ -15,7 +15,12 @@ const getPrefilledNameFromOnboarding = (): string => {
     const raw = localStorage.getItem("mf:onboarding:draft:v1");
     if (!raw) return "";
     const draft = JSON.parse(raw);
-    const nome = String(draft?.step1?.nomeCompleto || "").trim();
+    const nome = String(
+      draft?.step1?.nomeCompleto ??
+      draft?.step1?.nome ??
+      draft?.step1?.fullName ??
+      ""
+    ).trim();
     return nome.length >= 3 ? nome : "";
   } catch {
     return "";

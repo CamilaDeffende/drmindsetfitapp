@@ -2,6 +2,103 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
+const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
+const ONBOARDING_DONE_KEY = "mf:onboarding:done:v1";
+const ONBOARDING_DRAFT_KEY = "mf:onboarding:draft:v1";
+
+function readJsonStorage<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeJsonStorage(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+function buildProfileAppData() {
+  const activePlan = readJsonStorage<any>(ACTIVE_PLAN_KEY);
+  const onboardingDraft = readJsonStorage<any>(ONBOARDING_DRAFT_KEY);
+
+  let onboardingDone = false;
+  try {
+    onboardingDone = localStorage.getItem(ONBOARDING_DONE_KEY) === "1";
+  } catch {}
+
+  return {
+    onboardingDone: onboardingDone || Boolean(activePlan),
+    activePlan,
+    onboardingDraft,
+    updatedAtISO: new Date().toISOString(),
+  };
+}
+
+async function syncLocalAppStateToProfile(userId: string, fullName?: string) {
+  if (!isSupabaseConfigured || !userId) return;
+
+  const payload = buildProfileAppData();
+  const hasMeaningfulData =
+    payload.onboardingDone || payload.activePlan || payload.onboardingDraft;
+
+  if (!hasMeaningfulData) return;
+
+  try {
+    await supabase.from("profiles").upsert(
+      {
+        user_id: userId,
+        ...(fullName ? { nome_completo: fullName } : {}),
+        data: payload,
+      },
+      { onConflict: "user_id" }
+    );
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn("[MF] Não foi possível sincronizar onboarding/plano no profile.", error);
+    }
+  }
+}
+
+async function hydrateLocalAppStateFromProfile(userId: string) {
+  if (!isSupabaseConfigured || !userId) return;
+
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("data")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      if (import.meta.env.DEV) {
+        console.warn("[MF] Falha ao carregar dados do profile.", error);
+      }
+      return;
+    }
+
+    const appData = data?.data ?? {};
+    const activePlan = appData?.activePlan ?? null;
+    const onboardingDraft = appData?.onboardingDraft ?? null;
+    const onboardingDone = Boolean(appData?.onboardingDone || activePlan);
+
+    if (activePlan) writeJsonStorage(ACTIVE_PLAN_KEY, activePlan);
+    if (onboardingDraft) writeJsonStorage(ONBOARDING_DRAFT_KEY, onboardingDraft);
+    if (onboardingDone) {
+      try {
+        localStorage.setItem(ONBOARDING_DONE_KEY, "1");
+      } catch {}
+    }
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn("[MF] Exceção ao hidratar onboarding/plano do profile.", error);
+    }
+  }
+}
+
 // MF_DEMO_ONCE_GUARD (StrictMode-safe)
 // Evita loops de DEMO que disparam setState/store em re-render/hidratação.
 const __mfOncePerSession = (key: string) => {
@@ -90,7 +187,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Modo REAL: usar Supabase
     supabase.auth
       .getSession()
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
+        if (session?.user?.id) {
+          await hydrateLocalAppStateFromProfile(session.user.id);
+        }
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -106,9 +206,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      void (async () => {
+        if (session?.user?.id) {
+          await hydrateLocalAppStateFromProfile(session.user.id);
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })();
     });
 
     return () => subscription.unsubscribe();
@@ -153,6 +258,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           if (import.meta.env.DEV) console.warn("⚠️ Exceção ao upsert do profile, seguindo mesmo assim.", e);
         }
+
+        await syncLocalAppStateToProfile(data.user.id, fullName);
       }
 
       return { error: null };
@@ -173,6 +280,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
+      if (!error) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user?.id) {
+          await syncLocalAppStateToProfile(user.id, user.user_metadata?.full_name);
+          await hydrateLocalAppStateFromProfile(user.id);
+        }
+      }
       return { error };
     } catch (error) {
       return { error: error as AuthError };

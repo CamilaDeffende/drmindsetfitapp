@@ -21,6 +21,7 @@ import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
 import { writeOnboardingDraftStorage, normalizeDraftKeys } from "@/services/ssot/onboardingDraft.bridge";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { useAuth } from "@/contexts/AuthContext";
 
 function mfNavGuard(to: string) {
   try {
@@ -156,6 +157,7 @@ export function OnboardingFlow() {
   const location = useLocation();
   const params = useParams();
   const { appReady } = useApp();
+  const auth = useAuth() as any;
   void appReady;
 
   const onboardingDone = isOnboardingDone();
@@ -257,6 +259,16 @@ export function OnboardingFlow() {
   useEffect(() => {
     saveDraft({ ...draft, activeIndex: active });
   }, [draft, active]);
+
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    } catch {
+      try {
+        window.scrollTo(0, 0);
+      } catch {}
+    }
+  }, [active]);
 
   const goNext = () => {
     setActive((x) => {
@@ -389,6 +401,8 @@ export function OnboardingFlow() {
             const plan = buildActivePlanFromDraft(draft as any);
             saveActivePlan(plan);
 
+            const isAuthenticated = Boolean(auth?.user ?? auth?.session?.user);
+
             try {
               localStorage.setItem(DONE_KEY, "1");
             } catch {}
@@ -402,9 +416,9 @@ export function OnboardingFlow() {
             } catch {}
 
             try {
-              navigate("/dashboard", { replace: true });
+              navigate(isAuthenticated ? "/dashboard" : "/signup?next=%2Fdashboard", { replace: true });
             } catch {
-              window.location.replace("/dashboard");
+              window.location.replace(isAuthenticated ? "/dashboard" : "/signup?next=%2Fdashboard");
             }
           }}
         />

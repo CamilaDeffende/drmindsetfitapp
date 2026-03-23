@@ -32,6 +32,73 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { loadActivePlan } from "@/services/plan.service";
 import { getHomeRoute } from "@/lib/subscription/premium";
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+
+function firstFiniteNumber(...values: unknown[]) {
+  for (const value of values) {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return 0;
+}
+
+function toTitleLabel(value: unknown, fallback: string) {
+  const text = String(value ?? "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return text || fallback;
+}
+
+function countSelectedWorkoutDays(activePlan: any) {
+  const directDays = Array.isArray(activePlan?.training?.selectedDays)
+    ? activePlan.training.selectedDays
+    : [];
+
+  if (directDays.length) return directDays.length;
+
+  const draftDays = Array.isArray(activePlan?.draft?.step6?.days)
+    ? activePlan.draft.step6.days
+    : [];
+
+  if (draftDays.length) return draftDays.length;
+
+  const byModality =
+    activePlan?.draft?.step5?.diasPorModalidade ??
+    activePlan?.draft?.step6?.diasPorModalidade ??
+    {};
+
+  const uniqueDays = new Set<string>();
+
+  if (byModality && typeof byModality === "object") {
+    for (const days of Object.values(byModality)) {
+      if (!Array.isArray(days)) continue;
+      for (const day of days) {
+        const value = String(day ?? "").trim();
+        if (value) uniqueDays.add(value);
+      }
+    }
+  }
+
+  return uniqueDays.size;
+}
+
+function deriveWorkoutModality(activePlan: any, stateTreino: any) {
+  const draftModalities = Array.isArray(activePlan?.draft?.step5?.modalidades)
+    ? activePlan.draft.step5.modalidades
+    : [];
+
+  return toTitleLabel(
+    activePlan?.training?.modality ??
+      activePlan?.workout?.modality ??
+      activePlan?.draft?.step5?.primary ??
+      draftModalities[0] ??
+      stateTreino?.divisaoSemanal ??
+      stateTreino?.modalidade,
+    "Treino personalizado"
+  );
+}
 
 function getNextMealByTime(meals: any[]) {
   if (!Array.isArray(meals) || meals.length === 0) return null;
@@ -127,7 +194,10 @@ export function Dashboard() {
     ? (state as any).treino.historicoCargas
     : [];
 
+  const adaptedNutrition = adaptActivePlanNutrition(activePlan?.nutrition);
+
   const nutrition =
+    adaptedNutrition ??
     activePlan?.nutrition ??
     (state as any)?.nutricao ??
     (state as any)?.dieta ??
@@ -148,53 +218,46 @@ export function Dashboard() {
     ? activePlan.meals
     : [];
 
-  const caloriasMeta = Number(
-    nutrition?.kcalTarget ??
-      nutrition?.kcal ??
-      nutrition?.kcalAlvo ??
-      nutrition?.macros?.calorias ??
-      activePlan?.metabolic?.targetKcal ??
-      (state as any)?.metabolismo?.caloriasAlvo ??
-      2000
+  const caloriasMeta =
+    firstFiniteNumber(
+      nutrition?.kcalTarget,
+      nutrition?.kcal,
+      nutrition?.kcalAlvo,
+      nutrition?.macros?.calorias,
+      activePlan?.metabolic?.targetKcal,
+      (state as any)?.metabolismo?.caloriasAlvo
+    ) || 2000;
+
+  const proteina = firstFiniteNumber(
+    nutrition?.macros?.proteina,
+    nutrition?.macros?.protein,
+    activePlan?.macros?.proteinG
   );
 
-  const proteina = Number(
-    nutrition?.macros?.proteina ??
-      nutrition?.macros?.protein ??
-      activePlan?.macros?.proteinG ??
-      0
+  const carboidratos = firstFiniteNumber(
+    nutrition?.macros?.carboidratos,
+    nutrition?.macros?.carbs,
+    activePlan?.macros?.carbsG,
+    activePlan?.macros?.carbG,
+    activePlan?.macros?.carbohydrates
   );
 
-  const carboidratos = Number(
-    nutrition?.macros?.carboidratos ??
-      nutrition?.macros?.carbs ??
-      activePlan?.macros?.carbsG ??
-      activePlan?.macros?.carbG ??
-      activePlan?.macros?.carbohydrates ??
-      0
+  const gorduras = firstFiniteNumber(
+    nutrition?.macros?.gorduras,
+    nutrition?.macros?.fat,
+    activePlan?.macros?.fatG
   );
 
-  const gorduras = Number(
-    nutrition?.macros?.gorduras ??
-      nutrition?.macros?.fat ??
-      activePlan?.macros?.fatG ??
-      0
+  const treinoFrequencia = firstFiniteNumber(
+    training?.frequency,
+    Array.isArray(training?.selectedDays) ? training.selectedDays.length : undefined,
+    Array.isArray(training?.week) ? training.week.length : undefined,
+    Array.isArray(training?.days) ? training.days.length : undefined,
+    countSelectedWorkoutDays(activePlan),
+    (state as any)?.treino?.frequencia
   );
 
-  const treinoFrequencia = Number(
-    training?.frequency ??
-      (Array.isArray(training?.selectedDays) ? training.selectedDays.length : NaN) ??
-      (Array.isArray(training?.week) ? training.week.length : NaN) ??
-      (Array.isArray(training?.days) ? training.days.length : NaN) ??
-      (state as any)?.treino?.frequencia ??
-      0
-  );
-
-  const treinoModalidade =
-    training?.modality ??
-    training?.type ??
-    (state as any)?.treino?.divisaoSemanal ??
-    "Treino personalizado";
+  const treinoModalidade = deriveWorkoutModality(activePlan, (state as any)?.treino);
 
   const nomeUsuario =
     (state as any)?.perfil?.nomeCompleto?.split(" ")?.[0] ?? "Usuário";
@@ -300,8 +363,9 @@ export function Dashboard() {
 
           <CardContent>
             <Button
+              variant="ghost"
               onClick={() => navigate("/onboarding/step-1")}
-              className="w-full rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white"
+              className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
             >
               Iniciar questionário
             </Button>
@@ -343,8 +407,9 @@ export function Dashboard() {
               </Button>
 
               <Button
+                variant="ghost"
                 onClick={goPremium}
-                className="rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white"
+                className="overflow-hidden rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
               >
                 <Dumbbell className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Treinar</span>
@@ -374,8 +439,9 @@ export function Dashboard() {
 
             <div className="shrink-0">
               <Button
+                variant="ghost"
                 onClick={goPremium}
-                className="h-12 rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-5 text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)]"
+                className="h-12 overflow-hidden rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-5 text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:bg-transparent"
               >
                 Ver premium
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -553,9 +619,10 @@ export function Dashboard() {
               </div>
 
               <Button
+                variant="ghost"
                 onClick={goPremium}
                 size="lg"
-                className="w-full rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white"
+                className="w-full overflow-hidden rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
               >
                 <UtensilsCrossed className="w-4 h-4 mr-2" />
                 Desbloquear dieta completa
@@ -661,9 +728,10 @@ export function Dashboard() {
 
             <CardContent>
               <Button
+                variant="ghost"
                 onClick={goPremium}
                 size="lg"
-                className="w-full rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white"
+                className="w-full overflow-hidden rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
               >
                 <Dumbbell className="w-4 h-4 mr-2" />
                 Desbloquear treino
