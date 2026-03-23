@@ -5,6 +5,7 @@ import StatsOverview from "@/components/analytics/StatsOverview";
 import WorkoutsChart from "@/components/analytics/WorkoutsChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 const DAY_PRESETS = [7, 14, 30, 90] as const;
 
@@ -28,6 +29,15 @@ export default function ProgressPage() {
           <div className="text-xs text-muted-foreground">Histórico + métricas dos últimos {days} dias</div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => nav("/ai")}
+            className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+          >
+            <X className="mr-1 h-4 w-4" />
+            Fechar
+          </Button>
           {DAY_PRESETS.map((d) => (
             <Button
               key={d}

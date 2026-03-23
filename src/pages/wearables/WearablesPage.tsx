@@ -4,6 +4,7 @@ import { Activity, ArrowLeft, RefreshCw, Watch } from "lucide-react";
 import HeartRateMonitor from "@/components/wearables/HeartRateMonitor";
 import WearableDeviceCard from "@/components/wearables/WearableDeviceCard";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { getHomeRoute } from "@/lib/subscription/premium";
 import { Button } from "@/components/ui/button";
 import { useWearable } from "@/hooks/useWearable/useWearable";
 import { historyService, WorkoutType } from "@/services/history/HistoryService";
@@ -103,11 +104,11 @@ export default function WearablesPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(getHomeRoute())}
               className="border-white/10 bg-white/5 text-white hover:bg-white/10"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Dashboard
+              Dashboard Premium
             </Button>
             <Button
               variant="ghost"

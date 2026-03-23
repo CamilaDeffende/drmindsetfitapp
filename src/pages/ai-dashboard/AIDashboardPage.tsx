@@ -1,5 +1,6 @@
 import { AIInsights } from "@/components/ai-insights/AIInsights";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { getHomeRoute } from "@/lib/subscription/premium";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BrainCircuit, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -24,11 +25,11 @@ export default function AIDashboardPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(getHomeRoute())}
               className="border-white/10 bg-white/5 text-white hover:bg-white/10"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Dashboard
+              Dashboard Premium
             </Button>
             <Button
               variant="ghost"

@@ -9,19 +9,48 @@ import { Mail, Lock, Check, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from "@/components/ui/button";
+import { loadActivePlan } from "@/services/plan.service";
+import { loadOnboardingProgress } from "@/lib/onboardingProgress";
 
 const getPrefilledNameFromOnboarding = (): string => {
   try {
-    const raw = localStorage.getItem("mf:onboarding:draft:v1");
-    if (!raw) return "";
-    const draft = JSON.parse(raw);
-    const nome = String(
-      draft?.step1?.nomeCompleto ??
-      draft?.step1?.nome ??
-      draft?.step1?.fullName ??
-      ""
-    ).trim();
-    return nome.length >= 3 ? nome : "";
+    const candidates = [
+      (() => {
+        const raw = localStorage.getItem("mf:onboarding:draft:v1");
+        if (!raw) return "";
+        const draft = JSON.parse(raw);
+        return String(
+          draft?.step1?.nomeCompleto ??
+            draft?.step1?.nome ??
+            draft?.step1?.fullName ??
+            ""
+        ).trim();
+      })(),
+      (() => {
+        const progress = loadOnboardingProgress();
+        return String(
+          progress?.data?.step1?.nomeCompleto ??
+            progress?.data?.step1?.nome ??
+            progress?.data?.step1?.fullName ??
+            ""
+        ).trim();
+      })(),
+      (() => {
+        const plan = loadActivePlan() as any;
+        return String(
+          plan?.draft?.step1?.nomeCompleto ??
+            plan?.draft?.step1?.nome ??
+            plan?.draft?.step1?.fullName ??
+            plan?.perfil?.nomeCompleto ??
+            plan?.perfil?.nome ??
+            plan?.profile?.name ??
+            plan?.profile?.fullName ??
+            ""
+        ).trim();
+      })(),
+    ];
+
+    return candidates.find((value) => value.length >= 3) ?? "";
   } catch {
     return "";
   }
@@ -99,6 +128,17 @@ export function SignUp() {
     password: "",
     confirmPassword: "",
   }));
+
+  useEffect(() => {
+    const prefilledName = getPrefilledNameFromOnboarding();
+    if (!prefilledName) return;
+
+    setFormData((current) =>
+      current.fullName.trim().length >= 3
+        ? current
+        : { ...current, fullName: prefilledName }
+    );
+  }, [location.key, location.search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

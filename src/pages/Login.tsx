@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Mail, ChevronLeft } from "lucide-react";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 
 function getParams(search: string) {
@@ -24,7 +25,7 @@ export function Login() {
   const location = useLocation();
   const params = React.useMemo(() => getParams(location.search), [location.search]);
 
-  const next = params.get("next") || "/dashboard";
+  const next = params.get("next") || getHomeRoute();
   const premiumFromUrl = params.get("premium") === "1";
   const planFromUrl = params.get("plan") || "mensal";
   const shouldImportGuestState = params.has("next");

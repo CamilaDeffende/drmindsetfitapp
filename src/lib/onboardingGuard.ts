@@ -1,3 +1,5 @@
+import { getHomeRoute } from "./subscription/premium";
+
 export function clampStep(n: number, min = 1, max = 99): number {
   if (!Number.isFinite(n)) return min;
   return Math.max(min, Math.min(max, n));
@@ -16,7 +18,7 @@ export function guardOnboardingPath(
   nextAllowedStep: number,
   done: boolean
 ): string | null {
-  if (done) return "/dashboard";
+  if (done) return getHomeRoute();
 
   const next = clampStep(nextAllowedStep, 1, 99);
 

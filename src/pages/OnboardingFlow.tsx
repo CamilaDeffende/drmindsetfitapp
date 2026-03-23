@@ -22,6 +22,7 @@ import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
 import { writeOnboardingDraftStorage, normalizeDraftKeys } from "@/services/ssot/onboardingDraft.bridge";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { useAuth } from "@/contexts/AuthContext";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 function mfNavGuard(to: string) {
   try {
@@ -164,7 +165,7 @@ export function OnboardingFlow() {
 
   useEffect(() => {
     if (onboardingDone) {
-      navigate("/dashboard", { replace: true });
+      navigate(getHomeRoute(), { replace: true });
     }
   }, [onboardingDone, navigate]);
 
@@ -411,14 +412,25 @@ export function OnboardingFlow() {
               migrateLegacyToSSOT();
             } catch {}
 
-            try {
-              clearOnboardingDraft();
-            } catch {}
+            if (isAuthenticated) {
+              try {
+                clearOnboardingDraft();
+              } catch {}
+            }
 
             try {
-              navigate(isAuthenticated ? "/dashboard" : "/signup?next=%2Fdashboard", { replace: true });
+              navigate(
+                isAuthenticated
+                  ? getHomeRoute()
+                  : `/signup?next=${encodeURIComponent(getHomeRoute())}`,
+                { replace: true }
+              );
             } catch {
-              window.location.replace(isAuthenticated ? "/dashboard" : "/signup?next=%2Fdashboard");
+              window.location.replace(
+                isAuthenticated
+                  ? getHomeRoute()
+                  : `/signup?next=${encodeURIComponent(getHomeRoute())}`
+              );
             }
           }}
         />
