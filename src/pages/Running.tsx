@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getHomeRoute } from '@/lib/subscription/premium'
-import { Play, Pause, Square, Home, MapPin, TrendingUp, Timer } from 'lucide-react'
+import { Play, Pause, Square, ArrowLeft, MapPin, TrendingUp, Timer } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export function Running() {
@@ -75,13 +75,18 @@ export function Running() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(getHomeRoute())}
+            className="hover:bg-black/5 dark:hover:bg-white/10"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] bg-clip-text text-transparent hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
             Running
           </h1>
-          <Button variant="outline" size="icon" onClick={() => navigate(getHomeRoute())}>
-            <Home className="w-4 h-4" />
-          </Button>
         </div>
       </header>
 

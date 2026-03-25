@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { REPORT_HISTORY_BASE_KEY, CURRENT_PATIENT_KEY, reportHistoryKey, PATIENTS_KEY, PDF_VARIANT_KEY } from "@/lib/storageKeys";
+import { useNavigate } from "react-router-dom";
+import { getHomeRoute } from "@/lib/subscription/premium";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 type ReportHistoryItem = {
   id: string;
@@ -73,6 +77,7 @@ function Chip({ variant }: { variant: "coach" | "patient" }) {
 }
 
 export default function HistoryReports() {
+  const navigate = useNavigate();
   const [patientId, _setPatientId] = useState<string>(() => {
   try { return localStorage.getItem(CURRENT_PATIENT_KEY) || "default"; } catch { return "default"; }
 });
@@ -619,20 +624,16 @@ const [items, setItems] = useState<ReportHistoryItem[]>([]);
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <a
-            href="#/"
-            style={{
-              padding: "8px 10px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.14)",
-              background: "transparent",
-              color: "white",
-              fontSize: 12,
-              textDecoration: "none",
-            }}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(getHomeRoute())}
+            className="h-9 w-9 rounded-xl text-white hover:bg-white/10"
+            title="Voltar ao dashboard"
           >
-            Voltar ao Dashboard
-          </a>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <button
             onClick={refresh}
             style={{ padding: "8px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.14)", background: "transparent", color: "white", cursor: "pointer", fontSize: 12 }}

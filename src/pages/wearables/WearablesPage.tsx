@@ -90,8 +90,16 @@ export default function WearablesPage() {
   return (
     <div className="min-h-screen mf-app-bg mf-bg-neon text-white">
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(getHomeRoute())}
+              className="mt-1 shrink-0 hover:bg-white/10"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             <BrandIcon size={56} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.28)]" />
             <div>
               <div className="text-[24px] font-semibold tracking-tight">Wearables</div>
@@ -102,14 +110,6 @@ export default function WearablesPage() {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate(getHomeRoute())}
-              className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Dashboard Premium
-            </Button>
             <Button
               variant="ghost"
               onClick={onConnect}

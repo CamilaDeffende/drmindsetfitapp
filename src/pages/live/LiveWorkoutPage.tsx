@@ -69,18 +69,20 @@ export default function LiveWorkoutPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-white">{title}</h1>
-          <p className="text-sm text-zinc-400">{subtitle}</p>
+        <div className="flex items-start gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(getHomeRoute())}
+            className="mt-1 shrink-0 hover:bg-white/10"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold text-white">{title}</h1>
+            <p className="text-sm text-zinc-400">{subtitle}</p>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate(getHomeRoute())}
-          className="border-zinc-700 bg-zinc-900/70 text-white hover:bg-zinc-800"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
         {gps.error ? (
           <p className="text-sm text-red-400">Erro: {gps.error}</p>
         ) : null}
