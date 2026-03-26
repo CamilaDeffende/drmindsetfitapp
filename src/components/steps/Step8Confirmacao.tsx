@@ -42,10 +42,40 @@ export default function Step8Confirmacao({
     (state as any)?.resultadoMetabolico ??
     {};
 
-  const nutricao =
+  const extractMacroScore = (source: any): number => {
+    const macros = source?.macros ?? source ?? {};
+    const values = [
+      macros?.proteina,
+      macros?.proteinas,
+      macros?.protein,
+      macros?.proteinG,
+      macros?.proteina_g,
+      macros?.carboidratos,
+      macros?.carbo,
+      macros?.carbs,
+      macros?.carbsG,
+      macros?.carbo_g,
+      macros?.gorduras,
+      macros?.gordura,
+      macros?.fat,
+      macros?.fatG,
+      macros?.gordura_g,
+    ]
+      .map((value) => Number(value ?? 0))
+      .filter((value) => Number.isFinite(value) && value > 0);
+
+    return values.reduce((acc, value) => acc + value, 0);
+  };
+
+  const stateNutrition =
     (state as any)?.nutricao &&
     Object.keys((state as any).nutricao).length
       ? (state as any).nutricao
+      : null;
+
+  const nutricao =
+    extractMacroScore(stateNutrition) >= extractMacroScore(step4Nutrition)
+      ? stateNutrition ?? step4Nutrition
       : step4Nutrition;
 
   const summaryMacros =
@@ -88,6 +118,10 @@ export default function Step8Confirmacao({
       ? Number(macros.proteinas)
       : macros?.protein != null
       ? Number(macros.protein)
+      : macros?.proteinG != null
+      ? Number(macros.proteinG)
+      : macros?.proteina_g != null
+      ? Number(macros.proteina_g)
       : null;
 
   const carboidratos: number | null =
@@ -97,6 +131,10 @@ export default function Step8Confirmacao({
       ? Number(macros.carbo)
       : macros?.carbs != null
       ? Number(macros.carbs)
+      : macros?.carbsG != null
+      ? Number(macros.carbsG)
+      : macros?.carbo_g != null
+      ? Number(macros.carbo_g)
       : null;
 
   const gorduras: number | null =
@@ -106,6 +144,10 @@ export default function Step8Confirmacao({
       ? Number(macros.gordura)
       : macros?.fat != null
       ? Number(macros.fat)
+      : macros?.fatG != null
+      ? Number(macros.fatG)
+      : macros?.gordura_g != null
+      ? Number(macros.gordura_g)
       : null;
 
   const refeicoes: any[] = Array.isArray(nutricao?.refeicoes)

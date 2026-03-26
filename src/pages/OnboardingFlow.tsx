@@ -160,14 +160,15 @@ export function OnboardingFlow() {
   const { appReady } = useApp();
   const auth = useAuth() as any;
   void appReady;
+  const [isHandingOffAfterConfirm, setIsHandingOffAfterConfirm] = useState(false);
 
   const onboardingDone = isOnboardingDone();
 
   useEffect(() => {
-    if (onboardingDone) {
+    if (onboardingDone && !isHandingOffAfterConfirm) {
       navigate(getHomeRoute(), { replace: true });
     }
-  }, [onboardingDone, navigate]);
+  }, [onboardingDone, isHandingOffAfterConfirm, navigate]);
 
   const mfClampStep = (n: number) => Math.max(1, Math.min(8, n));
 
@@ -227,7 +228,6 @@ export function OnboardingFlow() {
     const i = Number(loadDraft()?.activeIndex ?? 0);
     return Number.isFinite(i) ? i : 0;
   });
-  const [isHandingOffAfterConfirm, setIsHandingOffAfterConfirm] = useState(false);
 
   const __clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
   const __stepFromUrl = (() => {
@@ -404,7 +404,10 @@ export function OnboardingFlow() {
             const plan = buildActivePlanFromDraft(draft as any);
             saveActivePlan(plan);
 
-            const isAuthenticated = Boolean(auth?.user ?? auth?.session?.user);
+            const authUser = auth?.user ?? auth?.session?.user ?? null;
+            const isAuthenticated = Boolean(
+              authUser && authUser.id && authUser.id !== "demo-user-123"
+            );
 
             try {
               localStorage.setItem(DONE_KEY, "1");
@@ -421,17 +424,23 @@ export function OnboardingFlow() {
             }
 
             try {
+              const signupHref = `/signup?next=${encodeURIComponent(
+                getHomeRoute()
+              )}&source=onboarding`;
               navigate(
                 isAuthenticated
                   ? getHomeRoute()
-                  : `/signup?next=${encodeURIComponent(getHomeRoute())}`,
+                  : signupHref,
                 { replace: true }
               );
             } catch {
+              const signupHref = `/signup?next=${encodeURIComponent(
+                getHomeRoute()
+              )}&source=onboarding`;
               window.location.replace(
                 isAuthenticated
                   ? getHomeRoute()
-                  : `/signup?next=${encodeURIComponent(getHomeRoute())}`
+                  : signupHref
               );
             }
           }}

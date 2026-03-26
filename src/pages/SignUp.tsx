@@ -83,20 +83,24 @@ export function SignUp() {
 
   const premiumFromUrl = searchParams.get("premium") === "1";
   const planFromUrl = searchParams.get("plan") || "mensal";
+  const source = searchParams.get("source") || "";
   const shouldImportGuestState = searchParams.has("next");
 
   const loginHref = useMemo(() => {
     const params = new URLSearchParams();
     params.set("next", next);
+    if (source) params.set("source", source);
 
     if (premiumFromUrl) params.set("premium", "1");
     if (planFromUrl) params.set("plan", planFromUrl);
 
     return `/login?${params.toString()}`;
-  }, [next, premiumFromUrl, planFromUrl]);
+  }, [next, premiumFromUrl, planFromUrl, source]);
 
   useEffect(() => {
-    if (!loading && user) {
+    const hasRealUser = Boolean(user && user.id !== "demo-user-123");
+
+    if (!loading && hasRealUser) {
       if (premiumFromUrl) {
         try {
           localStorage.setItem("mindsetfit:isSubscribed", "true");
