@@ -380,7 +380,7 @@ export function Dashboard() {
             <Button
               variant="ghost"
               onClick={() => navigate("/onboarding/step-1")}
-              className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
+              className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
             >
               Iniciar onboarding
             </Button>
@@ -424,7 +424,7 @@ export function Dashboard() {
               <Button
                 variant="ghost"
                 onClick={goPremium}
-                className="overflow-hidden rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
+                className="overflow-hidden rounded-[18px] border border-cyan-300/20 !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
               >
                 <Dumbbell className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Treinar</span>
@@ -456,7 +456,7 @@ export function Dashboard() {
               <Button
                 variant="ghost"
                 onClick={goPremium}
-                className="h-12 overflow-hidden rounded-[18px] border border-cyan-300/20 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-5 text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:bg-transparent"
+                className="h-12 overflow-hidden rounded-[18px] border border-cyan-300/20 !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-5 text-white !shadow-none hover:bg-transparent"
               >
                 Ver premium
                 <ArrowRight className="ml-2 h-4 w-4" />

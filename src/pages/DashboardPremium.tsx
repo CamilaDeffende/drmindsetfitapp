@@ -574,7 +574,7 @@ export function DashboardPremium() {
             <Button
               variant="ghost"
               onClick={() => navigate("/onboarding/step-1")}
-              className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
+              className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
             >
               Iniciar Agora
             </Button>
@@ -602,7 +602,7 @@ export function DashboardPremium() {
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button
                 variant="ghost"
-                className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
+                className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
                 onClick={() => navigate("/onboarding/step-1")}
               >
                 Criar / Recriar plano
@@ -1083,8 +1083,9 @@ export function DashboardPremium() {
 
                   <div className="pt-2">
                     <Button
+                      variant="ghost"
                       onClick={() => navigate("/edit-diet")}
-                      className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent hover:brightness-110"
+                      className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent hover:brightness-110"
                     >
                       Editar dieta
                     </Button>

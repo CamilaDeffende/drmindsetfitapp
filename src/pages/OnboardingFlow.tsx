@@ -403,6 +403,7 @@ export function OnboardingFlow() {
             setIsHandingOffAfterConfirm(true);
             const plan = buildActivePlanFromDraft(draft as any);
             saveActivePlan(plan);
+            const postOnboardingTarget = "/assinatura?source=onboarding";
 
             const authUser = auth?.user ?? auth?.session?.user ?? null;
             const isAuthenticated = Boolean(
@@ -418,6 +419,11 @@ export function OnboardingFlow() {
             } catch {}
 
             if (isAuthenticated) {
+              void auth?.syncProfileAppState?.(
+                (draft as any)?.step1?.nomeCompleto ??
+                  (draft as any)?.step1?.nome ??
+                  authUser?.user_metadata?.full_name
+              );
               try {
                 clearOnboardingDraft();
               } catch {}
@@ -425,21 +431,21 @@ export function OnboardingFlow() {
 
             try {
               const signupHref = `/signup?next=${encodeURIComponent(
-                getHomeRoute()
+                postOnboardingTarget
               )}&source=onboarding`;
               navigate(
                 isAuthenticated
-                  ? getHomeRoute()
+                  ? postOnboardingTarget
                   : signupHref,
                 { replace: true }
               );
             } catch {
               const signupHref = `/signup?next=${encodeURIComponent(
-                getHomeRoute()
+                postOnboardingTarget
               )}&source=onboarding`;
               window.location.replace(
                 isAuthenticated
-                  ? getHomeRoute()
+                  ? postOnboardingTarget
                   : signupHref
               );
             }

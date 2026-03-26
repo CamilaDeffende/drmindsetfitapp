@@ -117,6 +117,35 @@ function normalizeProfileAppData(raw: any) {
   };
 }
 
+function normalizeProfileColumns(row: any) {
+  const legacy = normalizeProfileAppData(row?.data);
+
+  const activePlan =
+    row?.active_plan ??
+    row?.activePlan ??
+    legacy.activePlan ??
+    null;
+
+  const onboardingDraft =
+    row?.onboarding_draft ??
+    row?.onboardingDraft ??
+    legacy.onboardingDraft ??
+    null;
+
+  const onboardingDone = Boolean(
+    row?.onboarding_done ??
+      row?.onboardingDone ??
+      legacy.onboardingDone ??
+      activePlan
+  );
+
+  return {
+    activePlan,
+    onboardingDraft,
+    onboardingDone,
+  };
+}
+
 async function syncLocalAppStateToProfile(userId: string, fullName?: string) {
   if (!isSupabaseConfigured || !userId) return;
 
@@ -131,6 +160,9 @@ async function syncLocalAppStateToProfile(userId: string, fullName?: string) {
       {
         user_id: userId,
         ...(fullName ? { nome_completo: fullName } : {}),
+        active_plan: payload.activePlan,
+        onboarding_draft: payload.onboardingDraft,
+        onboarding_synced_at: payload.updatedAtISO,
         data: payload,
       },
       { onConflict: "user_id" }
@@ -148,7 +180,7 @@ async function hydrateLocalAppStateFromProfile(userId: string) {
   try {
     const { data, error } = await supabase
       .from("profiles")
-      .select("data")
+      .select("data, active_plan, onboarding_draft, onboarding_synced_at")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -159,7 +191,7 @@ async function hydrateLocalAppStateFromProfile(userId: string) {
       return;
     }
 
-    const { activePlan, onboardingDraft, onboardingDone } = normalizeProfileAppData(data?.data);
+    const { activePlan, onboardingDraft, onboardingDone } = normalizeProfileColumns(data);
     const hasProfileAppData = Boolean(activePlan || onboardingDraft || onboardingDone);
 
     if (!hasProfileAppData) {
@@ -207,6 +239,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  syncProfileAppState: (fullName?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -335,6 +368,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 user_id: data.user.id,
                 nome_completo: fullName,
                 data: {},
+                active_plan: null,
+                onboarding_draft: null,
+                onboarding_synced_at: null,
               },
               { onConflict: "user_id" }
             );
@@ -421,6 +457,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const syncProfileAppState = async (fullName?: string) => {
+    const currentUser = user ?? session?.user ?? null;
+    if (!currentUser?.id || currentUser.id === "demo-user-123") return;
+
+    await syncLocalAppStateToProfile(
+      currentUser.id,
+      fullName ?? currentUser.user_metadata?.full_name
+    );
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -429,6 +475,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    syncProfileAppState,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
