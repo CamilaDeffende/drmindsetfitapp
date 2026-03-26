@@ -5,6 +5,11 @@ export type ActiveWorkoutExercise = {
   name: string;
   muscleGroup?: string;
   equipment?: string;
+  mediaUrl?: string;
+  mediaType?: "image" | "gif" | "mp4" | "webm";
+  posterUrl?: string;
+  targetMuscles?: string[];
+  sourceLabel?: string;
   sets?: number;
   reps?: string;
   restSec?: number;

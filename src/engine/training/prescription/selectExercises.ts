@@ -14,7 +14,31 @@ function compatible(exercise: ExerciseDefinition, profile: TrainingProfile): boo
   return true;
 }
 
-export function selectExercises(focus: SessionFocus, profile: TrainingProfile): ExerciseDefinition[] {
+function buildSelectionSeed(focus: SessionFocus, profile: TrainingProfile, dayIndex: number) {
+  return [
+    focus,
+    profile.goal,
+    profile.level,
+    profile.equipmentProfile,
+    profile.weeklyDays,
+    profile.sessionDurationMin,
+    dayIndex,
+  ].join("|");
+}
+
+function hashString(value: string) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+export function selectExercises(
+  focus: SessionFocus,
+  profile: TrainingProfile,
+  dayIndex = 0
+): ExerciseDefinition[] {
   const pool = EXERCISES.filter((item) => compatible(item, profile));
 
   const byFocus: Record<SessionFocus, MovementPattern[]> = {
@@ -30,7 +54,20 @@ export function selectExercises(focus: SessionFocus, profile: TrainingProfile): 
   };
 
   const targets = byFocus[focus] ?? byFocus.FULL_BODY;
+  const usedIds = new Set<string>();
+
   return targets
-    .map((pattern) => pool.find((item) => item.movementPattern === pattern))
+    .map((pattern, patternIndex) => {
+      const matches = pool.filter(
+        (item) => item.movementPattern === pattern && !usedIds.has(item.id)
+      );
+
+      if (!matches.length) return null;
+
+      const seed = hashString(buildSelectionSeed(focus, profile, dayIndex) + `|${pattern}|${patternIndex}`);
+      const pick = matches[seed % matches.length];
+      usedIds.add(pick.id);
+      return pick;
+    })
     .filter(Boolean) as ExerciseDefinition[];
 }

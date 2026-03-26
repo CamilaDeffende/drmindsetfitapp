@@ -27,6 +27,7 @@ import {
   getCanonicalTrainingExercises,
   getCanonicalTrainingSessionByIndex,
 } from "@/services/training/activeTrainingSessions.bridge";
+import { lookupExerciseVisual } from "@/services/training/exerciseMediaCatalog";
 import {
   beginTrainingExecutionSession,
   completeTrainingExecutionSession,
@@ -86,6 +87,11 @@ type CanonicalExerciseView = {
   equipamento?: string;
   grupoMuscular?: string;
   descricao?: string;
+  mediaUrl?: string;
+  mediaType?: "image" | "gif" | "mp4" | "webm";
+  posterUrl?: string;
+  targetMuscles?: string[];
+  sourceLabel?: string;
   series: number;
   repeticoes: string;
   descanso: number;
@@ -109,6 +115,20 @@ type CanonicalWorkoutDayView = {
 function safeNum(value: unknown, fallback: number) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function withExerciseVisual<T extends { id: string; nome: string; mediaUrl?: string; mediaType?: "image" | "gif" | "mp4" | "webm"; posterUrl?: string; targetMuscles?: string[]; sourceLabel?: string }>(
+  exercise: T
+): T {
+  const visual = lookupExerciseVisual({ exerciseId: exercise.id, name: exercise.nome });
+  return {
+    ...exercise,
+    mediaUrl: exercise.mediaUrl ?? visual?.mediaUrl,
+    mediaType: exercise.mediaType ?? visual?.mediaType,
+    posterUrl: exercise.posterUrl ?? visual?.posterUrl,
+    targetMuscles: exercise.targetMuscles ?? visual?.targetMuscles,
+    sourceLabel: exercise.sourceLabel ?? visual?.sourceLabel,
+  };
 }
 
 function normalizeLegacyDays(state: any): CanonicalWorkoutDayView[] {
@@ -250,6 +270,7 @@ export function TreinoAtivo() {
   const [treinoSelecionado, setTreinoSelecionado] = useState(0);
   const [exercicioAtual, setExercicioAtual] = useState(0);
   const [exerciseLogs, setExerciseLogs] = useState<Record<string, SerieDados[]>>({});
+  const [mediaHidden, setMediaHidden] = useState<Record<string, boolean>>({});
   const [tempoDecorrido, setTempoDecorrido] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
 
@@ -282,11 +303,19 @@ export function TreinoAtivo() {
   const canonicalDays = useMemo(() => normalizeCanonicalDays(), [planRefreshTick]);
   const activePlanLegacyDays = useMemo(() => normalizeActivePlanLegacyDays(), [planRefreshTick]);
   const legacyDays = useMemo(() => normalizeLegacyDays(state), [state]);
-  const treinoDias = canonicalDays.length
+  const treinoDiasBase = canonicalDays.length
     ? canonicalDays
     : activePlanLegacyDays.length
       ? activePlanLegacyDays
       : legacyDays;
+  const treinoDias = useMemo(
+    () =>
+      treinoDiasBase.map((day) => ({
+        ...day,
+        exercicios: Array.isArray(day.exercicios) ? day.exercicios.map((item) => withExerciseVisual(item)) : [],
+      })),
+    [treinoDiasBase]
+  );
   const isCanonicalSource = canonicalDays.length > 0;
 
   const treino = treinoDias[treinoSelecionado];
@@ -688,6 +717,65 @@ export function TreinoAtivo() {
           </CardHeader>
 
           <CardContent className="space-y-4">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+              {exercicio.mediaUrl && !mediaHidden[exercicio.id] ? (
+                exercicio.mediaType === "mp4" || exercicio.mediaType === "webm" ? (
+                  <video
+                    key={exercicio.mediaUrl}
+                    className="aspect-video w-full bg-black object-cover"
+                    controls
+                    playsInline
+                    muted
+                    loop
+                    poster={exercicio.posterUrl}
+                    onError={() => setMediaHidden((prev) => ({ ...prev, [exercicio.id]: true }))}
+                  >
+                    <source src={exercicio.mediaUrl} type={`video/${exercicio.mediaType}`} />
+                  </video>
+                ) : (
+                  <img
+                    src={exercicio.mediaUrl}
+                    alt={exercicio.nome}
+                    className="aspect-video w-full bg-black object-cover"
+                    onError={() => setMediaHidden((prev) => ({ ...prev, [exercicio.id]: true }))}
+                  />
+                )
+              ) : (
+                <div className="aspect-video w-full bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/60 p-4">
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.24em] text-cyan-200/70">
+                        Preview do movimento
+                      </div>
+                      <div className="mt-2 text-lg font-semibold text-white">{exercicio.nome}</div>
+                      <div className="mt-1 text-sm text-white/70">
+                        {exercicio.grupoMuscular ?? "Execucao guiada do exercicio"}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {Array.isArray(exercicio.targetMuscles) && exercicio.targetMuscles.length ? (
+                        <div className="flex flex-wrap gap-2">
+                          {exercicio.targetMuscles.map((muscle) => (
+                            <span
+                              key={muscle}
+                              className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100"
+                            >
+                              {muscle}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-4 py-3 text-xs text-white/60">
+                        {exercicio.sourceLabel ?? "Adicione um GIF ou MP4 do exercicio para exibir aqui."}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <div className="p-2 sm:p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg text-center">
                 <p className="text-xs text-muted-foreground mb-1">Séries</p>
