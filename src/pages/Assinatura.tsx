@@ -244,7 +244,11 @@ export default function Assinatura() {
       ? `/assinatura?${nextParams.toString()}`
       : "/assinatura";
 
-    navigate(`/login?next=${encodeURIComponent(next)}`, { replace: true });
+    const loginParams = new URLSearchParams();
+    loginParams.set("next", next);
+    if (source) loginParams.set("source", source);
+
+    navigate(`/login?${loginParams.toString()}`, { replace: true });
   };
 
   const goToSignup = () => {
@@ -256,7 +260,11 @@ export default function Assinatura() {
       ? `/assinatura?${nextParams.toString()}`
       : "/assinatura";
 
-    navigate(`/signup?next=${encodeURIComponent(next)}`, { replace: true });
+    const signupParams = new URLSearchParams();
+    signupParams.set("next", next);
+    if (source) signupParams.set("source", source);
+
+    navigate(`/signup?${signupParams.toString()}`, { replace: true });
   };
 
   const startFreeTrial = async () => {
@@ -264,10 +272,10 @@ export default function Assinatura() {
       const params = new URLSearchParams();
       if (source) params.set("source", source);
       params.set("autostartTrial", "1");
-
-      navigate(`/signup?next=${encodeURIComponent(`/assinatura?${params.toString()}`)}`, {
-        replace: true,
-      });
+      const signupParams = new URLSearchParams();
+      signupParams.set("next", `/assinatura?${params.toString()}`);
+      if (source) signupParams.set("source", source);
+      navigate(`/signup?${signupParams.toString()}`, { replace: true });
       return;
     }
 
@@ -278,7 +286,15 @@ export default function Assinatura() {
     setFreeSubscription();
 
     if (source === "onboarding") {
-      navigate(`/signup?next=${encodeURIComponent("/dashboard")}`, { replace: true });
+      if (user?.id) {
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
+      const signupParams = new URLSearchParams();
+      signupParams.set("next", "/dashboard");
+      signupParams.set("source", "onboarding");
+      navigate(`/signup?${signupParams.toString()}`, { replace: true });
       return;
     }
 
@@ -292,7 +308,10 @@ export default function Assinatura() {
       return;
     }
 
-    navigate(`/signup?next=${encodeURIComponent("/dashboard")}`, { replace: true });
+    const signupParams = new URLSearchParams();
+    signupParams.set("next", "/dashboard");
+    if (source) signupParams.set("source", source);
+    navigate(`/signup?${signupParams.toString()}`, { replace: true });
   };
 
   return (
