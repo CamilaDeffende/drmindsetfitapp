@@ -116,6 +116,12 @@ export default function Step3Metabolismo({
     atividade === "alto" ? 1.55 : atividade === "moderado" ? 1.4 : 1.3;
 
   const metaCalorica = tmb > 0 ? Math.round(tmb * fatorAtividade) : 0;
+  const canContinue =
+    peso > 0 &&
+    altura > 0 &&
+    idade > 0 &&
+    tmb > 0 &&
+    metaCalorica > 0;
 
   useOnboardingDraftSaver(
     {
@@ -283,14 +289,24 @@ export default function Step3Metabolismo({
         ) : null}
 
         <Button
-          onClick={() => onNext?.()}
+          onClick={() => {
+            if (!canContinue) return;
+            onNext?.();
+          }}
+          disabled={!canContinue}
           variant="ghost"
-          className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent"
+          className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent disabled:opacity-50"
         >
           Continuar
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
+
+      {!canContinue ? (
+        <div className="rounded-[18px] border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-100/90">
+          Revise peso e altura nos passos anteriores para liberar o calculo metabolico completo.
+        </div>
+      ) : null}
     </div>
   );
 }

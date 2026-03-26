@@ -59,7 +59,7 @@ export default function Step7Preferencias({
 }: Props) {
   useOnboardingDraftSaver({ step7: value, step7Preferencias: value } as any, 400);
 
-  const current = value?.dieta || "flexivel";
+  const current = value?.dieta || "";
   const canContinue = Boolean(current);
 
   return (
@@ -154,12 +154,12 @@ export default function Step7Preferencias({
 
           <div className="mt-3 rounded-[20px] border border-white/10 bg-black/20 p-4">
             <div className="text-[14px] font-semibold text-white">
-              {options.find((o) => o.k === current)?.label ?? "Flexível"}
+              {options.find((o) => o.k === current)?.label ?? "Selecione uma preferencia"}
             </div>
 
             <p className="mt-2 text-[13px] leading-5 text-white/48">
               {options.find((o) => o.k === current)?.desc ??
-                "Aderência acima de tudo, com mais liberdade para encaixar a rotina."}
+                "Escolha o estilo alimentar que mais combina com sua rotina para continuar."}
             </p>
           </div>
         </section>
@@ -189,6 +189,12 @@ export default function Step7Preferencias({
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
+
+        {!canContinue ? (
+          <div className="rounded-[18px] border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-100/90">
+            Escolha uma preferencia alimentar para concluir o onboarding com o plano completo.
+          </div>
+        ) : null}
       </div>
     </div>
   );

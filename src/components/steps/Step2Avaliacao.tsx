@@ -111,6 +111,10 @@ function toDisplay(value: unknown) {
   return String(value).trim();
 }
 
+function hasFilledMetric(value: unknown) {
+  return String(value ?? "").trim().length > 0;
+}
+
 function buildStep2Value(
   value: Step2Value | undefined,
   pesoFromStep1: string,
@@ -277,7 +281,28 @@ export default function Step2Avaliacao({
   const showMedidas = local.metodoAvaliativo === "medidas-corporais";
   const showVisual = local.metodoAvaliativo === "visual";
 
-  const canContinue = Boolean(local.biotipo) && Boolean(local.metodoAvaliativo);
+  const hasMetodoData =
+    local.metodoAvaliativo === "bioimpedancia"
+      ? hasFilledMetric(local.percentualGordura) && hasFilledMetric(local.massaMagra)
+      : local.metodoAvaliativo === "dobras-cutaneas"
+        ? hasFilledMetric(local.dobraTriceps) &&
+          hasFilledMetric(local.dobraAbdomen) &&
+          hasFilledMetric(local.dobraCoxa)
+        : local.metodoAvaliativo === "medidas-corporais"
+          ? hasFilledMetric(local.cintura) &&
+            hasFilledMetric(local.pescoco) &&
+            hasFilledMetric(local.quadril)
+          : local.metodoAvaliativo === "visual"
+            ? hasFilledMetric(local.percentualGordura)
+            : local.metodoAvaliativo === "nenhum";
+
+  const canContinue =
+    Boolean(local.biotipo) &&
+    Boolean(local.metodoAvaliativo) &&
+    Boolean(local.atividadeHabitual) &&
+    Boolean(pesoFromStep1) &&
+    Boolean(alturaFromStep1) &&
+    hasMetodoData;
 
   return (
     <div className="w-full text-white space-y-6">
@@ -624,6 +649,12 @@ export default function Step2Avaliacao({
           <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </div>
+
+      {!canContinue ? (
+        <div className="rounded-[18px] border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-100/90">
+          Complete biotipo, metodo avaliativo, atividade semanal e os campos do metodo escolhido para continuar.
+        </div>
+      ) : null}
     </div>
   );
 }

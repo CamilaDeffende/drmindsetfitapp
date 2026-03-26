@@ -339,6 +339,14 @@ export default function Step5Modalidades({
   }, []);
 
   const hasAny = state.modalidades.length > 0;
+  const hasDaysForAllSelected =
+    hasAny &&
+    state.modalidades.every(
+      (mod) =>
+        Array.isArray(state.diasPorModalidade[mod]) &&
+        state.diasPorModalidade[mod].length > 0
+    );
+  const canContinue = hasAny && hasDaysForAllSelected;
 
   return (
     <div data-testid="mf-step-root" className="w-full text-white space-y-6">
@@ -521,7 +529,7 @@ export default function Step5Modalidades({
         <Button
           type="button"
           onClick={() => onNext?.()}
-          disabled={!hasAny}
+          disabled={!canContinue}
           variant="ghost"
           className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent disabled:opacity-50"
         >
@@ -529,6 +537,12 @@ export default function Step5Modalidades({
           <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </div>
+
+      {!canContinue ? (
+        <div className="rounded-[18px] border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-100/90">
+          Selecione pelo menos uma modalidade e marque ao menos um dia da semana para cada modalidade escolhida.
+        </div>
+      ) : null}
     </div>
   );
 }

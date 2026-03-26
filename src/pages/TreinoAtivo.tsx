@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Home, Check, ArrowLeft, ArrowRight, Timer, Dumbbell } from "lucide-react";
+import { Check, ArrowLeft, ArrowRight, Timer, Dumbbell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ import {
   type TrainingExecutionExercise,
   type TrainingExecutionSet,
 } from "@/services/training/trainingExecution.service";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 function buildWorkoutExportText() {
   const lines = [
@@ -397,8 +398,8 @@ export function TreinoAtivo() {
             <CardDescription>Gere ou confirme seu plano antes de iniciar.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/dashboard")} className="w-full">
-              Voltar ao Dashboard
+            <Button onClick={() => navigate(getHomeRoute())} className="w-full">
+              Voltar
             </Button>
           </CardContent>
         </Card>
@@ -548,7 +549,7 @@ export function TreinoAtivo() {
         : "Sessão salva no histórico canônico com origem legada.",
     });
 
-    navigate("/dashboard");
+    navigate(getHomeRoute());
   };
 
   return (
@@ -581,8 +582,13 @@ export function TreinoAtivo() {
               </div>
             )}
 
-            <Button variant="outline" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
-              <Home className="w-4 h-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(getHomeRoute())}
+              className="shrink-0 hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              <ArrowLeft className="w-5 h-5" />
             </Button>
           </div>
 

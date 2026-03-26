@@ -29,26 +29,46 @@ export default function Step8Confirmacao({
 }: Props) {
   const { state } = useDrMindSetfit();
   const step4 = (summary as any)?.step4 ?? {};
+  const step4Nutrition =
+    step4?.nutricao ??
+    step4?.nutrition ??
+    step4?.dieta ??
+    step4?.planoDieta ??
+    step4 ??
+    {};
 
   const metabolismo =
     (state as any)?.metabolismo ??
     (state as any)?.resultadoMetabolico ??
     {};
 
-  const nutricao = (state as any)?.nutricao ?? {};
-  const summaryMacros = step4?.macros ?? {};
-  const summaryRefeicoes: any[] = Array.isArray(step4?.refeicoes)
-    ? step4.refeicoes
-    : Array.isArray(step4?.meals)
-      ? step4.meals
-      : Array.isArray(step4?.refeicoesSelecionadas)
-        ? step4.refeicoesSelecionadas
-        : [];
+  const nutricao =
+    (state as any)?.nutricao &&
+    Object.keys((state as any).nutricao).length
+      ? (state as any).nutricao
+      : step4Nutrition;
+
+  const summaryMacros =
+    step4Nutrition?.macros ??
+    step4?.macros ??
+    {};
+  const summaryRefeicoes: any[] = Array.isArray(step4Nutrition?.refeicoes)
+    ? step4Nutrition.refeicoes
+    : Array.isArray(step4Nutrition?.meals)
+      ? step4Nutrition.meals
+      : Array.isArray(step4?.refeicoes)
+        ? step4.refeicoes
+        : Array.isArray(step4?.meals)
+          ? step4.meals
+          : [];
 
   const kcalAlvo: number | null =
     nutricao?.kcalAlvo ??
+    nutricao?.calorias ??
     nutricao?.macros?.calorias ??
     summaryMacros?.calorias ??
+    step4Nutrition?.kcalAlvo ??
+    step4Nutrition?.calorias ??
     step4?.kcalAlvo ??
     metabolismo?.caloriasAlvo ??
     metabolismo?.get ??
@@ -66,6 +86,8 @@ export default function Step8Confirmacao({
       ? Number(macros.proteina)
       : macros?.proteinas != null
       ? Number(macros.proteinas)
+      : macros?.protein != null
+      ? Number(macros.protein)
       : null;
 
   const carboidratos: number | null =
@@ -73,6 +95,8 @@ export default function Step8Confirmacao({
       ? Number(macros.carboidratos)
       : macros?.carbo != null
       ? Number(macros.carbo)
+      : macros?.carbs != null
+      ? Number(macros.carbs)
       : null;
 
   const gorduras: number | null =
@@ -80,6 +104,8 @@ export default function Step8Confirmacao({
       ? Number(macros.gorduras)
       : macros?.gordura != null
       ? Number(macros.gordura)
+      : macros?.fat != null
+      ? Number(macros.fat)
       : null;
 
   const refeicoes: any[] = Array.isArray(nutricao?.refeicoes)

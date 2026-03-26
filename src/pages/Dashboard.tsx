@@ -372,7 +372,7 @@ export function Dashboard() {
           <CardHeader>
             <CardTitle>Complete seu perfil</CardTitle>
             <CardDescription className="text-white/60">
-              Voce precisa completar o questionario inicial para acessar o dashboard.
+              Voce precisa completar o onboarding inicial para acessar o dashboard.
             </CardDescription>
           </CardHeader>
 
@@ -382,7 +382,7 @@ export function Dashboard() {
               onClick={() => navigate("/onboarding/step-1")}
               className="w-full overflow-hidden rounded-[18px] bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white hover:bg-transparent"
             >
-              Iniciar questionario
+              Iniciar onboarding
             </Button>
           </CardContent>
         </Card>
@@ -524,7 +524,7 @@ export function Dashboard() {
             <CardHeader>
               <CardTitle>Consumo calorico · ultimos 7 dias</CardTitle>
               <CardDescription className="text-white/60">
-                Acompanhe seu consumo vs meta diaria
+                Acompanhe seu consumo em relacao a meta diaria
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -583,7 +583,7 @@ export function Dashboard() {
                 <div>
                   <CardTitle className="text-xl">Resumo da dieta gerada</CardTitle>
                   <CardDescription className="text-white/60 mt-1">
-                    Previa do plano alimentar estruturado no onboarding
+                    Resumo do plano alimentar estruturado no onboarding
                   </CardDescription>
                 </div>
 
@@ -651,7 +651,7 @@ export function Dashboard() {
                 <div>
                   <CardTitle className="text-xl">Proxima refeicao</CardTitle>
                   <CardDescription className="text-white/60 mt-1">
-                    Preview do que ja foi gerado para o seu plano
+                    Resumo do que ja foi gerado para o seu plano
                   </CardDescription>
                 </div>
 
@@ -706,7 +706,7 @@ export function Dashboard() {
               ) : (
                 <div className="space-y-4">
                   <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-[13px] text-white/50">
-                    Ainda nao encontramos a proxima refeicao no plano salvo.
+                    Ainda nao encontramos uma proxima refeicao no plano salvo.
                   </div>
 
                   <Button

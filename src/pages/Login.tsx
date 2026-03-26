@@ -26,6 +26,7 @@ export function Login() {
   const params = React.useMemo(() => getParams(location.search), [location.search]);
 
   const next = params.get("next") || getHomeRoute();
+  const source = params.get("source") || "";
   const premiumFromUrl = params.get("premium") === "1";
   const planFromUrl = params.get("plan") || "mensal";
   const shouldImportGuestState = params.has("next");
@@ -40,6 +41,7 @@ export function Login() {
   const signupHref = React.useMemo(() => {
     const nextParams = new URLSearchParams();
     nextParams.set("next", next);
+    if (source) nextParams.set("source", source);
 
     if (premiumFromUrl) nextParams.set("premium", "1");
     if (planFromUrl) nextParams.set("plan", planFromUrl);
@@ -71,7 +73,12 @@ export function Login() {
     }
   }, [user, loading, next, navigate, premiumFromUrl, planFromUrl]);
 
-  const backTarget = params.get("next") ? "/assinatura" : "/onboarding/step-1";
+  const backTarget =
+    source === "onboarding"
+      ? "/onboarding/step-1"
+      : params.get("next")
+        ? "/assinatura"
+        : "/onboarding/step-1";
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

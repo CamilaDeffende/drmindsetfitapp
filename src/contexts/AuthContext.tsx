@@ -67,6 +67,56 @@ function buildProfileAppData() {
   };
 }
 
+function parseProfileData(raw: any) {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  return raw;
+}
+
+function normalizeProfileAppData(raw: any) {
+  const parsed = parseProfileData(raw);
+  const root =
+    parsed?.appData ??
+    parsed?.mindsetfit ??
+    parsed?.mindsetFit ??
+    parsed?.drmindsetfit ??
+    parsed;
+
+  const onboardingDraft =
+    root?.onboardingDraft ??
+    root?.draft ??
+    root?.onboarding?.draft ??
+    root?.onboarding_data ??
+    null;
+
+  const activePlan =
+    root?.activePlan ??
+    root?.plan ??
+    root?.planoAtivo ??
+    root?.active_plan ??
+    null;
+
+  const onboardingDone = Boolean(
+    root?.onboardingDone ??
+      root?.done ??
+      root?.completedOnboarding ??
+      root?.onboarding?.done ??
+      activePlan
+  );
+
+  return {
+    onboardingDraft,
+    activePlan,
+    onboardingDone,
+  };
+}
+
 async function syncLocalAppStateToProfile(userId: string, fullName?: string) {
   if (!isSupabaseConfigured || !userId) return;
 
@@ -109,10 +159,7 @@ async function hydrateLocalAppStateFromProfile(userId: string) {
       return;
     }
 
-    const appData = data?.data ?? {};
-    const activePlan = appData?.activePlan ?? null;
-    const onboardingDraft = appData?.onboardingDraft ?? null;
-    const onboardingDone = Boolean(appData?.onboardingDone || activePlan);
+    const { activePlan, onboardingDraft, onboardingDone } = normalizeProfileAppData(data?.data);
     const hasProfileAppData = Boolean(activePlan || onboardingDraft || onboardingDone);
 
     if (!hasProfileAppData) {

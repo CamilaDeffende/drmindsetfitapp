@@ -3,7 +3,7 @@ import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, RefreshCw, Edit, FileText, Clipboard, Download } from "lucide-react";
+import { ArrowLeft, RefreshCw, Edit, FileText, Clipboard, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { buscarSubstituicoes } from "@/types/alimentos";
 import {
@@ -148,7 +148,7 @@ export function NutritionPlan() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/")} className="w-full glow-blue">
+            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full glow-blue">
               Configurar Agora
             </Button>
           </CardContent>
@@ -224,9 +224,9 @@ export function NutritionPlan() {
               variant="ghost"
               size="icon"
               onClick={() => navigate(getHomeRoute())}
-              className="glow-blue"
+              className="hover:bg-white/10"
             >
-              <Home className="w-5 h-5 text-[#1E6BFF]" />
+              <ArrowLeft className="w-5 h-5 text-[#1E6BFF]" />
             </Button>
           </div>
         </div>

@@ -569,7 +569,7 @@ export function DashboardPremium() {
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold mb-4">Complete seu Perfil</h2>
             <p className="text-gray-400 mb-6">
-              Inicie o questionario para desbloquear sua experiencia premium
+              Inicie o onboarding para desbloquear sua experiencia premium
             </p>
             <Button
               variant="ghost"
@@ -875,7 +875,7 @@ export function DashboardPremium() {
                   <CardHeader>
                     <CardTitle className="text-base">Ultimas decisoes do motor</CardTitle>
                     <CardDescription>
-                      Resumo explicavel do raciocinio aplicado nas sessoes recentes.
+                      Resumo claro do raciocinio aplicado nas sessoes recentes.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -906,7 +906,7 @@ export function DashboardPremium() {
                 <CardHeader>
                   <CardTitle className="text-base">Prontidao + deload inteligente</CardTitle>
                   <CardDescription>
-                    Fadiga regional e decisao de deload do microciclo atual.
+                    Fadiga regional e ajuste de deload do microciclo atual.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1162,8 +1162,8 @@ export function DashboardPremium() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-100">Fases Avancadas</h2>
-                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso - acesso rapido</p>
+                <h2 className="text-lg font-semibold text-gray-100">Recursos avancados</h2>
+                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso em um so lugar</p>
               </div>
               <Target className="w-6 h-6 text-white/80" />
             </div>
@@ -1176,7 +1176,7 @@ export function DashboardPremium() {
 
               <Button variant="outline" className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10" onClick={() => navigate("/live-workout")}>
                 <MapPin className="w-4 h-4" />
-                GPS Live
+                GPS
               </Button>
 
               <Button variant="outline" className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10" onClick={() => navigate("/wearables")}>

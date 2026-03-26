@@ -2,7 +2,7 @@
 // REGRA_FIXA_NO_HEALTH_CONTEXT_STEP: nunca criar etapa de Segurança/Contexto de saúde/Sinais do corpo.
 // PREMIUM_REFINEMENT_PHASE3_STEP1_UI_V2
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -94,6 +94,7 @@ const objetivos = [
 export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
   const navigate = useNavigate();
   const { state, updateState, nextStep } = useDrMindSetfit();
+  const [isComposingName, setIsComposingName] = React.useState(false);
 
   const draftSeed = (value && typeof value === "object" ? value : {}) as Partial<PerfilUsuario>;
   const draftSSOT = useOnboardingStore((st) => st.draft) as Record<string, any>;
@@ -147,6 +148,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
   );
 
   useEffect(() => {
+    if (isComposingName) return;
     const data = form.getValues();
 
     const temEssenciais = data.sexo && data.idade && data.altura && data.pesoAtual;
@@ -167,7 +169,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
         },
       } as any);
     } catch {}
-  }, [_watchAll, updateState, state, form]);
+  }, [_watchAll, updateState, state, form, isComposingName]);
 
   const __goNextSafe = (data: PerfilUsuario) => {
     const nome = (data?.nomeCompleto || "").trim();
@@ -230,7 +232,7 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => navigate("/login?next=%2Fdashboard")}
+              onClick={() => navigate("/login?next=%2Fdashboard&source=onboarding")}
               className="inline-flex items-center rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/70 transition hover:bg-white/[0.06] hover:text-white"
             >
               <LogIn className="mr-1.5 h-3.5 w-3.5" />
@@ -261,15 +263,11 @@ export function Step1Perfil({ value, onChange, onNext }: OnboardingStepProps) {
                         {...field}
                         onChange={(e) => {
                           field.onChange(e);
-                          try {
-                            if (typeof onChange === "function") {
-                              const next = {
-                                ...form.getValues(),
-                                nomeCompleto: (e.target as any).value,
-                              };
-                              onChange(next);
-                            }
-                          } catch {}
+                        }}
+                        onCompositionStart={() => setIsComposingName(true)}
+                        onCompositionEnd={(e) => {
+                          setIsComposingName(false);
+                          field.onChange(e.currentTarget.value);
                         }}
                         className="h-12 rounded-2xl border-white/10 bg-black/20 text-white placeholder:text-white/28 focus-visible:ring-1 focus-visible:ring-[#28C7FF] focus-visible:border-[#28C7FF]"
                       />

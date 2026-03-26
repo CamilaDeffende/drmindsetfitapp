@@ -227,6 +227,7 @@ export function OnboardingFlow() {
     const i = Number(loadDraft()?.activeIndex ?? 0);
     return Number.isFinite(i) ? i : 0;
   });
+  const [isHandingOffAfterConfirm, setIsHandingOffAfterConfirm] = useState(false);
 
   const __clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
   const __stepFromUrl = (() => {
@@ -303,7 +304,7 @@ export function OnboardingFlow() {
     );
   }
 
-  if (onboardingDone) {
+  if (onboardingDone && !isHandingOffAfterConfirm) {
     return null;
   }
 
@@ -399,6 +400,7 @@ export function OnboardingFlow() {
           summary={draft}
           onBack={goBack}
           onConfirm={() => {
+            setIsHandingOffAfterConfirm(true);
             const plan = buildActivePlanFromDraft(draft as any);
             saveActivePlan(plan);
 
