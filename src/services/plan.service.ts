@@ -509,13 +509,15 @@ function buildRealMealPlan(params: {
       );
 
   const dinnerProtein = isVeg
-    ? pickFoodByIdOrFallback(
+    ? pickAlternativeFood(
         allowedFoods,
+        lunchProtein?.id,
         ["tofu", "tempeh", "lentilha", "grao-de-bico", "feijao-preto", "edamame"],
         "proteina-vegetal"
       )
-    : pickFoodByIdOrFallback(
+    : pickAlternativeFood(
         allowedFoods,
+        lunchProtein?.id,
         ["peixe-salmao", "frango-peito", "peixe-tilapia", "patinho", "atum", "camarao"],
         "proteina"
       );
@@ -537,9 +539,15 @@ function buildRealMealPlan(params: {
       );
 
   const dinnerCarb = isLowCarb
-    ? pickFoodByIdOrFallback(allowedFoods, ["abobrinha", "brocolis", "couve-flor", "aspargo", "tomate"], "legume")
-    : pickFoodByIdOrFallback(
+    ? pickAlternativeFood(
         allowedFoods,
+        lunchCarb?.id,
+        ["abobrinha", "brocolis", "couve-flor", "aspargo", "tomate"],
+        "legume"
+      )
+    : pickAlternativeFood(
+        allowedFoods,
+        lunchCarb?.id,
         ["batata-doce", "quinoa", "arroz-integral", "mandioca", "inhame", "arroz-branco"],
         "carboidrato"
       );
@@ -552,24 +560,27 @@ function buildRealMealPlan(params: {
 
   const snackCarb = isLowCarb
     ? fruitSnack
-    : pickFoodByIdOrFallback(
+    : pickAlternativeFood(
         allowedFoods,
+        breakfastCarb?.id,
         ["banana", "maca", "pao-integral", "aveia", "cuscuz", "tapioca"],
         "carboidrato"
       );
 
   const snackProtein = isVeg
-    ? pickFoodByIdOrFallback(
+    ? pickAlternativeFood(
         allowedFoods,
+        breakfastProtein?.id,
         ["edamame", "tofu", "tempeh", "proteina-texturizada", "lentilha"],
         "proteina-vegetal"
       )
-    : pickFoodByIdOrFallback(
+    : pickAlternativeFood(
         allowedFoods,
+        breakfastProtein?.id,
         avoidsLactose
           ? ["ovo", "peru", "atum", "frango-peito"]
           : ["iogurte-zero-lactose", "iogurte-grego", "queijo-cottage-zero-lactose", "queijo-cottage", "ovo"],
-        "laticinio"
+        avoidsLactose ? "proteina" : "laticinio"
       );
 
   const goodFat = pickFoodByIdOrFallback(
@@ -592,6 +603,20 @@ function buildRealMealPlan(params: {
     "legume"
   );
 
+  const dinnerGreens = pickAlternativeFood(
+    allowedFoods,
+    greens?.id,
+    ["rucula", "espinafre", "couve", "agriao", "alface"],
+    "folhoso"
+  );
+
+  const dinnerLegumes = pickAlternativeFood(
+    allowedFoods,
+    legumes?.id,
+    ["abobrinha", "brocolis", "couve-flor", "vagem", "cenoura", "tomate", "pepino", "beterraba", "aspargo"],
+    "legume"
+  );
+
   const breakfastFruit =
     breakfastCarb?.categoria === "fruta"
       ? null
@@ -605,7 +630,7 @@ function buildRealMealPlan(params: {
   const lunchSide = isLowCarb
     ? pickAlternativeFood(
         allowedFoods,
-        legumes?.id,
+        dinnerLegumes?.id,
         ["tomate", "pepino", "aspargo", "abobrinha", "brocolis"],
         "legume"
       )
@@ -684,8 +709,8 @@ function buildRealMealPlan(params: {
       ...(dinnerCarb ? [portion(dinnerCarb, undefined, isLowCarb ? 0.75 : isHighKcal ? 1.05 : 0.95)!] : []),
       ...(dinnerProtein ? [portion(dinnerProtein, undefined, 1)!] : []),
       ...(!isLowCarb && dinnerSide ? [portion(dinnerSide, 60)!] : []),
-      ...(greens ? [portion(greens, Math.max(greens.porcaoPadrao, 60))!] : []),
-      ...(legumes ? [portion(legumes, Math.max(legumes.porcaoPadrao, 90))!] : []),
+      ...((dinnerGreens ?? greens) ? [portion(dinnerGreens ?? greens, Math.max((dinnerGreens ?? greens)!.porcaoPadrao, 60))!] : []),
+      ...((dinnerLegumes ?? legumes) ? [portion(dinnerLegumes ?? legumes, Math.max((dinnerLegumes ?? legumes)!.porcaoPadrao, 90))!] : []),
       ...(isLowCarb && dinnerSide ? [portion(dinnerSide, 70)!] : []),
       ...(goodFat?.id === "azeite" && isLowCarb ? [{ id: "azeite", grams: 10 }] : []),
     ]);
