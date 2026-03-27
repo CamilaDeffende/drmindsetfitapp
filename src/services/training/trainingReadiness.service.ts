@@ -80,8 +80,8 @@ export function getTrainingReadinessSnapshot(): TrainingReadinessSnapshot {
       level: "moderate",
       recommendation: "maintain",
       rationale:
-        "Sem histórico suficiente de execução canônica. Mantendo a sessão prescrita até consolidar mais dados reais.",
-      flags: ["Histórico insuficiente"],
+        "Ainda estamos aprendendo com as suas primeiras sessões. Por enquanto, a recomendação é seguir o plano prescrito e consolidar mais dados reais.",
+      flags: ["Prontidão inicial em calibração"],
       recentSessions: 0,
       avgAdherencePct: 0,
       avgSessionScore: 0,

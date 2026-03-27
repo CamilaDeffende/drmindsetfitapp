@@ -56,6 +56,7 @@ type Draft = {
 
 const LS_KEY = "mf:onboarding:draft:v1";
 const DONE_KEY = "mf:onboarding:done:v1";
+const FLOW_MODE_KEY = "mf:onboarding:flow-mode:v1";
 
 function isDone(): boolean {
   try {
@@ -95,6 +96,14 @@ function saveDraft(d: Draft) {
       writeOnboardingDraftStorage(normalizeDraftKeys(d || {}));
     } catch {}
   } catch {}
+}
+
+function readFlowMode() {
+  try {
+    const fromSession = sessionStorage.getItem(FLOW_MODE_KEY);
+    if (fromSession === "recreate") return "recreate";
+  } catch {}
+  return "guest";
 }
 
 export function OnboardingFlow() {
@@ -161,6 +170,35 @@ export function OnboardingFlow() {
   const auth = useAuth() as any;
   void appReady;
   const [isHandingOffAfterConfirm, setIsHandingOffAfterConfirm] = useState(false);
+  const [hadRealAuthAtFlowStart, setHadRealAuthAtFlowStart] = useState<boolean | null>(null);
+  const [flowMode, setFlowMode] = useState<"guest" | "recreate">(() => readFlowMode());
+
+  useEffect(() => {
+    const qsMode = new URLSearchParams(location.search).get("mode");
+    const normalizedMode = qsMode === "recreate" ? "recreate" : null;
+
+    if (normalizedMode) {
+      try {
+        sessionStorage.setItem(FLOW_MODE_KEY, normalizedMode);
+      } catch {}
+      setFlowMode(normalizedMode);
+      return;
+    }
+
+    setFlowMode(readFlowMode());
+  }, [location.search]);
+
+  useEffect(() => {
+    if (hadRealAuthAtFlowStart !== null) return;
+    if (auth?.loading) return;
+
+    const authUser = auth?.user ?? auth?.session?.user ?? null;
+    const hasRealUser = Boolean(
+      authUser && authUser.id && authUser.id !== "demo-user-123"
+    );
+
+    setHadRealAuthAtFlowStart(hasRealUser);
+  }, [auth?.loading, auth?.session?.user, auth?.user, hadRealAuthAtFlowStart]);
 
   const onboardingDone = isOnboardingDone();
 
@@ -374,6 +412,7 @@ export function OnboardingFlow() {
       render: () => (
         <Step6PlanoTreinos
           value={draft.step6 || { days: [] }}
+          draft={draft}
           onChange={(v: any) => setDraft((d) => ({ ...d, step6: v }))}
           onNext={goNext}
           onBack={goBack}
@@ -406,9 +445,18 @@ export function OnboardingFlow() {
             const postOnboardingTarget = "/assinatura?source=onboarding";
 
             const authUser = auth?.user ?? auth?.session?.user ?? null;
-            const isAuthenticated = Boolean(
+            const hasRealAuthNow = Boolean(
               authUser && authUser.id && authUser.id !== "demo-user-123"
             );
+            const hasAuthenticatedRecreateFlow =
+              flowMode === "recreate" &&
+              (
+                hadRealAuthAtFlowStart === null
+                  ? hasRealAuthNow
+                  : hadRealAuthAtFlowStart
+              );
+            const isAuthenticated =
+              hasAuthenticatedRecreateFlow;
 
             try {
               localStorage.setItem(DONE_KEY, "1");
@@ -430,6 +478,9 @@ export function OnboardingFlow() {
             }
 
             try {
+              try {
+                sessionStorage.removeItem(FLOW_MODE_KEY);
+              } catch {}
               const signupHref = `/signup?next=${encodeURIComponent(
                 postOnboardingTarget
               )}&source=onboarding`;
@@ -440,6 +491,9 @@ export function OnboardingFlow() {
                 { replace: true }
               );
             } catch {
+              try {
+                sessionStorage.removeItem(FLOW_MODE_KEY);
+              } catch {}
               const signupHref = `/signup?next=${encodeURIComponent(
                 postOnboardingTarget
               )}&source=onboarding`;

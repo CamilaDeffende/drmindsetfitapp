@@ -11,10 +11,11 @@ export default defineConfig(() => {
   // desativamos o PWA (Service Worker/Workbox), porque pode quebrar o WebView
   // e causar "bad-precaching-response" e tela preta.
   const IS_CAPACITOR = process.env.VITE_CAPACITOR === "1";
+  const APP_BASE = IS_CAPACITOR ? "./" : "/";
 
   return {
     // IMPORTANTÍSSIMO para WebView/Capacitor: assets relativos
-    base: "./",
+    base: APP_BASE,
 
     plugins: [
       ANALYZE_BUNDLE

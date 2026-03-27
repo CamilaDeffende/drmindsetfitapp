@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, Dumbbell, Flame, Sparkles } from "lucide-rea
 
 type Props = {
   value?: any;
+  draft?: any;
   onChange?: (v: any) => void;
   onNext?: () => void;
   onBack?: () => void;
@@ -52,12 +53,12 @@ const humanLevel = (level: string) =>
     ? "Intermediario"
     : "Avancado";
 
-export default function Step6PlanoTreinos({ value, onChange, onNext, onBack }: Props) {
+export default function Step6PlanoTreinos({ value, draft: liveDraft, onChange, onNext, onBack }: Props) {
   const safeOnChange = onChange ?? (() => {});
   void safeOnChange;
   useOnboardingDraftSaver({ step6PlanoTreinos: value ?? null } as any, 400);
 
-  const draft = React.useMemo(() => {
+  const persistedDraft = React.useMemo(() => {
     try {
       const raw =
         localStorage.getItem("mf:onboarding:draft:v1") ??
@@ -68,7 +69,12 @@ export default function Step6PlanoTreinos({ value, onChange, onNext, onBack }: P
     }
   }, []);
 
-  const preview = React.useMemo(() => buildWorkoutPlanPreview(draft), [draft]);
+  const previewDraft = React.useMemo(
+    () => (liveDraft && typeof liveDraft === "object" ? liveDraft : persistedDraft),
+    [liveDraft, persistedDraft]
+  );
+
+  const preview = React.useMemo(() => buildWorkoutPlanPreview(previewDraft), [previewDraft]);
 
   return (
     <div data-testid="mf-step-root" className="w-full text-white space-y-6">
