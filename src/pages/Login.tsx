@@ -19,6 +19,8 @@ function getParams(search: string) {
 }
 
 const PENDING_IMPORT_KEY = "mf:pendingProfileImport:v1";
+const PENDING_SIGNUP_HANDOFF_KEY = "mf:onboarding:signup-pending:v1";
+const DONE_KEY = "mf:onboarding:done:v1";
 
 export function Login() {
   const navigate = useNavigate();
@@ -51,6 +53,11 @@ export function Login() {
 
   React.useEffect(() => {
     if (!loading && user) {
+      try {
+        localStorage.setItem(DONE_KEY, "1");
+        localStorage.removeItem(PENDING_SIGNUP_HANDOFF_KEY);
+      } catch {}
+
       if (premiumFromUrl) {
         try {
           localStorage.setItem("mindsetfit:isSubscribed", "true");

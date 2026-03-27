@@ -57,6 +57,7 @@ type Draft = {
 const LS_KEY = "mf:onboarding:draft:v1";
 const DONE_KEY = "mf:onboarding:done:v1";
 const FLOW_MODE_KEY = "mf:onboarding:flow-mode:v1";
+const PENDING_SIGNUP_HANDOFF_KEY = "mf:onboarding:signup-pending:v1";
 
 function isDone(): boolean {
   try {
@@ -459,14 +460,14 @@ export function OnboardingFlow() {
               hasAuthenticatedRecreateFlow;
 
             try {
-              localStorage.setItem(DONE_KEY, "1");
-            } catch {}
-
-            try {
               migrateLegacyToSSOT();
             } catch {}
 
             if (isAuthenticated) {
+              try {
+                localStorage.setItem(DONE_KEY, "1");
+                localStorage.removeItem(PENDING_SIGNUP_HANDOFF_KEY);
+              } catch {}
               void auth?.syncProfileAppState?.(
                 (draft as any)?.step1?.nomeCompleto ??
                   (draft as any)?.step1?.nome ??
@@ -474,6 +475,11 @@ export function OnboardingFlow() {
               );
               try {
                 clearOnboardingDraft();
+              } catch {}
+            } else {
+              try {
+                localStorage.removeItem(DONE_KEY);
+                localStorage.setItem(PENDING_SIGNUP_HANDOFF_KEY, "1");
               } catch {}
             }
 

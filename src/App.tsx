@@ -80,10 +80,27 @@ function isOnboardingDone(): boolean {
   }
 }
 
+function getPendingPostOnboardingRoute(): string | null {
+  try {
+    if (localStorage.getItem("mf:onboarding:signup-pending:v1") !== "1") {
+      return null;
+    }
+
+    return `/signup?next=${encodeURIComponent("/assinatura?source=onboarding")}&source=onboarding`;
+  } catch {
+    return null;
+  }
+}
+
 function RootRedirect() {
+  const pendingSignupRoute = getPendingPostOnboardingRoute();
+
   return (
     <Navigate
-      to={isOnboardingDone() ? getHomeRoute() : "/onboarding/step-1"}
+      to={
+        pendingSignupRoute ??
+        (isOnboardingDone() ? getHomeRoute() : "/onboarding/step-1")
+      }
       replace
     />
   );
