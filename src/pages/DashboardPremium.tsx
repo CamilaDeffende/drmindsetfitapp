@@ -35,9 +35,6 @@ import { ptBR } from "date-fns/locale";
 import { loadActivePlan } from "@/services/plan.service";
 import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
-import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
-import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
-import { getLatestTrainingMotorDecisions } from "@/services/training/trainingDecision.service";
 import { getCanonicalTrainingLoadHistory } from "@/services/training/trainingExecution.service";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -458,41 +455,6 @@ export function DashboardPremium() {
       ? ((state as any).treino.historicoCargas as CargaDia[])
       : [];
   })();
-
-  const readinessSnapshot = useMemo(() => getTrainingReadinessSnapshot(), []);
-
-  const progressionHighlights = useMemo(() => {
-    const workouts = getCanonicalTrainingWorkouts();
-
-    const exercises = workouts.flatMap((w: any) =>
-      Array.isArray(w?.blocks)
-        ? w.blocks.flatMap((b: any) => (Array.isArray(b?.exercises) ? b.exercises : []))
-        : []
-    );
-
-    const seen = new Set<string>();
-
-    const suggestions = exercises
-      .map((ex: any) =>
-        getExerciseProgressionSuggestion({
-          exerciseId: ex?.exerciseId ?? ex?.id,
-          exerciseName: ex?.name ?? ex?.nome,
-          currentSets: ex?.sets,
-          currentReps: ex?.reps,
-        })
-      )
-      .filter(Boolean)
-      .filter((sug: any) => {
-        const key = String(sug?.exerciseId ?? "");
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-
-    return suggestions.slice(0, 3);
-  }, []);
-
-  const latestMotorDecisions = useMemo(() => getLatestTrainingMotorDecisions(4), []);
 
   const nutrition = useMemo(() => {
     return (
@@ -969,102 +931,6 @@ export function DashboardPremium() {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {latestMotorDecisions.length ? (
-                <Card className="border-cyan-500/20 bg-white/5">
-                  <CardHeader>
-                    <CardTitle className="text-base">Ultimas decisoes do motor</CardTitle>
-                    <CardDescription>
-                      Resumo claro do raciocinio aplicado nas sessoes recentes.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {latestMotorDecisions.map((item: any, idx: number) => (
-                      <div
-                        key={item.id ?? idx}
-                        className="rounded-xl border border-white/10 bg-white/5 p-3"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="text-sm font-semibold">
-                            {item.title ?? item.modality ?? "Sessao"}
-                          </div>
-                          <div className="text-[11px] text-white/50 capitalize">
-                            {item.confidence}
-                          </div>
-                        </div>
-                        <div className="mt-1 text-xs text-white/50">
-                          {item.decisionType}
-                        </div>
-                        <div className="mt-2 text-sm">{item.rationale}</div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              <Card className="border-white/10 bg-white/5">
-                <CardHeader>
-                  <CardTitle className="text-base">Prontidao + deload inteligente</CardTitle>
-                  <CardDescription>
-                    Fadiga regional e ajuste de deload do microciclo atual.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Score</div>
-                      <div className="mt-1 text-xl font-bold">{readinessSnapshot.score}</div>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Nivel</div>
-                      <div className="mt-1 text-sm font-semibold capitalize">
-                        {readinessSnapshot.level}
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Recomendacao</div>
-                      <div className="mt-1 text-sm font-semibold capitalize">
-                        {readinessSnapshot.recommendation}
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Ajuste</div>
-                      <div className="mt-1 text-sm font-semibold">
-                        {readinessSnapshot.recommendedLoadAdjustmentPct > 0
-                          ? `+${readinessSnapshot.recommendedLoadAdjustmentPct}%`
-                          : `${readinessSnapshot.recommendedLoadAdjustmentPct}%`}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
-                    <div className="text-xs text-white/50">Racional</div>
-                    <div className="mt-1 text-sm">{readinessSnapshot.rationale}</div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {progressionHighlights.length ? (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <div className="text-sm font-semibold">Proximas progressoes sugeridas</div>
-                  <div className="mt-2 space-y-2">
-                    {progressionHighlights.map((item: any, idx: number) => (
-                      <div
-                        key={`${item.exerciseId}-${idx}`}
-                        className="rounded-lg bg-black/20 p-2 text-xs sm:text-sm"
-                      >
-                        <span className="font-semibold">
-                          {item.suggestedLoadKg != null ? `${item.suggestedLoadKg} kg` : "Manter"}
-                        </span>
-                        <span className="text-white/50"> • {item.rationale}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
               {nextMeal ? (
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                   <div className="text-[16px] font-semibold text-white">
