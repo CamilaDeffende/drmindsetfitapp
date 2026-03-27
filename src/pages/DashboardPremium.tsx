@@ -1176,8 +1176,8 @@ export function DashboardPremium() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-100">Recursos avancados</h2>
-                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso em um so lugar</p>
+                <h2 className="text-lg font-semibold text-gray-100">Recursos avançados</h2>
+                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso em um só lugar</p>
               </div>
               <Target className="w-6 h-6 text-white/80" />
             </div>

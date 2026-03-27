@@ -24,8 +24,6 @@ export default function LiveWorkoutPage() {
   const gps = useGPS();
   const navigate = useNavigate();
 
-
-  // MF_SAVE_SESSION_V1
   const saveSession = () => {
     try {
       const st = gps.stats;
@@ -46,12 +44,13 @@ export default function LiveWorkoutPage() {
         avgHeartRate: undefined,
         notes: gps.points?.length ? `Track points: ${gps.points.length}` : undefined,
       });
-      alert("✅ Sessão salva no histórico!");
+      alert("Sessão salva no histórico!");
     } catch (e: any) {
       console.error("MF_SAVE_SESSION_V1 error", e);
-      alert("❌ Falha ao salvar sessão.");
+      alert("Falha ao salvar sessão.");
     }
   };
+
   const accuracy = useMemo(() => gps.lastPoint?.accuracy ?? null, [gps.lastPoint]);
 
   const title = "Treino ao vivo (GPS)";
@@ -83,12 +82,10 @@ export default function LiveWorkoutPage() {
             <p className="text-sm text-zinc-400">{subtitle}</p>
           </div>
         </div>
-        {gps.error ? (
-          <p className="text-sm text-red-400">Erro: {gps.error}</p>
-        ) : null}
+        {gps.error ? <p className="text-sm text-red-400">Erro: {gps.error}</p> : null}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <LiveMetricsDisplay
             distanceM={gps.stats.distanceM}
@@ -99,11 +96,11 @@ export default function LiveWorkoutPage() {
             accuracy={accuracy}
           />
 
-          <Card className="mt-4 bg-zinc-900/70 border-zinc-800">
+          <Card className="mt-4 border-zinc-800 bg-zinc-900/70">
             <CardHeader>
               <CardTitle className="text-white">Controles</CardTitle>
               <p className="text-xs text-zinc-400">
-                Start/Stop do rastreamento. Export GPX para salvar o track.
+                Inicie e pare o rastreamento. Exporte GPX para salvar o trajeto.
               </p>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
@@ -123,11 +120,7 @@ export default function LiveWorkoutPage() {
               <Button variant="outline" onClick={gps.reset}>
                 Reset
               </Button>
-              <Button
-                variant="secondary"
-                onClick={saveSession}
-                disabled={gps.stats.durationS < 10}
-              >
+              <Button variant="secondary" onClick={saveSession} disabled={gps.stats.durationS < 10}>
                 Salvar sessão
               </Button>
               <Button
@@ -144,12 +137,12 @@ export default function LiveWorkoutPage() {
           </Card>
         </div>
 
-        <Card className="bg-zinc-900/70 border-zinc-800">
+        <Card className="border-zinc-800 bg-zinc-900/70">
           <CardHeader>
             <CardTitle className="text-white">Debug</CardTitle>
             <p className="text-xs text-zinc-400">Informações técnicas (dev).</p>
           </CardHeader>
-          <CardContent className="text-xs text-zinc-300 space-y-2">
+          <CardContent className="space-y-2 text-xs text-zinc-300">
             <div>Status: <span className="text-white">{gps.status}</span></div>
             <div>Pontos: <span className="text-white">{gps.points.length}</span></div>
             {gps.lastPoint ? (
