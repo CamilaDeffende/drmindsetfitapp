@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Trophy, Star, ArrowLeft } from "lucide-react";
 import { achievementsService } from "@/services/gamification/AchievementsService";
 import { levelSystem } from "@/services/gamification/LevelSystem";
-import { loadAchievements, type Achievement as LegacyAchievement } from "@/services/gamification/achievements";
+import { loadAchievements, unlock, type Achievement as LegacyAchievement } from "@/services/gamification/achievements";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +93,7 @@ export function AchievementsPage() {
   useEffect(() => {
     const refresh = () => {
       try {
+        unlock("FIRST_LOGIN");
         achievementsService.syncFromHistory();
       } catch {}
       setLevel(levelSystem.getProgress());

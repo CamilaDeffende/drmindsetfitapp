@@ -1,6 +1,7 @@
 import { loadActivePlan } from "../plan.service";
 
 import { getMicrocycleDeloadSnapshot, getMuscleFatigueSnapshots } from "@/services/training/trainingFatigue.service";
+import { getTrainingExecutionHistory } from "@/services/training/trainingExecution.service";
 
 type AnyObj = Record<string, any>;
 
@@ -57,9 +58,32 @@ function average(values: number[]): number {
 function getRecentSessionPerformance(limit = 7): SessionPerformance[] {
   const activePlan = loadActivePlan() as AnyObj | null;
   const execution = activePlan?.training?.execution;
+  const sessionHistory = getTrainingExecutionHistory()
+    .filter((item) => isObject(item))
+    .map((session) => ({
+      completedAt: session.finishedAt ?? session.startedAt,
+      adherencePct: safeNum(session.adherencePct, 0),
+      sessionScore: safeNum(session.adherencePct, 0),
+      totalVolumeLoad: safeNum(session.totalVolumeLoad, 0),
+      completedExercises: safeNum(session.completedExercises, 0),
+      plannedExercises: safeNum(session.plannedExercises, 0),
+    }))
+    .sort((a, b) => {
+      const da = new Date(String(a?.completedAt ?? 0)).getTime();
+      const db = new Date(String(b?.completedAt ?? 0)).getTime();
+      return db - da;
+    });
+
+  if (sessionHistory.length) {
+    return sessionHistory.slice(0, limit);
+  }
 
   const perf = safeArray<SessionPerformance>(execution?.exercisePerformance)
     .filter((item) => isObject(item))
+    .map((item) => ({
+      ...item,
+      completedAt: String((item as AnyObj)?.completedAt ?? (item as AnyObj)?.executedAt ?? ""),
+    }))
     .sort((a, b) => {
       const da = new Date(String(a?.completedAt ?? 0)).getTime();
       const db = new Date(String(b?.completedAt ?? 0)).getTime();
