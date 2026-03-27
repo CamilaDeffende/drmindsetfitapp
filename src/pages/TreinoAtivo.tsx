@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { loadActivePlan } from "@/services/plan.service";
+import { buildWorkoutPlanPreview } from "@/services/training/WorkoutPlanBuilder";
 import ProgressaoCargaHint from "@/components/ProgressaoCargaHint";
 import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
 import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
@@ -31,11 +32,11 @@ import { lookupExerciseVisual } from "@/services/training/exerciseMediaCatalog";
 import {
   beginTrainingExecutionSession,
   completeTrainingExecutionSession,
+  getTrainingExecutionHistory,
   getCanonicalTrainingLoadHistory,
   type TrainingExecutionExercise,
   type TrainingExecutionSet,
 } from "@/services/training/trainingExecution.service";
-import { getHomeRoute } from "@/lib/subscription/premium";
 
 function buildWorkoutExportText() {
   const lines = [
@@ -137,7 +138,7 @@ function normalizeLegacyDays(state: any): CanonicalWorkoutDayView[] {
     id: String(t?.id ?? `legacy-day-${idx + 1}`),
     dia: String(t?.dia ?? `Dia ${idx + 1}`),
     dayKey: String(t?.dayKey ?? ""),
-    modalidade: String(t?.modalidade ?? "musculacao"),
+    modalidade: normalizeWorkoutModality(t?.modalidade ?? "musculacao"),
     titulo: String(t?.titulo ?? t?.dia ?? `Treino ${idx + 1}`),
     grupamentos: Array.isArray(t?.grupamentos) ? t.grupamentos.map(String) : [],
     intensidade: t?.intensidade,
@@ -176,7 +177,7 @@ function normalizeActivePlanLegacyDays(): CanonicalWorkoutDayView[] {
     id: String(t?.id ?? `activeplan-day-${idx + 1}`),
     dia: String(t?.dia ?? t?.day ?? `Dia ${idx + 1}`),
     dayKey: String(t?.dayKey ?? ""),
-    modalidade: String(t?.modalidade ?? t?.modality ?? "musculacao"),
+    modalidade: normalizeWorkoutModality(t?.modalidade ?? t?.modality ?? "musculacao"),
     titulo: String(t?.titulo ?? t?.title ?? t?.dia ?? `Treino ${idx + 1}`),
     grupamentos: Array.isArray(t?.grupamentos)
       ? t.grupamentos.map(String)
@@ -230,7 +231,7 @@ function normalizeCanonicalDays(): CanonicalWorkoutDayView[] {
       id: String(session?.id ?? `session-${idx + 1}`),
       dia: String(opt.dayLabel ?? `Dia ${idx + 1}`),
       dayKey: String(session?.dayKey ?? ""),
-      modalidade: String(opt.modality ?? "musculacao"),
+      modalidade: normalizeWorkoutModality(opt.modality ?? "musculacao"),
       titulo: String(opt.title ?? `Treino ${idx + 1}`),
       grupamentos,
       intensidade: session?.intensity,
@@ -258,6 +259,66 @@ function normalizeMotorDecisionConfidence(value: unknown): "high" | "medium" | "
   if (v === "media" || v === "média" || v === "medium") return "medium";
 
   return "medium";
+}
+
+function normalizeWorkoutModality(value: unknown) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const map: Record<string, string> = {
+    musculacao: "musculacao",
+    musculação: "musculacao",
+    bike: "bike",
+    spinning: "bike",
+    corrida: "corrida",
+    funcional: "funcional",
+    cross: "crossfit",
+    crossfit: "crossfit",
+  };
+  return map[raw] ?? raw;
+}
+
+function humanWorkoutModality(value: unknown) {
+  const modality = normalizeWorkoutModality(value);
+  const labels: Record<string, string> = {
+    musculacao: "Musculação",
+    bike: "Bike",
+    corrida: "Corrida",
+    funcional: "Funcional",
+    crossfit: "CrossFit",
+  };
+  return labels[modality] ?? String(value ?? "Treino");
+}
+
+function normalizePreviewPlanDays(): CanonicalWorkoutDayView[] {
+  const activePlan = loadActivePlan();
+  const preview = buildWorkoutPlanPreview(activePlan?.draft ?? {});
+
+  return preview.sessions.map((session, idx) => ({
+    id: `preview-${session.day}-${session.modality}-${session.slot ?? idx}`,
+    dia: String(session.day ?? `Dia ${idx + 1}`),
+    dayKey: String(session.day ?? ""),
+    modalidade: normalizeWorkoutModality(session.modality),
+    titulo: humanWorkoutModality(session.modality),
+    grupamentos: [humanWorkoutModality(session.modality)],
+    intensidade: undefined,
+    duracaoMin: session.modality === "bike" || session.modality === "corrida" ? 35 : 45,
+    rationale: undefined,
+    exercicios: Array.isArray(session.exercises)
+      ? session.exercises.map((ex: any, exIdx: number) =>
+          withExerciseVisual({
+            id: String(ex?.id ?? ex?.exerciseId ?? `preview-ex-${idx + 1}-${exIdx + 1}`),
+            nome: String(ex?.name ?? ex?.nome ?? `Exercício ${exIdx + 1}`),
+            equipamento: ex?.equipment ?? ex?.equipamento,
+            grupoMuscular: ex?.muscleGroup ?? ex?.grupoMuscular ?? humanWorkoutModality(session.modality),
+            descricao: ex?.notes ?? ex?.descricao,
+            series: safeNum(ex?.sets, session.modality === "bike" || session.modality === "corrida" ? 1 : 3),
+            repeticoes: String(ex?.reps ?? (session.modality === "bike" || session.modality === "corrida" ? "bloco guiado" : "10-12")),
+            descanso: safeNum(ex?.restSec, session.modality === "bike" || session.modality === "corrida" ? 30 : 60),
+            rpe: ex?.rpe != null ? `RPE ${ex.rpe}` : undefined,
+            observacoes: ex?.notes ?? ex?.observacoes,
+          })
+        )
+      : [],
+  }));
 }
 
 
@@ -301,13 +362,17 @@ export function TreinoAtivo() {
   }, []);
 
   const canonicalDays = useMemo(() => normalizeCanonicalDays(), [planRefreshTick]);
+  const previewPlanDays = useMemo(() => normalizePreviewPlanDays(), [planRefreshTick]);
   const activePlanLegacyDays = useMemo(() => normalizeActivePlanLegacyDays(), [planRefreshTick]);
   const legacyDays = useMemo(() => normalizeLegacyDays(state), [state]);
-  const treinoDiasBase = canonicalDays.length
-    ? canonicalDays
-    : activePlanLegacyDays.length
-      ? activePlanLegacyDays
-      : legacyDays;
+  const hasNonStrengthPreview = previewPlanDays.some((day) => day.modalidade !== "musculacao");
+  const treinoDiasBase = hasNonStrengthPreview
+    ? previewPlanDays
+    : canonicalDays.length
+      ? canonicalDays
+      : activePlanLegacyDays.length
+        ? activePlanLegacyDays
+        : legacyDays;
   const treinoDias = useMemo(
     () =>
       treinoDiasBase.map((day) => ({
@@ -316,7 +381,24 @@ export function TreinoAtivo() {
       })),
     [treinoDiasBase]
   );
-  const isCanonicalSource = canonicalDays.length > 0;
+  const isCanonicalSource = treinoDiasBase === canonicalDays;
+  const completedTrainingIds = useMemo(
+    () => new Set(getTrainingExecutionHistory().map((item) => String(item?.trainingId ?? ""))),
+    [planRefreshTick]
+  );
+
+  useEffect(() => {
+    if (!treinoDias.length) {
+      setTreinoSelecionado(0);
+      return;
+    }
+
+    setTreinoSelecionado((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= treinoDias.length) return treinoDias.length - 1;
+      return prev;
+    });
+  }, [treinoDias.length]);
 
   const treino = treinoDias[treinoSelecionado];
   const exercicio = treino?.exercicios?.[exercicioAtual];
@@ -358,7 +440,7 @@ export function TreinoAtivo() {
       source: isCanonicalSource ? "training.workouts" : "state.treino",
       dayLabel: treino.dia,
       dayKey: treino.dayKey,
-      modality: treino.modalidade,
+      modality: normalizeWorkoutModality(treino.modalidade),
       title: treino.titulo,
       intensity: treino.intensidade,
       durationMin: treino.duracaoMin,
@@ -427,7 +509,7 @@ export function TreinoAtivo() {
             <CardDescription>Gere ou confirme seu plano antes de iniciar.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate(getHomeRoute())} className="w-full">
+            <Button onClick={() => navigate(-1)} className="w-full">
               Voltar
             </Button>
           </CardContent>
@@ -482,6 +564,19 @@ export function TreinoAtivo() {
       setExercicioAtual((prev) => prev + 1);
       return;
     }
+
+    const hasAnyCompletedSet = treino.exercicios.some((item) =>
+      (exerciseLogs[item.id] ?? []).some((setItem) => setItem.completa)
+    );
+
+    const confirmed = window.confirm(
+      hasAnyCompletedSet
+        ? "Deseja finalizar este treino e confirmar o ultimo exercicio?"
+        : "Deseja finalizar este treino mesmo sem confirmar nenhuma serie?"
+    );
+
+    if (!confirmed) return;
+
     finalizarTreino();
   };
 
@@ -536,7 +631,7 @@ export function TreinoAtivo() {
       source: isCanonicalSource ? "training.workouts" : "state.treino",
       dayLabel: treino.dia,
       dayKey: treino.dayKey,
-      modality: treino.modalidade,
+      modality: normalizeWorkoutModality(treino.modalidade),
       title: treino.titulo,
       intensity: treino.intensidade,
       startedAt: new Date().toISOString(),
@@ -553,7 +648,7 @@ export function TreinoAtivo() {
       session: {
         id: treino.id,
         dayKey: treino.dia,
-        modality: treino.modalidade,
+        modality: normalizeWorkoutModality(treino.modalidade),
         title: treino.titulo,
         focus: treino.grupamentos.join(", "),
         intensity: treino.intensidade,
@@ -578,7 +673,7 @@ export function TreinoAtivo() {
         : "Sessão salva no histórico canônico com origem legada.",
     });
 
-    navigate(getHomeRoute());
+    navigate(-1);
   };
 
   return (
@@ -614,7 +709,7 @@ export function TreinoAtivo() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(getHomeRoute())}
+              onClick={() => navigate(-1)}
               className="shrink-0 hover:bg-black/5 dark:hover:bg-white/10"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -661,7 +756,7 @@ export function TreinoAtivo() {
             </div>
 
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-              <div className="text-xs text-muted-foreground">Racional do motor</div>
+              <div className="text-xs text-muted-foreground">Leitura de prontidão</div>
               <div className="mt-1 text-sm">{readinessSnapshot.rationale}</div>
             </div>
 
@@ -693,8 +788,14 @@ export function TreinoAtivo() {
                 >
                   <span className="font-semibold">{t.dia}</span>
                   <span className="text-xs opacity-80 truncate max-w-full">
-                    {(t.grupamentos?.length ? t.grupamentos.join(", ") : t.modalidade) || "Treino"}
+                    {humanWorkoutModality(t.modalidade)}
                   </span>
+                  {completedTrainingIds.has(String(t.id ?? "")) ? (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-0.5 text-[10px] text-emerald-200">
+                      <Check className="h-3 w-3" />
+                      Concluido
+                    </span>
+                  ) : null}
                 </Button>
               ))}
             </div>
@@ -711,7 +812,7 @@ export function TreinoAtivo() {
                 </CardDescription>
               </div>
               <Badge variant="outline" className="self-start sm:self-auto text-xs">
-                {exercicio.grupoMuscular ?? treino.modalidade}
+                {exercicio.grupoMuscular ?? humanWorkoutModality(treino.modalidade)}
               </Badge>
             </div>
           </CardHeader>

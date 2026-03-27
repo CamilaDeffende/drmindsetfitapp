@@ -1,6 +1,7 @@
 import { SessionFocus, MovementPattern } from "../core/enums";
 import { ExerciseDefinition, TrainingProfile } from "../core/types";
 import { EXERCISES } from "../library/exercises";
+import { SESSION_TEMPLATES } from "../library/sessionTemplates";
 
 function compatible(exercise: ExerciseDefinition, profile: TrainingProfile): boolean {
   if (profile.equipmentProfile === "BODYWEIGHT") {
@@ -34,40 +35,146 @@ function hashString(value: string) {
   return hash;
 }
 
+function getTargetExerciseCount(profile: TrainingProfile): number {
+  let target = 5;
+
+  if (
+    String(profile.level).includes("INTERMEDIATE") ||
+    String(profile.level).includes("ADVANCED")
+  ) {
+    target += 1;
+  }
+
+  if (profile.sessionDurationMin >= 55) target += 1;
+  if (profile.sessionDurationMin >= 75) target += 1;
+  if (profile.sessionDurationMin <= 35) target -= 1;
+
+  return Math.max(4, Math.min(target, 8));
+}
+
+function getTemplatePatterns(focus: SessionFocus) {
+  const template = SESSION_TEMPLATES.find((item) => item.focus === focus);
+  if (!template) {
+    return {
+      requiredPatterns: [
+        MovementPattern.SQUAT,
+        MovementPattern.HORIZONTAL_PUSH,
+        MovementPattern.HORIZONTAL_PULL,
+      ],
+      optionalPatterns: [MovementPattern.CORE_ANTI_EXTENSION],
+    };
+  }
+
+  return {
+    requiredPatterns: template.requiredPatterns ?? [],
+    optionalPatterns: template.optionalPatterns ?? [],
+  };
+}
+
+function getPatternCandidates(pattern: MovementPattern): MovementPattern[] {
+  const aliases: Record<string, MovementPattern[]> = {
+    [MovementPattern.HIP_HINGE]: [MovementPattern.HIP_HINGE, MovementPattern.HINGE],
+    [MovementPattern.HINGE]: [MovementPattern.HINGE, MovementPattern.HIP_HINGE],
+    [MovementPattern.CORE_ANTI_EXTENSION]: [MovementPattern.CORE_ANTI_EXTENSION, MovementPattern.CORE],
+    [MovementPattern.CORE_ANTI_ROTATION]: [MovementPattern.CORE_ANTI_ROTATION, MovementPattern.CORE],
+    [MovementPattern.CARDIO_INTERVAL]: [MovementPattern.CARDIO_INTERVAL, MovementPattern.CARDIO],
+  };
+
+  return aliases[pattern] ?? [pattern];
+}
+
+function findMatchesForPattern(
+  pool: ExerciseDefinition[],
+  pattern: MovementPattern,
+  usedIds: Set<string>
+) {
+  const acceptedPatterns = new Set(getPatternCandidates(pattern));
+  return pool.filter(
+    (item) => acceptedPatterns.has(item.movementPattern) && !usedIds.has(item.id)
+  );
+}
+
+function pickDeterministicExercise(
+  matches: ExerciseDefinition[],
+  focus: SessionFocus,
+  profile: TrainingProfile,
+  dayIndex: number,
+  pattern: MovementPattern,
+  seedLabel: string
+) {
+  if (!matches.length) return null;
+  const seed = hashString(
+    buildSelectionSeed(focus, profile, dayIndex) + `|${pattern}|${seedLabel}`
+  );
+  return matches[seed % matches.length] ?? null;
+}
+
 export function selectExercises(
   focus: SessionFocus,
   profile: TrainingProfile,
   dayIndex = 0
 ): ExerciseDefinition[] {
   const pool = EXERCISES.filter((item) => compatible(item, profile));
-
-  const byFocus: Record<SessionFocus, MovementPattern[]> = {
-    FULL_BODY: [MovementPattern.SQUAT, MovementPattern.HORIZONTAL_PUSH, MovementPattern.HORIZONTAL_PULL, MovementPattern.HINGE, MovementPattern.CORE],
-    UPPER: [MovementPattern.HORIZONTAL_PUSH, MovementPattern.HORIZONTAL_PULL, MovementPattern.VERTICAL_PUSH, MovementPattern.VERTICAL_PULL, MovementPattern.CORE],
-    LOWER: [MovementPattern.SQUAT, MovementPattern.HINGE, MovementPattern.LUNGE, MovementPattern.CORE],
-    PUSH: [MovementPattern.HORIZONTAL_PUSH, MovementPattern.VERTICAL_PUSH, MovementPattern.CORE],
-    PULL: [MovementPattern.HORIZONTAL_PULL, MovementPattern.VERTICAL_PULL, MovementPattern.CORE],
-    LEGS: [MovementPattern.SQUAT, MovementPattern.HINGE, MovementPattern.LUNGE, MovementPattern.CORE],
-    POSTERIOR_CHAIN: [MovementPattern.HINGE, MovementPattern.HORIZONTAL_PULL, MovementPattern.CORE],
-    CONDITIONING: [MovementPattern.CARDIO, MovementPattern.CORE],
-    RECOVERY: [MovementPattern.CORE, MovementPattern.CARDIO],
-  };
-
-  const targets = byFocus[focus] ?? byFocus.FULL_BODY;
   const usedIds = new Set<string>();
+  const { requiredPatterns, optionalPatterns } = getTemplatePatterns(focus);
+  const selected: ExerciseDefinition[] = [];
+  const targetCount = getTargetExerciseCount(profile);
 
-  return targets
-    .map((pattern, patternIndex) => {
-      const matches = pool.filter(
-        (item) => item.movementPattern === pattern && !usedIds.has(item.id)
-      );
+  for (const [patternIndex, pattern] of requiredPatterns.entries()) {
+    const matches = findMatchesForPattern(pool, pattern, usedIds);
+    const picked = pickDeterministicExercise(
+      matches,
+      focus,
+      profile,
+      dayIndex,
+      pattern,
+      `required-${patternIndex}`
+    );
 
-      if (!matches.length) return null;
+    if (!picked) continue;
+    usedIds.add(picked.id);
+    selected.push(picked);
+  }
 
-      const seed = hashString(buildSelectionSeed(focus, profile, dayIndex) + `|${pattern}|${patternIndex}`);
-      const pick = matches[seed % matches.length];
-      usedIds.add(pick.id);
-      return pick;
-    })
-    .filter(Boolean) as ExerciseDefinition[];
+  for (const [patternIndex, pattern] of optionalPatterns.entries()) {
+    if (selected.length >= targetCount) break;
+
+    const matches = findMatchesForPattern(pool, pattern, usedIds);
+    const picked = pickDeterministicExercise(
+      matches,
+      focus,
+      profile,
+      dayIndex,
+      pattern,
+      `optional-${patternIndex}`
+    );
+
+    if (!picked) continue;
+    usedIds.add(picked.id);
+    selected.push(picked);
+  }
+
+  const repeatablePatterns = [...requiredPatterns, ...optionalPatterns];
+  let fillerIndex = 0;
+
+  while (selected.length < targetCount && fillerIndex < repeatablePatterns.length * 2) {
+    const pattern = repeatablePatterns[fillerIndex % repeatablePatterns.length];
+    const matches = findMatchesForPattern(pool, pattern, usedIds);
+    const picked = pickDeterministicExercise(
+      matches,
+      focus,
+      profile,
+      dayIndex,
+      pattern,
+      `filler-${fillerIndex}`
+    );
+
+    fillerIndex += 1;
+
+    if (!picked) continue;
+    usedIds.add(picked.id);
+    selected.push(picked);
+  }
+
+  return selected;
 }

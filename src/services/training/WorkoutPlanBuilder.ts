@@ -1,23 +1,19 @@
-// MF_WORKOUT_PLAN_BUILDER_V2
-// Protocolo semanal (Seg -> Dom) com multi-modalidades.
-// - Usuário escolhe N modalidades
-// - Define dias por modalidade
-// - Define condicionamento por modalidade
-// - Motor cria sessões semanais ordenadas e estáveis
-// - Suporta múltiplas modalidades no mesmo dia (ex: sex musculação + cross)
-// - Respeita banco de exercícios via getExerciseCatalog()
-// DEMO-safe: nunca lança erro.
+// MF_WORKOUT_PLAN_BUILDER_V4
+// Preview semanal do onboarding priorizando os dias/modalidades reais do Step 5.
+// Quando existir treino canônico, ele é usado como fonte de exercícios para musculação.
+// Para modalidades como bike, corrida, funcional e crossfit, usamos uma prévia coerente
+// com o nível selecionado, sem depender do motor canônico de força.
 
-import { getExerciseCatalog, __MF_EXERCISE_SOURCE } from "./exerciseCatalog";
+import { buildActivePlanFromDraft } from "@/services/plan.service";
 
 export type MF_Level = "iniciante" | "intermediario" | "avancado";
 
 export type MF_Session = {
-  day: string;       // seg/ter/qua/qui/sex/sab/dom
-  modality: string;  // musculacao/corrida/bike/funcional/cross...
+  day: string;
+  modality: string;
   level: MF_Level;
-  exercises: any[];  // itens do banco (estrutura original)
-  slot?: number;     // quando há múltiplas sessões no mesmo dia (0,1,2...)
+  exercises: any[];
+  slot?: number;
 };
 
 export type MF_PlanPreview = {
@@ -31,169 +27,279 @@ export type MF_PlanPreview = {
 
 const WEEK: string[] = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
 
-function safeArr<T>(v: any): T[] {
-  return Array.isArray(v) ? (v as T[]) : [];
+const PREVIEW_LIBRARY: Record<string, Record<MF_Level, string[]>> = {
+  bike: {
+    iniciante: ["Zona 2", "Cadencia confortavel", "Recuperacao ativa"],
+    intermediario: ["Sweet Spot", "Cadencia alta", "Bloco progressivo", "Recuperacao ativa"],
+    avancado: ["HIIT Bike", "Sprint curto", "Cadencia alta", "Bloco progressivo", "Resfriamento"],
+  },
+  corrida: {
+    iniciante: ["Caminhada acelerada", "Trote leve", "Mobilidade de tornozelo"],
+    intermediario: ["Rodagem moderada", "Tempo Run", "Drills de tecnica", "Desaceleracao"],
+    avancado: ["Intervalado", "Tiro curto", "Rodagem de recuperacao", "Drills de tecnica", "Desaceleracao"],
+  },
+  funcional: {
+    iniciante: ["Agachamento livre", "Afundo alternado", "Prancha", "Farmer's Carry"],
+    intermediario: ["Agachamento livre", "Push-Up", "Dead Bug", "Farmer's Carry", "Pallof Press"],
+    avancado: ["Walking Lunge", "Push-Up", "Pallof Press", "Farmer's Carry", "Front Plank", "Dead Bug"],
+  },
+  crossfit: {
+    iniciante: ["Air Squat", "Push-Up", "Farmer's Carry", "Bike Interval"],
+    intermediario: ["Goblet Squat", "Push-Up", "Bike Interval", "Farmer's Carry", "Front Plank"],
+    avancado: ["Goblet Squat", "Assisted Pull-Up", "Bike Interval", "Pallof Press", "Walking Lunge", "Front Plank"],
+  },
+};
+
+function safeArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
 }
 
-function uniqStable(list: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const x of list) {
-    const k = String(x || "").trim();
-    if (!k) continue;
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push(k);
-  }
-  return out;
+function normalizeDay(value: unknown): string {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const map: Record<string, string> = {
+    seg: "seg",
+    segunda: "seg",
+    ter: "ter",
+    terca: "ter",
+    terça: "ter",
+    qua: "qua",
+    quarta: "qua",
+    qui: "qui",
+    quinta: "qui",
+    sex: "sex",
+    sexta: "sex",
+    sab: "sab",
+    sabado: "sab",
+    sábado: "sab",
+    dom: "dom",
+    domingo: "dom",
+  };
+
+  return map[raw] ?? raw;
 }
 
-// Tenta obter modalidades a partir de diferentes formatos possíveis do draft
-function extractModalities(draft: any): string[] {
-  // 1) formato preferido
-  const direct = uniqStable(safeArr<string>(draft?.modalidadesSelecionadas));
-  if (direct.length) return direct;
+function normalizeModality(value: unknown): string {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const map: Record<string, string> = {
+    musculacao: "musculacao",
+    musculação: "musculacao",
+    corrida: "corrida",
+    bike: "bike",
+    spinning: "bike",
+    funcional: "funcional",
+    cross: "crossfit",
+    crossfit: "crossfit",
+  };
 
-  // 1.1) formato do onboarding atual: step5.modalidades = ["musculacao", ...]
-  const fromStep5 = uniqStable(
-    safeArr<any>(draft?.step5?.modalidades).map((x) => String(x || "")).filter(Boolean)
-  );
-  if (fromStep5.length) return fromStep5;
-
-  // 2) formato step5Modalidades.modalidades = [{key,...}]
-  const m2 = uniqStable(
-    safeArr<any>(draft?.step5Modalidades?.modalidades).map((x) => String(x?.key || x?.id || x?.value || "")).filter(Boolean)
-  );
-  if (m2.length) return m2;
-
-  // 3) formato antigo: step5Modalidades.primary
-  const p = String(draft?.step5Modalidades?.primary || "");
-  if (p) return [p];
-
-  // 4) formato onboarding atual com primary em step5
-  const p2 = String(draft?.step5?.primary || "");
-  if (p2) return [p2];
-
-  return [];
+  return map[raw] ?? raw;
 }
 
-// Normaliza níveis (aceita variações)
-function normalizeLevel(v: any): MF_Level {
-  const s = String(v || "").toLowerCase();
-  if (s.includes("avan")) return "avancado";
-  if (s.includes("inter")) return "intermediario";
+function normalizeLevel(value: unknown): MF_Level {
+  const raw = String(value ?? "").toLowerCase();
+  if (raw.includes("avan")) return "avancado";
+  if (raw.includes("inter")) return "intermediario";
   return "iniciante";
 }
 
-// Quantidade de exercícios por sessão conforme nível
-function nFor(level: MF_Level): number {
-  return level === "avancado" ? 20 : level === "intermediario" ? 15 : 12;
+function extractExerciseName(exercise: any, index: number) {
+  return (
+    exercise?.name ??
+    exercise?.nome ??
+    exercise?.title ??
+    exercise?.titulo ??
+    exercise?.exerciseName ??
+    exercise?.label ??
+    `Exercicio ${index + 1}`
+  );
 }
 
-function pickExercisesForModality(all: any[], modality: string, n: number): any[] {
-  const m = String(modality || "").toLowerCase();
+function hashText(value: string) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
 
-  // best-effort: filtro textual para manter compatível com qualquer schema do banco
-  const filtered = all.filter((e) => {
-    try {
-      const s = JSON.stringify(e ?? {}).toLowerCase();
-      return s.includes(m);
-    } catch {
-      return false;
+function pickPreviewExercises(modality: string, level: MF_Level, day: string, slot: number) {
+  const catalog = PREVIEW_LIBRARY[modality]?.[level] ?? PREVIEW_LIBRARY[modality]?.iniciante ?? [];
+  if (!catalog.length) return [];
+
+  const desiredCount =
+    modality === "bike" || modality === "corrida"
+      ? Math.min(catalog.length, 3)
+      : Math.min(catalog.length, level === "iniciante" ? 4 : 5);
+
+  const startIndex = hashText(`${modality}:${level}:${day}:${slot}`) % catalog.length;
+  const names: string[] = [];
+
+  for (let i = 0; i < desiredCount; i += 1) {
+    const name = catalog[(startIndex + i) % catalog.length];
+    if (!names.includes(name)) names.push(name);
+  }
+
+  return names.map((name) => ({ name }));
+}
+
+function groupCanonicalStrengthWorkouts(workouts: any[]) {
+  const grouped: Record<string, any[]> = {};
+
+  for (const workout of workouts) {
+    const day = normalizeDay(workout?.dayKey ?? workout?.day);
+    const modality = normalizeModality(workout?.modality ?? "musculacao");
+    if (day !== "seg" && day !== "ter" && day !== "qua" && day !== "qui" && day !== "sex" && day !== "sab" && day !== "dom") {
+      continue;
     }
+    if (modality !== "musculacao") continue;
+
+    const key = `${day}:${modality}`;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(workout);
+  }
+
+  return grouped;
+}
+
+function getLegacyWeekSource(activePlan: any) {
+  const trainingWeek = safeArray<any>(activePlan?.training?.week);
+  if (trainingWeek.length) return trainingWeek;
+
+  const trainingDays = safeArray<any>(activePlan?.training?.days);
+  if (trainingDays.length) return trainingDays;
+
+  return safeArray<any>(activePlan?.workout?.week);
+}
+
+function extractWorkoutExercises(workout: any) {
+  return safeArray<any>(workout?.blocks).flatMap((block) =>
+    safeArray<any>(block?.exercises).map((exercise, index) => ({
+      ...exercise,
+      name: extractExerciseName(exercise, index),
+    }))
+  );
+}
+
+function buildSessionsFromLegacyWeek(activePlan: any, draft: any): MF_Session[] {
+  const legacyWeek = getLegacyWeekSource(activePlan);
+  const canonicalWorkouts = safeArray<any>(activePlan?.training?.workouts);
+  const groupedStrength = groupCanonicalStrengthWorkouts(canonicalWorkouts);
+  const usedStrengthIndex: Record<string, number> = {};
+
+  const step5 = draft?.step5 ?? {};
+  const levelsByModality =
+    (step5?.condicionamentoPorModalidade && typeof step5.condicionamentoPorModalidade === "object"
+      ? step5.condicionamentoPorModalidade
+      : {}) ?? {};
+
+  const slotByDay: Record<string, number> = {};
+  const sessions: MF_Session[] = [];
+
+  for (const item of legacyWeek) {
+    const day = normalizeDay(item?.dayKey ?? item?.day ?? item?.dia);
+    const modality = normalizeModality(item?.modalidade ?? item?.modality ?? item?.type);
+    if (!WEEK.includes(day) || !modality) continue;
+
+    const slot = slotByDay[day] ?? 0;
+    slotByDay[day] = slot + 1;
+
+    const level = normalizeLevel(
+      levelsByModality?.[modality] ??
+        item?.level ??
+        activePlan?.training?.level ??
+        "iniciante"
+    );
+
+    let exercises: any[] = [];
+
+    if (modality === "musculacao") {
+      const key = `${day}:${modality}`;
+      const dayStrengthSessions = groupedStrength[key] ?? [];
+      const currentIndex = usedStrengthIndex[key] ?? 0;
+      const selectedWorkout = dayStrengthSessions[currentIndex] ?? dayStrengthSessions[dayStrengthSessions.length - 1];
+      usedStrengthIndex[key] = currentIndex + 1;
+      exercises = selectedWorkout ? extractWorkoutExercises(selectedWorkout) : [];
+    }
+
+    if (!exercises.length) {
+      exercises = pickPreviewExercises(modality, level, day, slot);
+    }
+
+    sessions.push({
+      day,
+      modality,
+      level,
+      slot,
+      exercises,
+    });
+  }
+
+  return sessions.sort((a, b) => {
+    const dayDiff = WEEK.indexOf(a.day) - WEEK.indexOf(b.day);
+    if (dayDiff !== 0) return dayDiff;
+    return (a.slot ?? 0) - (b.slot ?? 0);
   });
-
-  const base = filtered.length ? filtered : all;
-  return base.slice(0, Math.max(0, n));
 }
 
-// Extrai dias por modalidade suportando formatos possíveis
-function extractDaysByModality(draft: any): Record<string, string[]> {
-  // formato preferido: diasPorModalidade = { musculacao:["seg","qua"], corrida:["sab"]... }
-  const direct = draft?.diasPorModalidade;
-  if (direct && typeof direct === "object") return direct as any;
+function normalizePreviewSessions(workouts: any[]): MF_Session[] {
+  const sessions: MF_Session[] = [];
+  const slotByDay: Record<string, number> = {};
 
-  const step5Direct = draft?.step5?.diasPorModalidade;
-  if (step5Direct && typeof step5Direct === "object") return step5Direct as any;
+  for (const workout of workouts) {
+    const day = normalizeDay(workout?.dayKey ?? workout?.day);
+    if (!WEEK.includes(day)) continue;
 
-  // fallback: step5Modalidades.daysByModality
-  const alt = draft?.step5Modalidades?.diasPorModalidade || draft?.step5Modalidades?.daysByModality;
-  if (alt && typeof alt === "object") return alt as any;
+    const exercises = extractWorkoutExercises(workout);
+    const slot = slotByDay[day] ?? 0;
+    slotByDay[day] = slot + 1;
 
-  return {};
-}
-
-// Extrai condicionamento por modalidade suportando formatos possíveis
-function extractLevelByModality(draft: any): Record<string, MF_Level> {
-  const direct = draft?.condicionamentoPorModalidade;
-  if (direct && typeof direct === "object") {
-    const out: Record<string, MF_Level> = {};
-    for (const k of Object.keys(direct)) out[k] = normalizeLevel(direct[k]);
-    return out;
+    sessions.push({
+      day,
+      modality: normalizeModality(workout?.modality ?? "musculacao"),
+      level: normalizeLevel(workout?.level),
+      slot,
+      exercises,
+    });
   }
 
-  const step5Direct = draft?.step5?.condicionamentoPorModalidade;
-  if (step5Direct && typeof step5Direct === "object") {
-    const out: Record<string, MF_Level> = {};
-    for (const k of Object.keys(step5Direct)) out[k] = normalizeLevel(step5Direct[k]);
-    return out;
-  }
-
-  const alt = draft?.step5Modalidades?.condicionamentoPorModalidade || draft?.step5Modalidades?.levelByModality;
-  if (alt && typeof alt === "object") {
-    const out: Record<string, MF_Level> = {};
-    for (const k of Object.keys(alt)) out[k] = normalizeLevel(alt[k]);
-    return out;
-  }
-
-  return {};
+  return sessions.sort((a, b) => {
+    const dayDiff = WEEK.indexOf(a.day) - WEEK.indexOf(b.day);
+    if (dayDiff !== 0) return dayDiff;
+    return (a.slot ?? 0) - (b.slot ?? 0);
+  });
 }
 
 export function buildWorkoutPlanPreview(draft: any): MF_PlanPreview {
   try {
-    const modalities = extractModalities(draft);
-    const daysByMod = extractDaysByModality(draft);
-    const levelByMod = extractLevelByModality(draft);
+    const activePlan = buildActivePlanFromDraft(draft ?? {});
+    const legacyWeek = getLegacyWeekSource(activePlan);
+    const sessions = legacyWeek.length
+      ? buildSessionsFromLegacyWeek(activePlan, draft ?? {})
+      : normalizePreviewSessions(safeArray<any>(activePlan?.training?.workouts));
 
-    // monta day->modalities (ordem estável baseada em modalities)
-    const dayMap: Record<string, string[]> = {};
-    for (const d of WEEK) dayMap[d] = [];
-
-    for (const mod of modalities) {
-      const daysRaw = safeArr<string>(daysByMod?.[mod]);
-      const days = uniqStable(daysRaw.map((x) => String(x).toLowerCase()));
-      for (const d of days) {
-        if (!dayMap[d]) dayMap[d] = [];
-        // mantém ordem estável por modalities
-        if (!dayMap[d].includes(mod)) dayMap[d].push(mod);
-      }
-    }
-
-    const all = getExerciseCatalog();
-    const sessions: MF_Session[] = [];
-
-    // protocolo semanal: seg -> dom
-    for (const day of WEEK) {
-      const modsToday = dayMap[day] || [];
-      let slot = 0;
-      for (const mod of modsToday) {
-        const level = (levelByMod?.[mod] ?? "iniciante") as MF_Level;
-        sessions.push({
-          day,
-          modality: mod,
-          level,
-          slot,
-          exercises: pickExercisesForModality(all, mod, nFor(level)),
-        });
-        slot += 1;
-      }
-    }
+    const modalities = Array.from(
+      new Set(
+        sessions
+          .map((session) => String(session?.modality ?? "").trim())
+          .filter(Boolean)
+      )
+    );
 
     return {
       sessions,
-      meta: { modalities, exerciseSource: __MF_EXERCISE_SOURCE, weekOrder: WEEK },
+      meta: {
+        modalities,
+        exerciseSource: legacyWeek.length ? "workout.week+training.workouts" : "training.workouts",
+        weekOrder: WEEK,
+      },
     };
   } catch {
-    return { sessions: [], meta: { modalities: [], exerciseSource: __MF_EXERCISE_SOURCE, weekOrder: WEEK } };
+    return {
+      sessions: [],
+      meta: {
+        modalities: [],
+        exerciseSource: "training.workouts",
+        weekOrder: WEEK,
+      },
+    };
   }
 }

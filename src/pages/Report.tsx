@@ -361,7 +361,7 @@ export function Report() {
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
             <p className="text-gray-400 mb-6">Finalize o questionário para ver seu relatório completo</p>
-            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full glow-blue">
+            <Button onClick={() => navigate("/onboarding/step-1?mode=recreate")} className="w-full glow-blue">
               Iniciar Agora
             </Button>
           </CardContent>

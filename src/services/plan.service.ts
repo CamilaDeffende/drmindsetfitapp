@@ -245,6 +245,69 @@ function getSelectedDaysFromDraft(step5: any, step6: any): string[] {
   return Array.from(uniqueDays);
 }
 
+function normalizeDayKey(value: unknown): string {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const map: Record<string, string> = {
+    seg: "seg",
+    segunda: "seg",
+    ter: "ter",
+    terca: "ter",
+    terça: "ter",
+    qua: "qua",
+    quarta: "qua",
+    qui: "qui",
+    quinta: "qui",
+    sex: "sex",
+    sexta: "sex",
+    sab: "sab",
+    sabado: "sab",
+    sábado: "sab",
+    dom: "dom",
+    domingo: "dom",
+  };
+
+  return map[raw] ?? raw;
+}
+
+function toDayLabel(dayKey: string) {
+  const map: Record<string, string> = {
+    seg: "Segunda",
+    ter: "Terca",
+    qua: "Quarta",
+    qui: "Quinta",
+    sex: "Sexta",
+    sab: "Sabado",
+    dom: "Domingo",
+  };
+
+  return map[dayKey] ?? dayKey;
+}
+
+function alignCanonicalWorkoutDays(workouts: any[], legacyWeek: any[]) {
+  if (!Array.isArray(workouts) || !workouts.length) return Array.isArray(workouts) ? workouts : [];
+  if (!Array.isArray(legacyWeek) || !legacyWeek.length) return workouts;
+
+  return workouts.map((workout, index) => {
+    const fallbackDay =
+      legacyWeek[index]?.dayKey ??
+      legacyWeek[index]?.day ??
+      legacyWeek[index]?.dia;
+
+    const dayKey = normalizeDayKey(fallbackDay ?? workout?.dayKey ?? workout?.day);
+    const fallbackModality =
+      legacyWeek[index]?.modalidade ??
+      legacyWeek[index]?.modality ??
+      legacyWeek[index]?.type;
+
+    return {
+      ...workout,
+      dayKey,
+      dayLabel: toDayLabel(dayKey),
+      modality: String(fallbackModality ?? workout?.modality ?? "musculacao"),
+    };
+  });
+}
+
 function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
   const primary = mapPrimaryModality(step5?.primary);
   const modalidadesRaw = Array.isArray(step5?.modalidades)
@@ -798,6 +861,10 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
   });
 
   const trainingPayload = buildTrainingPayloadFromSmartEngine(draft, step3, step5, step6);
+  const alignedCanonicalWorkouts = alignCanonicalWorkoutDays(
+    Array.isArray(trainingPayload?.training?.workouts) ? trainingPayload.training.workouts : [],
+    Array.isArray((workout as any)?.week) ? (workout as any).week : []
+  );
 
   const macrosTargetKcal = Number((macros as any)?.targetKcal ?? 0);
 
@@ -853,6 +920,7 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
 
     training: {
       ...(trainingPayload?.training ?? {}),
+      workouts: alignedCanonicalWorkouts,
       modality: String(step5?.primary ?? "musculacao"),
       frequency: selectedDays.length,
       week: (workout as any)?.week ?? (workout as any)?.days ?? [],

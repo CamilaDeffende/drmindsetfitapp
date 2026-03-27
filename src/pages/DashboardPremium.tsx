@@ -206,6 +206,59 @@ function getNextMealByTime(meals: any[]) {
   return parsedMeals[0].meal;
 }
 
+function extractWorkoutExercises(workoutItem: any) {
+  const canonicalExercises = Array.isArray(workoutItem?.blocks)
+    ? workoutItem.blocks.flatMap((block: any) =>
+        Array.isArray(block?.exercises) ? block.exercises : []
+      )
+    : [];
+
+  if (canonicalExercises.length) return canonicalExercises;
+
+  if (Array.isArray(workoutItem?.exercises)) return workoutItem.exercises;
+
+  if (Array.isArray(workoutItem?.sessoes)) {
+    return workoutItem.sessoes.flatMap((session: any) =>
+      Array.isArray(session?.exercises) ? session.exercises : []
+    );
+  }
+
+  return [];
+}
+
+function getWorkoutDayTitle(workoutItem: any, index: number) {
+  return (
+    workoutItem?.dayLabel ??
+    workoutItem?.day ??
+    workoutItem?.dia ??
+    workoutItem?.label ??
+    `Dia ${index + 1}`
+  );
+}
+
+function getWorkoutItemLabel(workoutItem: any, fallback: string) {
+  return (
+    workoutItem?.title ??
+    workoutItem?.titulo ??
+    workoutItem?.modality ??
+    workoutItem?.modalidade ??
+    workoutItem?.type ??
+    fallback
+  );
+}
+
+function getWorkoutExerciseLabel(exercise: any, index: number) {
+  return (
+    exercise?.name ??
+    exercise?.nome ??
+    exercise?.title ??
+    exercise?.titulo ??
+    exercise?.exerciseName ??
+    exercise?.label ??
+    `Exercicio ${index + 1}`
+  );
+}
+
 function getPremiumStatus(): PremiumStatus {
   try {
     const raw = localStorage.getItem("mindsetfit:subscription:v1");
@@ -573,7 +626,7 @@ export function DashboardPremium() {
             </p>
             <Button
               variant="ghost"
-              onClick={() => navigate("/onboarding/step-1")}
+              onClick={() => navigate("/onboarding/step-1?mode=recreate")}
               className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
             >
               Iniciar Agora
@@ -603,7 +656,7 @@ export function DashboardPremium() {
               <Button
                 variant="ghost"
                 className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
-                onClick={() => navigate("/onboarding/step-1")}
+                onClick={() => navigate("/onboarding/step-1?mode=recreate")}
               >
                 Criar / Recriar plano
               </Button>
@@ -1127,19 +1180,47 @@ export function DashboardPremium() {
               {showWorkoutWeek ? (
                 Array.isArray(workoutWeek) && workoutWeek.length ? (
                   <div className="space-y-3">
-                    {workoutWeek.slice(0, 7).map((day: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="rounded-[16px] border border-white/10 bg-black/20 p-4"
-                      >
-                        <div className="text-sm font-semibold text-white">
-                          {day?.day ?? day?.dia ?? day?.label ?? `Dia ${idx + 1}`}
+                    {workoutWeek.slice(0, 7).map((day: any, idx: number) => {
+                      const exercises = extractWorkoutExercises(day);
+
+                      return (
+                        <div
+                          key={idx}
+                          className="rounded-[16px] border border-white/10 bg-black/20 p-4"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-white">
+                                {getWorkoutDayTitle(day, idx)}
+                              </div>
+                              <div className="mt-1 text-xs text-white/50">
+                                {getWorkoutItemLabel(day, workoutModality)}
+                                {exercises.length ? ` • ${exercises.length} exercicios` : ""}
+                              </div>
+                            </div>
+
+                            {typeof day?.estimatedDurationMin === "number" ? (
+                              <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/60">
+                                {day.estimatedDurationMin} min
+                              </div>
+                            ) : null}
+                          </div>
+
+                          {exercises.length ? (
+                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {exercises.slice(0, 6).map((exercise: any, exerciseIndex: number) => (
+                                <div
+                                  key={`${idx}-${exerciseIndex}`}
+                                  className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] text-white/80"
+                                >
+                                  {getWorkoutExerciseLabel(exercise, exerciseIndex)}
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
-                        <div className="mt-1 text-xs text-white/50">
-                          {day?.modality ?? day?.type ?? workoutModality}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="rounded-[20px] border border-white/10 bg-black/20 p-4 text-sm text-white/50">

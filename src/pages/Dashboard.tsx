@@ -379,7 +379,7 @@ export function Dashboard() {
           <CardContent>
             <Button
               variant="ghost"
-              onClick={() => navigate("/onboarding/step-1")}
+              onClick={() => navigate("/onboarding/step-1?mode=recreate")}
               className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
             >
               Iniciar onboarding

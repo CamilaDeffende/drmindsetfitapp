@@ -174,7 +174,7 @@ export function NutritionPlan() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full glow-blue">
+            <Button onClick={() => navigate("/onboarding/step-1?mode=recreate")} className="w-full glow-blue">
               Configurar Agora
             </Button>
           </CardContent>

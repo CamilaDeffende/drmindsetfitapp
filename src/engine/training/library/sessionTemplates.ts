@@ -11,6 +11,11 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
       MovementPattern.HORIZONTAL_PULL,
       MovementPattern.CORE_ANTI_EXTENSION,
     ],
+    optionalPatterns: [
+      MovementPattern.HIP_HINGE,
+      MovementPattern.LUNGE,
+      MovementPattern.CARRY,
+    ],
   },
   {
     split: TrainingSplit.UPPER_LOWER,
@@ -22,6 +27,7 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
       MovementPattern.VERTICAL_PULL,
       MovementPattern.CORE_ANTI_ROTATION,
     ],
+    optionalPatterns: [MovementPattern.CORE_ANTI_EXTENSION],
   },
   {
     split: TrainingSplit.UPPER_LOWER,
@@ -33,6 +39,7 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
       MovementPattern.CALF,
       MovementPattern.CORE_ANTI_EXTENSION,
     ],
+    optionalPatterns: [MovementPattern.CARRY],
   },
   {
     split: TrainingSplit.PUSH_PULL_LEGS,
@@ -40,8 +47,10 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
     requiredPatterns: [
       MovementPattern.HORIZONTAL_PUSH,
       MovementPattern.VERTICAL_PUSH,
+      MovementPattern.HORIZONTAL_PUSH,
       MovementPattern.CORE_ANTI_ROTATION,
     ],
+    optionalPatterns: [MovementPattern.CORE_ANTI_EXTENSION, MovementPattern.CARRY],
   },
   {
     split: TrainingSplit.PUSH_PULL_LEGS,
@@ -49,8 +58,10 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
     requiredPatterns: [
       MovementPattern.HORIZONTAL_PULL,
       MovementPattern.VERTICAL_PULL,
+      MovementPattern.HORIZONTAL_PULL,
       MovementPattern.CORE_ANTI_ROTATION,
     ],
+    optionalPatterns: [MovementPattern.CARRY, MovementPattern.CORE_ANTI_EXTENSION],
   },
   {
     split: TrainingSplit.PUSH_PULL_LEGS,
@@ -58,13 +69,16 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
     requiredPatterns: [
       MovementPattern.SQUAT,
       MovementPattern.HIP_HINGE,
+      MovementPattern.LUNGE,
       MovementPattern.KNEE_FLEXION,
       MovementPattern.CALF,
     ],
+    optionalPatterns: [MovementPattern.CORE_ANTI_EXTENSION, MovementPattern.CARRY],
   },
   {
     split: TrainingSplit.BODY_PART,
     focus: SessionFocus.CONDITIONING,
     requiredPatterns: [MovementPattern.CARDIO_INTERVAL],
+    optionalPatterns: [MovementPattern.CORE_ANTI_ROTATION],
   },
 ];
