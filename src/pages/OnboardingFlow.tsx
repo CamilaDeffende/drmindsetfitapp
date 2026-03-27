@@ -21,6 +21,8 @@ import Step7Preferencias from "@/components/steps/Step7Preferencias";
 import Step8Confirmacao from "@/components/steps/Step8Confirmacao";
 import { writeOnboardingDraftStorage, normalizeDraftKeys } from "@/services/ssot/onboardingDraft.bridge";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { useAuth } from "@/contexts/AuthContext";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 function mfNavGuard(to: string) {
   try {
@@ -156,15 +158,17 @@ export function OnboardingFlow() {
   const location = useLocation();
   const params = useParams();
   const { appReady } = useApp();
+  const auth = useAuth() as any;
   void appReady;
+  const [isHandingOffAfterConfirm, setIsHandingOffAfterConfirm] = useState(false);
 
   const onboardingDone = isOnboardingDone();
 
   useEffect(() => {
-    if (onboardingDone) {
-      navigate("/dashboard", { replace: true });
+    if (onboardingDone && !isHandingOffAfterConfirm) {
+      navigate(getHomeRoute(), { replace: true });
     }
-  }, [onboardingDone, navigate]);
+  }, [onboardingDone, isHandingOffAfterConfirm, navigate]);
 
   const mfClampStep = (n: number) => Math.max(1, Math.min(8, n));
 
@@ -177,7 +181,6 @@ export function OnboardingFlow() {
         try {
           const ok = Boolean((guard as (x: string) => unknown)(to));
           if (ok) navigate(to, { replace: true });
-          else navigate(to, { replace: true });
         } catch {
           navigate(to, { replace: true });
         }
@@ -259,6 +262,16 @@ export function OnboardingFlow() {
     saveDraft({ ...draft, activeIndex: active });
   }, [draft, active]);
 
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    } catch {
+      try {
+        window.scrollTo(0, 0);
+      } catch {}
+    }
+  }, [active]);
+
   const goNext = () => {
     setActive((x) => {
       const nx = Math.min(x + 1, 7);
@@ -291,7 +304,7 @@ export function OnboardingFlow() {
     );
   }
 
-  if (onboardingDone) {
+  if (onboardingDone && !isHandingOffAfterConfirm) {
     return null;
   }
 
@@ -387,8 +400,15 @@ export function OnboardingFlow() {
           summary={draft}
           onBack={goBack}
           onConfirm={() => {
+            setIsHandingOffAfterConfirm(true);
             const plan = buildActivePlanFromDraft(draft as any);
             saveActivePlan(plan);
+            const postOnboardingTarget = "/assinatura?source=onboarding";
+
+            const authUser = auth?.user ?? auth?.session?.user ?? null;
+            const isAuthenticated = Boolean(
+              authUser && authUser.id && authUser.id !== "demo-user-123"
+            );
 
             try {
               localStorage.setItem(DONE_KEY, "1");
@@ -398,14 +418,36 @@ export function OnboardingFlow() {
               migrateLegacyToSSOT();
             } catch {}
 
-            try {
-              clearOnboardingDraft();
-            } catch {}
+            if (isAuthenticated) {
+              void auth?.syncProfileAppState?.(
+                (draft as any)?.step1?.nomeCompleto ??
+                  (draft as any)?.step1?.nome ??
+                  authUser?.user_metadata?.full_name
+              );
+              try {
+                clearOnboardingDraft();
+              } catch {}
+            }
 
             try {
-              navigate("/dashboard", { replace: true });
+              const signupHref = `/signup?next=${encodeURIComponent(
+                postOnboardingTarget
+              )}&source=onboarding`;
+              navigate(
+                isAuthenticated
+                  ? postOnboardingTarget
+                  : signupHref,
+                { replace: true }
+              );
             } catch {
-              window.location.replace("/dashboard");
+              const signupHref = `/signup?next=${encodeURIComponent(
+                postOnboardingTarget
+              )}&source=onboarding`;
+              window.location.replace(
+                isAuthenticated
+                  ? postOnboardingTarget
+                  : signupHref
+              );
             }
           }}
         />
@@ -457,43 +499,6 @@ export function OnboardingFlow() {
             ok
           </span>
         </div>
-      </div>
-
-      <div className="mt-6 flex items-center justify-end">
-        <button
-          data-testid="onboarding-next"
-          data-mf="mf-next"
-          type="button"
-          onClick={() => {
-            try {
-              if (current?.key === "step1") {
-                const nome = String((draft as any).step1?.nomeCompleto || "").trim();
-                if (!nome || nome.length < 3) {
-                  alert("Digite seu nome completo antes de continuar.");
-                  return;
-                }
-              }
-            } catch {}
-
-            try {
-              goNext();
-            } catch {}
-
-            try {
-              const __path = window.location.pathname || "";
-              if (__path.startsWith("/onboarding")) {
-                const m = __path.match(/\/onboarding\/step-(\d+)\b/);
-                const __cur = m && m[1] ? Number(m[1]) || 1 : 1;
-                const __dest =
-                  __cur >= 8 ? "/dashboard" : `/onboarding/step-${__cur + 1}`;
-                mfSafeNavigate(__dest, { replace: true });
-              }
-            } catch {}
-          }}
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15"
-        >
-          Continuar
-        </button>
       </div>
 
       {SHOW_LEGACY_NAV && (

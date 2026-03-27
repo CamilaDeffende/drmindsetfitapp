@@ -9,17 +9,57 @@ import { Mail, Lock, Check, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Button } from "@/components/ui/button";
+import { loadActivePlan } from "@/services/plan.service";
+import { loadOnboardingProgress } from "@/lib/onboardingProgress";
 
 const getPrefilledNameFromOnboarding = (): string => {
   try {
-    const raw = localStorage.getItem("mf:onboarding:draft:v1");
-    if (!raw) return "";
-    const draft = JSON.parse(raw);
-    const nome = String(draft?.step1?.nomeCompleto || "").trim();
-    return nome.length >= 3 ? nome : "";
+    const candidates = [
+      (() => {
+        const raw = localStorage.getItem("mf:onboarding:draft:v1");
+        if (!raw) return "";
+        const draft = JSON.parse(raw);
+        return String(
+          draft?.step1?.nomeCompleto ??
+            draft?.step1?.nome ??
+            draft?.step1?.fullName ??
+            ""
+        ).trim();
+      })(),
+      (() => {
+        const progress = loadOnboardingProgress();
+        return String(
+          progress?.data?.step1?.nomeCompleto ??
+            progress?.data?.step1?.nome ??
+            progress?.data?.step1?.fullName ??
+            ""
+        ).trim();
+      })(),
+      (() => {
+        const plan = loadActivePlan() as any;
+        return String(
+          plan?.draft?.step1?.nomeCompleto ??
+            plan?.draft?.step1?.nome ??
+            plan?.draft?.step1?.fullName ??
+            plan?.perfil?.nomeCompleto ??
+            plan?.perfil?.nome ??
+            plan?.profile?.name ??
+            plan?.profile?.fullName ??
+            ""
+        ).trim();
+      })(),
+    ];
+
+    return candidates.find((value) => value.length >= 3) ?? "";
   } catch {
     return "";
   }
+};
+
+const PENDING_IMPORT_KEY = "mf:pendingProfileImport:v1";
+
+const getDefaultPostAuthRoute = (): string => {
+  return "/onboarding/step-1";
 };
 
 export function SignUp() {
@@ -35,27 +75,32 @@ export function SignUp() {
 
   const next = useMemo(() => {
     try {
-      return searchParams.get("next") || "/assinatura?source=onboarding";
+      return searchParams.get("next") || getDefaultPostAuthRoute();
     } catch {
-      return "/assinatura?source=onboarding";
+      return getDefaultPostAuthRoute();
     }
   }, [searchParams]);
 
   const premiumFromUrl = searchParams.get("premium") === "1";
   const planFromUrl = searchParams.get("plan") || "mensal";
+  const source = searchParams.get("source") || "";
+  const shouldImportGuestState = searchParams.has("next");
 
   const loginHref = useMemo(() => {
     const params = new URLSearchParams();
     params.set("next", next);
+    if (source) params.set("source", source);
 
     if (premiumFromUrl) params.set("premium", "1");
     if (planFromUrl) params.set("plan", planFromUrl);
 
     return `/login?${params.toString()}`;
-  }, [next, premiumFromUrl, planFromUrl]);
+  }, [next, premiumFromUrl, planFromUrl, source]);
 
   useEffect(() => {
-    if (!loading && user) {
+    const hasRealUser = Boolean(user && user.id !== "demo-user-123");
+
+    if (!loading && hasRealUser) {
       if (premiumFromUrl) {
         try {
           localStorage.setItem("mindsetfit:isSubscribed", "true");
@@ -88,6 +133,17 @@ export function SignUp() {
     confirmPassword: "",
   }));
 
+  useEffect(() => {
+    const prefilledName = getPrefilledNameFromOnboarding();
+    if (!prefilledName) return;
+
+    setFormData((current) =>
+      current.fullName.trim().length >= 3
+        ? current
+        : { ...current, fullName: prefilledName }
+    );
+  }, [location.key, location.search]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -110,6 +166,14 @@ export function SignUp() {
       setSubmitting(false);
       return;
     }
+
+    try {
+      if (shouldImportGuestState) {
+        localStorage.setItem(PENDING_IMPORT_KEY, "1");
+      } else {
+        localStorage.removeItem(PENDING_IMPORT_KEY);
+      }
+    } catch {}
 
     const { error: signUpError } = await signUp(
       formData.email.trim(),

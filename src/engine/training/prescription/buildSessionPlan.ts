@@ -4,7 +4,7 @@ import { assignSetRepSchemes } from "./assignSetRepSchemes";
 import { selectExercises } from "./selectExercises";
 
 export function buildSessionPlan(dayIndex: number, focus: SessionFocus, profile: TrainingProfile): SessionPlan {
-  const selected = selectExercises(focus, profile);
+  const selected = selectExercises(focus, profile, dayIndex);
   const exercises = assignSetRepSchemes(selected, profile);
 
   return {

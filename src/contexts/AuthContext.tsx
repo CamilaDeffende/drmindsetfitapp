@@ -1,6 +1,218 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  SMART_TRAINING_PLAN_KEY,
+  TRAINING_DECISION_LOG_KEY,
+} from "@/services/training/trainingEngine.storage";
+
+const ACTIVE_PLAN_KEY = "mf:activePlan:v1";
+const ONBOARDING_DONE_KEY = "mf:onboarding:done:v1";
+const ONBOARDING_DRAFT_KEY = "mf:onboarding:draft:v1";
+const PENDING_IMPORT_KEY = "mf:pendingProfileImport:v1";
+
+function readJsonStorage<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeJsonStorage(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+function clearLocalAppState() {
+  try {
+    localStorage.removeItem(ACTIVE_PLAN_KEY);
+    localStorage.removeItem(ONBOARDING_DRAFT_KEY);
+    localStorage.removeItem(ONBOARDING_DONE_KEY);
+    localStorage.removeItem(SMART_TRAINING_PLAN_KEY);
+    localStorage.removeItem(TRAINING_DECISION_LOG_KEY);
+  } catch {}
+}
+
+function shouldImportPendingGuestState() {
+  try {
+    return localStorage.getItem(PENDING_IMPORT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function clearPendingGuestStateImport() {
+  try {
+    localStorage.removeItem(PENDING_IMPORT_KEY);
+  } catch {}
+}
+
+function buildProfileAppData() {
+  const activePlan = readJsonStorage<any>(ACTIVE_PLAN_KEY);
+  const onboardingDraft = readJsonStorage<any>(ONBOARDING_DRAFT_KEY);
+
+  let onboardingDone = false;
+  try {
+    onboardingDone = localStorage.getItem(ONBOARDING_DONE_KEY) === "1";
+  } catch {}
+
+  return {
+    onboardingDone: onboardingDone || Boolean(activePlan),
+    activePlan,
+    onboardingDraft,
+    updatedAtISO: new Date().toISOString(),
+  };
+}
+
+function parseProfileData(raw: any) {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  return raw;
+}
+
+function normalizeProfileAppData(raw: any) {
+  const parsed = parseProfileData(raw);
+  const root =
+    parsed?.appData ??
+    parsed?.mindsetfit ??
+    parsed?.mindsetFit ??
+    parsed?.drmindsetfit ??
+    parsed;
+
+  const onboardingDraft =
+    root?.onboardingDraft ??
+    root?.draft ??
+    root?.onboarding?.draft ??
+    root?.onboarding_data ??
+    null;
+
+  const activePlan =
+    root?.activePlan ??
+    root?.plan ??
+    root?.planoAtivo ??
+    root?.active_plan ??
+    null;
+
+  const onboardingDone = Boolean(
+    root?.onboardingDone ??
+      root?.done ??
+      root?.completedOnboarding ??
+      root?.onboarding?.done ??
+      activePlan
+  );
+
+  return {
+    onboardingDraft,
+    activePlan,
+    onboardingDone,
+  };
+}
+
+function normalizeProfileColumns(row: any) {
+  const legacy = normalizeProfileAppData(row?.data);
+
+  const activePlan =
+    row?.active_plan ??
+    row?.activePlan ??
+    legacy.activePlan ??
+    null;
+
+  const onboardingDraft =
+    row?.onboarding_draft ??
+    row?.onboardingDraft ??
+    legacy.onboardingDraft ??
+    null;
+
+  const onboardingDone = Boolean(
+    row?.onboarding_done ??
+      row?.onboardingDone ??
+      legacy.onboardingDone ??
+      activePlan
+  );
+
+  return {
+    activePlan,
+    onboardingDraft,
+    onboardingDone,
+  };
+}
+
+async function syncLocalAppStateToProfile(userId: string, fullName?: string) {
+  if (!isSupabaseConfigured || !userId) return;
+
+  const payload = buildProfileAppData();
+  const hasMeaningfulData =
+    payload.onboardingDone || payload.activePlan || payload.onboardingDraft;
+
+  if (!hasMeaningfulData) return;
+
+  try {
+    await supabase.from("profiles").upsert(
+      {
+        user_id: userId,
+        ...(fullName ? { nome_completo: fullName } : {}),
+        active_plan: payload.activePlan,
+        onboarding_draft: payload.onboardingDraft,
+        onboarding_synced_at: payload.updatedAtISO,
+        data: payload,
+      },
+      { onConflict: "user_id" }
+    );
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn("[MF] Não foi possível sincronizar onboarding/plano no profile.", error);
+    }
+  }
+}
+
+async function hydrateLocalAppStateFromProfile(userId: string) {
+  if (!isSupabaseConfigured || !userId) return;
+
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("data, active_plan, onboarding_draft, onboarding_synced_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      if (import.meta.env.DEV) {
+        console.warn("[MF] Falha ao carregar dados do profile.", error);
+      }
+      return;
+    }
+
+    const { activePlan, onboardingDraft, onboardingDone } = normalizeProfileColumns(data);
+    const hasProfileAppData = Boolean(activePlan || onboardingDraft || onboardingDone);
+
+    if (!hasProfileAppData) {
+      return;
+    }
+
+    clearLocalAppState();
+
+    if (activePlan) writeJsonStorage(ACTIVE_PLAN_KEY, activePlan);
+    if (onboardingDraft) writeJsonStorage(ONBOARDING_DRAFT_KEY, onboardingDraft);
+    if (onboardingDone) {
+      try {
+        localStorage.setItem(ONBOARDING_DONE_KEY, "1");
+      } catch {}
+    }
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn("[MF] Exceção ao hidratar onboarding/plano do profile.", error);
+    }
+  }
+}
 
 // MF_DEMO_ONCE_GUARD (StrictMode-safe)
 // Evita loops de DEMO que disparam setState/store em re-render/hidratação.
@@ -27,6 +239,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  syncProfileAppState: (fullName?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -90,7 +303,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Modo REAL: usar Supabase
     supabase.auth
       .getSession()
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
+        if (session?.user?.id) {
+          await hydrateLocalAppStateFromProfile(session.user.id);
+        }
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -105,10 +321,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Escutar mudanças de autenticação
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      void (async () => {
+        if (event === "SIGNED_OUT") {
+          clearPendingGuestStateImport();
+          clearLocalAppState();
+        }
+        if (session?.user?.id) {
+          await hydrateLocalAppStateFromProfile(session.user.id);
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })();
     });
 
     return () => subscription.unsubscribe();
@@ -143,6 +368,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 user_id: data.user.id,
                 nome_completo: fullName,
                 data: {},
+                active_plan: null,
+                onboarding_draft: null,
+                onboarding_synced_at: null,
               },
               { onConflict: "user_id" }
             );
@@ -153,6 +381,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           if (import.meta.env.DEV) console.warn("⚠️ Exceção ao upsert do profile, seguindo mesmo assim.", e);
         }
+
+        if (shouldImportPendingGuestState()) {
+          await syncLocalAppStateToProfile(data.user.id, fullName);
+        }
+        clearPendingGuestStateImport();
+        await hydrateLocalAppStateFromProfile(data.user.id);
       }
 
       return { error: null };
@@ -173,6 +407,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
+      if (!error) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user?.id) {
+          if (shouldImportPendingGuestState()) {
+            await syncLocalAppStateToProfile(user.id, user.user_metadata?.full_name);
+          }
+          clearPendingGuestStateImport();
+          await hydrateLocalAppStateFromProfile(user.id);
+        }
+      }
       return { error };
     } catch (error) {
       return { error: error as AuthError };
@@ -182,6 +429,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     // Modo DEMO: apenas limpar estado local
     if (!isSupabaseConfigured) {
+      clearPendingGuestStateImport();
+      clearLocalAppState();
       setUser(null);
       setSession(null);
       if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Logout simulado");
@@ -208,6 +457,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const syncProfileAppState = async (fullName?: string) => {
+    const currentUser = user ?? session?.user ?? null;
+    if (!currentUser?.id || currentUser.id === "demo-user-123") return;
+
+    await syncLocalAppStateToProfile(
+      currentUser.id,
+      fullName ?? currentUser.user_metadata?.full_name
+    );
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -216,6 +475,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    syncProfileAppState,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

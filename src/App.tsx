@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { maybeResetFromUrl } from "@/lib/resetApp";
 import { ErrorBoundary } from "@/components/system/ErrorBoundary";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 // Páginas Públicas
 import { Login } from "@/pages/Login";
@@ -70,6 +71,23 @@ const LazyCorridaPro = React.lazy(() => import("@/pages/CorridaPro").then((m) =>
 const MF_METABOLIC_ENGINE_V1_ENABLED =
   (import.meta as any).env?.VITE_MF_METABOLIC_ENGINE_V1_ENABLED === "true";
 
+function isOnboardingDone(): boolean {
+  try {
+    return localStorage.getItem("mf:onboarding:done:v1") === "1";
+  } catch {
+    return false;
+  }
+}
+
+function RootRedirect() {
+  return (
+    <Navigate
+      to={isOnboardingDone() ? getHomeRoute() : "/onboarding/step-1"}
+      replace
+    />
+  );
+}
+
 function App() {
   React.useEffect(() => {
     maybeResetFromUrl();
@@ -105,7 +123,7 @@ function App() {
 
             <Route path="/diagnostic" element={<DiagnosticPage />} />
 
-            <Route path="/" element={<Navigate to="/onboarding/step-1" replace />} />
+            <Route path="/" element={<RootRedirect />} />
 
             {/* Públicas */}
             <Route path="/assinatura" element={<Assinatura />} />

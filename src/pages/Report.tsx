@@ -10,6 +10,7 @@ import { getCanonicalTrainingWorkouts } from "@/services/training/activeTraining
 import { FileText, Calendar, Target, UtensilsCrossed, Dumbbell, Activity, ArrowLeft, Clock, TrendingUp } from 'lucide-react'
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 import { readOnboardingDraftStorage, normalizeDraftKeys } from "@/services/ssot/onboardingDraft.bridge";
+import { getHomeRoute } from "@/lib/subscription/premium";
 // DEMO-safe: hidrata Report via localStorage e evita loader infinito
 type MFAny = any;
 
@@ -360,7 +361,7 @@ export function Report() {
           <CardContent className="p-6 text-center">
             <h2 className="text-2xl font-bold text-neon mb-4">Complete seu Perfil</h2>
             <p className="text-gray-400 mb-6">Finalize o questionário para ver seu relatório completo</p>
-            <Button onClick={() => navigate("/")} className="w-full glow-blue">
+            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full glow-blue">
               Iniciar Agora
             </Button>
           </CardContent>
@@ -401,7 +402,12 @@ export function Report() {
       <header className="sticky top-0 z-50 glass-effect border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(getHomeRoute())}
+              className="hover:bg-white/10"
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="text-center">
@@ -703,7 +709,7 @@ export function Report() {
         )}
 
         {/* Botão Voltar */}
-        <Button onClick={() => navigate('/dashboard')} variant="outline" className="w-full">
+        <Button onClick={() => navigate(getHomeRoute())} variant="outline" className="w-full">
           Voltar ao Dashboard
         </Button>
       </main>

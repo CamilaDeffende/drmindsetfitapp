@@ -3,7 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiveMetricsDisplay } from "@/components/live-metrics/LiveMetricsDisplay";
 import { useGPS } from "@/hooks/useGPS/useGPS";
+import { getHomeRoute } from "@/lib/subscription/premium";
 import { historyService } from "@/services/history/HistoryService";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const downloadText = (filename: string, content: string, mime = "application/gpx+xml") => {
   const blob = new Blob([content], { type: mime });
@@ -19,6 +22,7 @@ const downloadText = (filename: string, content: string, mime = "application/gpx
 
 export default function LiveWorkoutPage() {
   const gps = useGPS();
+  const navigate = useNavigate();
 
 
   // MF_SAVE_SESSION_V1
@@ -64,9 +68,21 @@ export default function LiveWorkoutPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
-      <div className="flex flex-col gap-2 mb-4">
-        <h1 className="text-2xl font-bold text-white">{title}</h1>
-        <p className="text-sm text-zinc-400">{subtitle}</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(getHomeRoute())}
+            className="mt-1 shrink-0 hover:bg-white/10"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold text-white">{title}</h1>
+            <p className="text-sm text-zinc-400">{subtitle}</p>
+          </div>
+        </div>
         {gps.error ? (
           <p className="text-sm text-red-400">Erro: {gps.error}</p>
         ) : null}

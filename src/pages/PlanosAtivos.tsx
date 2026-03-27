@@ -5,7 +5,7 @@ import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Calendar, Download } from "lucide-react";
+import { ArrowLeft, Calendar, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DietaAtivaView } from "@/components/planos/DietaAtivaView";
 import { TreinoAtivoView } from "@/components/planos/TreinoAtivoView";
@@ -15,6 +15,7 @@ import { MODALITIES } from "@/features/fitness-suite/workouts/library";
 import { WeeklyProtocolActive } from "@/components/treino/WeeklyProtocolActive";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 import { getActivePlanNormalized } from "@/services/ssot/getActivePlanNormalized";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 const HIDE_ADVANCED_MODALITY_UI = true;
 
@@ -35,12 +36,38 @@ export function PlanosAtivos() {
   const [planLoaded, setPlanLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const p = getActivePlanNormalized();
-      setActivePlan(p);
-    } finally {
-      setPlanLoaded(true);
-    }
+    const syncActivePlan = () => {
+      try {
+        const p = getActivePlanNormalized();
+        setActivePlan(p);
+      } finally {
+        setPlanLoaded(true);
+      }
+    };
+
+    syncActivePlan();
+
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "mf:activePlan:v1") {
+        syncActivePlan();
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncActivePlan();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", syncActivePlan);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", syncActivePlan);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   const kcal = activePlan?.nutrition?.kcalTarget ?? activePlan?.nutrition?.kcal ?? null;
@@ -336,7 +363,6 @@ export function PlanosAtivos() {
         </div>
 
         <WeeklyProtocolActive />
-        <WeeklyProtocolActive />
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">
@@ -602,7 +628,7 @@ export function PlanosAtivos() {
             <p className="text-gray-400 mb-6">
               Inicie o questionário para desbloquear seus planos
             </p>
-            <Button onClick={() => navigate("/")} className="w-full glow-blue">
+            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full glow-blue">
               Iniciar Agora
             </Button>
           </CardContent>
@@ -611,8 +637,12 @@ export function PlanosAtivos() {
     );
   }
 
-  const temDieta = !!state.dietaAtiva;
-  const temTreino = !!state.treinoAtivo;
+  const temDieta = !!state.dietaAtiva || !!adapted?.macros || (Array.isArray(meals) && meals.length > 0);
+  const temTreino =
+    !!state.treinoAtivo ||
+    !!treinoPlan ||
+    (Array.isArray(week) && week.length > 0) ||
+    __mfWorkouts.length > 0;
 
   if (!temDieta && !temTreino) {
     return (
@@ -623,7 +653,7 @@ export function PlanosAtivos() {
             <p className="text-gray-400 mb-6">
               Configure seus planos de dieta e treino primeiro
             </p>
-            <Button onClick={() => navigate("/dashboard")} className="w-full glow-blue">
+            <Button onClick={() => navigate(getHomeRoute())} className="w-full glow-blue">
               Voltar ao Dashboard
             </Button>
           </CardContent>
@@ -659,10 +689,10 @@ export function PlanosAtivos() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate("/dashboard")}
-                className="hover:bg-green-500/20"
+                onClick={() => navigate(getHomeRoute())}
+                className="hover:bg-white/10"
               >
-                <Home className="w-5 h-5 text-green-400" />
+                <ArrowLeft className="w-5 h-5 text-green-400" />
               </Button>
             </div>
           </div>

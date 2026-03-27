@@ -186,3 +186,6 @@ coverage
 android/.idea
 
 .vercel_preview_url.txt
+
+# local assistant instructions
+AGENTS.md

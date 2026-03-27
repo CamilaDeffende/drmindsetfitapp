@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Home, Check, ArrowLeft, ArrowRight, Timer, Dumbbell } from "lucide-react";
+import { Check, ArrowLeft, ArrowRight, Timer, Dumbbell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { loadActivePlan } from "@/services/plan.service";
 import ProgressaoCargaHint from "@/components/ProgressaoCargaHint";
 import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
 import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
@@ -26,6 +27,7 @@ import {
   getCanonicalTrainingExercises,
   getCanonicalTrainingSessionByIndex,
 } from "@/services/training/activeTrainingSessions.bridge";
+import { lookupExerciseVisual } from "@/services/training/exerciseMediaCatalog";
 import {
   beginTrainingExecutionSession,
   completeTrainingExecutionSession,
@@ -33,6 +35,7 @@ import {
   type TrainingExecutionExercise,
   type TrainingExecutionSet,
 } from "@/services/training/trainingExecution.service";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 function buildWorkoutExportText() {
   const lines = [
@@ -84,6 +87,11 @@ type CanonicalExerciseView = {
   equipamento?: string;
   grupoMuscular?: string;
   descricao?: string;
+  mediaUrl?: string;
+  mediaType?: "image" | "gif" | "mp4" | "webm";
+  posterUrl?: string;
+  targetMuscles?: string[];
+  sourceLabel?: string;
   series: number;
   repeticoes: string;
   descanso: number;
@@ -107,6 +115,20 @@ type CanonicalWorkoutDayView = {
 function safeNum(value: unknown, fallback: number) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function withExerciseVisual<T extends { id: string; nome: string; mediaUrl?: string; mediaType?: "image" | "gif" | "mp4" | "webm"; posterUrl?: string; targetMuscles?: string[]; sourceLabel?: string }>(
+  exercise: T
+): T {
+  const visual = lookupExerciseVisual({ exerciseId: exercise.id, name: exercise.nome });
+  return {
+    ...exercise,
+    mediaUrl: exercise.mediaUrl ?? visual?.mediaUrl,
+    mediaType: exercise.mediaType ?? visual?.mediaType,
+    posterUrl: exercise.posterUrl ?? visual?.posterUrl,
+    targetMuscles: exercise.targetMuscles ?? visual?.targetMuscles,
+    sourceLabel: exercise.sourceLabel ?? visual?.sourceLabel,
+  };
 }
 
 function normalizeLegacyDays(state: any): CanonicalWorkoutDayView[] {
@@ -133,6 +155,49 @@ function normalizeLegacyDays(state: any): CanonicalWorkoutDayView[] {
           descanso: safeNum(ex?.descanso, 60),
           rpe: ex?.rpe,
           observacoes: ex?.observacoes,
+        }))
+      : [],
+  }));
+}
+
+function normalizeActivePlanLegacyDays(): CanonicalWorkoutDayView[] {
+  const activePlan = loadActivePlan();
+  const rawDays = Array.isArray(activePlan?.training?.week)
+    ? activePlan.training.week
+    : Array.isArray(activePlan?.training?.days)
+      ? activePlan.training.days
+      : Array.isArray(activePlan?.workout?.week)
+        ? activePlan.workout.week
+        : Array.isArray(activePlan?.workout?.days)
+          ? activePlan.workout.days
+          : [];
+
+  return rawDays.map((t: any, idx: number) => ({
+    id: String(t?.id ?? `activeplan-day-${idx + 1}`),
+    dia: String(t?.dia ?? t?.day ?? `Dia ${idx + 1}`),
+    dayKey: String(t?.dayKey ?? ""),
+    modalidade: String(t?.modalidade ?? t?.modality ?? "musculacao"),
+    titulo: String(t?.titulo ?? t?.title ?? t?.dia ?? `Treino ${idx + 1}`),
+    grupamentos: Array.isArray(t?.grupamentos)
+      ? t.grupamentos.map(String)
+      : Array.isArray(t?.focus)
+        ? t.focus.map(String)
+        : [],
+    intensidade: t?.intensidade ?? t?.intensity,
+    duracaoMin: safeNum(t?.duracaoMin ?? t?.estimatedDurationMin, 45),
+    rationale: t?.rationale,
+    exercicios: Array.isArray(t?.exercicios)
+      ? t.exercicios.map((ex: any, exIdx: number) => ({
+          id: String(ex?.exercicio?.id ?? ex?.id ?? `activeplan-ex-${idx + 1}-${exIdx + 1}`),
+          nome: String(ex?.exercicio?.nome ?? ex?.nome ?? ex?.name ?? `Exercicio ${exIdx + 1}`),
+          equipamento: ex?.exercicio?.equipamento ?? ex?.equipamento ?? ex?.equipment,
+          grupoMuscular: ex?.exercicio?.grupoMuscular ?? ex?.grupoMuscular ?? ex?.muscleGroup,
+          descricao: ex?.exercicio?.descricao ?? ex?.descricao ?? ex?.notes,
+          series: safeNum(ex?.series ?? ex?.sets, 3),
+          repeticoes: String(ex?.repeticoes ?? ex?.reps ?? "10-12"),
+          descanso: safeNum(ex?.descanso ?? ex?.restSec, 60),
+          rpe: ex?.rpe,
+          observacoes: ex?.observacoes ?? ex?.notes,
         }))
       : [],
   }));
@@ -200,16 +265,57 @@ export function TreinoAtivo() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [planRefreshTick, setPlanRefreshTick] = useState(0);
 
   const [treinoSelecionado, setTreinoSelecionado] = useState(0);
   const [exercicioAtual, setExercicioAtual] = useState(0);
   const [exerciseLogs, setExerciseLogs] = useState<Record<string, SerieDados[]>>({});
+  const [mediaHidden, setMediaHidden] = useState<Record<string, boolean>>({});
   const [tempoDecorrido, setTempoDecorrido] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
 
-  const canonicalDays = useMemo(() => normalizeCanonicalDays(), []);
+  useEffect(() => {
+    const refresh = () => setPlanRefreshTick((prev) => prev + 1);
+
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "mf:activePlan:v1") {
+        refresh();
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
+  const canonicalDays = useMemo(() => normalizeCanonicalDays(), [planRefreshTick]);
+  const activePlanLegacyDays = useMemo(() => normalizeActivePlanLegacyDays(), [planRefreshTick]);
   const legacyDays = useMemo(() => normalizeLegacyDays(state), [state]);
-  const treinoDias = canonicalDays.length ? canonicalDays : legacyDays;
+  const treinoDiasBase = canonicalDays.length
+    ? canonicalDays
+    : activePlanLegacyDays.length
+      ? activePlanLegacyDays
+      : legacyDays;
+  const treinoDias = useMemo(
+    () =>
+      treinoDiasBase.map((day) => ({
+        ...day,
+        exercicios: Array.isArray(day.exercicios) ? day.exercicios.map((item) => withExerciseVisual(item)) : [],
+      })),
+    [treinoDiasBase]
+  );
   const isCanonicalSource = canonicalDays.length > 0;
 
   const treino = treinoDias[treinoSelecionado];
@@ -321,8 +427,8 @@ export function TreinoAtivo() {
             <CardDescription>Gere ou confirme seu plano antes de iniciar.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/dashboard")} className="w-full">
-              Voltar ao Dashboard
+            <Button onClick={() => navigate(getHomeRoute())} className="w-full">
+              Voltar
             </Button>
           </CardContent>
         </Card>
@@ -472,7 +578,7 @@ export function TreinoAtivo() {
         : "Sessão salva no histórico canônico com origem legada.",
     });
 
-    navigate("/dashboard");
+    navigate(getHomeRoute());
   };
 
   return (
@@ -491,9 +597,6 @@ export function TreinoAtivo() {
                 >
                   Baixar PDF Premium
                 </button>
-                <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px]">
-                  Fonte: <b>{isCanonicalSource ? "training.workouts" : "state.treino (fallback)"}</b>
-                </span>
               </div>
 
               <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
@@ -508,8 +611,13 @@ export function TreinoAtivo() {
               </div>
             )}
 
-            <Button variant="outline" size="icon" onClick={() => navigate("/dashboard")} className="shrink-0">
-              <Home className="w-4 h-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(getHomeRoute())}
+              className="shrink-0 hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              <ArrowLeft className="w-5 h-5" />
             </Button>
           </div>
 
@@ -609,6 +717,65 @@ export function TreinoAtivo() {
           </CardHeader>
 
           <CardContent className="space-y-4">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+              {exercicio.mediaUrl && !mediaHidden[exercicio.id] ? (
+                exercicio.mediaType === "mp4" || exercicio.mediaType === "webm" ? (
+                  <video
+                    key={exercicio.mediaUrl}
+                    className="aspect-video w-full bg-black object-cover"
+                    controls
+                    playsInline
+                    muted
+                    loop
+                    poster={exercicio.posterUrl}
+                    onError={() => setMediaHidden((prev) => ({ ...prev, [exercicio.id]: true }))}
+                  >
+                    <source src={exercicio.mediaUrl} type={`video/${exercicio.mediaType}`} />
+                  </video>
+                ) : (
+                  <img
+                    src={exercicio.mediaUrl}
+                    alt={exercicio.nome}
+                    className="aspect-video w-full bg-black object-cover"
+                    onError={() => setMediaHidden((prev) => ({ ...prev, [exercicio.id]: true }))}
+                  />
+                )
+              ) : (
+                <div className="aspect-video w-full bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/60 p-4">
+                  <div className="flex h-full flex-col justify-between">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.24em] text-cyan-200/70">
+                        Preview do movimento
+                      </div>
+                      <div className="mt-2 text-lg font-semibold text-white">{exercicio.nome}</div>
+                      <div className="mt-1 text-sm text-white/70">
+                        {exercicio.grupoMuscular ?? "Execucao guiada do exercicio"}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {Array.isArray(exercicio.targetMuscles) && exercicio.targetMuscles.length ? (
+                        <div className="flex flex-wrap gap-2">
+                          {exercicio.targetMuscles.map((muscle) => (
+                            <span
+                              key={muscle}
+                              className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100"
+                            >
+                              {muscle}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-4 py-3 text-xs text-white/60">
+                        {exercicio.sourceLabel ?? "Adicione um GIF ou MP4 do exercicio para exibir aqui."}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <div className="p-2 sm:p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg text-center">
                 <p className="text-xs text-muted-foreground mb-1">Séries</p>

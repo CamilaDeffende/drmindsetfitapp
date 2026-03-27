@@ -151,13 +151,26 @@ function normalizeGoal(goalRaw: any): "cut" | "bulk" | "maintain" {
 function normalizePreference(
   prefRaw: string
 ): "flexivel" | "lowcarb" | "vegetariano" | "vegana" | "onivoro" {
-  const p = String(prefRaw || "").toLowerCase();
+  const p = String(prefRaw || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 
   if (p.includes("low")) return "lowcarb";
   if (p.includes("vegano")) return "vegana";
   if (p.includes("veget")) return "vegetariano";
   if (p.includes("oniv")) return "onivoro";
   return "flexivel";
+}
+
+function resolveNutritionPreference(
+  preference: "flexivel" | "lowcarb" | "vegetariano" | "vegana" | "onivoro",
+  restrictions: string[]
+): "flexivel" | "lowcarb" | "vegetariano" | "vegana" | "onivoro" {
+  if (restrictions.includes("vegano")) return "vegana";
+  if (restrictions.includes("vegetariano")) return "vegetariano";
+  return preference;
 }
 
 function mapPrimaryModality(raw: any): Modality {
@@ -186,7 +199,50 @@ function normalizeLevel(raw: any): "iniciante" | "intermediario" | "avancado" {
 
 function normalizeRestrictions(raw: any): string[] {
   if (!Array.isArray(raw)) return [];
-  return raw.map((x) => String(x || "").toLowerCase()).filter(Boolean);
+  return raw
+    .map((x) =>
+      String(x || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+    )
+    .map((value) => {
+      if (value === "baixo sodio" || value === "low sodium") return "low-sodium";
+      if (value === "acucar") return "acucar";
+      if (value === "gluten") return "gluten";
+      return value;
+    })
+    .filter(Boolean);
+}
+
+function getDaysByModalityFromDraft(step5: any, step6: any) {
+  const fromStep6 = step6?.diasPorModalidade || step6?.daysByModality;
+  if (fromStep6 && typeof fromStep6 === "object") return fromStep6;
+
+  const fromStep5 = step5?.diasPorModalidade || step5?.daysByModality;
+  if (fromStep5 && typeof fromStep5 === "object") return fromStep5;
+
+  return {};
+}
+
+function getSelectedDaysFromDraft(step5: any, step6: any): string[] {
+  if (Array.isArray(step6?.days) && step6.days.length) {
+    return step6.days.map(String);
+  }
+
+  const byModality = getDaysByModalityFromDraft(step5, step6);
+  const uniqueDays = new Set<string>();
+
+  for (const days of Object.values(byModality)) {
+    if (!Array.isArray(days)) continue;
+    for (const day of days) {
+      const value = String(day || "").trim();
+      if (value) uniqueDays.add(value);
+    }
+  }
+
+  return Array.from(uniqueDays);
 }
 
 function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
@@ -206,9 +262,7 @@ function buildLegacyWorkoutFallback(step3: any, step5: any, step6: any) {
       "iniciante"
   );
 
-  const daysByModality = (step6?.diasPorModalidade ||
-    step6?.daysByModality ||
-    {}) as Record<Modality, string[]>;
+  const daysByModality = getDaysByModalityFromDraft(step5, step6) as Record<Modality, string[]>;
 
   return buildWorkoutWeek({
     modalities: modalities.length ? modalities : [primary],
@@ -224,7 +278,7 @@ function buildTrainingPayloadFromSmartEngine(draft: PlanDraft, step3: any, step5
 
     const base = {
       training: {
-        smartPlan,
+        smartPlan: smartPlan.plan,
       },
       workout: {
         legacyFallbackShape: buildLegacyWorkoutFallback(step3, step5, step6),
@@ -289,6 +343,19 @@ function pickFoodByIdOrFallback(
   return allowedFoods[0] ?? null;
 }
 
+function pickAlternativeFood(
+  allowedFoods: AlimentoDatabase[],
+  currentId: string | null | undefined,
+  preferredIds: string[],
+  fallbackCategory?: AlimentoDatabase["categoria"]
+): AlimentoDatabase | null {
+  const filtered = currentId
+    ? allowedFoods.filter((food) => food.id !== currentId)
+    : allowedFoods;
+
+  return pickFoodByIdOrFallback(filtered, preferredIds, fallbackCategory);
+}
+
 function buildFoodItem(foodId: string, grams?: number) {
   const food = buscarAlimento(foodId);
   if (!food) return null;
@@ -324,6 +391,16 @@ function buildMeal(
   };
 }
 
+function hasRestriction(restrictions: string[], key: string) {
+  return restrictions.includes(key);
+}
+
+function portion(food: AlimentoDatabase | null, grams?: number, multiplier = 1) {
+  if (!food) return null;
+  const base = Number(grams ?? food.porcaoPadrao ?? 100);
+  return { id: food.id, grams: Math.max(10, Math.round(base * multiplier)) };
+}
+
 function buildRealMealPlan(params: {
   kcalTarget: number;
   preference: "flexivel" | "lowcarb" | "vegetariano" | "vegana" | "onivoro";
@@ -333,43 +410,110 @@ function buildRealMealPlan(params: {
   const { preference, restrictions, selectedMealTypes } = params;
 
   const allowedFoods = pickAllowedFoods({ preference, restrictions });
+  if (!allowedFoods.length) return [];
 
   const isLowCarb = preference === "lowcarb";
   const isVeg = preference === "vegetariano" || preference === "vegana";
+  const isHighKcal = params.kcalTarget >= 2400;
+  const isCutting = params.kcalTarget <= 1800;
+  const avoidsLactose = hasRestriction(restrictions, "lactose");
+  const avoidsNuts = hasRestriction(restrictions, "oleaginosas");
 
   const breakfastProtein = isVeg
-    ? pickFoodByIdOrFallback(allowedFoods, ["tofu", "proteina-texturizada"], "proteina-vegetal")
-    : pickFoodByIdOrFallback(allowedFoods, ["iogurte-grego", "ovo", "queijo-cottage", "tofu"], "proteina");
+    ? pickFoodByIdOrFallback(
+        allowedFoods,
+        ["tofu", "tempeh", "edamame", "proteina-texturizada", "lentilha"],
+        "proteina-vegetal"
+      )
+    : pickFoodByIdOrFallback(
+        allowedFoods,
+        avoidsLactose
+          ? ["ovo", "peru", "atum", "tofu"]
+          : ["iogurte-zero-lactose", "iogurte-grego", "queijo-cottage-zero-lactose", "queijo-cottage", "ovo", "tofu"],
+        "proteina"
+      );
 
   const lunchProtein = isVeg
-    ? pickFoodByIdOrFallback(allowedFoods, ["tofu", "proteina-texturizada", "lentilha", "grao-de-bico"], "proteina-vegetal")
-    : pickFoodByIdOrFallback(allowedFoods, ["frango-peito", "peixe-tilapia", "atum", "peru"], "proteina");
+    ? pickFoodByIdOrFallback(
+        allowedFoods,
+        ["tempeh", "tofu", "proteina-texturizada", "lentilha", "grao-de-bico", "feijao-preto", "edamame"],
+        "proteina-vegetal"
+      )
+    : pickFoodByIdOrFallback(
+        allowedFoods,
+        ["frango-peito", "patinho", "peixe-tilapia", "sardinha", "atum", "peru", "camarao"],
+        "proteina"
+      );
 
   const dinnerProtein = isVeg
-    ? pickFoodByIdOrFallback(allowedFoods, ["tofu", "lentilha", "grao-de-bico", "feijao-preto"], "proteina-vegetal")
-    : pickFoodByIdOrFallback(allowedFoods, ["frango-peito", "peixe-salmao", "peixe-tilapia", "atum"], "proteina");
+    ? pickFoodByIdOrFallback(
+        allowedFoods,
+        ["tofu", "tempeh", "lentilha", "grao-de-bico", "feijao-preto", "edamame"],
+        "proteina-vegetal"
+      )
+    : pickFoodByIdOrFallback(
+        allowedFoods,
+        ["peixe-salmao", "frango-peito", "peixe-tilapia", "patinho", "atum", "camarao"],
+        "proteina"
+      );
 
   const breakfastCarb = isLowCarb
-    ? pickFoodByIdOrFallback(allowedFoods, ["morango", "maca", "abacate"], "fruta")
-    : pickFoodByIdOrFallback(allowedFoods, ["aveia", "banana", "maca"], "carboidrato");
+    ? pickFoodByIdOrFallback(allowedFoods, ["morango", "kiwi", "maca", "pera", "abacate"], "fruta")
+    : pickFoodByIdOrFallback(
+        allowedFoods,
+        ["aveia", "pao-integral", "cuscuz", "tapioca", "banana", "maca"],
+        "carboidrato"
+      );
 
   const lunchCarb = isLowCarb
-    ? pickFoodByIdOrFallback(allowedFoods, ["brocolis", "abobrinha", "couve-flor"], "legume")
-    : pickFoodByIdOrFallback(allowedFoods, ["arroz-integral", "quinoa", "batata-doce", "arroz-branco"], "carboidrato");
+    ? pickFoodByIdOrFallback(allowedFoods, ["brocolis", "abobrinha", "couve-flor", "aspargo", "pepino"], "legume")
+    : pickFoodByIdOrFallback(
+        allowedFoods,
+        ["arroz-integral", "quinoa", "batata-doce", "cuscuz", "mandioca", "arroz-branco"],
+        "carboidrato"
+      );
 
   const dinnerCarb = isLowCarb
-    ? pickFoodByIdOrFallback(allowedFoods, ["abobrinha", "brocolis", "couve-flor"], "legume")
-    : pickFoodByIdOrFallback(allowedFoods, ["batata-doce", "quinoa", "arroz-integral", "arroz-branco"], "carboidrato");
+    ? pickFoodByIdOrFallback(allowedFoods, ["abobrinha", "brocolis", "couve-flor", "aspargo", "tomate"], "legume")
+    : pickFoodByIdOrFallback(
+        allowedFoods,
+        ["batata-doce", "quinoa", "arroz-integral", "mandioca", "inhame", "arroz-branco"],
+        "carboidrato"
+      );
 
   const fruitSnack = pickFoodByIdOrFallback(
     allowedFoods,
-    ["morango", "maca", "mamao", "banana", "abacaxi"],
+    ["morango", "maca", "pera", "kiwi", "mamao", "banana", "abacaxi", "uva"],
     "fruta"
   );
 
+  const snackCarb = isLowCarb
+    ? fruitSnack
+    : pickFoodByIdOrFallback(
+        allowedFoods,
+        ["banana", "maca", "pao-integral", "aveia", "cuscuz", "tapioca"],
+        "carboidrato"
+      );
+
+  const snackProtein = isVeg
+    ? pickFoodByIdOrFallback(
+        allowedFoods,
+        ["edamame", "tofu", "tempeh", "proteina-texturizada", "lentilha"],
+        "proteina-vegetal"
+      )
+    : pickFoodByIdOrFallback(
+        allowedFoods,
+        avoidsLactose
+          ? ["ovo", "peru", "atum", "frango-peito"]
+          : ["iogurte-zero-lactose", "iogurte-grego", "queijo-cottage-zero-lactose", "queijo-cottage", "ovo"],
+        "laticinio"
+      );
+
   const goodFat = pickFoodByIdOrFallback(
     allowedFoods,
-    ["castanhas", "abacate", "azeite"],
+    avoidsNuts
+      ? ["abacate", "azeite"]
+      : ["castanhas", "pasta-amendoim", "abacate", "azeite"],
     "gordura"
   );
 
@@ -381,65 +525,128 @@ function buildRealMealPlan(params: {
 
   const legumes = pickFoodByIdOrFallback(
     allowedFoods,
-    ["brocolis", "abobrinha", "couve-flor", "vagem", "cenoura"],
+    ["brocolis", "abobrinha", "couve-flor", "vagem", "cenoura", "tomate", "pepino", "beterraba", "aspargo"],
     "legume"
   );
+
+  const breakfastFruit =
+    breakfastCarb?.categoria === "fruta"
+      ? null
+      : pickAlternativeFood(
+          allowedFoods,
+          breakfastCarb?.id,
+          ["morango", "kiwi", "pera", "maca", "banana", "mamao"],
+          "fruta"
+        );
+
+  const lunchSide = isLowCarb
+    ? pickAlternativeFood(
+        allowedFoods,
+        legumes?.id,
+        ["tomate", "pepino", "aspargo", "abobrinha", "brocolis"],
+        "legume"
+      )
+    : pickAlternativeFood(
+        allowedFoods,
+        lunchProtein?.id,
+        ["feijao-preto", "lentilha", "grao-de-bico"],
+        "proteina-vegetal"
+      );
+
+  const snackFruit =
+    snackCarb?.categoria === "fruta"
+      ? null
+      : pickAlternativeFood(
+          allowedFoods,
+          snackCarb?.id,
+          ["banana", "maca", "pera", "kiwi", "morango"],
+          "fruta"
+        );
+
+  const dinnerSide = isLowCarb
+    ? pickAlternativeFood(
+        allowedFoods,
+        legumes?.id,
+        ["tomate", "pepino", "aspargo", "abobrinha", "brocolis"],
+        "legume"
+      )
+    : pickAlternativeFood(
+        allowedFoods,
+        dinnerProtein?.id,
+        ["lentilha", "grao-de-bico", "feijao-preto"],
+        "proteina-vegetal"
+      );
 
   const mealTemplates: Record<string, any> = {};
 
   if (selectedMealTypes.includes("desjejum")) {
     mealTemplates["desjejum"] = buildMeal("Desjejum", "06:00", [
-      ...(fruitSnack ? [{ id: fruitSnack.id, grams: fruitSnack.porcaoPadrao }] : []),
+      ...(fruitSnack ? [portion(fruitSnack, isLowCarb ? 80 : fruitSnack.porcaoPadrao)!] : []),
+      ...(isLowCarb && goodFat ? [portion(goodFat, Math.min(goodFat.porcaoPadrao, 20))!] : []),
     ]);
   }
 
   if (selectedMealTypes.includes("cafe-da-manha")) {
     mealTemplates["cafe-da-manha"] = buildMeal("Café da Manhã", "08:00", [
-      ...(breakfastCarb ? [{ id: breakfastCarb.id, grams: breakfastCarb.porcaoPadrao }] : []),
-      ...(breakfastProtein ? [{ id: breakfastProtein.id, grams: breakfastProtein.porcaoPadrao }] : []),
-      ...(goodFat ? [{ id: goodFat.id, grams: Math.min(goodFat.porcaoPadrao, 30) }] : []),
+      ...(breakfastCarb ? [portion(breakfastCarb, undefined, isLowCarb ? 0.75 : isHighKcal ? 1.1 : 1)!] : []),
+      ...(breakfastProtein ? [portion(breakfastProtein, undefined, isCutting ? 0.9 : 1)!] : []),
+      ...(breakfastFruit ? [portion(breakfastFruit, isCutting ? 90 : 110)!] : []),
+      ...(goodFat ? [portion(goodFat, Math.min(goodFat.porcaoPadrao, isHighKcal ? 25 : 18))!] : []),
     ]);
   }
 
   if (selectedMealTypes.includes("almoco")) {
     mealTemplates["almoco"] = buildMeal("Almoço", "12:00", [
-      ...(lunchCarb ? [{ id: lunchCarb.id, grams: lunchCarb.porcaoPadrao }] : []),
-      ...(lunchProtein ? [{ id: lunchProtein.id, grams: lunchProtein.porcaoPadrao }] : []),
-      ...(greens ? [{ id: greens.id, grams: greens.porcaoPadrao }] : []),
-      ...(legumes ? [{ id: legumes.id, grams: legumes.porcaoPadrao }] : []),
+      ...(lunchCarb ? [portion(lunchCarb, undefined, isLowCarb ? 0.8 : isHighKcal ? 1.15 : 1)!] : []),
+      ...(lunchProtein ? [portion(lunchProtein, undefined, isCutting ? 1 : 1.1)!] : []),
+      ...(!isLowCarb && lunchSide ? [portion(lunchSide, 70)!] : []),
+      ...(greens ? [portion(greens, Math.max(greens.porcaoPadrao, 60))!] : []),
+      ...(legumes ? [portion(legumes, Math.max(legumes.porcaoPadrao, 90))!] : []),
+      ...(isLowCarb && lunchSide ? [portion(lunchSide, 70)!] : []),
       ...(goodFat?.id === "azeite" ? [{ id: "azeite", grams: 10 }] : []),
     ]);
   }
 
   if (selectedMealTypes.includes("lanche-tarde")) {
     mealTemplates["lanche-tarde"] = buildMeal("Lanche da Tarde", "16:00", [
-      ...(fruitSnack ? [{ id: fruitSnack.id, grams: fruitSnack.porcaoPadrao }] : []),
-      ...(breakfastProtein ? [{ id: breakfastProtein.id, grams: Math.min(breakfastProtein.porcaoPadrao, 120) }] : []),
-      ...(goodFat && goodFat.id !== "azeite" ? [{ id: goodFat.id, grams: Math.min(goodFat.porcaoPadrao, 20) }] : []),
+      ...(snackCarb ? [portion(snackCarb, undefined, isLowCarb ? 0.8 : 1)!] : []),
+      ...(snackProtein ? [portion(snackProtein, undefined, isCutting ? 0.9 : 1)!] : []),
+      ...(snackFruit ? [portion(snackFruit, 90)!] : []),
+      ...(goodFat && goodFat.id !== "azeite" ? [portion(goodFat, Math.min(goodFat.porcaoPadrao, 20))!] : []),
     ]);
   }
 
   if (selectedMealTypes.includes("jantar")) {
     mealTemplates["jantar"] = buildMeal("Jantar", "20:00", [
-      ...(dinnerCarb ? [{ id: dinnerCarb.id, grams: dinnerCarb.porcaoPadrao }] : []),
-      ...(dinnerProtein ? [{ id: dinnerProtein.id, grams: dinnerProtein.porcaoPadrao }] : []),
-      ...(greens ? [{ id: greens.id, grams: greens.porcaoPadrao }] : []),
-      ...(legumes ? [{ id: legumes.id, grams: legumes.porcaoPadrao }] : []),
+      ...(dinnerCarb ? [portion(dinnerCarb, undefined, isLowCarb ? 0.75 : isHighKcal ? 1.05 : 0.95)!] : []),
+      ...(dinnerProtein ? [portion(dinnerProtein, undefined, 1)!] : []),
+      ...(!isLowCarb && dinnerSide ? [portion(dinnerSide, 60)!] : []),
+      ...(greens ? [portion(greens, Math.max(greens.porcaoPadrao, 60))!] : []),
+      ...(legumes ? [portion(legumes, Math.max(legumes.porcaoPadrao, 90))!] : []),
+      ...(isLowCarb && dinnerSide ? [portion(dinnerSide, 70)!] : []),
+      ...(goodFat?.id === "azeite" && isLowCarb ? [{ id: "azeite", grams: 10 }] : []),
     ]);
   }
 
   if (selectedMealTypes.includes("ceia")) {
     const ceiaProtein = isVeg
-      ? breakfastProtein
+      ? pickFoodByIdOrFallback(
+          allowedFoods,
+          ["tofu", "edamame", "tempeh", "lentilha"],
+          "proteina-vegetal"
+        )
       : pickFoodByIdOrFallback(
           allowedFoods,
-          ["queijo-cottage", "iogurte-grego", "tofu"],
+          avoidsLactose
+            ? ["ovo", "peru", "tofu"]
+            : ["iogurte-zero-lactose", "queijo-cottage-zero-lactose", "queijo-cottage", "iogurte-grego", "tofu"],
           "laticinio"
         );
 
     mealTemplates["ceia"] = buildMeal("Ceia", "22:00", [
-      ...(ceiaProtein ? [{ id: ceiaProtein.id, grams: 100 }] : []),
-      ...(fruitSnack ? [{ id: fruitSnack.id, grams: 80 }] : []),
+      ...(ceiaProtein ? [portion(ceiaProtein, 100)!] : []),
+      ...(!isLowCarb && fruitSnack ? [portion(fruitSnack, 80)!] : []),
+      ...(isLowCarb && goodFat && goodFat.id !== "azeite" ? [portion(goodFat, 15)!] : []),
     ]);
   }
 
@@ -520,15 +727,16 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
   const preference = normalizePreference(
     String(step7?.dieta || step7?.preference || "flexivel")
   );
+  const effectivePreference = resolveNutritionPreference(preference, restrictions);
 
   const normalizedComputedMacros = computeMacros({
     targetKcal: metabolic.targetKcal,
     goal,
     weightKg,
     preference:
-      preference === "vegana" || preference === "vegetariano"
+      effectivePreference === "vegana" || effectivePreference === "vegetariano"
         ? "vegetariano"
-        : preference === "lowcarb"
+        : effectivePreference === "lowcarb"
           ? "lowcarb"
           : "flexivel",
   });
@@ -556,7 +764,7 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
 
   const meals = buildRealMealPlan({
     kcalTarget: Number(step4?.kcalAlvo ?? metabolic?.targetKcal ?? 2000),
-    preference,
+    preference: effectivePreference,
     restrictions,
     selectedMealTypes,
   });
@@ -577,10 +785,9 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
       "iniciante"
   );
 
-  const selectedDays = Array.isArray(step6?.days) ? step6.days : [];
+  const selectedDays = getSelectedDaysFromDraft(step5, step6);
   const daysByModality = (
-    step6?.diasPorModalidade ||
-    step6?.daysByModality ||
+    getDaysByModalityFromDraft(step5, step6) ||
     { [modalities[0] ?? primaryModality]: selectedDays }
   ) as Record<Modality, string[]>;
 
@@ -640,7 +847,7 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
       refeicoes: normalizedMeals,
       meals: normalizedMeals,
       strategy: step4?.estrategia ?? goal,
-      preference,
+      preference: effectivePreference,
       restrictions,
     },
 

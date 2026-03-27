@@ -54,6 +54,12 @@ function extractModalities(draft: any): string[] {
   const direct = uniqStable(safeArr<string>(draft?.modalidadesSelecionadas));
   if (direct.length) return direct;
 
+  // 1.1) formato do onboarding atual: step5.modalidades = ["musculacao", ...]
+  const fromStep5 = uniqStable(
+    safeArr<any>(draft?.step5?.modalidades).map((x) => String(x || "")).filter(Boolean)
+  );
+  if (fromStep5.length) return fromStep5;
+
   // 2) formato step5Modalidades.modalidades = [{key,...}]
   const m2 = uniqStable(
     safeArr<any>(draft?.step5Modalidades?.modalidades).map((x) => String(x?.key || x?.id || x?.value || "")).filter(Boolean)
@@ -63,6 +69,10 @@ function extractModalities(draft: any): string[] {
   // 3) formato antigo: step5Modalidades.primary
   const p = String(draft?.step5Modalidades?.primary || "");
   if (p) return [p];
+
+  // 4) formato onboarding atual com primary em step5
+  const p2 = String(draft?.step5?.primary || "");
+  if (p2) return [p2];
 
   return [];
 }
@@ -103,6 +113,9 @@ function extractDaysByModality(draft: any): Record<string, string[]> {
   const direct = draft?.diasPorModalidade;
   if (direct && typeof direct === "object") return direct as any;
 
+  const step5Direct = draft?.step5?.diasPorModalidade;
+  if (step5Direct && typeof step5Direct === "object") return step5Direct as any;
+
   // fallback: step5Modalidades.daysByModality
   const alt = draft?.step5Modalidades?.diasPorModalidade || draft?.step5Modalidades?.daysByModality;
   if (alt && typeof alt === "object") return alt as any;
@@ -116,6 +129,13 @@ function extractLevelByModality(draft: any): Record<string, MF_Level> {
   if (direct && typeof direct === "object") {
     const out: Record<string, MF_Level> = {};
     for (const k of Object.keys(direct)) out[k] = normalizeLevel(direct[k]);
+    return out;
+  }
+
+  const step5Direct = draft?.step5?.condicionamentoPorModalidade;
+  if (step5Direct && typeof step5Direct === "object") {
+    const out: Record<string, MF_Level> = {};
+    for (const k of Object.keys(step5Direct)) out[k] = normalizeLevel(step5Direct[k]);
     return out;
   }
 

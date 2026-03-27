@@ -27,6 +27,8 @@ import { useToast } from '@/hooks/use-toast'
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { loadActivePlan, saveActivePlan } from "@/services/plan.service";
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
 function buildDietExportText() {
   const lines = [
@@ -203,11 +205,26 @@ export function EditDiet() {
   const { state, updateState } = useDrMindSetfit()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const activePlan = loadActivePlan()
+  const adaptedNutrition = adaptActivePlanNutrition(activePlan?.nutrition)
+  const dietaAtivaFallback: any = state.dietaAtiva ?? (
+    adaptedNutrition ? {
+      ...(state.dietaAtiva ?? {}),
+      nutricao: {
+        ...(activePlan?.nutrition ?? {}),
+        refeicoes: adaptedNutrition.refeicoes,
+        meals: adaptedNutrition.meals,
+        macros: adaptedNutrition.macros,
+      },
+    } : null
+  )
   const [refeicoes, setRefeicoes] = useState<Refeicao[]>(
-    Array.isArray(state.dietaAtiva?.nutricao?.refeicoes) ? state.dietaAtiva!.nutricao.refeicoes : []
+    Array.isArray(dietaAtivaFallback?.nutricao?.refeicoes)
+      ? (dietaAtivaFallback.nutricao.refeicoes as Refeicao[])
+      : []
   )
 
-  if (!state.dietaAtiva) {
+  if (!dietaAtivaFallback) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-black text-white">
         <Card className="w-full max-w-md mx-4 glass-effect neon-border border-white/10 bg-black/40">
@@ -251,18 +268,36 @@ export function EditDiet() {
   }
 
   const handleSalvar = () => {
-    if (!state.dietaAtiva) return
+    if (!dietaAtivaFallback) return
+
+    if (activePlan) {
+      const nextPlan = {
+        ...activePlan,
+        meals: refeicoes,
+        nutrition: {
+          ...(activePlan.nutrition ?? {}),
+          refeicoes,
+          meals: refeicoes,
+          macros:
+            (dietaAtivaFallback as any)?.nutricao?.macros ??
+            activePlan?.nutrition?.macros ??
+            {},
+        },
+      }
+
+      saveActivePlan(nextPlan as any)
+    }
 
     updateState({
       nutricao: {
         ...state.nutricao,
-        ...state.dietaAtiva.nutricao,
+        ...(dietaAtivaFallback.nutricao as any),
         refeicoes
       },
       dietaAtiva: {
-        ...state.dietaAtiva,
+        ...dietaAtivaFallback,
         nutricao: {
-          ...state.dietaAtiva.nutricao,
+          ...(dietaAtivaFallback.nutricao as any),
           refeicoes
         }
       }
@@ -279,6 +314,15 @@ export function EditDiet() {
   const handleResetar = () => {
     if (state.nutricao?.refeicoes) {
       setRefeicoes(state.nutricao.refeicoes)
+      toast({
+        title: "Dieta resetada",
+        description: "Voltou para o plano original.",
+      })
+      return
+    }
+
+    if (Array.isArray(dietaAtivaFallback?.nutricao?.refeicoes)) {
+      setRefeicoes(dietaAtivaFallback.nutricao.refeicoes as Refeicao[])
       toast({
         title: "Dieta resetada",
         description: "Voltou para o plano original.",

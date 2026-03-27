@@ -244,7 +244,27 @@ export default function Assinatura() {
       ? `/assinatura?${nextParams.toString()}`
       : "/assinatura";
 
-    navigate(`/login?next=${encodeURIComponent(next)}`, { replace: true });
+    const loginParams = new URLSearchParams();
+    loginParams.set("next", next);
+    if (source) loginParams.set("source", source);
+
+    navigate(`/login?${loginParams.toString()}`, { replace: true });
+  };
+
+  const goToSignup = () => {
+    const nextParams = new URLSearchParams();
+    if (source) nextParams.set("source", source);
+    if (autostartTrial) nextParams.set("autostartTrial", "1");
+
+    const next = nextParams.toString()
+      ? `/assinatura?${nextParams.toString()}`
+      : "/assinatura";
+
+    const signupParams = new URLSearchParams();
+    signupParams.set("next", next);
+    if (source) signupParams.set("source", source);
+
+    navigate(`/signup?${signupParams.toString()}`, { replace: true });
   };
 
   const startFreeTrial = async () => {
@@ -252,10 +272,10 @@ export default function Assinatura() {
       const params = new URLSearchParams();
       if (source) params.set("source", source);
       params.set("autostartTrial", "1");
-
-      navigate(`/signup?next=${encodeURIComponent(`/assinatura?${params.toString()}`)}`, {
-        replace: true,
-      });
+      const signupParams = new URLSearchParams();
+      signupParams.set("next", `/assinatura?${params.toString()}`);
+      if (source) signupParams.set("source", source);
+      navigate(`/signup?${signupParams.toString()}`, { replace: true });
       return;
     }
 
@@ -266,7 +286,15 @@ export default function Assinatura() {
     setFreeSubscription();
 
     if (source === "onboarding") {
-      navigate(`/signup?next=${encodeURIComponent("/dashboard")}`, { replace: true });
+      if (user?.id) {
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
+      const signupParams = new URLSearchParams();
+      signupParams.set("next", "/dashboard");
+      signupParams.set("source", "onboarding");
+      navigate(`/signup?${signupParams.toString()}`, { replace: true });
       return;
     }
 
@@ -280,7 +308,10 @@ export default function Assinatura() {
       return;
     }
 
-    navigate(`/signup?next=${encodeURIComponent("/dashboard")}`, { replace: true });
+    const signupParams = new URLSearchParams();
+    signupParams.set("next", "/dashboard");
+    if (source) signupParams.set("source", source);
+    navigate(`/signup?${signupParams.toString()}`, { replace: true });
   };
 
   return (
@@ -419,46 +450,63 @@ export default function Assinatura() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4">
+        <div className="mt-6 grid grid-cols-[0.9fr_1.1fr] items-stretch gap-3">
           {plans.map((pl) => (
             <div
               key={pl.id}
               className={[
-                "relative overflow-hidden rounded-[28px] border p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)]",
+                "relative flex h-full flex-col overflow-hidden rounded-[26px] border shadow-[0_0_32px_rgba(0,149,255,0.06)]",
+                pl.id === "mensal" ? "p-3.5 sm:p-4" : "p-4 sm:p-5",
                 pl.highlight
                   ? "border-emerald-400/30 bg-[linear-gradient(180deg,rgba(16,40,30,0.7),rgba(8,10,18,0.9))] shadow-[0_0_30px_rgba(34,197,94,0.10)]"
                   : "border-white/10 bg-[rgba(8,10,18,0.82)]",
               ].join(" ")}
             >
               {pl.badge ? (
-                <div className="mb-4 inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
+                <div className="mb-4 inline-flex self-start rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
                   {pl.badge}
                 </div>
               ) : null}
 
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <div className="text-[18px] font-semibold text-white">
+                  <div
+                    className={[
+                      "font-semibold text-white",
+                      pl.id === "mensal" ? "text-[14px] leading-5 sm:text-[16px]" : "text-[16px] leading-5 sm:text-[18px]",
+                    ].join(" ")}
+                  >
                     {pl.title}
-                  </div>
-
-                  <div className="mt-2 text-[13px] leading-5 text-white/60">
-                    {pl.note}
                   </div>
                 </div>
 
-                <div className="shrink-0 text-right">
-                  <div className="text-[28px] font-semibold tracking-tight text-white">
+                <div className="shrink-0 text-left sm:text-right">
+                  <div
+                    className={[
+                      "font-semibold tracking-tight text-white",
+                      pl.id === "mensal" ? "text-[19px] sm:text-[24px]" : "text-[22px] sm:text-[28px]",
+                    ].join(" ")}
+                  >
                     {pl.price}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-col gap-3">
+              <div
+                className={[
+                  "mt-3 text-white/60",
+                  pl.id === "mensal" ? "text-[11px] leading-6 sm:text-[12px] sm:leading-5" : "text-[12px] leading-6 sm:text-[13px]",
+                ].join(" ")}
+              >
+                {pl.note}
+              </div>
+
+              <div className="mt-auto flex flex-col gap-3 pt-5">
                 <button
                   type="button"
                   className={[
-                    "inline-flex w-full items-center justify-center rounded-[20px] px-4 py-3 text-[14px] font-semibold transition-all active:scale-[0.99]",
+                    "inline-flex w-full items-center justify-center rounded-[20px] px-4 py-3 font-semibold transition-all active:scale-[0.99]",
+                    pl.id === "mensal" ? "text-[12px] sm:text-[13px]" : "text-[12px] sm:text-[14px]",
                     pl.highlight
                       ? "overflow-hidden border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
                       : "bg-white text-black hover:opacity-95",
@@ -469,12 +517,12 @@ export default function Assinatura() {
                 </button>
 
                 {pl.id === "anual" ? (
-                  <div className="flex items-center gap-2 text-[12px] text-white/50">
+                  <div className="flex items-start gap-2 text-[10px] leading-5 text-white/50 sm:text-[11px]">
                     <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
                     Melhor valor para uso contínuo do app
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-[12px] text-white/50">
+                  <div className="flex items-start gap-2 text-[10px] leading-5 text-white/50 sm:text-[12px]">
                     <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
                     Flexibilidade para começar sem compromisso longo
                   </div>
@@ -487,6 +535,14 @@ export default function Assinatura() {
         <div className="mt-5 rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 shadow-[0_0_32px_rgba(0,149,255,0.04)]">
           {source === "onboarding" ? (
             <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                className="inline-flex w-full items-center justify-center rounded-[20px] bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 px-4 py-3 text-[13px] font-semibold text-slate-950 shadow-[0_12px_32px_rgba(22,163,255,0.28)] transition hover:brightness-105 active:scale-[0.99]"
+                onClick={goToSignup}
+              >
+                Criar conta e continuar
+              </button>
+
               <button
                 type="button"
                 className="inline-flex w-full items-center justify-center rounded-[20px] border border-white/15 bg-white/5 px-4 py-3 text-[13px] font-semibold text-white/90 hover:bg-white/10 active:scale-[0.99]"

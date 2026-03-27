@@ -3,7 +3,7 @@ import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, RefreshCw, Edit, FileText, Clipboard, Download } from "lucide-react";
+import { ArrowLeft, RefreshCw, Edit, FileText, Clipboard, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { buscarSubstituicoes } from "@/types/alimentos";
 import {
@@ -28,6 +28,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { getHomeRoute } from "@/lib/subscription/premium";
+import { loadActivePlan } from "@/services/plan.service";
+import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
 
 function mfNum(x: unknown, fallback = 0): number {
   const n = typeof x === "number" ? x : Number(x);
@@ -70,6 +72,11 @@ async function downloadPdfPremiumDietPhase3D(state: any) {
 export function NutritionPlan() {
   const { state } = useDrMindSetfit();
   const navigate = useNavigate();
+  const activePlan = React.useMemo(() => loadActivePlan(), []);
+  const adaptedNutrition = React.useMemo(
+    () => adaptActivePlanNutrition(activePlan?.nutrition),
+    [activePlan]
+  );
 
   const [planTextOpen, setPlanTextOpen] = React.useState(false);
   const [planTextDraft, setPlanTextDraft] = React.useState<string>("");
@@ -117,15 +124,34 @@ export function NutritionPlan() {
     URL.revokeObjectURL(url);
   };
 
+  const stateNutrition = (state?.nutricao ?? {}) as any;
+  const hasStateNutrition =
+    Array.isArray(stateNutrition?.refeicoes) && stateNutrition.refeicoes.length > 0;
+  const nutritionSource: any = hasStateNutrition
+    ? stateNutrition
+    : adaptedNutrition
+      ? {
+          ...(activePlan?.nutrition ?? {}),
+          refeicoes: adaptedNutrition.refeicoes,
+          meals: adaptedNutrition.meals,
+          macros: adaptedNutrition.macros,
+        }
+      : stateNutrition;
+
   const nutricaoSafe = {
-    refeicoes: safeArray(state?.nutricao?.refeicoes),
+    refeicoes: safeArray(nutritionSource?.refeicoes),
     macros: {
-      calorias: mfNum(state?.nutricao?.macros?.calorias, 0),
-      proteina: mfNum(state?.nutricao?.macros?.proteina, 0),
-      carboidratos: mfNum(state?.nutricao?.macros?.carboidratos, 0),
-      gorduras: mfNum(state?.nutricao?.macros?.gorduras, 0),
+      calorias: mfNum(
+        nutritionSource?.macros?.calorias ??
+          adaptedNutrition?.kcalTarget ??
+          activePlan?.nutrition?.kcalTarget,
+        0
+      ),
+      proteina: mfNum(nutritionSource?.macros?.proteina, 0),
+      carboidratos: mfNum(nutritionSource?.macros?.carboidratos, 0),
+      gorduras: mfNum(nutritionSource?.macros?.gorduras, 0),
     },
-    restricoes: safeArray(state?.nutricao?.restricoes),
+    restricoes: safeArray(nutritionSource?.restricoes ?? activePlan?.nutrition?.restrictions),
   };
 
   const dayTotals = sumMacrosFromRefeicoes(nutricaoSafe.refeicoes ?? []);
@@ -137,7 +163,7 @@ export function NutritionPlan() {
     tolerancePct: 10,
   });
 
-  if (!state.nutricao) {
+  if (!state.nutricao && !adaptedNutrition) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-black p-4 text-white">
         <Card className="w-full max-w-md glass-effect neon-border border-white/10 bg-black/40">
@@ -148,7 +174,7 @@ export function NutritionPlan() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/")} className="w-full glow-blue">
+            <Button onClick={() => navigate("/onboarding/step-1")} className="w-full glow-blue">
               Configurar Agora
             </Button>
           </CardContent>
@@ -224,9 +250,9 @@ export function NutritionPlan() {
               variant="ghost"
               size="icon"
               onClick={() => navigate(getHomeRoute())}
-              className="glow-blue"
+              className="hover:bg-white/10"
             >
-              <Home className="w-5 h-5 text-[#1E6BFF]" />
+              <ArrowLeft className="w-5 h-5 text-[#1E6BFF]" />
             </Button>
           </div>
         </div>

@@ -30,6 +30,7 @@ function safeJsonParse(raw: string | null): Json {
 function isDone(): boolean {
   return safeGetLS(DONE_KEY) === "1";
 }
+
 function deriveNomeCompletoFromDraft(draft: any): string | null {
   try {
     const nome = String(draft?.step1?.nomeCompleto || "").trim();
@@ -39,11 +40,21 @@ function deriveNomeCompletoFromDraft(draft: any): string | null {
   }
 }
 
+function buildProfileDataPayload(draft: Json, activePlan: Json) {
+  return {
+    onboardingDone: true,
+    activePlan: activePlan ?? null,
+    onboardingDraft: draft ?? null,
+    updatedAtISO: new Date().toISOString(),
+  };
+}
+
 function isInCooldown(userId: string): boolean {
   const raw = safeGetSS(COOLDOWN_PREFIX + userId);
   const until = raw ? Number(raw) : NaN;
   return Number.isFinite(until) ? Date.now() < until : false;
 }
+
 function setCooldown(userId: string, ms = DEFAULT_COOLDOWN_MS) {
   safeSetSS(COOLDOWN_PREFIX + userId, String(Date.now() + ms));
 }
@@ -74,10 +85,8 @@ export async function postAuthSync(userId: string): Promise<void> {
       }
 
       const nomeCompleto = deriveNomeCompletoFromDraft(draft);
-
-      // schema tem nome_completo NOT NULL
-      // Se não vier no draft, enviamos "Usuário" como fallback (melhor do que falhar o upsert)
-      const nomeParaSalvar = nomeCompleto || "Usuário";
+      const nomeParaSalvar = nomeCompleto || "Usuario";
+      const profileData = buildProfileDataPayload(draft, activePlan);
 
       const { error } = await supabase
         .from("profiles")
@@ -85,9 +94,7 @@ export async function postAuthSync(userId: string): Promise<void> {
           {
             user_id: userId,
             nome_completo: nomeParaSalvar,
-            onboarding_draft: draft,
-            active_plan: activePlan,
-            onboarding_synced_at: new Date().toISOString(),
+            data: profileData,
           },
           { onConflict: "user_id" }
         );
@@ -95,7 +102,7 @@ export async function postAuthSync(userId: string): Promise<void> {
       if (error) throw error;
 
       safeSetSS(guardKey, "1");
-      safeRemoveLS(DRAFT_KEY); // limpa só o draft
+      safeRemoveLS(DRAFT_KEY);
       if (import.meta.env.DEV) console.log("[PostAuthSync] Sync OK");
     } catch (err) {
       console.warn("[PostAuthSync] Sync falhou:", err);

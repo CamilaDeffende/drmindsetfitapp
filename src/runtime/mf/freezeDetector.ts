@@ -56,6 +56,7 @@ export function installFreezeDetector(opts?: { thresholdMs?: number; pollMs?: nu
   const pollMs = Math.max(100, opts?.pollMs ?? 250);
 
   let lastRoute = getRoute();
+  let suspended = typeof document !== "undefined" ? document.visibilityState === "hidden" : false;
 
   try {
     const origPush = history.pushState.bind(history);
@@ -73,6 +74,18 @@ export function installFreezeDetector(opts?: { thresholdMs?: number; pollMs?: nu
     window.addEventListener("popstate", () => { lastRoute = getRoute(); });
   } catch {}
 
+  try {
+    document.addEventListener("visibilitychange", () => {
+      suspended = document.visibilityState === "hidden";
+    });
+    window.addEventListener("focus", () => {
+      suspended = false;
+    });
+    window.addEventListener("blur", () => {
+      suspended = true;
+    });
+  } catch {}
+
   let prev = nowMs();
   let fired = false;
 
@@ -81,12 +94,19 @@ export function installFreezeDetector(opts?: { thresholdMs?: number; pollMs?: nu
     const lag = t - prev - pollMs;
     prev = t;
 
+    if (suspended) {
+      fired = false;
+      return;
+    }
+
     if (!fired && lag > thresholdMs) {
       fired = true;
       const route = getRoute();
       pushFreeze(lag, route, lastRoute);
       try { renderOverlay(lag, route, lastRoute); }
       catch { setTimeout(() => { try { renderOverlay(lag, route, lastRoute); } catch {} }, 50); }
+    } else if (lag <= thresholdMs) {
+      fired = false;
     }
   }, pollMs);
 }

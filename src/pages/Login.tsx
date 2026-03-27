@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Mail, ChevronLeft } from "lucide-react";
+import { getHomeRoute } from "@/lib/subscription/premium";
 
 
 function getParams(search: string) {
@@ -17,14 +18,18 @@ function getParams(search: string) {
   }
 }
 
+const PENDING_IMPORT_KEY = "mf:pendingProfileImport:v1";
+
 export function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = React.useMemo(() => getParams(location.search), [location.search]);
 
-  const next = params.get("next") || "/dashboard";
+  const next = params.get("next") || getHomeRoute();
+  const source = params.get("source") || "";
   const premiumFromUrl = params.get("premium") === "1";
   const planFromUrl = params.get("plan") || "mensal";
+  const shouldImportGuestState = params.has("next");
 
   const { user, signIn, signOut, loading } = useAuth();
 
@@ -36,6 +41,7 @@ export function Login() {
   const signupHref = React.useMemo(() => {
     const nextParams = new URLSearchParams();
     nextParams.set("next", next);
+    if (source) nextParams.set("source", source);
 
     if (premiumFromUrl) nextParams.set("premium", "1");
     if (planFromUrl) nextParams.set("plan", planFromUrl);
@@ -67,7 +73,12 @@ export function Login() {
     }
   }, [user, loading, next, navigate, premiumFromUrl, planFromUrl]);
 
-  const backTarget = params.get("next") ? "/assinatura" : "/onboarding/step-1";
+  const backTarget =
+    source === "onboarding"
+      ? "/onboarding/step-1"
+      : params.get("next")
+        ? "/assinatura"
+        : "/onboarding/step-1";
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +99,14 @@ export function Login() {
     setSubmitting(true);
 
     try {
+      try {
+        if (shouldImportGuestState) {
+          localStorage.setItem(PENDING_IMPORT_KEY, "1");
+        } else {
+          localStorage.removeItem(PENDING_IMPORT_KEY);
+        }
+      } catch {}
+
       const { error } = await signIn(eMail, password);
 
       if (error) {
@@ -154,7 +173,7 @@ export function Login() {
             />
 
             <h1 className="text-[24px] font-semibold tracking-tight text-white">
-              Bem-vinda de volta
+              Bem-vindo de volta
             </h1>
 
             <p className="mt-2 text-[13px] leading-5 text-white/60">

@@ -10,7 +10,7 @@ import {
 } from "@/lib/subscription/storage";
 
 type PlanId = "mensal" | "anual";
-type SourceId = "onboarding" | "dashboard" | "premium" | null;
+type SourceId = "onboarding" | "dashboard-free" | "premium" | null;
 
 type PlanConfig = {
   id: PlanId;
@@ -64,7 +64,7 @@ function getSourceFromSearch(search: string): SourceId {
   try {
     const raw = new URLSearchParams(search).get("source");
     if (raw === "onboarding") return "onboarding";
-    if (raw === "dashboard") return "dashboard";
+    if (raw === "dashboard-free") return "dashboard-free";
     if (raw === "premium") return "premium";
     return null;
   } catch {
