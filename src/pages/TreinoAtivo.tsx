@@ -21,6 +21,10 @@ import {
   buildTrainingMotorDecisionForSession,
   getTrainingMotorDecisionPreview,
 } from "@/services/training/trainingDecision.service";
+import { historyService } from "@/services/history/HistoryService";
+import { achievementsService } from "@/services/gamification/AchievementsService";
+import { addXP } from "@/services/gamification/LevelSystem";
+import { recordDailyCompletion } from "@/services/gamification/streaks";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import {
@@ -32,9 +36,12 @@ import { lookupExerciseVisual } from "@/services/training/exerciseMediaCatalog";
 import {
   beginTrainingExecutionSession,
   completeTrainingExecutionSession,
+  getTrainingCurrentExecutionSession,
   getTrainingExecutionHistory,
   getCanonicalTrainingLoadHistory,
+  saveTrainingCurrentExecutionSession,
   type TrainingExecutionExercise,
+  type TrainingExecutionSession,
   type TrainingExecutionSet,
 } from "@/services/training/trainingExecution.service";
 
@@ -324,6 +331,14 @@ function isCardioLikeModality(modality: unknown) {
   return normalized === "bike" || normalized === "corrida";
 }
 
+function toHistoryWorkoutType(modality: unknown): "corrida" | "bike" | "musculacao" | "outro" {
+  const normalized = normalizeWorkoutModality(modality);
+  if (normalized === "corrida") return "corrida";
+  if (normalized === "bike") return "bike";
+  if (normalized === "musculacao") return "musculacao";
+  return "outro";
+}
+
 function normalizePreviewPlanDays(): CanonicalWorkoutDayView[] {
   const activePlan = loadActivePlan();
   const preview = buildWorkoutPlanPreview(activePlan?.draft ?? {});
@@ -357,6 +372,27 @@ function normalizePreviewPlanDays(): CanonicalWorkoutDayView[] {
   }));
 }
 
+function restoreSeriesFromExecution(
+  exercicio: CanonicalExerciseView,
+  executionExercise: TrainingExecutionExercise | undefined
+): SerieDados[] {
+  const fallback = buildInitialSeries(exercicio);
+  const performed = Array.isArray(executionExercise?.performedSets) ? executionExercise!.performedSets : [];
+
+  if (!performed.length) return fallback;
+
+  return fallback.map((serie, index) => {
+    const saved = performed[index];
+    if (!saved) return serie;
+    return {
+      numero: serie.numero,
+      carga: safeNum(saved.loadKg, serie.carga),
+      tempoDescanso: safeNum(saved.restSec, serie.tempoDescanso),
+      completa: !!saved.completed,
+    };
+  });
+}
+
 
 export function TreinoAtivo() {
   const { state } = useDrMindSetfit();
@@ -370,6 +406,7 @@ export function TreinoAtivo() {
   const [mediaHidden, setMediaHidden] = useState<Record<string, boolean>>({});
   const [tempoDecorrido, setTempoDecorrido] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
+  const [sessionMeta, setSessionMeta] = useState<{ sessionId: string; startedAt: string } | null>(null);
 
   useEffect(() => {
     const refresh = () => setPlanRefreshTick((prev) => prev + 1);
@@ -467,12 +504,47 @@ export function TreinoAtivo() {
 
   useEffect(() => {
     if (!treino) return;
+
+    const currentSession = getTrainingCurrentExecutionSession();
+    const canResume =
+      currentSession &&
+      String(currentSession.trainingId ?? "") === String(treino.id ?? "") &&
+      !currentSession.finishedAt;
+
+    if (canResume) {
+      const restoredLogs = treino.exercicios.reduce<Record<string, SerieDados[]>>((acc, item) => {
+        const executionExercise = currentSession.exercises.find(
+          (savedExercise) => String(savedExercise.exerciseId ?? "") === String(item.id ?? "")
+        );
+        acc[item.id] = restoreSeriesFromExecution(item, executionExercise);
+        return acc;
+      }, {});
+
+      const firstPendingExerciseIndex = Math.max(
+        0,
+        treino.exercicios.findIndex((item) => {
+          const restored = restoredLogs[item.id] ?? [];
+          return restored.some((setItem) => !setItem.completa);
+        })
+      );
+
+      setExerciseLogs(restoredLogs);
+      setExercicioAtual(firstPendingExerciseIndex === -1 ? 0 : firstPendingExerciseIndex);
+      setSessionMeta({
+        sessionId: currentSession.sessionId,
+        startedAt: currentSession.startedAt,
+      });
+      setTempoDecorrido(0);
+      setTimerAtivo(false);
+      return;
+    }
+
     setExerciseLogs({});
     setExercicioAtual(0);
     setTempoDecorrido(0);
     setTimerAtivo(false);
 
-    beginTrainingExecutionSession({
+    const startedSession = beginTrainingExecutionSession({
       sessionId: `${treino.id}-${Date.now()}`,
       trainingId: treino.id,
       source: isCanonicalSource ? "training.workouts" : "state.treino",
@@ -496,6 +568,10 @@ export function TreinoAtivo() {
         completed: false,
       })),
     });
+    setSessionMeta({
+      sessionId: startedSession.sessionId,
+      startedAt: startedSession.startedAt,
+    });
   }, [treinoSelecionado, isCanonicalSource, treino?.id]);
 
   useEffect(() => {
@@ -516,6 +592,68 @@ export function TreinoAtivo() {
 
   const seriesCompletas = series.filter((s) => s.completa).length;
   const progressoSeries = exercicio?.series ? Math.round((seriesCompletas / exercicio.series) * 100) : 0;
+
+  const buildExecutionSessionSnapshot = (): TrainingExecutionSession | null => {
+    if (!treino || !sessionMeta) return null;
+
+    const performedExercises: TrainingExecutionExercise[] = treino.exercicios.map((item) => {
+      const performedSets = (exerciseLogs[item.id] ?? buildInitialSeries(item)).map<TrainingExecutionSet>((setItem) => ({
+        setNumber: setItem.numero,
+        loadKg: Number(setItem.carga ?? 0) || 0,
+        restSec: Number(setItem.tempoDescanso ?? item.descanso) || item.descanso,
+        completed: !!setItem.completa,
+        repsTarget: item.repeticoes,
+        repsPerformed: Number.parseInt(String(item.repeticoes).split("-")[0] ?? "0", 10) || null,
+      }));
+
+      return {
+        exerciseId: item.id,
+        exerciseName: item.nome,
+        muscleGroup: item.grupoMuscular,
+        equipment: item.equipamento,
+        notes: item.observacoes,
+        plannedSets: item.series,
+        plannedReps: item.repeticoes,
+        plannedRestSec: item.descanso,
+        performedSets,
+        completed: performedSets.some((setItem) => setItem.completed),
+      };
+    });
+
+    const completedExercises = performedExercises.filter((exerciseItem) => exerciseItem.completed).length;
+    const totalVolumeLoad = performedExercises.reduce(
+      (acc, exerciseItem) =>
+        acc + exerciseItem.performedSets.reduce((setAcc, setItem) => setAcc + (Number(setItem.loadKg ?? 0) || 0), 0),
+      0
+    );
+
+    const adherencePct =
+      performedExercises.length > 0 ? Math.round((completedExercises / performedExercises.length) * 100) : 0;
+
+    return {
+      sessionId: sessionMeta.sessionId,
+      trainingId: treino.id,
+      source: isCanonicalSource ? "training.workouts" : "state.treino",
+      dayLabel: treino.dia,
+      dayKey: treino.dayKey,
+      modality: normalizeWorkoutModality(treino.modalidade),
+      title: treino.titulo,
+      intensity: treino.intensidade,
+      startedAt: sessionMeta.startedAt,
+      durationMin: treino.duracaoMin,
+      plannedExercises: treino.exercicios.length,
+      completedExercises,
+      totalVolumeLoad,
+      adherencePct,
+      exercises: performedExercises,
+    };
+  };
+
+  useEffect(() => {
+    const snapshot = buildExecutionSessionSnapshot();
+    if (!snapshot) return;
+    saveTrainingCurrentExecutionSession(snapshot);
+  }, [exerciseLogs, sessionMeta?.sessionId, treino?.id, isCanonicalSource]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -629,58 +767,31 @@ export function TreinoAtivo() {
   };
 
   const finalizarTreino = () => {
-    const performedExercises: TrainingExecutionExercise[] = treino.exercicios.map((item) => {
-      const performedSets = (exerciseLogs[item.id] ?? buildInitialSeries(item)).map<TrainingExecutionSet>((setItem) => ({
-        setNumber: setItem.numero,
-        loadKg: Number(setItem.carga ?? 0) || 0,
-        restSec: Number(setItem.tempoDescanso ?? item.descanso) || item.descanso,
-        completed: !!setItem.completa,
-        repsTarget: item.repeticoes,
-        repsPerformed: Number.parseInt(String(item.repeticoes).split("-")[0] ?? "0", 10) || null,
-      }));
+    const snapshot = buildExecutionSessionSnapshot();
+    if (!snapshot) return;
 
-      return {
-        exerciseId: item.id,
-        exerciseName: item.nome,
-        muscleGroup: item.grupoMuscular,
-        equipment: item.equipamento,
-        notes: item.observacoes,
-        plannedSets: item.series,
-        plannedReps: item.repeticoes,
-        plannedRestSec: item.descanso,
-        performedSets,
-        completed: performedSets.some((setItem) => setItem.completed),
-      };
-    });
-
-    const completedExercises = performedExercises.filter((exerciseItem) => exerciseItem.completed).length;
-    const totalVolumeLoad = performedExercises.reduce(
-      (acc, exerciseItem) =>
-        acc + exerciseItem.performedSets.reduce((setAcc, setItem) => setAcc + (Number(setItem.loadKg ?? 0) || 0), 0),
-      0
-    );
-
-    const adherencePct =
-      performedExercises.length > 0 ? Math.round((completedExercises / performedExercises.length) * 100) : 0;
+    const finishedAt = new Date().toISOString();
 
     completeTrainingExecutionSession({
-      sessionId: `${treino.id}-${Date.now()}`,
-      trainingId: treino.id,
-      source: isCanonicalSource ? "training.workouts" : "state.treino",
-      dayLabel: treino.dia,
-      dayKey: treino.dayKey,
-      modality: normalizeWorkoutModality(treino.modalidade),
-      title: treino.titulo,
-      intensity: treino.intensidade,
-      startedAt: new Date().toISOString(),
-      finishedAt: new Date().toISOString(),
-      durationMin: treino.duracaoMin,
-      plannedExercises: treino.exercicios.length,
-      completedExercises,
-      totalVolumeLoad,
-      adherencePct,
-      exercises: performedExercises,
+      ...snapshot,
+      finishedAt,
     });
+
+    try {
+      historyService.addWorkout({
+        type: toHistoryWorkoutType(treino.modalidade),
+        modality: toHistoryWorkoutType(treino.modalidade),
+        title: `${humanWorkoutModality(treino.modalidade)} - ${treino.titulo}`,
+        durationMin: treino.duracaoMin,
+        durationS: treino.duracaoMin ? treino.duracaoMin * 60 : undefined,
+        dateIso: finishedAt,
+        pse: snapshot.intensity === "alta" ? 9 : snapshot.intensity === "moderada" ? 7 : 5,
+        notes: `Treino finalizado via TreinoAtivo com ${snapshot.completedExercises}/${snapshot.plannedExercises} exercicios concluidos.`,
+      });
+      achievementsService.syncFromHistory();
+      recordDailyCompletion(new Date(finishedAt));
+      addXP(35);
+    } catch {}
 
     const decision = buildTrainingMotorDecisionForSession({
       session: {

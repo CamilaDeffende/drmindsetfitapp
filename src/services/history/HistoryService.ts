@@ -1,4 +1,7 @@
 
+import { unlock } from "@/services/gamification/achievements";
+import { recordDailyCompletion } from "@/services/gamification/streaks";
+
 // MF_HISTORY_EVENTS_V1: minimal local event hooks (non-breaking)
 type MFHistoryEvent = "workout_added";
 type MFHistoryListener = (payload?: any) => void;
@@ -83,6 +86,16 @@ export class HistoryService {
     const rec: WorkoutRecord = { id: (input as any).id || nowId(), ts: input.ts ?? Date.now(), ...(input as any) };
     store.workouts = [rec, ...store.workouts].slice(0, 500);
     HistoryService.write(store);
+
+    try {
+      const workoutDate = rec.dateIso ? new Date(rec.dateIso) : new Date(rec.ts);
+      const streak = recordDailyCompletion(workoutDate);
+      unlock("FIRST_WORKOUT", workoutDate);
+      const l7 = mfGetLoad7dFromHistory(workoutDate);
+      if (l7.sessions >= 3) unlock("THREE_WORKOUTS_WEEK", workoutDate);
+      if ((streak.current ?? 0) >= 7) unlock("SEVEN_DAY_STREAK", workoutDate);
+    } catch {}
+
     return rec;
   }
 
