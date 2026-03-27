@@ -73,7 +73,8 @@ const MF_METABOLIC_ENGINE_V1_ENABLED =
 
 function isOnboardingDone(): boolean {
   try {
-    return localStorage.getItem("mf:onboarding:done:v1") === "1";
+    if (localStorage.getItem("mf:onboarding:done:v1") === "1") return true;
+    return Boolean(localStorage.getItem("mf:activePlan:v1"));
   } catch {
     return false;
   }

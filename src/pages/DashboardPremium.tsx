@@ -83,6 +83,45 @@ function toTitleLabel(value: unknown, fallback: string) {
   return text || fallback;
 }
 
+function normalizeWorkoutModality(value: unknown) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const map: Record<string, string> = {
+    musculacao: "musculacao",
+    "musculação": "musculacao",
+    bike: "bike",
+    spinning: "bike",
+    corrida: "corrida",
+    funcional: "funcional",
+    cross: "crossfit",
+    crossfit: "crossfit",
+  };
+  return map[raw] ?? raw;
+}
+
+function humanWorkoutModality(value: unknown) {
+  const modality = normalizeWorkoutModality(value);
+  const labels: Record<string, string> = {
+    musculacao: "Musculação",
+    bike: "Bike",
+    corrida: "Corrida",
+    funcional: "Funcional",
+    crossfit: "CrossFit",
+  };
+  return labels[modality] ?? toTitleLabel(value, "Treino");
+}
+
+function describeWorkoutModality(value: unknown) {
+  const modality = normalizeWorkoutModality(value);
+  const labels: Record<string, string> = {
+    musculacao: "Força, hipertrofia e progressão de carga",
+    bike: "Blocos de zona, cadência e recuperação ativa",
+    corrida: "Rodagem, ritmo, técnica e intervalos",
+    funcional: "Movimento, estabilidade, core e condicionamento",
+    crossfit: "Skill, força e metcon em alta densidade",
+  };
+  return labels[modality] ?? "Sessão planejada pelo motor";
+}
+
 function countSelectedWorkoutDays(activePlan: any) {
   const directDays = Array.isArray(activePlan?.training?.selectedDays)
     ? activePlan.training.selectedDays
@@ -121,12 +160,11 @@ function deriveWorkoutModality(activePlan: any) {
     ? activePlan.draft.step5.modalidades
     : [];
 
-  return toTitleLabel(
+  return humanWorkoutModality(
     activePlan?.training?.modality ??
       activePlan?.workout?.modality ??
       activePlan?.draft?.step5?.primary ??
-      draftModalities[0],
-    "musculacao"
+      draftModalities[0]
   );
 }
 
@@ -237,7 +275,7 @@ function getWorkoutDayTitle(workoutItem: any, index: number) {
 }
 
 function getWorkoutItemLabel(workoutItem: any, fallback: string) {
-  return (
+  return humanWorkoutModality(
     workoutItem?.title ??
     workoutItem?.titulo ??
     workoutItem?.modality ??
@@ -532,11 +570,19 @@ export function DashboardPremium() {
 
   const workoutModality =
     deriveWorkoutModality(activePlan);
+  const selectedModalities: string[] = Array.from(
+    new Set(
+      (Array.isArray(activePlan?.draft?.step5?.modalidades) ? activePlan.draft.step5.modalidades : [])
+        .map((item: unknown) => humanWorkoutModality(item))
+        .filter(Boolean)
+    )
+  );
 
   const userFirstName = deriveFirstName(activePlan, state);
   const onboardingDone = (() => {
     try {
-      return localStorage.getItem("mf:onboarding:done:v1") === "1";
+      if (localStorage.getItem("mf:onboarding:done:v1") === "1") return true;
+      return Boolean(localStorage.getItem("mf:activePlan:v1"));
     } catch {
       return false;
     }
@@ -1167,6 +1213,21 @@ export function DashboardPremium() {
                 <div className="mt-1 text-[13px] text-white/50">
                   {workoutFrequency} dias planejados • modalidade principal: {workoutModality}
                 </div>
+                <div className="mt-2 text-[12px] text-white/40">
+                  {describeWorkoutModality(workoutModality)}
+                </div>
+                {selectedModalities.length > 1 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedModalities.map((modality) => (
+                      <span
+                        key={modality}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/70"
+                      >
+                        {modality}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <Button
@@ -1196,6 +1257,11 @@ export function DashboardPremium() {
                               <div className="mt-1 text-xs text-white/50">
                                 {getWorkoutItemLabel(day, workoutModality)}
                                 {exercises.length ? ` • ${exercises.length} exercicios` : ""}
+                              </div>
+                              <div className="mt-1 text-[11px] text-white/35">
+                                {describeWorkoutModality(
+                                  day?.modality ?? day?.modalidade ?? day?.title ?? workoutModality
+                                )}
                               </div>
                             </div>
 

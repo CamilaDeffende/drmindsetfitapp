@@ -7,13 +7,16 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
     focus: SessionFocus.FULL_BODY,
     requiredPatterns: [
       MovementPattern.SQUAT,
+      MovementPattern.HIP_HINGE,
       MovementPattern.HORIZONTAL_PUSH,
       MovementPattern.HORIZONTAL_PULL,
+      MovementPattern.LUNGE,
       MovementPattern.CORE_ANTI_EXTENSION,
     ],
     optionalPatterns: [
-      MovementPattern.HIP_HINGE,
-      MovementPattern.LUNGE,
+      MovementPattern.VERTICAL_PUSH,
+      MovementPattern.VERTICAL_PULL,
+      MovementPattern.CORE_ANTI_ROTATION,
       MovementPattern.CARRY,
     ],
   },
@@ -23,11 +26,15 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
     requiredPatterns: [
       MovementPattern.HORIZONTAL_PUSH,
       MovementPattern.VERTICAL_PUSH,
+      MovementPattern.HORIZONTAL_PUSH,
       MovementPattern.HORIZONTAL_PULL,
       MovementPattern.VERTICAL_PULL,
       MovementPattern.CORE_ANTI_ROTATION,
     ],
-    optionalPatterns: [MovementPattern.CORE_ANTI_EXTENSION],
+    optionalPatterns: [
+      MovementPattern.CORE_ANTI_EXTENSION,
+      MovementPattern.CARRY,
+    ],
   },
   {
     split: TrainingSplit.UPPER_LOWER,
@@ -39,7 +46,11 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
       MovementPattern.CALF,
       MovementPattern.CORE_ANTI_EXTENSION,
     ],
-    optionalPatterns: [MovementPattern.CARRY],
+    optionalPatterns: [
+      MovementPattern.KNEE_FLEXION,
+      MovementPattern.CARRY,
+      MovementPattern.CORE_ANTI_ROTATION,
+    ],
   },
   {
     split: TrainingSplit.PUSH_PULL_LEGS,
@@ -74,6 +85,21 @@ export const SESSION_TEMPLATES: SessionTemplate[] = [
       MovementPattern.CALF,
     ],
     optionalPatterns: [MovementPattern.CORE_ANTI_EXTENSION, MovementPattern.CARRY],
+  },
+  {
+    split: TrainingSplit.BODY_PART,
+    focus: SessionFocus.POSTERIOR_CHAIN,
+    requiredPatterns: [
+      MovementPattern.HIP_HINGE,
+      MovementPattern.HORIZONTAL_PULL,
+      MovementPattern.VERTICAL_PULL,
+      MovementPattern.KNEE_FLEXION,
+      MovementPattern.CORE_ANTI_EXTENSION,
+    ],
+    optionalPatterns: [
+      MovementPattern.CARRY,
+      MovementPattern.CORE_ANTI_ROTATION,
+    ],
   },
   {
     split: TrainingSplit.BODY_PART,
