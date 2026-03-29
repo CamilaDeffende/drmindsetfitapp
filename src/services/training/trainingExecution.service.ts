@@ -150,6 +150,22 @@ export function beginTrainingExecutionSession(
   return currentSession;
 }
 
+export function saveTrainingCurrentExecutionSession(session: TrainingExecutionSession) {
+  const activePlan = readActivePlan() ?? {};
+  if (!isObject(activePlan.training)) activePlan.training = {};
+
+  const store = ensureExecutionStore(activePlan);
+  activePlan.training.execution = {
+    ...store,
+    currentSession: {
+      ...session,
+    },
+  };
+
+  writeActivePlan(activePlan);
+  return session;
+}
+
 export function completeTrainingExecutionSession(session: TrainingExecutionSession) {
   const activePlan = readActivePlan() ?? {};
   if (!isObject(activePlan.training)) activePlan.training = {};

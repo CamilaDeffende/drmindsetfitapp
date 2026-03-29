@@ -21,6 +21,10 @@ import {
   buildTrainingMotorDecisionForSession,
   getTrainingMotorDecisionPreview,
 } from "@/services/training/trainingDecision.service";
+import { historyService } from "@/services/history/HistoryService";
+import { achievementsService } from "@/services/gamification/AchievementsService";
+import { addXP } from "@/services/gamification/LevelSystem";
+import { recordDailyCompletion } from "@/services/gamification/streaks";
 import { generateMindsetFitPremiumPdf } from "@/lib/pdf/mindsetfitPdf";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
 import {
@@ -32,9 +36,12 @@ import { lookupExerciseVisual } from "@/services/training/exerciseMediaCatalog";
 import {
   beginTrainingExecutionSession,
   completeTrainingExecutionSession,
+  getTrainingCurrentExecutionSession,
   getTrainingExecutionHistory,
   getCanonicalTrainingLoadHistory,
+  saveTrainingCurrentExecutionSession,
   type TrainingExecutionExercise,
+  type TrainingExecutionSession,
   type TrainingExecutionSet,
 } from "@/services/training/trainingExecution.service";
 
@@ -288,6 +295,50 @@ function humanWorkoutModality(value: unknown) {
   return labels[modality] ?? String(value ?? "Treino");
 }
 
+function describeWorkoutModality(value: unknown) {
+  const modality = normalizeWorkoutModality(value);
+  const labels: Record<string, string> = {
+    musculacao: "SessÃ£o de forÃ§a com foco em tÃ©cnica, volume e progressÃ£o.",
+    bike: "SessÃ£o de cardio com zonas, cadÃªncia e recuperaÃ§Ã£o ativa.",
+    corrida: "SessÃ£o de corrida com rodagem, ritmo, tÃ©cnica ou intervalos.",
+    funcional: "SessÃ£o funcional com movimento, estabilidade, core e condicionamento.",
+    crossfit: "SessÃ£o de CrossFit com skill, forÃ§a e metcon de alta densidade.",
+  };
+  return labels[modality] ?? "SessÃ£o guiada pelo plano ativo.";
+}
+
+function getExerciseContextLabel(workout: CanonicalWorkoutDayView | undefined, exercise: CanonicalExerciseView | undefined) {
+  if (!workout || !exercise) return "ExecuÃ§Ã£o guiada";
+  if (isCardioLikeModality(workout.modalidade)) {
+    return exercise.grupoMuscular ?? "Cardio guiado";
+  }
+  if (workout.modalidade === "funcional") {
+    return exercise.grupoMuscular ?? "PadrÃ£o funcional";
+  }
+  if (workout.modalidade === "crossfit") {
+    return exercise.grupoMuscular ?? "Skill / Metcon";
+  }
+  return exercise.grupoMuscular ?? humanWorkoutModality(workout.modalidade);
+}
+
+function tracksExternalLoad(modality: unknown) {
+  const normalized = normalizeWorkoutModality(modality);
+  return normalized === "musculacao" || normalized === "crossfit" || normalized === "funcional";
+}
+
+function isCardioLikeModality(modality: unknown) {
+  const normalized = normalizeWorkoutModality(modality);
+  return normalized === "bike" || normalized === "corrida";
+}
+
+function toHistoryWorkoutType(modality: unknown): "corrida" | "bike" | "musculacao" | "outro" {
+  const normalized = normalizeWorkoutModality(modality);
+  if (normalized === "corrida") return "corrida";
+  if (normalized === "bike") return "bike";
+  if (normalized === "musculacao") return "musculacao";
+  return "outro";
+}
+
 function normalizePreviewPlanDays(): CanonicalWorkoutDayView[] {
   const activePlan = loadActivePlan();
   const preview = buildWorkoutPlanPreview(activePlan?.draft ?? {});
@@ -321,6 +372,27 @@ function normalizePreviewPlanDays(): CanonicalWorkoutDayView[] {
   }));
 }
 
+function restoreSeriesFromExecution(
+  exercicio: CanonicalExerciseView,
+  executionExercise: TrainingExecutionExercise | undefined
+): SerieDados[] {
+  const fallback = buildInitialSeries(exercicio);
+  const performed = Array.isArray(executionExercise?.performedSets) ? executionExercise!.performedSets : [];
+
+  if (!performed.length) return fallback;
+
+  return fallback.map((serie, index) => {
+    const saved = performed[index];
+    if (!saved) return serie;
+    return {
+      numero: serie.numero,
+      carga: safeNum(saved.loadKg, serie.carga),
+      tempoDescanso: safeNum(saved.restSec, serie.tempoDescanso),
+      completa: !!saved.completed,
+    };
+  });
+}
+
 
 export function TreinoAtivo() {
   const { state } = useDrMindSetfit();
@@ -334,6 +406,7 @@ export function TreinoAtivo() {
   const [mediaHidden, setMediaHidden] = useState<Record<string, boolean>>({});
   const [tempoDecorrido, setTempoDecorrido] = useState(0);
   const [timerAtivo, setTimerAtivo] = useState(false);
+  const [sessionMeta, setSessionMeta] = useState<{ sessionId: string; startedAt: string } | null>(null);
 
   useEffect(() => {
     const refresh = () => setPlanRefreshTick((prev) => prev + 1);
@@ -402,6 +475,8 @@ export function TreinoAtivo() {
 
   const treino = treinoDias[treinoSelecionado];
   const exercicio = treino?.exercicios?.[exercicioAtual];
+  const loadTrackingEnabled = tracksExternalLoad(treino?.modalidade);
+  const cardioLikeSession = isCardioLikeModality(treino?.modalidade);
 
 
   const progressionSuggestion = useMemo(() => {
@@ -429,12 +504,47 @@ export function TreinoAtivo() {
 
   useEffect(() => {
     if (!treino) return;
+
+    const currentSession = getTrainingCurrentExecutionSession();
+    const canResume =
+      currentSession &&
+      String(currentSession.trainingId ?? "") === String(treino.id ?? "") &&
+      !currentSession.finishedAt;
+
+    if (canResume) {
+      const restoredLogs = treino.exercicios.reduce<Record<string, SerieDados[]>>((acc, item) => {
+        const executionExercise = currentSession.exercises.find(
+          (savedExercise) => String(savedExercise.exerciseId ?? "") === String(item.id ?? "")
+        );
+        acc[item.id] = restoreSeriesFromExecution(item, executionExercise);
+        return acc;
+      }, {});
+
+      const firstPendingExerciseIndex = Math.max(
+        0,
+        treino.exercicios.findIndex((item) => {
+          const restored = restoredLogs[item.id] ?? [];
+          return restored.some((setItem) => !setItem.completa);
+        })
+      );
+
+      setExerciseLogs(restoredLogs);
+      setExercicioAtual(firstPendingExerciseIndex === -1 ? 0 : firstPendingExerciseIndex);
+      setSessionMeta({
+        sessionId: currentSession.sessionId,
+        startedAt: currentSession.startedAt,
+      });
+      setTempoDecorrido(0);
+      setTimerAtivo(false);
+      return;
+    }
+
     setExerciseLogs({});
     setExercicioAtual(0);
     setTempoDecorrido(0);
     setTimerAtivo(false);
 
-    beginTrainingExecutionSession({
+    const startedSession = beginTrainingExecutionSession({
       sessionId: `${treino.id}-${Date.now()}`,
       trainingId: treino.id,
       source: isCanonicalSource ? "training.workouts" : "state.treino",
@@ -458,6 +568,10 @@ export function TreinoAtivo() {
         completed: false,
       })),
     });
+    setSessionMeta({
+      sessionId: startedSession.sessionId,
+      startedAt: startedSession.startedAt,
+    });
   }, [treinoSelecionado, isCanonicalSource, treino?.id]);
 
   useEffect(() => {
@@ -478,6 +592,68 @@ export function TreinoAtivo() {
 
   const seriesCompletas = series.filter((s) => s.completa).length;
   const progressoSeries = exercicio?.series ? Math.round((seriesCompletas / exercicio.series) * 100) : 0;
+
+  const buildExecutionSessionSnapshot = (): TrainingExecutionSession | null => {
+    if (!treino || !sessionMeta) return null;
+
+    const performedExercises: TrainingExecutionExercise[] = treino.exercicios.map((item) => {
+      const performedSets = (exerciseLogs[item.id] ?? buildInitialSeries(item)).map<TrainingExecutionSet>((setItem) => ({
+        setNumber: setItem.numero,
+        loadKg: Number(setItem.carga ?? 0) || 0,
+        restSec: Number(setItem.tempoDescanso ?? item.descanso) || item.descanso,
+        completed: !!setItem.completa,
+        repsTarget: item.repeticoes,
+        repsPerformed: Number.parseInt(String(item.repeticoes).split("-")[0] ?? "0", 10) || null,
+      }));
+
+      return {
+        exerciseId: item.id,
+        exerciseName: item.nome,
+        muscleGroup: item.grupoMuscular,
+        equipment: item.equipamento,
+        notes: item.observacoes,
+        plannedSets: item.series,
+        plannedReps: item.repeticoes,
+        plannedRestSec: item.descanso,
+        performedSets,
+        completed: performedSets.some((setItem) => setItem.completed),
+      };
+    });
+
+    const completedExercises = performedExercises.filter((exerciseItem) => exerciseItem.completed).length;
+    const totalVolumeLoad = performedExercises.reduce(
+      (acc, exerciseItem) =>
+        acc + exerciseItem.performedSets.reduce((setAcc, setItem) => setAcc + (Number(setItem.loadKg ?? 0) || 0), 0),
+      0
+    );
+
+    const adherencePct =
+      performedExercises.length > 0 ? Math.round((completedExercises / performedExercises.length) * 100) : 0;
+
+    return {
+      sessionId: sessionMeta.sessionId,
+      trainingId: treino.id,
+      source: isCanonicalSource ? "training.workouts" : "state.treino",
+      dayLabel: treino.dia,
+      dayKey: treino.dayKey,
+      modality: normalizeWorkoutModality(treino.modalidade),
+      title: treino.titulo,
+      intensity: treino.intensidade,
+      startedAt: sessionMeta.startedAt,
+      durationMin: treino.duracaoMin,
+      plannedExercises: treino.exercicios.length,
+      completedExercises,
+      totalVolumeLoad,
+      adherencePct,
+      exercises: performedExercises,
+    };
+  };
+
+  useEffect(() => {
+    const snapshot = buildExecutionSessionSnapshot();
+    if (!snapshot) return;
+    saveTrainingCurrentExecutionSession(snapshot);
+  }, [exerciseLogs, sessionMeta?.sessionId, treino?.id, isCanonicalSource]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -591,58 +767,31 @@ export function TreinoAtivo() {
   };
 
   const finalizarTreino = () => {
-    const performedExercises: TrainingExecutionExercise[] = treino.exercicios.map((item) => {
-      const performedSets = (exerciseLogs[item.id] ?? buildInitialSeries(item)).map<TrainingExecutionSet>((setItem) => ({
-        setNumber: setItem.numero,
-        loadKg: Number(setItem.carga ?? 0) || 0,
-        restSec: Number(setItem.tempoDescanso ?? item.descanso) || item.descanso,
-        completed: !!setItem.completa,
-        repsTarget: item.repeticoes,
-        repsPerformed: Number.parseInt(String(item.repeticoes).split("-")[0] ?? "0", 10) || null,
-      }));
+    const snapshot = buildExecutionSessionSnapshot();
+    if (!snapshot) return;
 
-      return {
-        exerciseId: item.id,
-        exerciseName: item.nome,
-        muscleGroup: item.grupoMuscular,
-        equipment: item.equipamento,
-        notes: item.observacoes,
-        plannedSets: item.series,
-        plannedReps: item.repeticoes,
-        plannedRestSec: item.descanso,
-        performedSets,
-        completed: performedSets.some((setItem) => setItem.completed),
-      };
-    });
-
-    const completedExercises = performedExercises.filter((exerciseItem) => exerciseItem.completed).length;
-    const totalVolumeLoad = performedExercises.reduce(
-      (acc, exerciseItem) =>
-        acc + exerciseItem.performedSets.reduce((setAcc, setItem) => setAcc + (Number(setItem.loadKg ?? 0) || 0), 0),
-      0
-    );
-
-    const adherencePct =
-      performedExercises.length > 0 ? Math.round((completedExercises / performedExercises.length) * 100) : 0;
+    const finishedAt = new Date().toISOString();
 
     completeTrainingExecutionSession({
-      sessionId: `${treino.id}-${Date.now()}`,
-      trainingId: treino.id,
-      source: isCanonicalSource ? "training.workouts" : "state.treino",
-      dayLabel: treino.dia,
-      dayKey: treino.dayKey,
-      modality: normalizeWorkoutModality(treino.modalidade),
-      title: treino.titulo,
-      intensity: treino.intensidade,
-      startedAt: new Date().toISOString(),
-      finishedAt: new Date().toISOString(),
-      durationMin: treino.duracaoMin,
-      plannedExercises: treino.exercicios.length,
-      completedExercises,
-      totalVolumeLoad,
-      adherencePct,
-      exercises: performedExercises,
+      ...snapshot,
+      finishedAt,
     });
+
+    try {
+      historyService.addWorkout({
+        type: toHistoryWorkoutType(treino.modalidade),
+        modality: toHistoryWorkoutType(treino.modalidade),
+        title: `${humanWorkoutModality(treino.modalidade)} - ${treino.titulo}`,
+        durationMin: treino.duracaoMin,
+        durationS: treino.duracaoMin ? treino.duracaoMin * 60 : undefined,
+        dateIso: finishedAt,
+        pse: snapshot.intensity === "alta" ? 9 : snapshot.intensity === "moderada" ? 7 : 5,
+        notes: `Treino finalizado via TreinoAtivo com ${snapshot.completedExercises}/${snapshot.plannedExercises} exercicios concluidos.`,
+      });
+      achievementsService.syncFromHistory();
+      recordDailyCompletion(new Date(finishedAt));
+      addXP(35);
+    } catch {}
 
     const decision = buildTrainingMotorDecisionForSession({
       session: {
@@ -677,30 +826,37 @@ export function TreinoAtivo() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
-      <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#0B1322] via-[#0E1A2E] to-[#09111D] text-white">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#09111D]/85 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex-1">
-              <h1 className="text-lg sm:text-xl font-bold">{treino.dia}</h1>
+              <div className="text-[11px] uppercase tracking-[0.26em] text-cyan-200/70">Treino ativo</div>
+              <h1 className="mt-1 text-lg sm:text-xl font-bold">{treino.dia}</h1>
+              <p className="mt-1 text-[11px] sm:text-xs text-white/45">
+                {describeWorkoutModality(treino.modalidade)}
+              </p>
+              <p className="mt-1 text-xs sm:text-sm text-white/60">
+                {humanWorkoutModality(treino.modalidade)} • {treino.titulo}
+              </p>
 
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={downloadPdfPremiumWorkout}
-                  className="rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-xs hover:bg-black/60"
+                  className="rounded-xl border border-cyan-400/15 bg-cyan-400/10 px-4 py-2 text-xs text-cyan-100 transition-colors hover:bg-cyan-400/15"
                 >
                   Baixar PDF Premium
                 </button>
               </div>
 
-              <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
+              <p className="mt-2 text-xs sm:text-sm text-white/60">
                 Exercício {exercicioAtual + 1} de {treino.exercicios.length}
               </p>
             </div>
 
             {timerAtivo && (
-              <div className="px-3 py-1 rounded-full bg-[#1E6BFF] text-white font-bold text-sm mr-2">
+              <div className="mr-2 rounded-full border border-cyan-400/25 bg-cyan-400/15 px-3 py-1 text-sm font-bold text-cyan-50">
                 <Timer className="w-4 h-4 inline mr-1" />
                 {formatarTempo(tempoDecorrido)}
               </div>
@@ -710,7 +866,7 @@ export function TreinoAtivo() {
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
-              className="shrink-0 hover:bg-black/5 dark:hover:bg-white/10"
+              className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] text-white hover:bg-white/10"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -721,7 +877,7 @@ export function TreinoAtivo() {
       </header>
 
       <main className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24">
-        <Card className="mb-4 border-white/10">
+        <Card className="mb-4 border-white/10 bg-[#0A1220]/85 shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-base sm:text-lg">Prontidão da Sessão</CardTitle>
             <CardDescription>
@@ -773,7 +929,7 @@ export function TreinoAtivo() {
           </CardContent>
         </Card>
 
-        <Card className="mb-4">
+        <Card className="mb-4 border-white/10 bg-[#0A1220]/85 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-base sm:text-lg">Selecione o Treino</CardTitle>
           </CardHeader>
@@ -782,9 +938,13 @@ export function TreinoAtivo() {
               {treinoDias.map((t, idx) => (
                 <Button
                   key={t.id ?? idx}
-                  variant={treinoSelecionado === idx ? "default" : "outline"}
+                  variant="ghost"
                   onClick={() => selecionarTreino(idx)}
-                  className="h-auto py-2 sm:py-3 flex-col text-xs sm:text-sm"
+                  className={`h-auto rounded-2xl border px-3 py-3 text-xs sm:text-sm ${
+                    treinoSelecionado === idx
+                      ? "border-cyan-400/30 bg-cyan-400/15 text-white hover:bg-cyan-400/20"
+                      : "border-white/10 bg-white/[0.03] text-white/80 hover:bg-white/[0.07]"
+                  }`}
                 >
                   <span className="font-semibold">{t.dia}</span>
                   <span className="text-xs opacity-80 truncate max-w-full">
@@ -802,17 +962,22 @@ export function TreinoAtivo() {
           </CardContent>
         </Card>
 
-        <Card className="mb-4">
+        <Card className="mb-4 border-white/10 bg-[#0A1220]/85 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex-1">
                 <CardTitle className="text-lg sm:text-xl">{exercicio.nome}</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
-                  {exercicio.equipamento ?? "Equipamento livre"}
+                  {cardioLikeSession
+                    ? "Bloco guiado da sessão"
+                    : exercicio.equipamento ?? "Equipamento livre"}
+                </CardDescription>
+                <CardDescription className="text-[11px] sm:text-xs">
+                  {describeWorkoutModality(treino.modalidade)}
                 </CardDescription>
               </div>
-              <Badge variant="outline" className="self-start sm:self-auto text-xs">
-                {exercicio.grupoMuscular ?? humanWorkoutModality(treino.modalidade)}
+              <Badge variant="outline" className="self-start border-cyan-400/20 bg-cyan-400/10 text-cyan-100 sm:self-auto text-xs">
+                {getExerciseContextLabel(treino, exercicio)}
               </Badge>
             </div>
           </CardHeader>
@@ -878,23 +1043,23 @@ export function TreinoAtivo() {
             </div>
 
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              <div className="p-2 sm:p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg text-center">
-                <p className="text-xs text-muted-foreground mb-1">Séries</p>
+              <div className="rounded-2xl border border-cyan-400/15 bg-cyan-400/10 p-2 text-center sm:p-3">
+                <p className="text-xs text-muted-foreground mb-1">{cardioLikeSession ? "Blocos" : "Séries"}</p>
                 <p className="text-xl sm:text-2xl font-bold">{exercicio.series}</p>
               </div>
-              <div className="p-2 sm:p-3 bg-green-50 dark:bg-green-950 rounded-lg text-center">
-                <p className="text-xs text-muted-foreground mb-1">Reps</p>
+              <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/10 p-2 text-center sm:p-3">
+                <p className="text-xs text-muted-foreground mb-1">{cardioLikeSession ? "Meta" : "Reps"}</p>
                 <p className="text-xl sm:text-2xl font-bold">{exercicio.repeticoes}</p>
               </div>
-              <div className="p-2 sm:p-3 bg-[#1E6BFF] dark:bg-[#1E6BFF] rounded-lg text-center">
-                <p className="text-xs text-muted-foreground mb-1">Descanso</p>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2 text-center sm:p-3">
+                <p className="text-xs text-muted-foreground mb-1">{cardioLikeSession ? "Recuperação" : "Descanso"}</p>
                 <p className="text-xl sm:text-2xl font-bold">{exercicio.descanso}s</p>
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-sm sm:text-base">Progresso das Séries</Label>
+                <Label className="text-sm sm:text-base">{cardioLikeSession ? "Progresso dos blocos" : "Progresso das Séries"}</Label>
                 <span className="text-xs sm:text-sm text-muted-foreground">
                   {seriesCompletas}/{exercicio.series}
                 </span>
@@ -997,7 +1162,7 @@ export function TreinoAtivo() {
             ) : null}
 
             <div className="space-y-3">
-              <Label className="text-sm sm:text-base font-semibold">Registrar Séries</Label>
+              <Label className="text-sm sm:text-base font-semibold">{cardioLikeSession ? "Registrar blocos" : "Registrar Séries"}</Label>
               {series.map((serie, idx) => (
                 <div
                   key={idx}
@@ -1008,7 +1173,7 @@ export function TreinoAtivo() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="font-semibold text-sm">Série {serie.numero}</span>
+                    <span className="font-semibold text-sm">{cardioLikeSession ? `Bloco ${serie.numero}` : `Série ${serie.numero}`}</span>
                     <Button
                       size="sm"
                       variant={serie.completa ? "default" : "outline"}
@@ -1018,36 +1183,38 @@ export function TreinoAtivo() {
                       {serie.completa ? (
                         <>
                           <Check className="w-4 h-4 mr-1" />
-                          Completa
+                          {cardioLikeSession ? "Concluído" : "Completa"}
                         </>
                       ) : (
-                        "Marcar"
+                        cardioLikeSession ? "Concluir" : "Marcar"
                       )}
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label htmlFor={`carga-${idx}`} className="text-xs flex items-center gap-1">
-                        <Dumbbell className="w-3 h-3" />
-                        Carga (kg)
-                      </Label>
-                      <Input
-                        id={`carga-${idx}`}
-                        type="number"
-                        inputMode="decimal"
-                        value={serie.carga || ""}
-                        onChange={(e) => atualizarSerie(idx, "carga", Number(e.target.value))}
-                        placeholder="Ex: 20"
-                        className="text-sm font-semibold text-center"
-                        disabled={serie.completa}
-                      />
-                    </div>
+                  <div className={`grid gap-3 ${loadTrackingEnabled ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {loadTrackingEnabled ? (
+                      <div className="space-y-1">
+                        <Label htmlFor={`carga-${idx}`} className="text-xs flex items-center gap-1">
+                          <Dumbbell className="w-3 h-3" />
+                          Carga (kg)
+                        </Label>
+                        <Input
+                          id={`carga-${idx}`}
+                          type="number"
+                          inputMode="decimal"
+                          value={serie.carga || ""}
+                          onChange={(e) => atualizarSerie(idx, "carga", Number(e.target.value))}
+                          placeholder="Ex: 20"
+                          className="text-sm font-semibold text-center"
+                          disabled={serie.completa}
+                        />
+                      </div>
+                    ) : null}
 
                     <div className="space-y-1">
                       <Label htmlFor={`descanso-${idx}`} className="text-xs flex items-center gap-1">
                         <Timer className="w-3 h-3" />
-                        Descanso (s)
+                        {cardioLikeSession ? "Recuperação (s)" : "Descanso (s)"}
                       </Label>
                       <Input
                         id={`descanso-${idx}`}
@@ -1055,7 +1222,7 @@ export function TreinoAtivo() {
                         inputMode="decimal"
                         value={serie.tempoDescanso || ""}
                         onChange={(e) => atualizarSerie(idx, "tempoDescanso", Number(e.target.value))}
-                        placeholder="Ex: 60"
+                        placeholder={cardioLikeSession ? "Ex: 30" : "Ex: 60"}
                         className="text-sm font-semibold text-center"
                         disabled={serie.completa}
                       />
@@ -1073,9 +1240,9 @@ export function TreinoAtivo() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-white/10 bg-[#0A1220]/85 shadow-[0_18px_40px_rgba(0,0,0,0.24)]">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base sm:text-lg">Exercícios do Treino</CardTitle>
+            <CardTitle className="text-base sm:text-lg">{cardioLikeSession ? "Blocos da Sessão" : "Exercícios do Treino"}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -1087,24 +1254,24 @@ export function TreinoAtivo() {
                   <div
                     key={ex.id ?? idx}
                     onClick={() => setExercicioAtual(idx)}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                    className={`cursor-pointer rounded-2xl border p-3 transition-all ${
                       idx === exercicioAtual
-                        ? "bg-[#1E6BFF] dark:bg-[#1E6BFF] border-[#1E6BFF]"
+                        ? "border-cyan-400/35 bg-cyan-400/12"
                         : idx < exercicioAtual
-                          ? "bg-green-50 dark:bg-green-950 border-green-600"
-                          : "hover:bg-muted/50"
+                          ? "border-emerald-500/25 bg-emerald-500/10"
+                          : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm sm:text-base truncate">{ex.nome}</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-white/60">
                           {ex.series}x{ex.repeticoes} • {ex.descanso}s
                         </p>
                       </div>
 
                       <div className="ml-3 text-right">
-                        <p className="text-xs text-muted-foreground">{completedSets}/{ex.series}</p>
+                        <p className="text-xs text-white/50">{completedSets}/{ex.series}</p>
                         {idx < exercicioAtual && <Check className="w-4 h-4 text-green-500 ml-auto" />}
                       </div>
                     </div>
@@ -1122,13 +1289,13 @@ export function TreinoAtivo() {
 
 </main>
 
-      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-white/10 bg-[#09111D]/90 p-3 sm:p-4 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto flex gap-2 sm:gap-3">
           <Button
             variant="outline"
             onClick={exercicioAnterior}
             disabled={exercicioAtual === 0}
-            className="flex-1 text-sm sm:text-base"
+            className="flex-1 border-white/10 bg-white/[0.03] text-sm text-white hover:bg-white/[0.08] sm:text-base"
           >
             <ArrowLeft className="w-4 h-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Anterior</span>

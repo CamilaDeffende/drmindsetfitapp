@@ -35,9 +35,6 @@ import { ptBR } from "date-fns/locale";
 import { loadActivePlan } from "@/services/plan.service";
 import { getCanonicalTrainingWorkouts } from "@/services/training/activeTrainingSessions.bridge";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
-import { getExerciseProgressionSuggestion } from "@/services/training/trainingProgression.service";
-import { getTrainingReadinessSnapshot } from "@/services/training/trainingReadiness.service";
-import { getLatestTrainingMotorDecisions } from "@/services/training/trainingDecision.service";
 import { getCanonicalTrainingLoadHistory } from "@/services/training/trainingExecution.service";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -83,6 +80,45 @@ function toTitleLabel(value: unknown, fallback: string) {
   return text || fallback;
 }
 
+function normalizeWorkoutModality(value: unknown) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const map: Record<string, string> = {
+    musculacao: "musculacao",
+    "musculação": "musculacao",
+    bike: "bike",
+    spinning: "bike",
+    corrida: "corrida",
+    funcional: "funcional",
+    cross: "crossfit",
+    crossfit: "crossfit",
+  };
+  return map[raw] ?? raw;
+}
+
+function humanWorkoutModality(value: unknown) {
+  const modality = normalizeWorkoutModality(value);
+  const labels: Record<string, string> = {
+    musculacao: "Musculação",
+    bike: "Bike",
+    corrida: "Corrida",
+    funcional: "Funcional",
+    crossfit: "CrossFit",
+  };
+  return labels[modality] ?? toTitleLabel(value, "Treino");
+}
+
+function describeWorkoutModality(value: unknown) {
+  const modality = normalizeWorkoutModality(value);
+  const labels: Record<string, string> = {
+    musculacao: "Força, hipertrofia e progressão de carga",
+    bike: "Blocos de zona, cadência e recuperação ativa",
+    corrida: "Rodagem, ritmo, técnica e intervalos",
+    funcional: "Movimento, estabilidade, core e condicionamento",
+    crossfit: "Skill, força e metcon em alta densidade",
+  };
+  return labels[modality] ?? "Sessão planejada pelo motor";
+}
+
 function countSelectedWorkoutDays(activePlan: any) {
   const directDays = Array.isArray(activePlan?.training?.selectedDays)
     ? activePlan.training.selectedDays
@@ -121,12 +157,11 @@ function deriveWorkoutModality(activePlan: any) {
     ? activePlan.draft.step5.modalidades
     : [];
 
-  return toTitleLabel(
+  return humanWorkoutModality(
     activePlan?.training?.modality ??
       activePlan?.workout?.modality ??
       activePlan?.draft?.step5?.primary ??
-      draftModalities[0],
-    "musculacao"
+      draftModalities[0]
   );
 }
 
@@ -237,7 +272,7 @@ function getWorkoutDayTitle(workoutItem: any, index: number) {
 }
 
 function getWorkoutItemLabel(workoutItem: any, fallback: string) {
-  return (
+  return humanWorkoutModality(
     workoutItem?.title ??
     workoutItem?.titulo ??
     workoutItem?.modality ??
@@ -421,41 +456,6 @@ export function DashboardPremium() {
       : [];
   })();
 
-  const readinessSnapshot = useMemo(() => getTrainingReadinessSnapshot(), []);
-
-  const progressionHighlights = useMemo(() => {
-    const workouts = getCanonicalTrainingWorkouts();
-
-    const exercises = workouts.flatMap((w: any) =>
-      Array.isArray(w?.blocks)
-        ? w.blocks.flatMap((b: any) => (Array.isArray(b?.exercises) ? b.exercises : []))
-        : []
-    );
-
-    const seen = new Set<string>();
-
-    const suggestions = exercises
-      .map((ex: any) =>
-        getExerciseProgressionSuggestion({
-          exerciseId: ex?.exerciseId ?? ex?.id,
-          exerciseName: ex?.name ?? ex?.nome,
-          currentSets: ex?.sets,
-          currentReps: ex?.reps,
-        })
-      )
-      .filter(Boolean)
-      .filter((sug: any) => {
-        const key = String(sug?.exerciseId ?? "");
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-
-    return suggestions.slice(0, 3);
-  }, []);
-
-  const latestMotorDecisions = useMemo(() => getLatestTrainingMotorDecisions(4), []);
-
   const nutrition = useMemo(() => {
     return (
       adapted ??
@@ -532,11 +532,19 @@ export function DashboardPremium() {
 
   const workoutModality =
     deriveWorkoutModality(activePlan);
+  const selectedModalities: string[] = Array.from(
+    new Set(
+      (Array.isArray(activePlan?.draft?.step5?.modalidades) ? activePlan.draft.step5.modalidades : [])
+        .map((item: unknown) => humanWorkoutModality(item))
+        .filter(Boolean)
+    )
+  );
 
   const userFirstName = deriveFirstName(activePlan, state);
   const onboardingDone = (() => {
     try {
-      return localStorage.getItem("mf:onboarding:done:v1") === "1";
+      if (localStorage.getItem("mf:onboarding:done:v1") === "1") return true;
+      return Boolean(localStorage.getItem("mf:activePlan:v1"));
     } catch {
       return false;
     }
@@ -923,102 +931,6 @@ export function DashboardPremium() {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {latestMotorDecisions.length ? (
-                <Card className="border-cyan-500/20 bg-white/5">
-                  <CardHeader>
-                    <CardTitle className="text-base">Ultimas decisoes do motor</CardTitle>
-                    <CardDescription>
-                      Resumo claro do raciocinio aplicado nas sessoes recentes.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {latestMotorDecisions.map((item: any, idx: number) => (
-                      <div
-                        key={item.id ?? idx}
-                        className="rounded-xl border border-white/10 bg-white/5 p-3"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="text-sm font-semibold">
-                            {item.title ?? item.modality ?? "Sessao"}
-                          </div>
-                          <div className="text-[11px] text-white/50 capitalize">
-                            {item.confidence}
-                          </div>
-                        </div>
-                        <div className="mt-1 text-xs text-white/50">
-                          {item.decisionType}
-                        </div>
-                        <div className="mt-2 text-sm">{item.rationale}</div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              <Card className="border-white/10 bg-white/5">
-                <CardHeader>
-                  <CardTitle className="text-base">Prontidao + deload inteligente</CardTitle>
-                  <CardDescription>
-                    Fadiga regional e ajuste de deload do microciclo atual.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Score</div>
-                      <div className="mt-1 text-xl font-bold">{readinessSnapshot.score}</div>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Nivel</div>
-                      <div className="mt-1 text-sm font-semibold capitalize">
-                        {readinessSnapshot.level}
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Recomendacao</div>
-                      <div className="mt-1 text-sm font-semibold capitalize">
-                        {readinessSnapshot.recommendation}
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <div className="text-[11px] text-white/50">Ajuste</div>
-                      <div className="mt-1 text-sm font-semibold">
-                        {readinessSnapshot.recommendedLoadAdjustmentPct > 0
-                          ? `+${readinessSnapshot.recommendedLoadAdjustmentPct}%`
-                          : `${readinessSnapshot.recommendedLoadAdjustmentPct}%`}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
-                    <div className="text-xs text-white/50">Racional</div>
-                    <div className="mt-1 text-sm">{readinessSnapshot.rationale}</div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {progressionHighlights.length ? (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                  <div className="text-sm font-semibold">Proximas progressoes sugeridas</div>
-                  <div className="mt-2 space-y-2">
-                    {progressionHighlights.map((item: any, idx: number) => (
-                      <div
-                        key={`${item.exerciseId}-${idx}`}
-                        className="rounded-lg bg-black/20 p-2 text-xs sm:text-sm"
-                      >
-                        <span className="font-semibold">
-                          {item.suggestedLoadKg != null ? `${item.suggestedLoadKg} kg` : "Manter"}
-                        </span>
-                        <span className="text-white/50"> • {item.rationale}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
               {nextMeal ? (
                 <div className="rounded-[20px] border border-white/10 bg-black/20 p-4">
                   <div className="text-[16px] font-semibold text-white">
@@ -1167,6 +1079,21 @@ export function DashboardPremium() {
                 <div className="mt-1 text-[13px] text-white/50">
                   {workoutFrequency} dias planejados • modalidade principal: {workoutModality}
                 </div>
+                <div className="mt-2 text-[12px] text-white/40">
+                  {describeWorkoutModality(workoutModality)}
+                </div>
+                {selectedModalities.length > 1 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedModalities.map((modality) => (
+                      <span
+                        key={modality}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/70"
+                      >
+                        {modality}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <Button
@@ -1196,6 +1123,11 @@ export function DashboardPremium() {
                               <div className="mt-1 text-xs text-white/50">
                                 {getWorkoutItemLabel(day, workoutModality)}
                                 {exercises.length ? ` • ${exercises.length} exercicios` : ""}
+                              </div>
+                              <div className="mt-1 text-[11px] text-white/35">
+                                {describeWorkoutModality(
+                                  day?.modality ?? day?.modalidade ?? day?.title ?? workoutModality
+                                )}
                               </div>
                             </div>
 
@@ -1244,8 +1176,8 @@ export function DashboardPremium() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-100">Recursos avancados</h2>
-                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso em um so lugar</p>
+                <h2 className="text-lg font-semibold text-gray-100">Recursos avançados</h2>
+                <p className="text-sm text-gray-400">IA, GPS, wearables e progresso em um só lugar</p>
               </div>
               <Target className="w-6 h-6 text-white/80" />
             </div>

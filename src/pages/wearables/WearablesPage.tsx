@@ -49,7 +49,7 @@ export default function WearablesPage() {
       await connectHRM();
       setMsg("Dispositivo conectado com sucesso.");
     } catch (e: any) {
-      setMsg(String(e?.message || e || "Nao foi possivel conectar o dispositivo."));
+      setMsg(String(e?.message || e || "Não foi possível conectar o dispositivo."));
     }
   }
 
@@ -79,7 +79,7 @@ export default function WearablesPage() {
       avgHeartRate: workout.averageHeartRate,
     });
 
-    setMsg("Treino demo importado para o historico.");
+    setMsg("Treino demo importado para o histórico.");
   }
 
   async function demoSyncProvider() {
@@ -174,7 +174,7 @@ export default function WearablesPage() {
               onClick={demoImportToHistory}
               className="border-white/10 bg-white/5 text-white hover:bg-white/10"
             >
-              Import demo {"->"} Historico
+              Import demo {"->"} Histórico
             </Button>
 
             <Button

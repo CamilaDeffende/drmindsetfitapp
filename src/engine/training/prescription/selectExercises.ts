@@ -36,7 +36,7 @@ function hashString(value: string) {
 }
 
 function getTargetExerciseCount(profile: TrainingProfile): number {
-  let target = 5;
+  let target = 7;
 
   if (
     String(profile.level).includes("INTERMEDIATE") ||
@@ -47,9 +47,11 @@ function getTargetExerciseCount(profile: TrainingProfile): number {
 
   if (profile.sessionDurationMin >= 55) target += 1;
   if (profile.sessionDurationMin >= 75) target += 1;
-  if (profile.sessionDurationMin <= 35) target -= 1;
+  if (profile.sessionDurationMin >= 90) target += 1;
+  if (profile.sessionDurationMin <= 35) target -= 2;
+  if (profile.sessionDurationMin <= 45) target -= 1;
 
-  return Math.max(4, Math.min(target, 8));
+  return Math.max(5, Math.min(target, 10));
 }
 
 function getTemplatePatterns(focus: SessionFocus) {

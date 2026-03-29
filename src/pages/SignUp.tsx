@@ -57,6 +57,8 @@ const getPrefilledNameFromOnboarding = (): string => {
 };
 
 const PENDING_IMPORT_KEY = "mf:pendingProfileImport:v1";
+const PENDING_SIGNUP_HANDOFF_KEY = "mf:onboarding:signup-pending:v1";
+const DONE_KEY = "mf:onboarding:done:v1";
 
 const getDefaultPostAuthRoute = (): string => {
   return "/onboarding/step-1";
@@ -101,6 +103,11 @@ export function SignUp() {
     const hasRealUser = Boolean(user && user.id !== "demo-user-123");
 
     if (!loading && hasRealUser) {
+      try {
+        localStorage.setItem(DONE_KEY, "1");
+        localStorage.removeItem(PENDING_SIGNUP_HANDOFF_KEY);
+      } catch {}
+
       if (premiumFromUrl) {
         try {
           localStorage.setItem("mindsetfit:isSubscribed", "true");

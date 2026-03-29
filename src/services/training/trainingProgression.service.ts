@@ -68,14 +68,14 @@ function inferStepKg(avgLoad: number): number {
 }
 
 function extractLoadSamples(historyItem: AnyObj): number[] {
-  const details = safeArray<AnyObj>(historyItem?.details);
+  const details = safeArray<AnyObj>(historyItem?.details ?? historyItem?.detalhes);
   const samples = details
-    .map((d) => toNum(d?.carga, NaN))
+    .map((d) => toNum(d?.carga ?? d?.loadKg, NaN))
     .filter((n) => Number.isFinite(n) && n > 0);
   if (samples.length) return samples;
 
-  const total = toNum(historyItem?.cargaTotal, 0);
-  const sets = details.length || toNum(historyItem?.setsCompleted, 0);
+  const total = toNum(historyItem?.cargaTotal ?? historyItem?.totalVolumeLoad, 0);
+  const sets = details.length || toNum(historyItem?.setsCompleted ?? historyItem?.totalCompletedSets, 0);
   if (total > 0 && sets > 0) return [total / sets];
 
   return [];

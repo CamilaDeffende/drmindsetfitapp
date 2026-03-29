@@ -73,16 +73,34 @@ const MF_METABOLIC_ENGINE_V1_ENABLED =
 
 function isOnboardingDone(): boolean {
   try {
-    return localStorage.getItem("mf:onboarding:done:v1") === "1";
+    if (localStorage.getItem("mf:onboarding:done:v1") === "1") return true;
+    return Boolean(localStorage.getItem("mf:activePlan:v1"));
   } catch {
     return false;
   }
 }
 
+function getPendingPostOnboardingRoute(): string | null {
+  try {
+    if (localStorage.getItem("mf:onboarding:signup-pending:v1") !== "1") {
+      return null;
+    }
+
+    return `/signup?next=${encodeURIComponent("/assinatura?source=onboarding")}&source=onboarding`;
+  } catch {
+    return null;
+  }
+}
+
 function RootRedirect() {
+  const pendingSignupRoute = getPendingPostOnboardingRoute();
+
   return (
     <Navigate
-      to={isOnboardingDone() ? getHomeRoute() : "/onboarding/step-1"}
+      to={
+        pendingSignupRoute ??
+        (isOnboardingDone() ? getHomeRoute() : "/onboarding/step-1")
+      }
       replace
     />
   );

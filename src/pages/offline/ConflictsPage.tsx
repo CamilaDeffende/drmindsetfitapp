@@ -29,16 +29,14 @@ export function ConflictsPage() {
 
             <div>
               <h1 className="text-3xl font-bold text-orange-400 sm:text-4xl">Conflitos</h1>
-              <p className="text-sm text-white/60">Resolucao manual de sincronizacao</p>
+              <p className="text-sm text-white/60">Resolução manual de sincronização</p>
             </div>
           </div>
         </div>
 
         {conflicts.length === 0 ? (
           <Card className="mt-6 border-white/10 bg-[rgba(8,10,18,0.82)]">
-            <CardContent className="p-6 text-white/60">
-              Nenhum conflito pendente.
-            </CardContent>
+            <CardContent className="p-6 text-white/60">Nenhum conflito pendente.</CardContent>
           </Card>
         ) : (
           <div className="mt-6 space-y-4">
@@ -49,10 +47,7 @@ export function ConflictsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      onClick={() => resolveConflict(conflict.id, "local")}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
+                    <Button onClick={() => resolveConflict(conflict.id, "local")} className="bg-blue-600 hover:bg-blue-700">
                       Manter local
                     </Button>
                     <Button
@@ -62,10 +57,7 @@ export function ConflictsPage() {
                     >
                       Usar remoto
                     </Button>
-                    <Button
-                      onClick={() => resolveConflict(conflict.id, "merge")}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
+                    <Button onClick={() => resolveConflict(conflict.id, "merge")} className="bg-green-600 hover:bg-green-700">
                       Mesclar
                     </Button>
                   </div>

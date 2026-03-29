@@ -29,24 +29,121 @@ const WEEK: string[] = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
 
 const PREVIEW_LIBRARY: Record<string, Record<MF_Level, string[]>> = {
   bike: {
-    iniciante: ["Zona 2", "Cadencia confortavel", "Recuperacao ativa"],
-    intermediario: ["Sweet Spot", "Cadencia alta", "Bloco progressivo", "Recuperacao ativa"],
-    avancado: ["HIIT Bike", "Sprint curto", "Cadencia alta", "Bloco progressivo", "Resfriamento"],
+    iniciante: [
+      "Aquecimento leve",
+      "Zona 2",
+      "Cadencia confortavel",
+      "Giro solto",
+      "Resfriamento",
+    ],
+    intermediario: [
+      "Aquecimento progressivo",
+      "Sweet Spot",
+      "Cadencia alta",
+      "Bloco progressivo",
+      "Sprint controlado",
+      "Recuperacao ativa",
+      "Resfriamento",
+    ],
+    avancado: [
+      "Aquecimento progressivo",
+      "HIIT Bike",
+      "Sprint curto",
+      "Cadencia alta",
+      "Bloco progressivo",
+      "Zona 3 sustentada",
+      "Recuperacao ativa",
+      "Resfriamento",
+    ],
   },
   corrida: {
-    iniciante: ["Caminhada acelerada", "Trote leve", "Mobilidade de tornozelo"],
-    intermediario: ["Rodagem moderada", "Tempo Run", "Drills de tecnica", "Desaceleracao"],
-    avancado: ["Intervalado", "Tiro curto", "Rodagem de recuperacao", "Drills de tecnica", "Desaceleracao"],
+    iniciante: [
+      "Caminhada acelerada",
+      "Trote leve",
+      "Rodagem leve",
+      "Mobilidade de tornozelo",
+      "Desaceleracao",
+    ],
+    intermediario: [
+      "Aquecimento de corrida",
+      "Rodagem moderada",
+      "Tempo Run",
+      "Strides",
+      "Drills de tecnica",
+      "Desaceleracao",
+    ],
+    avancado: [
+      "Aquecimento de corrida",
+      "Intervalado",
+      "Tiro curto",
+      "Rodagem de recuperacao",
+      "Tempo Run",
+      "Drills de tecnica",
+      "Desaceleracao",
+    ],
   },
   funcional: {
-    iniciante: ["Agachamento livre", "Afundo alternado", "Prancha", "Farmer's Carry"],
-    intermediario: ["Agachamento livre", "Push-Up", "Dead Bug", "Farmer's Carry", "Pallof Press"],
-    avancado: ["Walking Lunge", "Push-Up", "Pallof Press", "Farmer's Carry", "Front Plank", "Dead Bug"],
+    iniciante: [
+      "Agachamento livre",
+      "Afundo alternado",
+      "Glute Bridge",
+      "Dead Bug",
+      "Bird Dog",
+      "Prancha",
+      "Farmer's Carry",
+      "Mobilidade final",
+    ],
+    intermediario: [
+      "Goblet Squat",
+      "Walking Lunge",
+      "Push-Up",
+      "Face Pull",
+      "Dead Bug",
+      "Pallof Press",
+      "Farmer's Carry",
+      "Mobilidade de quadril",
+    ],
+    avancado: [
+      "Kettlebell Swing",
+      "Walking Lunge",
+      "Push-Up",
+      "Farmer's Carry",
+      "Pallof Press",
+      "Front Plank",
+      "Dead Bug",
+      "Mobilidade toracica",
+    ],
   },
   crossfit: {
-    iniciante: ["Air Squat", "Push-Up", "Farmer's Carry", "Bike Interval"],
-    intermediario: ["Goblet Squat", "Push-Up", "Bike Interval", "Farmer's Carry", "Front Plank"],
-    avancado: ["Goblet Squat", "Assisted Pull-Up", "Bike Interval", "Pallof Press", "Walking Lunge", "Front Plank"],
+    iniciante: [
+      "Air Squat",
+      "Push-Up",
+      "Sit-Up",
+      "Farmer's Carry",
+      "Bike Interval",
+      "AMRAP curto",
+    ],
+    intermediario: [
+      "Goblet Squat",
+      "Push-Up",
+      "Assisted Pull-Up",
+      "Bike Interval",
+      "Burpee",
+      "Farmer's Carry",
+      "Front Plank",
+      "EMOM tecnico",
+    ],
+    avancado: [
+      "Goblet Squat",
+      "Assisted Pull-Up",
+      "Kettlebell Swing",
+      "Bike Interval",
+      "Burpee",
+      "Walking Lunge",
+      "Pallof Press",
+      "EMOM tecnico",
+      "Metcon final",
+    ],
   },
 };
 
@@ -126,9 +223,15 @@ function pickPreviewExercises(modality: string, level: MF_Level, day: string, sl
   if (!catalog.length) return [];
 
   const desiredCount =
-    modality === "bike" || modality === "corrida"
-      ? Math.min(catalog.length, 3)
-      : Math.min(catalog.length, level === "iniciante" ? 4 : 5);
+    modality === "bike"
+      ? Math.min(catalog.length, level === "iniciante" ? 4 : 5)
+      : modality === "corrida"
+        ? Math.min(catalog.length, level === "iniciante" ? 4 : 5)
+        : modality === "crossfit"
+          ? Math.min(catalog.length, level === "iniciante" ? 5 : level === "intermediario" ? 6 : 7)
+          : modality === "funcional"
+            ? Math.min(catalog.length, level === "iniciante" ? 5 : 6)
+            : Math.min(catalog.length, level === "iniciante" ? 4 : 5);
 
   const startIndex = hashText(`${modality}:${level}:${day}:${slot}`) % catalog.length;
   const names: string[] = [];

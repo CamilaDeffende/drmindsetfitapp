@@ -23,7 +23,7 @@ export default function AIDashboardPage() {
             </Button>
             <BrandIcon size={56} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.28)]" />
             <div>
-              <div className="text-[24px] font-semibold tracking-tight">IA e Predicoes</div>
+              <div className="text-[24px] font-semibold tracking-tight">IA e Predições</div>
               <div className="mt-1 text-sm text-white/58">
                 Recomendações adaptativas, leitura de carga e sinais de evolução.
               </div>
