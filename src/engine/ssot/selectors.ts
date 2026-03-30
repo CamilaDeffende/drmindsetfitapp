@@ -56,11 +56,32 @@ export function selectSSOTInputsFromState(stateAny: any): SSOTInputs {
   const age = n(perfil.idade ?? perfil.age);
   const sex = sexFromAny(perfil.sexo ?? perfil.sex);
 
-  const ffmKg =
-    n(avaliacao.massaMagra ?? avaliacao.massaMagraKg ?? avaliacao.ffm ?? avaliacao.ffmKg) ??
-    n(perfil.massaMagra ?? perfil.massaMagraKg);
+  const bfPercent =
+    n(
+      avaliacao.percentualGordura ??
+        avaliacao.bf ??
+        avaliacao.bfPercent ??
+        avaliacao.bodyFatPercent
+    ) ??
+    (n(avaliacao.gorduraKg ?? avaliacao.fatMassKg) != null && n(weightKg) != null
+      ? (Number(avaliacao.gorduraKg ?? avaliacao.fatMassKg) / Number(weightKg)) * 100
+      : undefined);
 
-  const bfPercent = n(avaliacao.percentualGordura ?? avaliacao.bf ?? avaliacao.bfPercent);
+  const ffmKg =
+    n(
+      avaliacao.massaMagra ??
+        avaliacao.massaMagraKg ??
+        avaliacao.massaMuscularKg ??
+        avaliacao.ffm ??
+        avaliacao.ffmKg
+    ) ??
+    (n(avaliacao.percentualMassaMuscular) != null && n(weightKg) != null
+      ? (Number(avaliacao.percentualMassaMuscular) / 100) * Number(weightKg)
+      : undefined) ??
+    (bfPercent != null && n(weightKg) != null
+      ? Number(weightKg) * (1 - Number(bfPercent) / 100)
+      : undefined) ??
+    n(perfil.massaMagra ?? perfil.massaMagraKg ?? perfil.massaMuscularKg);
 
   const frequencyPerWeek = n(
     avaliacao.frequenciaAtividadeSemanal ??

@@ -10,6 +10,7 @@ import {
 import { generateSmartTraining } from "@/engine/training/orchestrator/generateSmartTraining";
 import { ensureTrainingPlanInActivePlan } from "./training/trainingPlan.ssot";
 import { saveSmartTrainingPlan } from "@/services/training/trainingEngine.storage";
+import { calcBodyfat } from "@/engine/bodyfat";
 
 export type ActivePlanV1 = {
   version: "v1";
@@ -214,6 +215,95 @@ function normalizeRestrictions(raw: any): string[] {
       return value;
     })
     .filter(Boolean);
+}
+
+function finiteNumber(value: unknown): number | undefined {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function getStep2BodyFatPercent(
+  step2: any,
+  params: { weightKg: number; heightCm: number; ageYears: number; gender: "male" | "female" | "other" }
+): number | undefined {
+  const direct =
+    finiteNumber(
+      step2?.percentualGordura ??
+        step2?.bodyFatPercent ??
+        step2?.bf ??
+        step2?.gorduraCorporal ??
+        step2?.["%gordura"]
+    );
+
+  if (direct && direct > 0 && direct < 80) return direct;
+
+  const fatMassKg = finiteNumber(step2?.gorduraKg ?? step2?.fatMassKg);
+  if (fatMassKg && params.weightKg > 0) {
+    const derived = (fatMassKg / params.weightKg) * 100;
+    if (derived > 0 && derived < 80) return Number(derived.toFixed(1));
+  }
+
+  const sum7 = [
+    step2?.dobraTriceps,
+    step2?.dobraSubescapular,
+    step2?.dobraAxilaMedia,
+    step2?.dobraSuprailiaca,
+    step2?.dobraTorax,
+    step2?.dobraAbdomen,
+    step2?.dobraCoxa,
+  ]
+    .map(finiteNumber)
+    .filter((value): value is number => typeof value === "number" && value > 0)
+    .reduce((acc, value) => acc + value, 0);
+
+  const bodyfat = calcBodyfat({
+    ageYears: params.ageYears,
+    heightCm: params.heightCm,
+    sex: params.gender === "female" ? "female" : params.gender === "male" ? "male" : undefined,
+    bioimpedance: direct ? { bfPercent: direct } : undefined,
+    pollock7: sum7 > 0 ? { sum7mm: sum7 } : undefined,
+    circumferences: {
+      waistCm: finiteNumber(step2?.cintura),
+      hipCm: finiteNumber(step2?.quadril),
+      neckCm: finiteNumber(step2?.pescoco),
+    },
+  });
+
+  return bodyfat.bfPercent;
+}
+
+function getStep2FatFreeMassKg(
+  step2: any,
+  params: { weightKg: number; bodyFatPercent?: number }
+): number | undefined {
+  const direct =
+    finiteNumber(
+      step2?.massaMagra ??
+        step2?.massaMagraKg ??
+        step2?.massaMuscularKg ??
+        step2?.fatFreeMassKg ??
+        step2?.ffm ??
+        step2?.magraKg
+    );
+
+  if (direct && direct > 0) return direct;
+
+  const musclePct = finiteNumber(step2?.percentualMassaMuscular ?? step2?.musclePercent);
+  if (musclePct && params.weightKg > 0) {
+    const derived = (musclePct / 100) * params.weightKg;
+    if (derived > 0) return Number(derived.toFixed(1));
+  }
+
+  const fatMassKg = finiteNumber(step2?.gorduraKg ?? step2?.fatMassKg);
+  if (fatMassKg != null && params.weightKg > fatMassKg) {
+    return Number((params.weightKg - fatMassKg).toFixed(1));
+  }
+
+  if (params.bodyFatPercent != null && params.bodyFatPercent > 0 && params.bodyFatPercent < 80) {
+    return Number((params.weightKg * (1 - params.bodyFatPercent / 100)).toFixed(1));
+  }
+
+  return undefined;
 }
 
 function getDaysByModalityFromDraft(step5: any, step6: any) {
@@ -777,28 +867,21 @@ export function buildActivePlanFromDraft(draft: PlanDraft): ActivePlanV1 {
     step4?.restricoes ?? step4?.restrictions ?? []
   );
 
+  const bodyFatPercent = getStep2BodyFatPercent(step2, {
+    weightKg,
+    heightCm,
+    ageYears,
+    gender,
+  });
+  const fatFreeMassKg = getStep2FatFreeMassKg(step2, { weightKg, bodyFatPercent });
+
   const metabolic = computeMetabolic({
     weightKg,
     heightCm,
     ageYears,
     gender,
-    bodyFatPercent:
-      Number(
-        step2?.percentualGordura ??
-          step2?.bodyFatPercent ??
-          step2?.bf ??
-          step2?.gorduraCorporal ??
-          step2?.["%gordura"] ??
-          undefined
-      ) || undefined,
-    fatFreeMassKg:
-      Number(
-        step2?.massaMagra ??
-          step2?.fatFreeMassKg ??
-          step2?.ffm ??
-          step2?.magraKg ??
-          undefined
-      ) || undefined,
+    bodyFatPercent,
+    fatFreeMassKg,
     activityLevel: (
       String(step3?.nivelAtividade ?? step3?.activityLevel ?? "").toLowerCase() || undefined
     ) as any,

@@ -21,12 +21,19 @@ export function mfGetREEFromOnboarding(profile: AnyObj) {
     profile?.percentualGordura ??
     profile?.bodyFatPercent ??
     profile?.bfPercent ??
+    (profile?.gorduraKg != null && Number(profile?.peso ?? profile?.weightKg ?? profile?.weight ?? 0) > 0
+      ? (Number(profile.gorduraKg) / Number(profile?.peso ?? profile?.weightKg ?? profile?.weight)) * 100
+      : undefined) ??
     undefined;
 
   const fatFreeMassKg =
     profile?.massaMagra ??
+    profile?.massaMuscularKg ??
     profile?.fatFreeMassKg ??
     profile?.ffmKg ??
+    (profile?.percentualMassaMuscular != null && weightKg > 0
+      ? (Number(profile.percentualMassaMuscular) / 100) * weightKg
+      : undefined) ??
     undefined;
 
   // atividade/atleta

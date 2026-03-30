@@ -24,18 +24,27 @@ type Step2Value = {
   altura?: string;
 
   cintura?: string;
-  pescoco?: string;
+  abdomen?: string;
   quadril?: string;
+  torax?: string;
+  pescoco?: string;
 
   atividadeHabitual?: string | null;
   metodoAvaliativo?: MetodoAvaliativo | null;
 
   percentualGordura?: string;
+  percentualMassaMuscular?: string;
+  gorduraKg?: string;
+  massaMuscularKg?: string;
   massaMagra?: string;
 
   dobraTriceps?: string;
-  dobraAbdomen?: string;
+  dobraSubescapular?: string;
+  dobraAxilaMedia?: string;
+  dobraSuprailiaca?: string;
+  dobraTorax?: string;
   dobraCoxa?: string;
+  dobraAbdomen?: string;
 };
 
 type Props = {
@@ -126,18 +135,27 @@ function buildStep2Value(
     altura: alturaFromStep1,
 
     cintura: value?.cintura ?? "",
-    pescoco: value?.pescoco ?? "",
+    abdomen: value?.abdomen ?? "",
     quadril: value?.quadril ?? "",
+    torax: value?.torax ?? "",
+    pescoco: value?.pescoco ?? "",
 
     atividadeHabitual: value?.atividadeHabitual ?? null,
     metodoAvaliativo: value?.metodoAvaliativo ?? null,
 
     percentualGordura: value?.percentualGordura ?? "",
-    massaMagra: value?.massaMagra ?? "",
+    percentualMassaMuscular: value?.percentualMassaMuscular ?? "",
+    gorduraKg: value?.gorduraKg ?? "",
+    massaMuscularKg: value?.massaMuscularKg ?? "",
+    massaMagra: value?.massaMagra ?? value?.massaMuscularKg ?? "",
 
     dobraTriceps: value?.dobraTriceps ?? "",
-    dobraAbdomen: value?.dobraAbdomen ?? "",
+    dobraSubescapular: value?.dobraSubescapular ?? "",
+    dobraAxilaMedia: value?.dobraAxilaMedia ?? "",
+    dobraSuprailiaca: value?.dobraSuprailiaca ?? "",
+    dobraTorax: value?.dobraTorax ?? "",
     dobraCoxa: value?.dobraCoxa ?? "",
+    dobraAbdomen: value?.dobraAbdomen ?? "",
   };
 }
 
@@ -147,15 +165,24 @@ function isSameStep2Value(a: Step2Value, b: Step2Value) {
     a.peso === b.peso &&
     a.altura === b.altura &&
     a.cintura === b.cintura &&
-    a.pescoco === b.pescoco &&
+    a.abdomen === b.abdomen &&
     a.quadril === b.quadril &&
+    a.torax === b.torax &&
+    a.pescoco === b.pescoco &&
     a.atividadeHabitual === b.atividadeHabitual &&
     a.metodoAvaliativo === b.metodoAvaliativo &&
     a.percentualGordura === b.percentualGordura &&
+    a.percentualMassaMuscular === b.percentualMassaMuscular &&
+    a.gorduraKg === b.gorduraKg &&
+    a.massaMuscularKg === b.massaMuscularKg &&
     a.massaMagra === b.massaMagra &&
     a.dobraTriceps === b.dobraTriceps &&
-    a.dobraAbdomen === b.dobraAbdomen &&
-    a.dobraCoxa === b.dobraCoxa
+    a.dobraSubescapular === b.dobraSubescapular &&
+    a.dobraAxilaMedia === b.dobraAxilaMedia &&
+    a.dobraSuprailiaca === b.dobraSuprailiaca &&
+    a.dobraTorax === b.dobraTorax &&
+    a.dobraCoxa === b.dobraCoxa &&
+    a.dobraAbdomen === b.dobraAbdomen
   );
 }
 
@@ -283,15 +310,23 @@ export default function Step2Avaliacao({
 
   const hasMetodoData =
     local.metodoAvaliativo === "bioimpedancia"
-      ? hasFilledMetric(local.percentualGordura) && hasFilledMetric(local.massaMagra)
+      ? hasFilledMetric(local.percentualGordura) &&
+        hasFilledMetric(local.percentualMassaMuscular) &&
+        hasFilledMetric(local.gorduraKg) &&
+        hasFilledMetric(local.massaMuscularKg)
       : local.metodoAvaliativo === "dobras-cutaneas"
         ? hasFilledMetric(local.dobraTriceps) &&
-          hasFilledMetric(local.dobraAbdomen) &&
-          hasFilledMetric(local.dobraCoxa)
+          hasFilledMetric(local.dobraSubescapular) &&
+          hasFilledMetric(local.dobraAxilaMedia) &&
+          hasFilledMetric(local.dobraSuprailiaca) &&
+          hasFilledMetric(local.dobraTorax) &&
+          hasFilledMetric(local.dobraCoxa) &&
+          hasFilledMetric(local.dobraAbdomen)
         : local.metodoAvaliativo === "medidas-corporais"
           ? hasFilledMetric(local.cintura) &&
-            hasFilledMetric(local.pescoco) &&
-            hasFilledMetric(local.quadril)
+            hasFilledMetric(local.abdomen) &&
+            hasFilledMetric(local.quadril) &&
+            hasFilledMetric(local.torax)
           : local.metodoAvaliativo === "visual"
             ? hasFilledMetric(local.percentualGordura)
             : local.metodoAvaliativo === "nenhum";
@@ -305,11 +340,9 @@ export default function Step2Avaliacao({
     hasMetodoData;
 
   return (
-    <div className="w-full text-white space-y-6">
-      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
-        <h2 className="text-[22px] font-semibold tracking-tight">
-          Base corporal inicial
-        </h2>
+    <div className="w-full space-y-6 text-white">
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)] sm:p-6">
+        <h2 className="text-[22px] font-semibold tracking-tight">Base corporal inicial</h2>
 
         <p className="mt-1 text-[13px] leading-5 text-white/50">
           Usamos esses dados para calibrar metabolismo, gasto diário e lógica do plano.
@@ -326,7 +359,7 @@ export default function Step2Avaliacao({
         </div>
       </section>
 
-      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)] sm:p-6">
         <div className="flex items-center gap-2">
           <ScanLine className="h-4 w-4 text-cyan-300" />
           <h3 className="text-[18px] font-semibold">Autoavaliação de biotipo</h3>
@@ -348,12 +381,10 @@ export default function Step2Avaliacao({
                 className={[
                   "group relative overflow-hidden rounded-[22px] border transition-all duration-300",
                   active
-                    ? "border-white/30 scale-[1.03]"
-                    : "border-white/10 hover:border-white/20 hover:scale-[1.02]",
+                    ? "scale-[1.03] border-white/30"
+                    : "border-white/10 hover:scale-[1.02] hover:border-white/20",
                 ].join(" ")}
-                style={{
-                  boxShadow: active ? `0 0 35px ${card.glow}` : undefined,
-                }}
+                style={{ boxShadow: active ? `0 0 35px ${card.glow}` : undefined }}
               >
                 <img
                   src={card.img}
@@ -365,7 +396,7 @@ export default function Step2Avaliacao({
 
                 <div
                   className={[
-                    "absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full border transition-all",
+                    "absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border transition-all",
                     active
                       ? "border-emerald-400 bg-emerald-400 text-black"
                       : "border-white/30 bg-black/40",
@@ -395,12 +426,10 @@ export default function Step2Avaliacao({
                 className={[
                   "group relative w-full max-w-[320px] overflow-hidden rounded-[22px] border transition-all duration-300",
                   active
-                    ? "border-white/30 scale-[1.03]"
-                    : "border-white/10 hover:border-white/20 hover:scale-[1.02]",
+                    ? "scale-[1.03] border-white/30"
+                    : "border-white/10 hover:scale-[1.02] hover:border-white/20",
                 ].join(" ")}
-                style={{
-                  boxShadow: active ? `0 0 35px ${card.glow}` : undefined,
-                }}
+                style={{ boxShadow: active ? `0 0 35px ${card.glow}` : undefined }}
               >
                 <img
                   src={card.img}
@@ -412,7 +441,7 @@ export default function Step2Avaliacao({
 
                 <div
                   className={[
-                    "absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full border transition-all",
+                    "absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border transition-all",
                     active
                       ? "border-emerald-400 bg-emerald-400 text-black"
                       : "border-white/30 bg-black/40",
@@ -435,7 +464,7 @@ export default function Step2Avaliacao({
         </p>
       </section>
 
-      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)] sm:p-6">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-4 w-4 text-cyan-300" />
           <h3 className="text-[18px] font-semibold">Método avaliativo</h3>
@@ -445,7 +474,7 @@ export default function Step2Avaliacao({
           Escolha como sua composição corporal será estimada nesta etapa.
         </p>
 
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {METODO_OPTIONS.map((item) => {
             const active = local.metodoAvaliativo === item.key;
 
@@ -458,7 +487,7 @@ export default function Step2Avaliacao({
                   "rounded-[20px] border p-4 text-left transition-all",
                   active
                     ? "border-cyan-400/35 bg-cyan-400/10 shadow-[0_0_24px_rgba(0,183,255,0.12)]"
-                    : "border-white/10 bg-black/20 hover:bg-white/[0.04] hover:border-white/20",
+                    : "border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.04]",
                 ].join(" ")}
               >
                 <div className="text-[16px] font-semibold text-white">{item.label}</div>
@@ -469,18 +498,32 @@ export default function Step2Avaliacao({
         </div>
 
         {showBioimpedancia ? (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <MetricInput
-              label="Percentual de gordura"
+              label="% de gordura"
               value={local.percentualGordura ?? ""}
               onChange={(v) => updateValue({ percentualGordura: v })}
               placeholder="Ex: 18"
               unit="%"
             />
             <MetricInput
-              label="Massa magra"
-              value={local.massaMagra ?? ""}
-              onChange={(v) => updateValue({ massaMagra: v })}
+              label="% massa muscular"
+              value={local.percentualMassaMuscular ?? ""}
+              onChange={(v) => updateValue({ percentualMassaMuscular: v })}
+              placeholder="Ex: 42"
+              unit="%"
+            />
+            <MetricInput
+              label="Kg gordura"
+              value={local.gorduraKg ?? ""}
+              onChange={(v) => updateValue({ gorduraKg: v })}
+              placeholder="Ex: 16"
+              unit="kg"
+            />
+            <MetricInput
+              label="Kg massa muscular"
+              value={local.massaMuscularKg ?? ""}
+              onChange={(v) => updateValue({ massaMuscularKg: v, massaMagra: v })}
               placeholder="Ex: 62"
               unit="kg"
             />
@@ -488,7 +531,7 @@ export default function Step2Avaliacao({
         ) : null}
 
         {showDobras ? (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <MetricInput
               label="Dobra tríceps"
               value={local.dobraTriceps ?? ""}
@@ -497,10 +540,31 @@ export default function Step2Avaliacao({
               unit="mm"
             />
             <MetricInput
-              label="Dobra abdômen"
-              value={local.dobraAbdomen ?? ""}
-              onChange={(v) => updateValue({ dobraAbdomen: v })}
-              placeholder="Ex: 18"
+              label="Dobra subescapular"
+              value={local.dobraSubescapular ?? ""}
+              onChange={(v) => updateValue({ dobraSubescapular: v })}
+              placeholder="Ex: 14"
+              unit="mm"
+            />
+            <MetricInput
+              label="Dobra axila média"
+              value={local.dobraAxilaMedia ?? ""}
+              onChange={(v) => updateValue({ dobraAxilaMedia: v })}
+              placeholder="Ex: 15"
+              unit="mm"
+            />
+            <MetricInput
+              label="Dobra supra-ilíaca"
+              value={local.dobraSuprailiaca ?? ""}
+              onChange={(v) => updateValue({ dobraSuprailiaca: v })}
+              placeholder="Ex: 17"
+              unit="mm"
+            />
+            <MetricInput
+              label="Dobra tórax"
+              value={local.dobraTorax ?? ""}
+              onChange={(v) => updateValue({ dobraTorax: v })}
+              placeholder="Ex: 11"
               unit="mm"
             />
             <MetricInput
@@ -510,37 +574,51 @@ export default function Step2Avaliacao({
               placeholder="Ex: 20"
               unit="mm"
             />
+            <MetricInput
+              label="Dobra abdômen"
+              value={local.dobraAbdomen ?? ""}
+              onChange={(v) => updateValue({ dobraAbdomen: v })}
+              placeholder="Ex: 18"
+              unit="mm"
+            />
           </div>
         ) : null}
 
         {showMedidas ? (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MetricInput
-              label="Cintura"
+              label="Circunf. cintura"
               value={local.cintura ?? ""}
               onChange={(v) => updateValue({ cintura: v })}
               placeholder="Ex: 82"
               unit="cm"
             />
             <MetricInput
-              label="Pescoço"
-              value={local.pescoco ?? ""}
-              onChange={(v) => updateValue({ pescoco: v })}
-              placeholder="Ex: 36"
+              label="Circunf. abdômen"
+              value={local.abdomen ?? ""}
+              onChange={(v) => updateValue({ abdomen: v })}
+              placeholder="Ex: 88"
               unit="cm"
             />
             <MetricInput
-              label="Quadril"
+              label="Circunf. quadril"
               value={local.quadril ?? ""}
               onChange={(v) => updateValue({ quadril: v })}
               placeholder="Ex: 98"
+              unit="cm"
+            />
+            <MetricInput
+              label="Circunf. tórax"
+              value={local.torax ?? ""}
+              onChange={(v) => updateValue({ torax: v })}
+              placeholder="Ex: 96"
               unit="cm"
             />
           </div>
         ) : null}
 
         {showVisual ? (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <MetricInput
               label="Percentual de gordura estimado"
               value={local.percentualGordura ?? ""}
@@ -549,7 +627,7 @@ export default function Step2Avaliacao({
               unit="%"
             />
 
-            <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 flex items-center">
+            <div className="flex items-center rounded-[18px] border border-white/10 bg-black/20 p-4">
               <p className="text-[13px] leading-5 text-white/48">
                 Use uma estimativa aproximada. O app pode recalibrar depois com dados mais precisos.
               </p>
@@ -558,7 +636,7 @@ export default function Step2Avaliacao({
         ) : null}
       </section>
 
-      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)] sm:p-6">
         <div className="flex items-center gap-2">
           <Weight className="h-4 w-4 text-cyan-300" />
           <h3 className="text-[18px] font-semibold">Base antropométrica</h3>
@@ -568,15 +646,13 @@ export default function Step2Avaliacao({
           Peso e altura vêm do Step 1 e permanecem como base para os próximos cálculos.
         </p>
 
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="rounded-[18px] border border-white/10 bg-black/20 p-4">
             <div className="mb-2 flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-white/35">
               <Weight className="h-3.5 w-3.5" />
               Peso
             </div>
-            <div className="text-[20px] font-semibold text-white">
-              {pesoFromStep1 || "—"}
-            </div>
+            <div className="text-[20px] font-semibold text-white">{pesoFromStep1 || "—"}</div>
             <div className="mt-1 text-[12px] text-white/35">kg</div>
           </div>
 
@@ -585,15 +661,13 @@ export default function Step2Avaliacao({
               <Ruler className="h-3.5 w-3.5" />
               Altura
             </div>
-            <div className="text-[20px] font-semibold text-white">
-              {alturaFromStep1 || "—"}
-            </div>
+            <div className="text-[20px] font-semibold text-white">{alturaFromStep1 || "—"}</div>
             <div className="mt-1 text-[12px] text-white/35">cm</div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 sm:p-6 shadow-[0_0_32px_rgba(0,149,255,0.06)]">
+      <section className="rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.06)] sm:p-6">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-cyan-300" />
           <h3 className="text-[18px] font-semibold">Atividade física semanal</h3>
@@ -603,7 +677,7 @@ export default function Step2Avaliacao({
           Isso ajuda a calibrar melhor seu gasto energético total diário.
         </p>
 
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {ACTIVITY_OPTIONS.map((item) => {
             const active = local.atividadeHabitual === item.key;
 
@@ -616,7 +690,7 @@ export default function Step2Avaliacao({
                   "rounded-[20px] border p-4 text-left transition-all",
                   active
                     ? "border-cyan-400/35 bg-cyan-400/10 shadow-[0_0_24px_rgba(0,183,255,0.12)]"
-                    : "border-white/10 bg-black/20 hover:bg-white/[0.04] hover:border-white/20",
+                    : "border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.04]",
                 ].join(" ")}
               >
                 <div className="text-[16px] font-semibold text-white">{item.label}</div>
@@ -643,7 +717,7 @@ export default function Step2Avaliacao({
           disabled={!canContinue}
           onClick={onNext}
           variant="ghost"
-          className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 hover:bg-transparent disabled:opacity-50"
+          className="h-14 flex-1 overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:bg-transparent hover:brightness-110 disabled:opacity-50"
         >
           Continuar
           <ChevronRight className="ml-1 h-4 w-4" />
@@ -652,7 +726,7 @@ export default function Step2Avaliacao({
 
       {!canContinue ? (
         <div className="rounded-[18px] border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-100/90">
-          Complete biotipo, metodo avaliativo, atividade semanal e os campos do metodo escolhido para continuar.
+          Complete biotipo, método avaliativo, atividade semanal e os campos do método escolhido para continuar.
         </div>
       ) : null}
     </div>
