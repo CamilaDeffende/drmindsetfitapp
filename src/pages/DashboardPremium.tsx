@@ -1210,12 +1210,12 @@ export function DashboardPremium() {
 
               <Button
                 variant="outline"
-                className="justify-start gap-2 border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
+                className="h-auto flex-wrap justify-start gap-2 border-white/10 bg-white/5 py-3 text-white/80 hover:bg-white/10"
                 onClick={() => navigate("/conflicts")}
               >
                 <Calendar className="w-4 h-4" />
-                Offline
-                <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-white/55">
+                <span>Offline</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] uppercase tracking-[0.16em] text-white/55">
                   Em breve
                 </span>
               </Button>
