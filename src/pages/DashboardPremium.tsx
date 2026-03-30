@@ -1208,9 +1208,16 @@ export function DashboardPremium() {
                 Conquistas
               </Button>
 
-              <Button variant="outline" className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10" onClick={() => navigate("/conflicts")}>
+              <Button
+                variant="outline"
+                className="justify-start gap-2 border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
+                onClick={() => navigate("/conflicts")}
+              >
                 <Calendar className="w-4 h-4" />
                 Offline
+                <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-white/55">
+                  Em breve
+                </span>
               </Button>
 
               {import.meta.env.DEV ? (

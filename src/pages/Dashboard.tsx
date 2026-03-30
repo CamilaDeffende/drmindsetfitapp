@@ -441,15 +441,15 @@ export function Dashboard() {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-400/10 px-3 py-1 text-[11px] font-semibold text-amber-200">
                 <Crown className="h-3.5 w-3.5" />
-                Upgrade disponivel
+                Upgrade disponível
               </div>
 
               <h2 className="mt-3 text-[24px] font-semibold tracking-tight text-white">
-                Seu plano premium esta pronto
+                Seu plano premium está pronto
               </h2>
 
               <p className="mt-2 text-[14px] leading-6 text-white/60">
-                Desbloqueie treino completo, plano alimentar detalhado e recursos avancados do MindsetFit.
+                Desbloqueie treino completo, plano alimentar detalhado e recursos avançados do MindsetFit.
               </p>
             </div>
 
