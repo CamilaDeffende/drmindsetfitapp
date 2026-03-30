@@ -298,22 +298,22 @@ function humanWorkoutModality(value: unknown) {
 function describeWorkoutModality(value: unknown) {
   const modality = normalizeWorkoutModality(value);
   const labels: Record<string, string> = {
-    musculacao: "SessÃ£o de forÃ§a com foco em tÃ©cnica, volume e progressÃ£o.",
-    bike: "SessÃ£o de cardio com zonas, cadÃªncia e recuperaÃ§Ã£o ativa.",
-    corrida: "SessÃ£o de corrida com rodagem, ritmo, tÃ©cnica ou intervalos.",
-    funcional: "SessÃ£o funcional com movimento, estabilidade, core e condicionamento.",
-    crossfit: "SessÃ£o de CrossFit com skill, forÃ§a e metcon de alta densidade.",
+    musculacao: "Sessão de força com foco em técnica, volume e progressão.",
+    bike: "Sessão de cardio com zonas, cadência e recuperação ativa.",
+    corrida: "Sessão de corrida com rodagem, ritmo, técnica ou intervalos.",
+    funcional: "Sessão funcional com movimento, estabilidade, core e condicionamento.",
+    crossfit: "Sessão de CrossFit com skill, força e metcon de alta densidade.",
   };
-  return labels[modality] ?? "SessÃ£o guiada pelo plano ativo.";
+  return labels[modality] ?? "Sessão guiada pelo plano ativo.";
 }
 
 function getExerciseContextLabel(workout: CanonicalWorkoutDayView | undefined, exercise: CanonicalExerciseView | undefined) {
-  if (!workout || !exercise) return "ExecuÃ§Ã£o guiada";
+  if (!workout || !exercise) return "Execução guiada";
   if (isCardioLikeModality(workout.modalidade)) {
     return exercise.grupoMuscular ?? "Cardio guiado";
   }
   if (workout.modalidade === "funcional") {
-    return exercise.grupoMuscular ?? "PadrÃ£o funcional";
+    return exercise.grupoMuscular ?? "Padrão funcional";
   }
   if (workout.modalidade === "crossfit") {
     return exercise.grupoMuscular ?? "Skill / Metcon";

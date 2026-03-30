@@ -47,8 +47,8 @@ const WEEK = [
 
 const LEVEL_OPTIONS: { key: MF_Level; label: string; desc: string }[] = [
   { key: "iniciante", label: "Iniciante", desc: "Base tecnica e adaptacao." },
-  { key: "intermediario", label: "Intermediario", desc: "Mais volume e progressao." },
-  { key: "avancado", label: "Avancado", desc: "Maior intensidade e refinamento." },
+  { key: "intermediario", label: "Intermediário", desc: "Mais volume e progressão." },
+  { key: "avancado", label: "Avançado", desc: "Maior intensidade e refinamento." },
 ];
 
 function readDraft(): any {
@@ -441,8 +441,8 @@ export default function Step5Modalidades({
                       {level === "iniciante"
                         ? "Iniciante"
                         : level === "intermediario"
-                        ? "Intermediario"
-                        : "Avancado"}
+                        ? "Intermediário"
+                        : "Avançado"}
                     </div>
                   </div>
 

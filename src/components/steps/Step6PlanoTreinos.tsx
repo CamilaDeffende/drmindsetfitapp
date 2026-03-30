@@ -50,8 +50,8 @@ const humanLevel = (level: string) =>
   level === "iniciante"
     ? "Iniciante"
     : level === "intermediario"
-    ? "Intermediario"
-    : "Avancado";
+    ? "Intermediário"
+    : "Avançado";
 
 export default function Step6PlanoTreinos({ value, draft: liveDraft, onChange, onNext, onBack }: Props) {
   const safeOnChange = onChange ?? (() => {});
@@ -133,7 +133,7 @@ export default function Step6PlanoTreinos({ value, draft: liveDraft, onChange, o
                     </div>
 
                     <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/60">
-                      {daySessions.length} sessao{daySessions.length > 1 ? "es" : ""}
+                      {daySessions.length} sessão{daySessions.length > 1 ? "ões" : ""}
                     </div>
                   </div>
 

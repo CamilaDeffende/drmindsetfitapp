@@ -136,7 +136,7 @@ export function AIInsights() {
             ))
           ) : (
             <div className="rounded-[18px] border border-white/10 bg-black/20 p-4 text-sm text-white/60">
-              Nenhuma recomendacao disponivel no momento.
+              Nenhuma recomendação disponível no momento.
             </div>
           )}
         </div>
