@@ -48,6 +48,17 @@ function str(v: any, d = ""): string {
   return typeof v === "string" ? v : d;
 }
 
+function parseGramsValue(v: any): number | undefined {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string") {
+    const match = v.replace(",", ".").match(/-?\d+(\.\d+)?/);
+    if (!match) return undefined;
+    const parsed = Number(match[0]);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
 function normMealType(name: string): string {
   const s = (name || "").toLowerCase();
 
@@ -101,12 +112,18 @@ export function adaptMealsToRefeicoes(meals: any): MfRefeicao[] {
       const gramasValor =
         it?.grams ??
         it?.gramas ??
+        it?.quantidade ??
+        it?.quantidadeG ??
         it?.porcao ??
         it?.portion ??
         "";
+      const gramasNumericas = parseGramsValue(gramasValor);
 
       return {
         nome: str(it?.name ?? it?.nome ?? "Alimento"),
+        gramas: gramasNumericas,
+        grams: gramasNumericas,
+        quantidade: gramasNumericas,
         porcao: gramasValor
           ? typeof gramasValor === "number"
             ? `${gramasValor}g`
