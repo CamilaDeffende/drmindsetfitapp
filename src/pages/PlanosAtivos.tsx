@@ -628,8 +628,8 @@ export function PlanosAtivos() {
             <p className="text-gray-400 mb-6">
               Inicie o questionário para desbloquear seus planos
             </p>
-            <Button onClick={() => navigate("/onboarding/step-1?mode=recreate")} className="w-full glow-blue">
-              Iniciar Agora
+            <Button onClick={() => navigate("/perfil")} className="w-full glow-blue">
+              Completar Agora
             </Button>
           </CardContent>
         </Card>
