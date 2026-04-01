@@ -46,11 +46,6 @@ export interface Subscription {
 }
 
 export function useSubscription() {
-  // DEV_PASS_SUBSCRIPTION: ?dev=1 força premium para testes locais (sem quebrar hooks)
-  const __devPass = (() => { try { return new URLSearchParams(window.location.search).get("dev") === "1"; } catch { return false; } })();
-
-  
-  void __devPass;
   const { user } = useAuth()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
@@ -79,25 +74,11 @@ export function useSubscription() {
   const loadSubscription = async () => {
     if (!user) return
 
-    // Modo DEMO: simular assinatura premium ativa
     if (!isSupabaseConfigured) {
-      const demoSubscription: Subscription = {
-        id: 'demo-sub-123',
-        user_id: user.id,
-        stripe_customer_id: 'demo-customer',
-        stripe_subscription_id: 'demo-subscription',
-        status: 'active',
-        plan: 'premium',
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        cancel_at_period_end: false
-      }
-
-      setSubscription(demoSubscription)
-      setIsActive(true)
-      setIsPremium(true)
+      setSubscription(null)
+      setIsActive(false)
+      setIsPremium(false)
       setLoading(false)
-      if (import.meta.env.DEV) console.log('🎭 Modo DEMO: Assinatura Premium ativada')
       return
     }
 

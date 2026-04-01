@@ -244,6 +244,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function buildAuthConfigError(message = "Configuracao de autenticacao indisponivel.") {
+  return {
+    name: "AuthConfigError",
+    message,
+    status: 500,
+  } as AuthError;
+}
+
 // DEV_PASS_AUTH: ?dev=1 força usuário logado para testes locais
 const __isDevPass = (() => {
   try {
@@ -273,30 +281,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Então não retornamos aqui.
     }
 
-    // Modo DEMO: criar usuário fake automaticamente (somente quando Supabase não está configurado)
+    // Em release, sem Supabase configurado não devemos cair em login demo.
     if (!isSupabaseConfigured) {
-      const demoUser: User = {
-        id: "demo-user-123",
-        email: "demo@drmindsetfit.com",
-        aud: "authenticated",
-        role: "authenticated",
-        created_at: new Date().toISOString(),
-        app_metadata: {},
-        user_metadata: { full_name: "Usuário Demo" },
-      } as User;
-
-      const demoSession: Session = {
-        access_token: "demo-token",
-        refresh_token: "demo-refresh",
-        expires_in: 3600,
-        token_type: "bearer",
-        user: demoUser,
-      } as Session;
-
-      setUser(demoUser);
-      setSession(demoSession);
+      setUser(null);
+      setSession(null);
       setLoading(false);
-      if (import.meta.env.DEV) console.log("🎭 Modo DEMO ativado - Login automático");
       return;
     }
 
@@ -341,10 +330,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // CORRIGIDO: agora é idempotente (upsert) e alinhado ao schema (UNIQUE(user_id))
   const signUp = async (email: string, password: string, fullName: string) => {
-    // Modo DEMO: simular cadastro bem-sucedido
     if (!isSupabaseConfigured) {
-      if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Cadastro simulado para", email);
-      return { error: null };
+      void email;
+      void password;
+      void fullName;
+      return { error: buildAuthConfigError("Supabase nao configurado para cadastro.") };
     }
 
     try {
@@ -396,10 +386,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    // Modo DEMO: simular login bem-sucedido
     if (!isSupabaseConfigured) {
-      if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Login simulado para", email);
-      return { error: null };
+      void email;
+      void password;
+      return { error: buildAuthConfigError("Supabase nao configurado para login.") };
     }
 
     try {
@@ -427,13 +417,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    // Modo DEMO: apenas limpar estado local
     if (!isSupabaseConfigured) {
       clearPendingGuestStateImport();
       clearLocalAppState();
       setUser(null);
       setSession(null);
-      if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Logout simulado");
       return;
     }
 
@@ -441,10 +429,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    // Modo DEMO: simular reset de senha
     if (!isSupabaseConfigured) {
-      if (import.meta.env.DEV) console.log("🎭 Modo DEMO: Reset de senha simulado para", email);
-      return { error: null };
+      void email;
+      return { error: buildAuthConfigError("Supabase nao configurado para reset de senha.") };
     }
 
     try {

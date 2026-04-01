@@ -115,7 +115,7 @@ function App() {
   const __suite = new URLSearchParams(window.location.search).get("suite") === "1";
   const isDevMode = import.meta.env.DEV;
 
-  return __suite ? (
+  return isDevMode && __suite ? (
     <MFSuspense>
       <LazyFitnessSuiteDemo />
     </MFSuspense>
@@ -131,7 +131,7 @@ function App() {
           <LiveLocationPill />
 
           <Routes>
-            {MF_METABOLIC_ENGINE_V1_ENABLED ? (
+            {isDevMode && MF_METABOLIC_ENGINE_V1_ENABLED ? (
               <Route path="/__engine-preview" element={<EnginePreviewPage />} />
             ) : null}
 

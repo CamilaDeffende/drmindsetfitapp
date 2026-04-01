@@ -4,15 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/branding/BrandIcon";
+import { useToast } from "@/hooks/use-toast";
 import {
   getPaymentProviderLabel,
   hasConfiguredPaymentProvider,
   readPaymentProvider,
 } from "@/lib/payments/config";
-import {
-  setAnnualSubscription,
-  setMonthlySubscription,
-} from "@/lib/subscription/storage";
 
 type PlanId = "mensal" | "anual";
 type SourceId = "onboarding" | "dashboard-free" | "premium" | null;
@@ -81,6 +78,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth() as any;
+  const { toast } = useToast();
 
   const planId = useMemo(() => getPlanFromSearch(location.search), [location.search]);
   const source = useMemo(() => getSourceFromSearch(location.search), [location.search]);
@@ -90,19 +88,22 @@ export default function Checkout() {
   const paymentProviderReady = hasConfiguredPaymentProvider();
 
   const handleConfirmPayment = () => {
-    if (plan.id === "mensal") {
-      setMonthlySubscription();
-    } else {
-      setAnnualSubscription();
+    if (paymentProviderReady) {
+      toast({
+        title: "Integracao pendente",
+        description: `O checkout com ${paymentProviderLabel} ja esta preparado, mas ainda falta a validacao final do pagamento.`,
+        variant: "destructive",
+      });
+      return;
     }
 
     if (user) {
-      navigate("/dashboardpremium", { replace: true });
+      navigate("/assinatura", { replace: true });
       return;
     }
 
     navigate(
-      `/signup?next=${encodeURIComponent("/dashboardpremium")}&premium=1&plan=${encodeURIComponent(plan.id)}`,
+      `/signup?next=${encodeURIComponent("/assinatura")}&plan=${encodeURIComponent(plan.id)}`,
       { replace: true },
     );
   };
@@ -152,7 +153,7 @@ export default function Checkout() {
                 onClick={handleConfirmPayment}
                 className="w-full h-12 text-base font-semibold"
               >
-                {paymentProviderReady ? "Confirmar pagamento" : "Confirmar em modo teste"}
+                {paymentProviderReady ? "Continuar pagamento" : "Voltar para assinatura"}
               </Button>
 
               <Button
@@ -167,7 +168,7 @@ export default function Checkout() {
             <p className="text-xs text-center text-white/45">
               {paymentProviderReady
                 ? `Fluxo preparado para ${paymentProviderLabel}. O backend final ainda precisa validar o pagamento.`
-                : "Esta tela esta em modo de simulacao. Depois voce conecta o gateway real de pagamento."}
+                : "Esta tela esta em modo de preparacao. O gateway real ainda precisa ser conectado antes do lancamento."}
             </p>
           </CardContent>
         </Card>
