@@ -5,13 +5,13 @@ const url = (import.meta as any).env?.VITE_SUPABASE_URL ?? "";
 const anon = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ?? "";
 
 /**
- * DEMO Supabase (mock):
- * - Não persiste
- * - Não quebra o app
- * - Retorna sessão nula e métodos "no-op"
+ * Safe fallback Supabase client:
+ * - nao persiste dados
+ * - evita crash em ambientes sem env configurada
+ * - retorna sessao nula e metodos no-op para bootstrap seguro
  * OBS: tipamos como SupabaseClient via cast para manter compatibilidade do projeto.
  */
-function createDemoSupabase(): SupabaseClient {
+function createSafeFallbackSupabase(): SupabaseClient {
   const noop = async () => ({ data: null as any, error: null as any });
 
   const auth = {
@@ -24,12 +24,10 @@ function createDemoSupabase(): SupabaseClient {
     signOut: async () => ({ error: null }),
   };
 
-  // Proxy para capturar usos inesperados (DB/storage/etc) sem quebrar import.
   const handler: ProxyHandler<any> = {
-    get(_t, prop) {
+    get(_target, prop) {
       if (prop === "auth") return auth;
-      if (prop === "__isDemo") return true;
-      // retorna funções no-op para evitar crash acidental
+      if (prop === "__isFallbackClient") return true;
       return (..._args: any[]) => noop();
     },
   };
@@ -43,11 +41,10 @@ export const supabase: SupabaseClient = isSupabaseConfigured
   ? createClient(url, anon, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     })
-  : createDemoSupabase();
+  : createSafeFallbackSupabase();
 
-// Log explícito (aparece no console, mas não quebra)
 if (!isSupabaseConfigured) {
   console.warn(
-    "[MF] Rodando em modo DEMO — Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY em .env.local para ativar."
+    "[MF] Supabase nao configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para habilitar autenticacao e persistencia.",
   );
 }
