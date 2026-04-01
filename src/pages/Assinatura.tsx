@@ -1,26 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { loadFlags, setPaywallEnabled, setPremiumUnlocked } from "@/lib/featureFlags";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import { Check, ChevronLeft, Crown, ShieldCheck, Sparkles } from "lucide-react";
 import { useDrMindSetfit } from "@/contexts/DrMindSetfitContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscriptionService } from "@/services/subscription/SubscriptionService";
-import {
-  setFreeSubscription,
-  setTrialSubscription,
-} from "@/lib/subscription/storage";
+import { setFreeSubscription, setTrialSubscription } from "@/lib/subscription/storage";
+
+type PlanId = "mensal" | "semestral" | "anual";
+type AssinaturaSource = "onboarding" | "dashboard-free" | "premium";
 
 type Plan = {
-  id: "mensal" | "anual";
+  id: PlanId;
   title: string;
   price: string;
   note?: string;
+  kicker?: string;
   highlight?: boolean;
   badge?: string;
 };
-
-type AssinaturaSource = "onboarding" | "dashboard-free" | "premium";
 
 function getSourceFromSearch(search: string): AssinaturaSource | null {
   try {
@@ -61,7 +60,6 @@ export default function Assinatura() {
 
   const draft = useMemo(() => loadOnboardingDraft(), []);
   const autoStartRanRef = useRef(false);
-
   const [startingTrial, setStartingTrial] = useState(false);
 
   const step1 = draft?.step1 ?? {};
@@ -73,93 +71,96 @@ export default function Assinatura() {
 
   const objetivoLabelMap: Record<string, string> = {
     emagrecimento: "Emagrecimento",
-    reposicao: "Recomposição corporal",
+    reposicao: "Recomposicao corporal",
     hipertrofia: "Hipertrofia",
     performance: "Performance",
-    longevidade: "Saúde / longevidade",
+    longevidade: "Saude / longevidade",
   };
 
   const dietaLabelMap: Record<string, string> = {
-    flexivel: "Flexível",
-    onivoro: "Onívoro",
+    flexivel: "Flexivel",
+    onivoro: "Onivoro",
     lowcarb: "Low carb",
     vegetariano: "Vegetariano",
     vegano: "Vegano",
   };
 
+  const perfil = (state as any)?.perfil ?? {};
+  const treino = (state as any)?.treino ?? {};
+  const nutricao = (state as any)?.nutricao ?? {};
+
   const objetivoLabel =
-    objetivoLabelMap[step1?.objetivo] ?? "Plano personalizado";
+    (perfil as any)?.objetivo ??
+    objetivoLabelMap[step1?.objetivo] ??
+    "Plano personalizado";
 
   const modalidadeLabel =
+    (perfil as any)?.modalidadePrincipal ??
     step5?.primary ??
     step1?.modalidadePrincipal ??
     "Treino personalizado";
 
-  const diasTreino = Array.isArray(step6?.days) ? step6.days : [];
+  const diasTreino = Array.isArray((treino as any)?.dias)
+    ? (treino as any).dias
+    : Array.isArray(step6?.days)
+      ? step6.days
+      : [];
+
   const diasTreinoLabel =
     diasTreino.length > 0
       ? diasTreino.map((d: string) => d.toUpperCase()).join(" • ")
-      : "Distribuição automática";
+      : "Distribuicao automatica";
 
-  const dietaLabel =
-    dietaLabelMap[step7?.dieta] ?? "Plano alimentar personalizado";
-
-  const kcalAlvoFromDraft =
+  const kcalAlvo =
+    (nutricao as any)?.macros?.calorias ??
     step4?.kcalAlvo ??
     step4?.macros?.calorias ??
     step3?.metabolismo?.caloriasAlvo ??
     step3?.metabolismo?.get ??
     null;
 
-  const perfil = (state as any)?.perfil ?? {};
-  const treino = (state as any)?.treino ?? {};
-  const nutricao = (state as any)?.nutricao ?? {};
-
-  const objetivoLabelState =
-    (perfil as any)?.objetivo ?? objetivoLabel;
-
-  const modalidadeLabelState =
-    (perfil as any)?.modalidadePrincipal ?? modalidadeLabel;
-
-  const diasTreinoLabelState = Array.isArray((treino as any)?.dias)
-    ? (treino as any).dias.join(" • ").toUpperCase()
-    : diasTreinoLabel;
-
-  const kcalAlvo =
-    (nutricao as any)?.macros?.calorias ??
-    kcalAlvoFromDraft;
+  const dietaLabel = dietaLabelMap[step7?.dieta] ?? "Plano alimentar personalizado";
 
   const plans: Plan[] = useMemo(
     () => [
       {
         id: "mensal",
         title: "Plano mensal",
-        price: "R$ 97,90",
+        price: "R$ 49,90",
         note: "30 dias de acesso • Cancelamento a qualquer momento",
+        kicker: "Ideal para comecar sem compromisso longo",
+      },
+      {
+        id: "semestral",
+        title: "Plano semestral",
+        price: "R$ 249,90",
+        note: "6 meses de acesso • Equivale a R$ 41,65/mes",
+        kicker: "Melhor equilibrio entre valor e compromisso",
       },
       {
         id: "anual",
         title: "Plano anual",
-        price: "R$ 597,90",
-        note: "12 meses de acesso • Melhor custo-benefício",
+        price: "R$ 399,90",
+        note: "12 meses de acesso • 12x de R$ 39,90 ou R$ 399,90 a vista",
+        kicker: "Apenas R$ 33,32/mes • Economize R$ 198,90 por ano",
         highlight: true,
         badge: "Mais popular",
       },
     ],
-    []
+    [],
   );
 
   const benefits = [
     "Plano alimentar personalizado",
-    "Treinos completos e ajustáveis",
-    "Acompanhamento de evolução",
-    "Atualizações e melhorias contínuas",
+    "Treinos completos e ajustaveis",
+    "Acompanhamento de evolucao",
+    "Atualizacoes e melhorias continuas",
   ];
 
   const [devFlags, setDevFlags] = useState(() =>
     typeof window !== "undefined"
       ? loadFlags()
-      : { paywallEnabled: false, premiumUnlocked: false }
+      : { paywallEnabled: false, premiumUnlocked: false },
   );
 
   useEffect(() => {
@@ -173,14 +174,11 @@ export default function Assinatura() {
 
     try {
       setStartingTrial(true);
-
       await subscriptionService.startTrial(user.id);
-
       setTrialSubscription();
 
       const cleanParams = new URLSearchParams(location.search);
       cleanParams.delete("autostartTrial");
-
       const cleanSearch = cleanParams.toString();
 
       navigate(
@@ -188,11 +186,11 @@ export default function Assinatura() {
           pathname: "/dashboardpremium",
           search: cleanSearch ? `?${cleanSearch}` : "",
         },
-        { replace: true }
+        { replace: true },
       );
     } catch (e) {
       console.error("Erro ao iniciar trial:", e);
-      alert("Não foi possível iniciar o trial agora. Tente novamente.");
+      alert("Nao foi possivel iniciar o trial agora. Tente novamente.");
       setStartingTrial(false);
     }
   };
@@ -219,9 +217,8 @@ export default function Assinatura() {
     return null;
   };
 
-  const backHref = getBackHref();
-
   const goBack = () => {
+    const backHref = getBackHref();
     if (backHref) {
       navigate(backHref, { replace: true });
       return;
@@ -229,7 +226,7 @@ export default function Assinatura() {
     navigate(-1);
   };
 
-  const goToCheckout = (planId: "mensal" | "anual") => {
+  const goToCheckout = (planId: PlanId) => {
     const params = new URLSearchParams();
     params.set("plan", planId);
     if (source) params.set("source", source);
@@ -241,14 +238,11 @@ export default function Assinatura() {
     if (source) nextParams.set("source", source);
     if (autostartTrial) nextParams.set("autostartTrial", "1");
 
-    const next = nextParams.toString()
-      ? `/assinatura?${nextParams.toString()}`
-      : "/assinatura";
+    const next = nextParams.toString() ? `/assinatura?${nextParams.toString()}` : "/assinatura";
 
     const loginParams = new URLSearchParams();
     loginParams.set("next", next);
     if (source) loginParams.set("source", source);
-
     navigate(`/login?${loginParams.toString()}`, { replace: true });
   };
 
@@ -257,14 +251,11 @@ export default function Assinatura() {
     if (source) nextParams.set("source", source);
     if (autostartTrial) nextParams.set("autostartTrial", "1");
 
-    const next = nextParams.toString()
-      ? `/assinatura?${nextParams.toString()}`
-      : "/assinatura";
+    const next = nextParams.toString() ? `/assinatura?${nextParams.toString()}` : "/assinatura";
 
     const signupParams = new URLSearchParams();
     signupParams.set("next", next);
     if (source) signupParams.set("source", source);
-
     navigate(`/signup?${signupParams.toString()}`, { replace: true });
   };
 
@@ -273,6 +264,7 @@ export default function Assinatura() {
       const params = new URLSearchParams();
       if (source) params.set("source", source);
       params.set("autostartTrial", "1");
+
       const signupParams = new URLSearchParams();
       signupParams.set("next", `/assinatura?${params.toString()}`);
       if (source) signupParams.set("source", source);
@@ -299,12 +291,7 @@ export default function Assinatura() {
       return;
     }
 
-    if (source === "dashboard-free") {
-      navigate("/dashboard", { replace: true });
-      return;
-    }
-
-    if (source === "premium") {
+    if (source === "dashboard-free" || source === "premium") {
       navigate("/dashboard", { replace: true });
       return;
     }
@@ -317,7 +304,7 @@ export default function Assinatura() {
 
   return (
     <div className="min-h-dvh mf-app-bg mf-bg-neon text-white">
-      <div className="mx-auto w-full max-w-[560px] px-4 pb-10 pt-8">
+      <div className="mx-auto w-full max-w-[920px] px-4 pb-10 pt-8">
         <div className="flex items-center gap-3">
           <BrandIcon size={80} className="drop-shadow-[0_0_16px_rgba(0,190,255,0.35)]" />
 
@@ -325,9 +312,7 @@ export default function Assinatura() {
             <div className="text-[14px] font-semibold tracking-tight text-white/90">
               Assinatura
             </div>
-            <div className="text-[12px] text-white/60">
-              MindsetFit • Premium
-            </div>
+            <div className="text-[12px] text-white/60">MindsetFit • Premium</div>
           </div>
 
           {source !== "onboarding" ? (
@@ -353,11 +338,10 @@ export default function Assinatura() {
           </h1>
 
           <p className="mt-3 text-[14px] leading-6 text-white/60">
-            Acesse dieta personalizada, treinos completos e evolução contínua
-            com base no seu perfil.
+            Acesse dieta personalizada, treinos completos e evolucao continua com base no seu perfil.
           </p>
 
-          <div className="mt-5 grid gap-3">
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
             {benefits.map((item) => (
               <div
                 key={item}
@@ -367,7 +351,6 @@ export default function Assinatura() {
                   <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-emerald-400 bg-emerald-400 text-black">
                     <Check className="h-3 w-3" />
                   </div>
-
                   <div className="text-[13px] text-white/80">{item}</div>
                 </div>
               </div>
@@ -376,23 +359,23 @@ export default function Assinatura() {
 
           <div className="mt-6 border-t border-white/10 pt-5">
             <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-300/80">
-              Seu plano já está pronto
+              Seu plano ja esta pronto
             </div>
 
             <h2 className="mt-1 text-[18px] font-semibold text-white">
-              Falta só desbloquear o acesso premium
+              Falta so desbloquear o acesso premium
             </h2>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="text-[11px] text-white/40">Objetivo</div>
                 <div className="mt-1 text-[15px] font-semibold text-white capitalize">
-                  {String(objetivoLabelState).replace("-", " ")}
+                  {String(objetivoLabel).replace("-", " ")}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                <div className="text-[11px] text-white/40">Meta diária</div>
+                <div className="text-[11px] text-white/40">Meta diaria</div>
                 <div className="mt-1 text-[15px] font-semibold text-white">
                   {fmtKcal(kcalAlvo)}
                 </div>
@@ -401,20 +384,20 @@ export default function Assinatura() {
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="text-[11px] text-white/40">Modalidade</div>
                 <div className="mt-1 text-[15px] font-semibold text-white capitalize">
-                  {String(modalidadeLabelState).replace("-", " ")}
+                  {String(modalidadeLabel).replace("-", " ")}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="text-[11px] text-white/40">Dias de treino</div>
                 <div className="mt-1 text-[15px] font-semibold text-white">
-                  {diasTreinoLabelState}
+                  {diasTreinoLabel}
                 </div>
               </div>
             </div>
 
             <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-400/10 px-4 py-3 text-[13px] text-cyan-100/90">
-              Ao assinar, você libera imediatamente o dashboard premium, treino completo e plano alimentar ajustado ao seu perfil.
+              Ao assinar, voce libera imediatamente o dashboard premium, treino completo e plano alimentar ajustado ao seu perfil.
             </div>
 
             <div className="mt-3 text-[12px] text-white/45">
@@ -426,7 +409,7 @@ export default function Assinatura() {
 
         <div className="mt-6 rounded-[28px] border border-emerald-400/25 bg-[linear-gradient(180deg,rgba(16,40,30,0.7),rgba(8,10,18,0.92))] p-5 shadow-[0_0_30px_rgba(34,197,94,0.10)]">
           <div className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
-            Trial grátis
+            Trial gratis
           </div>
 
           <div className="mt-3 text-[22px] font-semibold tracking-tight text-white">
@@ -443,21 +426,20 @@ export default function Assinatura() {
             disabled={startingTrial}
             className="mt-5 inline-flex w-full items-center justify-center overflow-hidden rounded-[20px] border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] px-4 py-3 text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {startingTrial ? "Ativando trial..." : "Testar grátis por 7 dias"}
+            {startingTrial ? "Ativando trial..." : "Testar gratis por 7 dias"}
           </button>
 
           <div className="mt-2 text-center text-[11px] text-white/45">
-            Sem pagamento agora. Após 7 dias, você escolhe se quer continuar.
+            Sem pagamento agora. Apos 7 dias, voce escolhe se quer continuar.
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-[0.9fr_1.1fr] items-stretch gap-3">
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
           {plans.map((pl) => (
             <div
               key={pl.id}
               className={[
-                "relative flex h-full flex-col overflow-hidden rounded-[26px] border shadow-[0_0_32px_rgba(0,149,255,0.06)]",
-                pl.id === "mensal" ? "p-3.5 sm:p-4" : "p-4 sm:p-5",
+                "relative flex h-full flex-col overflow-hidden rounded-[26px] border p-4 shadow-[0_0_32px_rgba(0,149,255,0.06)]",
                 pl.highlight
                   ? "border-emerald-400/30 bg-[linear-gradient(180deg,rgba(16,40,30,0.7),rgba(8,10,18,0.9))] shadow-[0_0_30px_rgba(34,197,94,0.10)]"
                   : "border-white/10 bg-[rgba(8,10,18,0.82)]",
@@ -469,45 +451,30 @@ export default function Assinatura() {
                 </div>
               ) : null}
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <div
-                    className={[
-                      "font-semibold text-white",
-                      pl.id === "mensal" ? "text-[14px] leading-5 sm:text-[16px]" : "text-[16px] leading-5 sm:text-[18px]",
-                    ].join(" ")}
-                  >
-                    {pl.title}
-                  </div>
-                </div>
-
-                <div className="shrink-0 text-left sm:text-right">
-                  <div
-                    className={[
-                      "font-semibold tracking-tight text-white",
-                      pl.id === "mensal" ? "text-[19px] sm:text-[24px]" : "text-[22px] sm:text-[28px]",
-                    ].join(" ")}
-                  >
-                    {pl.price}
-                  </div>
-                </div>
+              <div className="font-semibold text-white">{pl.title}</div>
+              <div className="mt-2 text-[26px] font-semibold tracking-tight text-white">
+                {pl.price}
               </div>
+              <div className="mt-3 text-[12px] leading-6 text-white/60">{pl.note}</div>
 
-              <div
-                className={[
-                  "mt-3 text-white/60",
-                  pl.id === "mensal" ? "text-[11px] leading-6 sm:text-[12px] sm:leading-5" : "text-[12px] leading-6 sm:text-[13px]",
-                ].join(" ")}
-              >
-                {pl.note}
-              </div>
+              {pl.kicker ? (
+                <div
+                  className={[
+                    "mt-3 rounded-2xl border px-3 py-2 text-[11px] font-medium",
+                    pl.highlight
+                      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200"
+                      : "border-white/10 bg-white/[0.03] text-white/70",
+                  ].join(" ")}
+                >
+                  {pl.kicker}
+                </div>
+              ) : null}
 
               <div className="mt-auto flex flex-col gap-3 pt-5">
                 <button
                   type="button"
                   className={[
-                    "inline-flex w-full items-center justify-center rounded-[20px] px-4 py-3 font-semibold transition-all active:scale-[0.99]",
-                    pl.id === "mensal" ? "text-[12px] sm:text-[13px]" : "text-[12px] sm:text-[14px]",
+                    "inline-flex w-full items-center justify-center rounded-[20px] px-4 py-3 text-[13px] font-semibold transition-all active:scale-[0.99]",
                     pl.highlight
                       ? "overflow-hidden border-0 bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white shadow-[0_10px_30px_rgba(0,149,255,0.18)] hover:brightness-110"
                       : "bg-white text-black hover:opacity-95",
@@ -520,12 +487,14 @@ export default function Assinatura() {
                 {pl.id === "anual" ? (
                   <div className="flex items-start gap-2 text-[10px] leading-5 text-white/50 sm:text-[11px]">
                     <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
-                    Melhor valor para uso contínuo do app
+                    Melhor valor para uso continuo do app
                   </div>
                 ) : (
-                  <div className="flex items-start gap-2 text-[10px] leading-5 text-white/50 sm:text-[12px]">
+                  <div className="flex items-start gap-2 text-[10px] leading-5 text-white/50 sm:text-[11px]">
                     <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" />
-                    Flexibilidade para começar sem compromisso longo
+                    {pl.id === "semestral"
+                      ? "Compromisso intermediario com economia real"
+                      : "Flexibilidade para comecar sem compromisso longo"}
                   </div>
                 )}
               </div>
@@ -549,7 +518,7 @@ export default function Assinatura() {
                 className="inline-flex w-full items-center justify-center rounded-[20px] border border-white/15 bg-white/5 px-4 py-3 text-[13px] font-semibold text-white/90 hover:bg-white/10 active:scale-[0.99]"
                 onClick={goToLogin}
               >
-                Já tenho login
+                Ja tenho login
               </button>
 
               <button
@@ -561,7 +530,7 @@ export default function Assinatura() {
               </button>
 
               <div className="text-center text-[11px] text-white/50">
-                Você ainda poderá assinar depois dentro do app.
+                Voce ainda podera assinar depois dentro do app.
               </div>
             </div>
           ) : (
@@ -571,73 +540,69 @@ export default function Assinatura() {
                 className="inline-flex w-full items-center justify-center rounded-[20px] border border-white/15 bg-white/5 px-4 py-3 text-[13px] font-semibold text-white/90 hover:bg-white/10 active:scale-[0.99]"
                 onClick={continueFree}
               >
-                Agora não
+                Agora nao
               </button>
 
               <div className="text-center text-[11px] text-white/50">
-                Você pode voltar e continuar usando o app no modo atual.
+                Voce pode voltar e continuar usando o app no modo atual.
               </div>
             </div>
           )}
         </div>
 
         {isDevMode ? (
-        <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-          <div className="text-[13px] font-semibold text-white/90">Modo DEV</div>
-          <div className="mt-1 text-[12px] text-white/60">
-            Controles internos para teste de paywall e premium.
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-[14px] font-semibold">Liberar Premium</div>
-              <div className="mt-1 text-[12px] text-white/70">
-                Apenas para testes internos.
-              </div>
+          <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+            <div className="text-[13px] font-semibold text-white/90">Modo DEV</div>
+            <div className="mt-1 text-[12px] text-white/60">
+              Controles internos para teste de paywall e premium.
             </div>
 
-            <button
-              type="button"
-              onClick={togglePremium}
-              className="inline-flex items-center rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] font-semibold text-white/90 hover:bg-white/15 active:scale-[0.99]"
-            >
-              {devFlags.premiumUnlocked ? "Ativo" : "Inativo"}
-            </button>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-4">
-            <div>
-              <div className="text-[14px] font-semibold">Paywall</div>
-              <div className="mt-1 text-[12px] text-white/70">
-                Quando ativo, recursos premium redirecionam para /assinatura.
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <div>
+                <div className="text-[14px] font-semibold">Liberar Premium</div>
+                <div className="mt-1 text-[12px] text-white/70">Apenas para testes internos.</div>
               </div>
+
+              <button
+                type="button"
+                onClick={togglePremium}
+                className="inline-flex items-center rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] font-semibold text-white/90 hover:bg-white/15 active:scale-[0.99]"
+              >
+                {devFlags.premiumUnlocked ? "Ativo" : "Inativo"}
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={togglePaywall}
-              className="inline-flex items-center rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] font-semibold text-white/90 hover:bg-white/15 active:scale-[0.99]"
-            >
-              {devFlags.paywallEnabled ? "Ativo" : "Inativo"}
-            </button>
-          </div>
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <div>
+                <div className="text-[14px] font-semibold">Paywall</div>
+                <div className="mt-1 text-[12px] text-white/70">
+                  Quando ativo, recursos premium redirecionam para /assinatura.
+                </div>
+              </div>
 
-          <div className="mt-4 text-[12px] text-white/60">
-            Estado:{" "}
-            <span className="font-semibold text-white/80">
-              {devFlags.paywallEnabled ? "paywall ON" : "paywall OFF"}
-            </span>{" "}
-            •{" "}
-            <span className="font-semibold text-white/80">
-              {devFlags.premiumUnlocked ? "premium ON" : "premium OFF"}
-            </span>
+              <button
+                type="button"
+                onClick={togglePaywall}
+                className="inline-flex items-center rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[12px] font-semibold text-white/90 hover:bg-white/15 active:scale-[0.99]"
+              >
+                {devFlags.paywallEnabled ? "Ativo" : "Inativo"}
+              </button>
+            </div>
+
+            <div className="mt-4 text-[12px] text-white/60">
+              Estado:{" "}
+              <span className="font-semibold text-white/80">
+                {devFlags.paywallEnabled ? "paywall ON" : "paywall OFF"}
+              </span>{" "}
+              •{" "}
+              <span className="font-semibold text-white/80">
+                {devFlags.premiumUnlocked ? "premium ON" : "premium OFF"}
+              </span>
+            </div>
           </div>
-        </div>
         ) : null}
 
-        <div className="mt-6 text-center text-[11px] text-white/40">
-          MindsetFit • Premium
-        </div>
+        <div className="mt-6 text-center text-[11px] text-white/40">MindsetFit • Premium</div>
       </div>
     </div>
   );

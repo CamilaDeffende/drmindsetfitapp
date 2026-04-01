@@ -42,10 +42,17 @@ export function mapOnboardingToTrainingInput(source: unknown): OnboardingTrainin
   const daysByModality =
     (isObject(step6.diasPorModalidade) ? step6.diasPorModalidade : undefined) ??
     (isObject(step5.diasPorModalidade) ? step5.diasPorModalidade : undefined);
+  const selectedModalities = Array.isArray(step5.modalidades)
+    ? step5.modalidades.map(String)
+    : [];
+  const allowedModalities = new Set<string>(
+    selectedModalities.length ? selectedModalities : primaryModality ? [primaryModality] : []
+  );
 
   const uniqueDays = new Set<string>();
   if (isObject(daysByModality)) {
-    for (const days of Object.values(daysByModality)) {
+    for (const [modality, days] of Object.entries(daysByModality)) {
+      if (allowedModalities.size && !allowedModalities.has(String(modality))) continue;
       if (!Array.isArray(days)) continue;
       for (const day of days) {
         const value = String(day ?? "").trim();

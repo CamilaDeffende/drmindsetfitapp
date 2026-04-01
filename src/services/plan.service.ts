@@ -307,20 +307,38 @@ function getStep2FatFreeMassKg(
 }
 
 function getDaysByModalityFromDraft(step5: any, step6: any) {
-  const fromStep6 = step6?.diasPorModalidade || step6?.daysByModality;
-  if (fromStep6 && typeof fromStep6 === "object") return fromStep6;
+  const selectedModalities = Array.isArray(step5?.modalidades)
+    ? step5.modalidades.map((value: unknown) => String(value || "").trim()).filter(Boolean)
+    : Array.isArray(step5?.modalities)
+      ? step5.modalities.map((value: unknown) => String(value || "").trim()).filter(Boolean)
+      : [];
 
-  const fromStep5 = step5?.diasPorModalidade || step5?.daysByModality;
-  if (fromStep5 && typeof fromStep5 === "object") return fromStep5;
+  const primary = String(step5?.primary ?? "").trim();
+  const allowed = new Set<string>(
+    selectedModalities.length ? selectedModalities : primary ? [primary] : []
+  );
+
+  const sanitize = (value: any) => {
+    if (!value || typeof value !== "object") return {};
+
+    const entries = Object.entries(value).filter(([key]) => {
+      if (!allowed.size) return true;
+      return allowed.has(String(key || "").trim());
+    });
+
+    return Object.fromEntries(entries);
+  };
+
+  const fromStep6 = sanitize(step6?.diasPorModalidade || step6?.daysByModality);
+  if (Object.keys(fromStep6).length) return fromStep6;
+
+  const fromStep5 = sanitize(step5?.diasPorModalidade || step5?.daysByModality);
+  if (Object.keys(fromStep5).length) return fromStep5;
 
   return {};
 }
 
 function getSelectedDaysFromDraft(step5: any, step6: any): string[] {
-  if (Array.isArray(step6?.days) && step6.days.length) {
-    return step6.days.map(String);
-  }
-
   const byModality = getDaysByModalityFromDraft(step5, step6);
   const uniqueDays = new Set<string>();
 
@@ -332,7 +350,15 @@ function getSelectedDaysFromDraft(step5: any, step6: any): string[] {
     }
   }
 
-  return Array.from(uniqueDays);
+  if (uniqueDays.size > 0) {
+    return Array.from(uniqueDays);
+  }
+
+  if (Array.isArray(step6?.days) && step6.days.length) {
+    return step6.days.map(String);
+  }
+
+  return [];
 }
 
 function normalizeDayKey(value: unknown): string {
@@ -377,11 +403,16 @@ function alignCanonicalWorkoutDays(workouts: any[], legacyWeek: any[]) {
   if (!Array.isArray(workouts) || !workouts.length) return Array.isArray(workouts) ? workouts : [];
   if (!Array.isArray(legacyWeek) || !legacyWeek.length) return workouts;
 
+  const fallbackDays = legacyWeek
+    .map((item) => normalizeDayKey(item?.dayKey ?? item?.day ?? item?.dia))
+    .filter((day) => ["seg", "ter", "qua", "qui", "sex", "sab", "dom"].includes(day));
+
   return workouts.map((workout, index) => {
     const fallbackDay =
       legacyWeek[index]?.dayKey ??
       legacyWeek[index]?.day ??
-      legacyWeek[index]?.dia;
+      legacyWeek[index]?.dia ??
+      fallbackDays[index % Math.max(fallbackDays.length, 1)];
 
     const dayKey = normalizeDayKey(fallbackDay ?? workout?.dayKey ?? workout?.day);
     const fallbackModality =
