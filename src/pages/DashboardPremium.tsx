@@ -655,26 +655,19 @@ export function DashboardPremium() {
               <div>
                 <h2 className="text-xl font-bold">Nenhum plano ativo encontrado</h2>
                 <p className="mt-2 text-sm text-gray-400">
-                  Finalize a criacao do seu plano ou abra um plano ativo para desbloquear o Dashboard Premium.
+                  Complete seu onboarding para criar o primeiro plano e desbloquear o Dashboard Premium.
                 </p>
               </div>
               <Target className="w-6 h-6 text-white/80" />
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="mt-6">
               <Button
                 variant="ghost"
                 className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
-                onClick={() => navigate("/onboarding/step-1?mode=recreate")}
+                onClick={() => navigate("/onboarding/step-1")}
               >
-                Criar / Recriar plano
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full border-white/10 bg-white/5 hover:bg-white/10"
-                onClick={() => navigate("/planos-ativos")}
-              >
-                Ver planos ativos
+                Criar plano
               </Button>
             </div>
 
