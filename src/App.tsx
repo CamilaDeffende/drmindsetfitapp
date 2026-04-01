@@ -113,6 +113,7 @@ function App() {
   }, []);
 
   const __suite = new URLSearchParams(window.location.search).get("suite") === "1";
+  const isDevMode = import.meta.env.DEV;
 
   return __suite ? (
     <MFSuspense>
@@ -304,7 +305,7 @@ function App() {
             />
 
             {/* Dev / Tools */}
-            <Route path="/dev/engine" element={<DevEngine />} />
+            {isDevMode ? <Route path="/dev/engine" element={<DevEngine />} /> : null}
             <Route path="/ai" element={<MFSuspense><LazyAIDashboardPage /></MFSuspense>} />
             <Route path="/wearables" element={<MFSuspense><LazyWearablesPage /></MFSuspense>} />
             <Route path="/achievements" element={<MFSuspense><LazyAchievementsPage /></MFSuspense>} />
