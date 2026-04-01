@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { useSubscription } from '@/hooks/useSubscription'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Check,
   Zap,
@@ -15,71 +15,93 @@ import {
   Edit,
   Cloud,
   Crown,
-  ArrowLeft
-} from 'lucide-react'
-import { loadStripe } from '@stripe/stripe-js'
-import { useToast } from '@/hooks/use-toast'
+  ArrowLeft,
+} from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
+import { useToast } from "@/hooks/use-toast";
+import {
+  getPaymentProviderLabel,
+  hasConfiguredPaymentProvider,
+  hasStripeCheckoutConfig,
+  readPaymentProvider,
+} from "@/lib/payments/config";
 
-const stripePromise = (import.meta.env.VITE_STRIPE_PUBLIC_KEY ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY) : null)
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
+  : null;
 
 export function Pricing() {
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const { isPremium, loading: subLoading } = useSubscription()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isPremium, loading: subLoading } = useSubscription();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const paymentProvider = readPaymentProvider();
+  const paymentProviderLabel = getPaymentProviderLabel(paymentProvider);
+  const paymentProviderReady = hasConfiguredPaymentProvider();
 
   const handleSubscribe = async () => {
     if (!user) {
-      navigate('/signup')
-      return
+      navigate("/signup");
+      return;
     }
 
-    setLoading(true)
+    if (paymentProvider !== "stripe") {
+      navigate("/checkout?plan=mensal&source=premium");
+      return;
+    }
+
+    if (!hasStripeCheckoutConfig()) {
+      toast({
+        title: "Gateway pendente",
+        description: "Configure as credenciais do Stripe para iniciar o checkout real.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      // Criar checkout session no backend
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userId: user.id,
           priceId: import.meta.env.VITE_SUBSCRIPTION_PRICE_ID,
         }),
-      })
+      });
 
-      const { sessionId } = await response.json()
+      const { sessionId } = await response.json();
 
-      // Redirecionar para checkout Stripe
-      const stripe = await stripePromise
+      const stripe = await stripePromise;
       if (stripe) {
-        // @ts-expect-error - redirectToCheckout existe mas TypeScript não reconhece na versão atual
-        const { error } = await stripe.redirectToCheckout({ sessionId })
+        // @ts-expect-error redirectToCheckout exists at runtime for Stripe.js
+        const { error } = await stripe.redirectToCheckout({ sessionId });
 
         if (error) {
           toast({
-            title: 'Erro no pagamento',
+            title: "Erro no pagamento",
             description: error.message,
-            variant: 'destructive',
-          })
+            variant: "destructive",
+          });
         }
       }
-    } catch (error) {
+    } catch {
       toast({
-        title: 'Erro',
-        description: 'Não foi possível iniciar o checkout. Tente novamente.',
-        variant: 'destructive',
-      })
+        title: "Erro",
+        description: "Não foi possível iniciar o checkout. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
-      {/* Header */}
       <header className="border-b border-white/10 glass-effect sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -90,7 +112,7 @@ export function Pricing() {
               <h1 className="text-xl font-bold text-neon">DrMindSetfit</h1>
             </div>
             {user && (
-              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Dashboard
               </Button>
@@ -100,22 +122,17 @@ export function Pricing() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-12 sm:py-16">
-        {/* Hero */}
         <div className="text-center mb-12">
           <Badge className="mb-4 bg-gradient-to-r from-[#1E6BFF] via-[#00B7FF] to-[#00B7FF] hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
             Transforme seu corpo e mente
           </Badge>
-          <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-neon">
-            Escolha seu plano
-          </h2>
+          <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-neon">Escolha seu plano</h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
             Treinos personalizados, dieta inteligente e acompanhamento completo para você alcançar seus objetivos
           </p>
         </div>
 
-        {/* Planos */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {/* Plano Free */}
           <Card className="glass-effect border-white/20">
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
@@ -155,17 +172,12 @@ export function Pricing() {
                   <span>Relatórios em PDF</span>
                 </li>
               </ul>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate(user ? '/dashboard' : '/signup')}
-              >
-                {user ? 'Ir para Dashboard' : 'Começar grátis'}
+              <Button variant="outline" className="w-full" onClick={() => navigate(user ? "/dashboard" : "/signup")}>
+                {user ? "Ir para Dashboard" : "Começar grátis"}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Plano Premium */}
           <Card className="glass-effect border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.3)] relative">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
               <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-1 hover:from-[#1E6BFF] hover:via-[#00B7FF] hover:to-[#00B7FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00B7FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black/0">
@@ -231,18 +243,23 @@ export function Pricing() {
                   disabled={loading || subLoading}
                   className="w-full glow-green h-12 text-lg"
                 >
-                  {loading ? 'Carregando...' : 'Assinar Agora'}
+                  {loading
+                    ? "Carregando..."
+                    : paymentProvider === "stripe"
+                      ? "Assinar Agora"
+                      : "Continuar para pagamento"}
                 </Button>
               )}
 
               <p className="text-center text-xs text-gray-400 mt-3">
-                Cancele quando quiser • Renovação automática
+                {paymentProviderReady
+                  ? `Checkout preparado com ${paymentProviderLabel}.`
+                  : "Cancele quando quiser • Renovação automática"}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* FAQ Simples */}
         <div className="mt-16 max-w-3xl mx-auto">
           <h3 className="text-2xl font-bold text-center mb-8 text-neon">Perguntas Frequentes</h3>
           <div className="space-y-4">
@@ -252,7 +269,7 @@ export function Pricing() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-400">
-                  Sim! Você pode cancelar sua assinatura a qualquer momento. O acesso continuará até o fim do período pago.
+                  Sim. Você pode cancelar sua assinatura a qualquer momento. O acesso continuará até o fim do período pago.
                 </p>
               </CardContent>
             </Card>
@@ -274,7 +291,7 @@ export function Pricing() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-400">
-                  Sim! Com o plano Premium, todos os seus dados ficam salvos e sincronizados entre todos os seus dispositivos.
+                  Sim. Com o plano Premium, todos os seus dados ficam salvos e sincronizados entre todos os seus dispositivos.
                 </p>
               </CardContent>
             </Card>
@@ -282,12 +299,11 @@ export function Pricing() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-white/10 mt-16">
         <div className="max-w-7xl mx-auto px-4 py-8 text-center text-sm text-gray-400">
           <p>© 2025 DrMindSetfit. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>
-  )
+  );
 }

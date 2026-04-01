@@ -5,8 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { BrandIcon } from "@/components/branding/BrandIcon";
 import {
-  setMonthlySubscription,
+  getPaymentProviderLabel,
+  hasConfiguredPaymentProvider,
+  readPaymentProvider,
+} from "@/lib/payments/config";
+import {
   setAnnualSubscription,
+  setMonthlySubscription,
 } from "@/lib/subscription/storage";
 
 type PlanId = "mensal" | "anual";
@@ -30,7 +35,7 @@ const PLANS: Record<PlanId, PlanConfig> = {
       "Dashboard premium completo",
       "Treino personalizado",
       "Dieta personalizada",
-      "Relatórios e PDFs",
+      "Relatorios e PDFs",
       "Recursos premium liberados",
     ],
   },
@@ -43,9 +48,9 @@ const PLANS: Record<PlanId, PlanConfig> = {
       "Dashboard premium completo",
       "Treino personalizado",
       "Dieta personalizada",
-      "Relatórios e PDFs",
+      "Relatorios e PDFs",
       "Recursos premium liberados",
-      "Melhor custo-benefício",
+      "Melhor custo-beneficio",
     ],
   },
 };
@@ -80,6 +85,9 @@ export default function Checkout() {
   const planId = useMemo(() => getPlanFromSearch(location.search), [location.search]);
   const source = useMemo(() => getSourceFromSearch(location.search), [location.search]);
   const plan = PLANS[planId];
+  const paymentProvider = readPaymentProvider();
+  const paymentProviderLabel = getPaymentProviderLabel(paymentProvider);
+  const paymentProviderReady = hasConfiguredPaymentProvider();
 
   const handleConfirmPayment = () => {
     if (plan.id === "mensal") {
@@ -95,7 +103,7 @@ export default function Checkout() {
 
     navigate(
       `/signup?next=${encodeURIComponent("/dashboardpremium")}&premium=1&plan=${encodeURIComponent(plan.id)}`,
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -131,7 +139,7 @@ export default function Checkout() {
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="text-sm font-semibold mb-3">O que está incluído</div>
+              <div className="text-sm font-semibold mb-3">O que esta incluido</div>
               <ul className="space-y-2 text-sm text-white/80">
                 {plan.benefits.map((item) => (
                   <li key={item}>• {item}</li>
@@ -144,7 +152,7 @@ export default function Checkout() {
                 onClick={handleConfirmPayment}
                 className="w-full h-12 text-base font-semibold"
               >
-                Confirmar pagamento
+                {paymentProviderReady ? "Confirmar pagamento" : "Confirmar em modo teste"}
               </Button>
 
               <Button
@@ -157,7 +165,9 @@ export default function Checkout() {
             </div>
 
             <p className="text-xs text-center text-white/45">
-              Esta tela está em modo de simulação. Depois você conecta o gateway real de pagamento.
+              {paymentProviderReady
+                ? `Fluxo preparado para ${paymentProviderLabel}. O backend final ainda precisa validar o pagamento.`
+                : "Esta tela esta em modo de simulacao. Depois voce conecta o gateway real de pagamento."}
             </p>
           </CardContent>
         </Card>
