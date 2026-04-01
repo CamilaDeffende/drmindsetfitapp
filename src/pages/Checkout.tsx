@@ -11,7 +11,7 @@ import {
   readPaymentProvider,
 } from "@/lib/payments/config";
 
-type PlanId = "mensal" | "anual";
+type PlanId = "mensal" | "semestral" | "anual";
 type SourceId = "onboarding" | "dashboard-free" | "premium" | null;
 
 type PlanConfig = {
@@ -26,8 +26,8 @@ const PLANS: Record<PlanId, PlanConfig> = {
   mensal: {
     id: "mensal",
     title: "Plano Mensal",
-    price: "R$ 97,90",
-    description: "Acesso premium por 30 dias.",
+    price: "R$ 49,90",
+    description: "Acesso premium por 30 dias com cancelamento a qualquer momento.",
     benefits: [
       "Dashboard premium completo",
       "Treino personalizado",
@@ -36,18 +36,32 @@ const PLANS: Record<PlanId, PlanConfig> = {
       "Recursos premium liberados",
     ],
   },
-  anual: {
-    id: "anual",
-    title: "Plano Anual",
-    price: "R$ 597,90",
-    description: "Acesso premium por 12 meses.",
+  semestral: {
+    id: "semestral",
+    title: "Plano Semestral",
+    price: "R$ 249,90",
+    description: "Acesso premium por 6 meses. Equivale a R$ 41,65 por mes.",
     benefits: [
       "Dashboard premium completo",
       "Treino personalizado",
       "Dieta personalizada",
       "Relatorios e PDFs",
       "Recursos premium liberados",
-      "Melhor custo-beneficio",
+      "Melhor equilibrio entre valor e compromisso",
+    ],
+  },
+  anual: {
+    id: "anual",
+    title: "Plano Anual",
+    price: "R$ 399,90",
+    description: "Acesso premium por 12 meses. Apenas R$ 33,32 por mes no melhor plano.",
+    benefits: [
+      "Dashboard premium completo",
+      "Treino personalizado",
+      "Dieta personalizada",
+      "Relatorios e PDFs",
+      "Recursos premium liberados",
+      "Economia de R$ 198,90 em relacao ao mensal",
     ],
   },
 };
@@ -56,6 +70,7 @@ function getPlanFromSearch(search: string): PlanId {
   try {
     const raw = new URLSearchParams(search).get("plan");
     if (raw === "anual") return "anual";
+    if (raw === "semestral") return "semestral";
     return "mensal";
   } catch {
     return "mensal";
