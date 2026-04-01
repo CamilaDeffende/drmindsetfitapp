@@ -28,6 +28,7 @@ import { DashboardPremium } from "@/pages/DashboardPremium";
 import RouteGuard from "./features/fitness-suite/router/RouteGuard";
 import StyleGuidePage from "@/pages/StyleGuidePage";
 import { DiagnosticPage } from "@/pages/DiagnosticPage";
+import Profile from "@/pages/Profile";
 
 const MFPageLoader = () => (
   <div className="min-h-[40vh] flex items-center justify-center p-6 text-sm opacity-70 mf-app-bg mf-bg-neon">
@@ -112,8 +113,9 @@ function App() {
   }, []);
 
   const __suite = new URLSearchParams(window.location.search).get("suite") === "1";
+  const isDevMode = import.meta.env.DEV;
 
-  return __suite ? (
+  return isDevMode && __suite ? (
     <MFSuspense>
       <LazyFitnessSuiteDemo />
     </MFSuspense>
@@ -129,15 +131,22 @@ function App() {
           <LiveLocationPill />
 
           <Routes>
-            {MF_METABOLIC_ENGINE_V1_ENABLED ? (
+            {isDevMode && MF_METABOLIC_ENGINE_V1_ENABLED ? (
               <Route path="/__engine-preview" element={<EnginePreviewPage />} />
             ) : null}
 
             <Route path="/styleguide" element={<StyleGuidePage />} />
 
             <Route path="/planos" element={<Navigate to="/planos-ativos" replace />} />
-            <Route path="/perfil" element={<Navigate to="/onboarding/step-1" replace />} />
-            <Route path="/profile" element={<Navigate to="/onboarding/step-1" replace />} />
+            <Route
+              path="/perfil"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/profile" element={<Navigate to="/perfil" replace />} />
 
             <Route path="/diagnostic" element={<DiagnosticPage />} />
 
@@ -296,7 +305,7 @@ function App() {
             />
 
             {/* Dev / Tools */}
-            <Route path="/dev/engine" element={<DevEngine />} />
+            {isDevMode ? <Route path="/dev/engine" element={<DevEngine />} /> : null}
             <Route path="/ai" element={<MFSuspense><LazyAIDashboardPage /></MFSuspense>} />
             <Route path="/wearables" element={<MFSuspense><LazyWearablesPage /></MFSuspense>} />
             <Route path="/achievements" element={<MFSuspense><LazyAchievementsPage /></MFSuspense>} />

@@ -162,7 +162,12 @@ function __mfBuildNutritionInputs(anyState: any, anyForm?: any) {
 
   const massaMagraKg =
     anyForm?.massaMagraKg ??
+    anyForm?.massaMuscularKg ??
     anyState?.bioimpedancia?.massaMagraKg ??
+    anyState?.massaMuscularKg ??
+    (anyState?.percentualMassaMuscular != null && pesoKg > 0
+      ? (Number(anyState.percentualMassaMuscular) / 100) * pesoKg
+      : null) ??
     anyState?.massaMagraKg ??
     null;
 

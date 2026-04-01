@@ -1,4 +1,9 @@
 import { supabase } from "@/lib/supabase";
+import {
+  isActiveSubscription,
+  readSubscription,
+  setTrialSubscription,
+} from "@/lib/subscription/storage";
 
 export type SubscriptionStatus = {
   isPremium: boolean;
@@ -19,27 +24,16 @@ function devPremiumOverride(): boolean {
 }
 
 function readLocalTrial() {
-  try {
-    const raw = localStorage.getItem("mindsetfit:subscription:v1");
-    if (!raw) return null;
+  const sub = readSubscription();
+  if (sub.plan !== "trial") return null;
 
-    const parsed = JSON.parse(raw);
-    const kind = String(parsed?.kind ?? "");
-    const active = Boolean(parsed?.active);
-    const trialEndsAt = Number(parsed?.trialEndsAt ?? 0);
+  const expiresAt = sub.expiresAtISO ? Date.parse(String(sub.expiresAtISO)) : NaN;
 
-    if (kind !== "trial") return null;
-    if (!active) return null;
-    if (!Number.isFinite(trialEndsAt)) return null;
-
-    return {
-      ...parsed,
-      trialEndsAt,
-      isActive: trialEndsAt > Date.now(),
-    };
-  } catch {
-    return null;
-  }
+  return {
+    ...sub,
+    trialEndsAt: Number.isFinite(expiresAt) ? expiresAt : null,
+    isActive: isActiveSubscription(sub),
+  };
 }
 
 export const subscriptionService = {
@@ -98,54 +92,36 @@ export const subscriptionService = {
 
   async startTrial(userId: string) {
     const now = Date.now();
-    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-    const trialEndsAt = now + sevenDaysMs;
+    const current = readSubscription();
+    const currentTrialEndsAt = current.expiresAtISO
+      ? Date.parse(String(current.expiresAtISO))
+      : NaN;
+    const hasActiveTrial =
+      current.plan === "trial" &&
+      isActiveSubscription(current) &&
+      Number.isFinite(currentTrialEndsAt);
+    const hasPaid =
+      (current.plan === "monthly" || current.plan === "annual") &&
+      isActiveSubscription(current);
 
-    try {
-      const currentRaw = localStorage.getItem("mindsetfit:subscription:v1");
-      if (currentRaw) {
-        const current = JSON.parse(currentRaw);
+    if (hasPaid || hasActiveTrial) {
+      return {
+        ok: true,
+        alreadyExists: true,
+        trialEndsAt: hasActiveTrial ? currentTrialEndsAt : null,
+      };
+    }
 
-        const currentKind = String(current?.kind ?? "");
-        const currentTrialEndsAt = Number(current?.trialEndsAt ?? 0);
-        const currentActive = Boolean(current?.active);
-
-        const hasActiveTrial =
-          currentKind === "trial" &&
-          currentActive &&
-          Number.isFinite(currentTrialEndsAt) &&
-          currentTrialEndsAt > now;
-
-        const hasPaid =
-          currentKind === "paid" &&
-          currentActive;
-
-        if (hasPaid || hasActiveTrial) {
-          return {
-            ok: true,
-            alreadyExists: true,
-            trialEndsAt: hasActiveTrial ? currentTrialEndsAt : null,
-          };
-        }
-      }
-    } catch {}
-
-    const payload = {
-      userId,
-      planId: "trial-7d",
-      kind: "trial",
-      active: true,
-      activatedAt: now,
-      trialEndsAt,
-    };
+    void userId;
 
     try {
       localStorage.setItem("mindsetfit:isSubscribed", "false");
     } catch {}
 
-    try {
-      localStorage.setItem("mindsetfit:subscription:v1", JSON.stringify(payload));
-    } catch {}
+    const next = setTrialSubscription();
+    const trialEndsAt = next.expiresAtISO
+      ? Date.parse(String(next.expiresAtISO))
+      : now + 7 * 24 * 60 * 60 * 1000;
 
     return {
       ok: true,

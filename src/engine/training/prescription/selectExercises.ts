@@ -96,6 +96,36 @@ function findMatchesForPattern(
   );
 }
 
+function scoreForProfile(exercise: ExerciseDefinition, profile: TrainingProfile) {
+  const tags = new Set(exercise.equipmentTags);
+  let score = 0;
+
+  if (profile.equipmentProfile === "FULL_GYM") {
+    if (tags.has("machine")) score += 4;
+    if (tags.has("cable")) score += 3;
+    if (tags.has("barbell")) score += 3;
+    if (tags.has("dumbbell")) score += 2;
+    if (tags.has("bench")) score += 1;
+    if (tags.has("bodyweight")) score -= 2;
+  }
+
+  if (profile.equipmentProfile === "BASIC_HOME") {
+    if (tags.has("dumbbell")) score += 3;
+    if (tags.has("bench")) score += 2;
+    if (tags.has("kettlebell")) score += 2;
+    if (tags.has("bodyweight")) score += 2;
+    if (tags.has("machine") || tags.has("cable") || tags.has("barbell")) score -= 3;
+  }
+
+  if (profile.equipmentProfile === "BODYWEIGHT") {
+    if (tags.has("bodyweight")) score += 4;
+    if (exercise.homeFriendly) score += 2;
+    if (tags.has("machine") || tags.has("cable") || tags.has("barbell")) score -= 4;
+  }
+
+  return score;
+}
+
 function pickDeterministicExercise(
   matches: ExerciseDefinition[],
   focus: SessionFocus,
@@ -105,10 +135,15 @@ function pickDeterministicExercise(
   seedLabel: string
 ) {
   if (!matches.length) return null;
+  const ranked = [...matches].sort((a, b) => {
+    const scoreDelta = scoreForProfile(b, profile) - scoreForProfile(a, profile);
+    if (scoreDelta !== 0) return scoreDelta;
+    return a.id.localeCompare(b.id);
+  });
   const seed = hashString(
     buildSelectionSeed(focus, profile, dayIndex) + `|${pattern}|${seedLabel}`
   );
-  return matches[seed % matches.length] ?? null;
+  return ranked[seed % ranked.length] ?? null;
 }
 
 export function selectExercises(

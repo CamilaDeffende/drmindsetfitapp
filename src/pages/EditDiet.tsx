@@ -79,6 +79,66 @@ function safeFixed(value: unknown, digits = 0): string {
   return mfNum(value, 0).toFixed(digits);
 }
 
+function getFoodProtein(food: any): number {
+  return mfNum(
+    food?.proteinas ??
+      food?.proteina ??
+      food?.protein ??
+      food?.proteinG ??
+      food?.protein_g,
+    0
+  );
+}
+
+function getFoodCarbs(food: any): number {
+  return mfNum(
+    food?.carboidratos ??
+      food?.carboidrato ??
+      food?.carbs ??
+      food?.carbsG ??
+      food?.carbG ??
+      food?.carbo_g,
+    0
+  );
+}
+
+function getFoodFat(food: any): number {
+  return mfNum(
+    food?.gorduras ??
+      food?.gordura ??
+      food?.fat ??
+      food?.fatG ??
+      food?.gordura_g,
+    0
+  );
+}
+
+function getFoodGrams(food: any): number {
+  const directValue =
+    food?.gramas ??
+    food?.grams ??
+    food?.quantidade ??
+    food?.quantidadeG ??
+    food?.quantity ??
+    food?.portionG ??
+    food?.peso ??
+    food?.peso_g;
+
+  if (directValue != null && directValue !== "") {
+    return mfNum(directValue, 0);
+  }
+
+  if (typeof food?.porcao === "string") {
+    const match = food.porcao.replace(",", ".").match(/-?\d+(\.\d+)?/);
+    if (match) return mfNum(match[0], 0);
+  }
+
+  return mfNum(
+    directValue,
+    0
+  );
+}
+
 const SUBSTITUTOS_DATABASE: Record<string, { nome: string; calorias: number; proteinas: number; carboidratos: number; gorduras: number }[]> = {
   'proteina-animal': [
     { nome: 'Peito de Frango Grelhado', calorias: 165, proteinas: 31, carboidratos: 0, gorduras: 3.6 },
@@ -436,7 +496,7 @@ export function EditDiet() {
                                 {alimento?.nome || `Alimento ${alimIdx + 1}`}
                               </p>
                               <p className="text-sm text-[#1E6BFF] font-medium mt-1">
-                                {mfNum(alimento?.gramas, 0)}g
+                                {getFoodGrams(alimento)}g
                               </p>
                             </div>
 
@@ -448,15 +508,15 @@ export function EditDiet() {
                           <div className="grid grid-cols-3 gap-2 text-xs sm:text-sm">
                             <div className="rounded-xl bg-white/5 border border-white/10 p-2">
                               <span className="text-red-400 font-medium">P:</span>{" "}
-                              <span className="text-gray-200">{safeFixed(alimento?.proteinas, 1)}g</span>
+                              <span className="text-gray-200">{safeFixed(getFoodProtein(alimento), 1)}g</span>
                             </div>
                             <div className="rounded-xl bg-white/5 border border-white/10 p-2">
                               <span className="text-yellow-400 font-medium">C:</span>{" "}
-                              <span className="text-gray-200">{safeFixed(alimento?.carboidratos, 1)}g</span>
+                              <span className="text-gray-200">{safeFixed(getFoodCarbs(alimento), 1)}g</span>
                             </div>
                             <div className="rounded-xl bg-white/5 border border-white/10 p-2">
                               <span className="text-[#1E6BFF] font-medium">G:</span>{" "}
-                              <span className="text-gray-200">{safeFixed(alimento?.gorduras, 1)}g</span>
+                              <span className="text-gray-200">{safeFixed(getFoodFat(alimento), 1)}g</span>
                             </div>
                           </div>
                         </div>

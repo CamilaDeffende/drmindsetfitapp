@@ -19,6 +19,7 @@ import {
   Home,
   Crown,
   LogOut,
+  UserRound,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -634,10 +635,10 @@ export function DashboardPremium() {
             </p>
             <Button
               variant="ghost"
-              onClick={() => navigate("/onboarding/step-1?mode=recreate")}
+              onClick={() => navigate("/perfil")}
               className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
             >
-              Iniciar Agora
+              Completar Agora
             </Button>
           </CardContent>
         </Card>
@@ -654,26 +655,19 @@ export function DashboardPremium() {
               <div>
                 <h2 className="text-xl font-bold">Nenhum plano ativo encontrado</h2>
                 <p className="mt-2 text-sm text-gray-400">
-                  Finalize a criacao do seu plano ou abra um plano ativo para desbloquear o Dashboard Premium.
+                  Complete seu onboarding para criar o primeiro plano e desbloquear o Dashboard Premium.
                 </p>
               </div>
               <Target className="w-6 h-6 text-white/80" />
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="mt-6">
               <Button
                 variant="ghost"
                 className="w-full overflow-hidden rounded-[18px] !bg-transparent bg-gradient-to-r from-[#193B72] via-[#255AA8] to-[#7FE9D6] text-white !shadow-none hover:bg-transparent"
-                onClick={() => navigate("/onboarding/step-1?mode=recreate")}
+                onClick={() => navigate("/onboarding/step-1")}
               >
-                Criar / Recriar plano
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full border-white/10 bg-white/5 hover:bg-white/10"
-                onClick={() => navigate("/planos-ativos")}
-              >
-                Ver planos ativos
+                Criar plano
               </Button>
             </div>
 
@@ -731,6 +725,15 @@ export function DashboardPremium() {
                 className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
               >
                 <Download className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => navigate("/perfil")}
+                className="h-9 w-9 rounded-xl border-white/10 bg-black/20 text-white hover:bg-white/5"
+              >
+                <UserRound className="h-4 w-4" />
               </Button>
 
               <Button
@@ -1206,6 +1209,11 @@ export function DashboardPremium() {
               <Button variant="outline" className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10" onClick={() => navigate("/achievements")}>
                 <Zap className="w-4 h-4" />
                 Conquistas
+              </Button>
+
+              <Button variant="outline" className="justify-start gap-2 border-white/10 bg-white/5 hover:bg-white/10" onClick={() => navigate("/perfil")}>
+                <Target className="w-4 h-4" />
+                Perfil
               </Button>
 
               <Button

@@ -7,12 +7,10 @@ import { ArrowLeft, RefreshCw, Edit, FileText, Clipboard, Download } from "lucid
 import { useNavigate } from "react-router-dom";
 import { buscarSubstituicoes } from "@/types/alimentos";
 import {
-  sumMacrosFromRefeicoes,
   guessPesoKgFromStateLike,
   validateDietScience,
   buildDietExportTextPhase3E,
   copyTextFallbackPhase3E,
-  sumAlimentosTotals,
   buildDietExportPayload,
 } from "@/engine/nutrition/NutritionEngine";
 import { mindsetfitSignatureLines } from "@/assets/branding/signature";
@@ -42,6 +40,93 @@ function safeFixed(value: unknown, digits = 0): string {
 
 function safeArray<T = any>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function getFoodProtein(food: any): number {
+  return mfNum(
+    food?.proteinas ??
+      food?.proteina ??
+      food?.protein ??
+      food?.proteinG ??
+      food?.protein_g,
+    0
+  );
+}
+
+function getFoodCarbs(food: any): number {
+  return mfNum(
+    food?.carboidratos ??
+      food?.carboidrato ??
+      food?.carbs ??
+      food?.carbsG ??
+      food?.carbG ??
+      food?.carbo_g,
+    0
+  );
+}
+
+function getFoodFat(food: any): number {
+  return mfNum(
+    food?.gorduras ??
+      food?.gordura ??
+      food?.fat ??
+      food?.fatG ??
+      food?.gordura_g,
+    0
+  );
+}
+
+function getFoodGrams(food: any): number {
+  const directValue =
+    food?.gramas ??
+    food?.grams ??
+    food?.quantidade ??
+    food?.quantidadeG ??
+    food?.quantity ??
+    food?.portionG ??
+    food?.peso ??
+    food?.peso_g;
+
+  if (directValue != null && directValue !== "") {
+    return mfNum(directValue, 0);
+  }
+
+  if (typeof food?.porcao === "string") {
+    const match = food.porcao.replace(",", ".").match(/-?\d+(\.\d+)?/);
+    if (match) return mfNum(match[0], 0);
+  }
+
+  return mfNum(
+    directValue,
+    0
+  );
+}
+
+function sumFoodTotals(alimentos: any[]) {
+  return (alimentos ?? []).reduce(
+    (acc, alimento) => {
+      acc.calorias += mfNum(alimento?.calorias, 0);
+      acc.proteinas += getFoodProtein(alimento);
+      acc.carboidratos += getFoodCarbs(alimento);
+      acc.gorduras += getFoodFat(alimento);
+      return acc;
+    },
+    { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 }
+  );
+}
+
+function sumMealMacros(refeicoes: any[]) {
+  return (refeicoes ?? []).reduce(
+    (acc, refeicao) => {
+      const totals = sumFoodTotals(safeArray(refeicao?.alimentos));
+      acc.calorias += totals.calorias;
+      acc.proteinas += totals.proteinas;
+      acc.carboidratos += totals.carboidratos;
+      acc.gorduras += totals.gorduras;
+      return acc;
+    },
+    { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 }
+  );
 }
 
 async function downloadPdfPremiumDietPhase3D(state: any) {
@@ -147,14 +232,36 @@ export function NutritionPlan() {
           activePlan?.nutrition?.kcalTarget,
         0
       ),
-      proteina: mfNum(nutritionSource?.macros?.proteina, 0),
-      carboidratos: mfNum(nutritionSource?.macros?.carboidratos, 0),
-      gorduras: mfNum(nutritionSource?.macros?.gorduras, 0),
+      proteina: mfNum(
+        nutritionSource?.macros?.proteina ??
+          nutritionSource?.macros?.proteinas ??
+          nutritionSource?.macros?.protein ??
+          nutritionSource?.macros?.proteinG ??
+          nutritionSource?.macros?.proteina_g,
+        0
+      ),
+      carboidratos: mfNum(
+        nutritionSource?.macros?.carboidratos ??
+          nutritionSource?.macros?.carboidrato ??
+          nutritionSource?.macros?.carbs ??
+          nutritionSource?.macros?.carbsG ??
+          nutritionSource?.macros?.carbG ??
+          nutritionSource?.macros?.carbo_g,
+        0
+      ),
+      gorduras: mfNum(
+        nutritionSource?.macros?.gorduras ??
+          nutritionSource?.macros?.gordura ??
+          nutritionSource?.macros?.fat ??
+          nutritionSource?.macros?.fatG ??
+          nutritionSource?.macros?.gordura_g,
+        0
+      ),
     },
     restricoes: safeArray(nutritionSource?.restricoes ?? activePlan?.nutrition?.restrictions),
   };
 
-  const dayTotals = sumMacrosFromRefeicoes(nutricaoSafe.refeicoes ?? []);
+  const dayTotals = sumMealMacros(nutricaoSafe.refeicoes ?? []);
   const pesoKg = guessPesoKgFromStateLike(state);
   const kcalTarget = nutricaoSafe?.macros?.calorias;
   const science = validateDietScience({
@@ -415,7 +522,7 @@ export function NutritionPlan() {
         <div className="space-y-4">
           {safeArray(nutricaoSafe.refeicoes).map((refeicao: any, index: number) => {
             const alimentos = safeArray<any>(refeicao?.alimentos);
-            const totals = sumAlimentosTotals(alimentos);
+            const totals = sumFoodTotals(alimentos);
 
             return (
               <Card key={index} className="glass-effect border-white/10 bg-black/30">
@@ -449,7 +556,7 @@ export function NutritionPlan() {
                     {alimentos.map((alimento: any, idx: number) => {
                       const substituicoes = safeArray<any>(buscarSubstituicoes(alimento?.alimentoId));
                       const alimentoNome = alimento?.nome || `Alimento ${idx + 1}`;
-                      const alimentoGramas = mfNum(alimento?.gramas, 0);
+                      const alimentoGramas = getFoodGrams(alimento);
 
                       return (
                         <div
@@ -478,17 +585,17 @@ export function NutritionPlan() {
                                 <div className="flex items-center gap-1">
                                   <span className="w-2 h-2 rounded-full bg-[#1E6BFF]"></span>
                                   <span className="text-muted-foreground">P:</span>
-                                  <span className="font-medium">{safeFixed(alimento?.proteinas, 1)}g</span>
+                                  <span className="font-medium">{safeFixed(getFoodProtein(alimento), 1)}g</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
                                   <span className="text-muted-foreground">C:</span>
-                                  <span className="font-medium">{safeFixed(alimento?.carboidratos, 1)}g</span>
+                                  <span className="font-medium">{safeFixed(getFoodCarbs(alimento), 1)}g</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
                                   <span className="text-muted-foreground">G:</span>
-                                  <span className="font-medium">{safeFixed(alimento?.gorduras, 1)}g</span>
+                                  <span className="font-medium">{safeFixed(getFoodFat(alimento), 1)}g</span>
                                 </div>
                               </div>
                             </div>

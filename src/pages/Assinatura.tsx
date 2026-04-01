@@ -55,6 +55,7 @@ export default function Assinatura() {
   const { user } = useAuth() as any;
 
   const source = getSourceFromSearch(location.search);
+  const isDevMode = import.meta.env.DEV;
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const autostartTrial = searchParams.get("autostartTrial") === "1";
 
@@ -580,6 +581,7 @@ export default function Assinatura() {
           )}
         </div>
 
+        {isDevMode ? (
         <div className="mt-6 rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
           <div className="text-[13px] font-semibold text-white/90">Modo DEV</div>
           <div className="mt-1 text-[12px] text-white/60">
@@ -631,6 +633,7 @@ export default function Assinatura() {
             </span>
           </div>
         </div>
+        ) : null}
 
         <div className="mt-6 text-center text-[11px] text-white/40">
           MindsetFit • Premium
