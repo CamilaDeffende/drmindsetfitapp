@@ -127,11 +127,13 @@ function countSelectedWorkoutDays(activePlan: any) {
 
   if (directDays.length) return directDays.length;
 
-  const draftDays = Array.isArray(activePlan?.draft?.step6?.days)
-    ? activePlan.draft.step6.days
+  const selectedModalities = Array.isArray(activePlan?.draft?.step5?.modalidades)
+    ? activePlan.draft.step5.modalidades.map((value: unknown) => String(value ?? "").trim()).filter(Boolean)
     : [];
-
-  if (draftDays.length) return draftDays.length;
+  const primaryModality = String(activePlan?.draft?.step5?.primary ?? "").trim();
+  const allowedModalities = new Set<string>(
+    selectedModalities.length ? selectedModalities : primaryModality ? [primaryModality] : []
+  );
 
   const byModality =
     activePlan?.draft?.step5?.diasPorModalidade ??
@@ -141,7 +143,8 @@ function countSelectedWorkoutDays(activePlan: any) {
   const uniqueDays = new Set<string>();
 
   if (byModality && typeof byModality === "object") {
-    for (const days of Object.values(byModality)) {
+    for (const [modality, days] of Object.entries(byModality)) {
+      if (allowedModalities.size && !allowedModalities.has(String(modality ?? "").trim())) continue;
       if (!Array.isArray(days)) continue;
       for (const day of days) {
         const value = String(day ?? "").trim();
@@ -149,6 +152,14 @@ function countSelectedWorkoutDays(activePlan: any) {
       }
     }
   }
+
+  if (uniqueDays.size > 0) return uniqueDays.size;
+
+  const draftDays = Array.isArray(activePlan?.draft?.step6?.days)
+    ? activePlan.draft.step6.days
+    : [];
+
+  if (draftDays.length) return draftDays.length;
 
   return uniqueDays.size;
 }
