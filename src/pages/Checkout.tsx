@@ -192,7 +192,7 @@ export default function Checkout() {
             <div className="flex items-center gap-3">
               <BrandIcon size={28} />
               <div>
-                <CardTitle className="text-xl">Checkout</CardTitle>
+                <CardTitle className="text-xl">Checkout MP V2</CardTitle>
                 <CardDescription className="text-white/60">
                   Confirme seu plano premium
                 </CardDescription>
