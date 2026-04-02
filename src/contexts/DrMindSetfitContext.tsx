@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import type { DrMindSetfitState } from "@/types";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
+import { mergePassosDia, startNativeStepsTracking, toPassosDia } from "@/services/steps/nativeSteps";
 
 interface DrMindSetfitContextType {
   state: DrMindSetfitState;
@@ -249,6 +250,31 @@ export function DrMindSetfitProvider({ children }: { children: ReactNode }) {
 
     saveStateToStorage(state);
   }, [state]);
+
+  useEffect(() => {
+    let disposed = false;
+    let cleanup: (() => Promise<void>) | null = null;
+
+    void (async () => {
+      cleanup = await startNativeStepsTracking((snapshot) => {
+        if (disposed || !snapshot.available || !snapshot.granted) return;
+
+        const today = toPassosDia(snapshot);
+        setState((prev) => {
+          const passosDiarios = mergePassosDia(prev.passosDiarios, today);
+          if (passosDiarios === prev.passosDiarios) return prev;
+          return { ...prev, passosDiarios };
+        });
+      });
+    })();
+
+    return () => {
+      disposed = true;
+      if (cleanup) {
+        void cleanup();
+      }
+    };
+  }, []);
 
   const updateState = (updates: Partial<DrMindSetfitState>) => {
     setState((prev) => {
