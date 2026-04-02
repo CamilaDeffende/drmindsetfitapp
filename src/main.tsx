@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
@@ -13,7 +13,7 @@ import { installFreezeDetector } from "./runtime/mf/freezeDetector";
 
 import { MFBackground } from "./components/mf/MFBackground";
 import { runMFDevBootstrap } from "./lib/devBootstrap";
-// Se você usa Leaflet e tem esse CSS instalado, descomente:
+// Se vocÃª usa Leaflet e tem esse CSS instalado, descomente:
 // import "leaflet/dist/leaflet.css";
 
 // init i18n antes do render (fallback pt-BR garantido)
@@ -48,9 +48,8 @@ function RootProviders({ children }: { children: React.ReactNode }) {
     (auth as any)?.session?.user?.id ??
     null;
 
-  // MF_MAIN_GATE_V1: nunca retornar null no bootstrap (evita root vazio)
-  const __demoUserId = "demo-user-123";
-  const __resolvedUserId = userId ?? __demoUserId;
+  // MF_MAIN_GATE_V1: manter bootstrap estavel sem fallback de usuario fake
+  const __resolvedUserId = userId ?? undefined;
 
   return (
     <ProfileProvider userId={__resolvedUserId} gate={false}>
@@ -190,3 +189,4 @@ try {
       .catch(() => {});
   }
 } catch {}
+

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Activity, ArrowLeft, RefreshCw, Watch } from "lucide-react";
 import HeartRateMonitor from "@/components/wearables/HeartRateMonitor";
@@ -40,6 +40,7 @@ export default function WearablesPage() {
   const navigate = useNavigate();
   const { devices, connectHRM, refresh } = useWearable();
   const [msg, setMsg] = useState("");
+  const isDevMode = import.meta.env.DEV;
 
   const canConnect = useMemo(() => true, []);
 
@@ -49,7 +50,7 @@ export default function WearablesPage() {
       await connectHRM();
       setMsg("Dispositivo conectado com sucesso.");
     } catch (e: any) {
-      setMsg(String(e?.message || e || "Não foi possível conectar o dispositivo."));
+      setMsg(String(e?.message || e || "NÃ£o foi possÃ­vel conectar o dispositivo."));
     }
   }
 
@@ -79,7 +80,7 @@ export default function WearablesPage() {
       avgHeartRate: workout.averageHeartRate,
     });
 
-    setMsg("Treino demo importado para o histórico.");
+    setMsg("Treino demo importado para o histÃ³rico.");
   }
 
   async function demoSyncProvider() {
@@ -104,7 +105,7 @@ export default function WearablesPage() {
             <div>
               <div className="text-[24px] font-semibold tracking-tight">Wearables</div>
               <div className="mt-1 text-sm text-white/58">
-                Sensores, batimentos e sincronização de treinos com o app.
+                Sensores, batimentos e sincronizaÃ§Ã£o de treinos com o app.
               </div>
             </div>
           </div>
@@ -125,11 +126,11 @@ export default function WearablesPage() {
         <div className="mt-6 rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.05)]">
           <div className="flex items-center gap-2 text-cyan-300">
             <Activity className="h-4 w-4" />
-            <span className="text-[12px] uppercase tracking-[0.22em]">Integração local</span>
+            <span className="text-[12px] uppercase tracking-[0.22em]">IntegraÃ§Ã£o local</span>
           </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/68">
-            Esta área permite testar a conexão de sensores e importar treinos para o histórico
-            sem depender de serviços externos durante o desenvolvimento.
+            Esta Ã¡rea permite testar a conexÃ£o de sensores e importar treinos para o histÃ³rico
+            sem depender de serviÃ§os externos durante o desenvolvimento.
           </p>
         </div>
 
@@ -148,15 +149,19 @@ export default function WearablesPage() {
             devices.map((device) => <WearableDeviceCard key={device.id} device={device} />)
           ) : (
             <div className="rounded-[20px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 text-sm text-white/58 md:col-span-2">
-              Nenhum dispositivo listado ainda. Use a conexão de HRM ou atualize a lista.
+              Nenhum dispositivo listado ainda. Use a conexÃ£o de HRM ou atualize a lista.
             </div>
           )}
         </div>
 
         <div className="mt-6 rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-5 shadow-[0_0_32px_rgba(0,149,255,0.05)]">
-          <div className="text-lg font-semibold text-white">Ações de teste</div>
+          <div className="text-lg font-semibold text-white">
+            {isDevMode ? "AÃ§Ãµes de teste" : "Ferramentas de sincronizaÃ§Ã£o"}
+          </div>
           <div className="mt-1 text-sm text-white/55">
-            Fluxos seguros para validar integração e histórico durante o desenvolvimento.
+            {isDevMode
+              ? "Fluxos seguros para validar integraÃ§Ã£o e histÃ³rico durante o desenvolvimento."
+              : "Atualize a lista de dispositivos e acompanhe a disponibilidade de integraÃ§Ãµes."}
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -169,24 +174,29 @@ export default function WearablesPage() {
               Atualizar lista
             </Button>
 
-            <Button
-              variant="outline"
-              onClick={demoImportToHistory}
-              className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-            >
-              Import demo {"->"} Histórico
-            </Button>
+            {isDevMode ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={demoImportToHistory}
+                  className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+                >
+                  Import demo {"->"} HistÃ³rico
+                </Button>
 
-            <Button
-              variant="outline"
-              onClick={demoSyncProvider}
-              className="border-white/10 bg-white/5 text-white hover:bg-white/10"
-            >
-              Sync placeholder
-            </Button>
+                <Button
+                  variant="outline"
+                  onClick={demoSyncProvider}
+                  className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+                >
+                  Sync placeholder
+                </Button>
+              </>
+            ) : null}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
