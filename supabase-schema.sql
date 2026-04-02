@@ -6,6 +6,7 @@
 -- e para ser mais seguro em reaplicacoes.
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ========================================
 -- TABELA: subscriptions
@@ -98,6 +99,41 @@ CREATE INDEX IF NOT EXISTS idx_corridas_data ON public.corridas(data DESC);
 CREATE INDEX IF NOT EXISTS idx_corridas_user_data ON public.corridas(user_id, data DESC);
 
 -- ========================================
+-- TABELA: payment_transactions
+-- ========================================
+CREATE TABLE IF NOT EXISTS public.payment_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    plan_id TEXT NOT NULL,
+    provider TEXT NOT NULL DEFAULT 'mercadopago',
+    external_reference TEXT NOT NULL,
+    preference_id TEXT,
+    payment_id TEXT,
+    merchant_order_id TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    status_detail TEXT,
+    amount NUMERIC,
+    payer_email TEXT,
+    raw_preference JSONB,
+    raw_payment JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS payment_transactions_external_reference_key
+    ON public.payment_transactions(external_reference);
+
+CREATE UNIQUE INDEX IF NOT EXISTS payment_transactions_payment_id_key
+    ON public.payment_transactions(payment_id)
+    WHERE payment_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user_id
+    ON public.payment_transactions(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_status
+    ON public.payment_transactions(status);
+
+-- ========================================
 -- RLS
 -- ========================================
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
@@ -105,6 +141,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.treinos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.nutricoes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.corridas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view own subscription" ON public.subscriptions;
 CREATE POLICY "Users can view own subscription"
@@ -196,6 +233,11 @@ CREATE POLICY "Users can delete own corridas"
     ON public.corridas FOR DELETE
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own payment transactions" ON public.payment_transactions;
+CREATE POLICY "Users can view own payment transactions"
+    ON public.payment_transactions FOR SELECT
+    USING (auth.uid() = user_id);
+
 -- ========================================
 -- FUNCOES E TRIGGERS
 -- ========================================
@@ -216,6 +258,12 @@ CREATE TRIGGER set_updated_at_subscriptions
 DROP TRIGGER IF EXISTS set_updated_at_profiles ON public.profiles;
 CREATE TRIGGER set_updated_at_profiles
     BEFORE UPDATE ON public.profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS set_updated_at_payment_transactions ON public.payment_transactions;
+CREATE TRIGGER set_updated_at_payment_transactions
+    BEFORE UPDATE ON public.payment_transactions
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
@@ -247,4 +295,4 @@ SELECT
     schemaname
 FROM pg_tables
 WHERE schemaname = 'public'
-  AND tablename IN ('subscriptions', 'profiles', 'treinos', 'nutricoes', 'corridas');
+  AND tablename IN ('subscriptions', 'profiles', 'treinos', 'nutricoes', 'corridas', 'payment_transactions');

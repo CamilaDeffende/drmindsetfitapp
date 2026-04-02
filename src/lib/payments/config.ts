@@ -1,5 +1,12 @@
 export type PaymentProvider = "stripe" | "mercadopago" | "manual";
 
+const env = import.meta.env as ImportMetaEnv & {
+  VITE_PAYMENT_PROVIDER?: string;
+  VITE_STRIPE_PUBLIC_KEY?: string;
+  VITE_SUBSCRIPTION_PRICE_ID?: string;
+  VITE_MERCADO_PAGO_PUBLIC_KEY?: string;
+};
+
 function normalizeProvider(value: unknown): PaymentProvider {
   const raw = String(value ?? "").trim().toLowerCase();
 
@@ -12,7 +19,7 @@ function normalizeProvider(value: unknown): PaymentProvider {
 }
 
 export function readPaymentProvider(): PaymentProvider {
-  return normalizeProvider((import.meta as any)?.env?.VITE_PAYMENT_PROVIDER);
+  return normalizeProvider(env.VITE_PAYMENT_PROVIDER);
 }
 
 export function getPaymentProviderLabel(provider = readPaymentProvider()): string {
@@ -22,14 +29,11 @@ export function getPaymentProviderLabel(provider = readPaymentProvider()): strin
 }
 
 export function hasStripeCheckoutConfig(): boolean {
-  return Boolean(
-    (import.meta as any)?.env?.VITE_STRIPE_PUBLIC_KEY &&
-      (import.meta as any)?.env?.VITE_SUBSCRIPTION_PRICE_ID,
-  );
+  return Boolean(env.VITE_STRIPE_PUBLIC_KEY && env.VITE_SUBSCRIPTION_PRICE_ID);
 }
 
 export function hasMercadoPagoFrontendConfig(): boolean {
-  return Boolean((import.meta as any)?.env?.VITE_MERCADO_PAGO_PUBLIC_KEY);
+  return Boolean(env.VITE_MERCADO_PAGO_PUBLIC_KEY);
 }
 
 export function hasConfiguredPaymentProvider(): boolean {
