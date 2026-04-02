@@ -18,6 +18,8 @@ const PLAN_CONFIG = {
 
 type PlanId = keyof typeof PLAN_CONFIG;
 
+type JsonRecord = Record<string, unknown>;
+
 function getAppUrl(request: any): string {
   const configured = process.env.VITE_APP_URL?.trim();
   if (configured) return configured.replace(/\/+$/, "");
@@ -47,6 +49,94 @@ async function readBody(request: any): Promise<any> {
   return raw ? JSON.parse(raw) : {};
 }
 
+function getSupabaseAdminConfig() {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Supabase admin credentials not configured");
+  }
+
+  return { supabaseUrl, serviceRoleKey };
+}
+
+async function supabaseAdminRequest(path: string, init: RequestInit) {
+  const { supabaseUrl, serviceRoleKey } = getSupabaseAdminConfig();
+  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+
+  return response;
+}
+
+async function createPendingTransaction(input: {
+  userId: string;
+  planId: PlanId;
+  source: string;
+  externalReference: string;
+  payerEmail: string;
+}) {
+  const response = await supabaseAdminRequest("payment_transactions", {
+    method: "POST",
+    headers: {
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify({
+      user_id: input.userId,
+      plan_id: input.planId,
+      provider: "mercadopago",
+      external_reference: input.externalReference,
+      status: "pending",
+      status_detail: `checkout_created:${input.source || "premium"}`,
+      payer_email: input.payerEmail || null,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Supabase insert payment_transactions failed: ${await response.text()}`);
+  }
+
+  return response.json();
+}
+
+async function updateTransactionByExternalReference(externalReference: string, payload: JsonRecord) {
+  const response = await supabaseAdminRequest(
+    `payment_transactions?external_reference=eq.${encodeURIComponent(externalReference)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        ...payload,
+        updated_at: new Date().toISOString(),
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Supabase update payment_transactions failed: ${await response.text()}`);
+  }
+
+  return response.json();
+}
+
+function logCreatePreference(stage: string, payload: Record<string, unknown>) {
+  console.log(
+    JSON.stringify({
+      scope: "mercadopago:create-preference",
+      stage,
+      ...payload,
+    }),
+  );
+}
+
 export default async function handler(request: any, response: any) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
@@ -72,6 +162,27 @@ export default async function handler(request: any, response: any) {
     const source = String(body?.source ?? "premium").trim();
     const userId = String(body?.userId ?? "").trim();
 
+    if (!userId) {
+      return sendJson(response, 400, { error: "Missing userId" });
+    }
+
+    const externalReference = `mf_mp_${crypto.randomUUID()}`;
+
+    logCreatePreference("request_received", {
+      userId,
+      planId,
+      source,
+      hasPayerEmail: Boolean(payerEmail),
+    });
+
+    await createPendingTransaction({
+      userId,
+      planId,
+      source,
+      externalReference,
+      payerEmail,
+    });
+
     const preferencePayload = {
       items: [
         {
@@ -87,11 +198,12 @@ export default async function handler(request: any, response: any) {
         ...(payerEmail ? { email: payerEmail } : {}),
         ...(payerName ? { name: payerName } : {}),
       },
-      external_reference: userId || undefined,
+      external_reference: externalReference,
       metadata: {
-        user_id: userId || null,
+        user_id: userId,
         plan_id: planId,
         source,
+        external_reference: externalReference,
       },
       notification_url: `${appUrl}/api/mercadopago/webhook`,
       back_urls: {
@@ -101,6 +213,13 @@ export default async function handler(request: any, response: any) {
       },
       auto_return: "approved",
     };
+
+    logCreatePreference("creating_preference", {
+      userId,
+      planId,
+      externalReference,
+      notificationUrl: preferencePayload.notification_url,
+    });
 
     const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -113,18 +232,51 @@ export default async function handler(request: any, response: any) {
 
     const mpData = await mpResponse.json();
     if (!mpResponse.ok) {
+      await updateTransactionByExternalReference(externalReference, {
+        status: "error",
+        status_detail: String(mpData?.message ?? "preference_creation_failed"),
+        raw_preference: mpData,
+      });
+
+      logCreatePreference("preference_failed", {
+        userId,
+        planId,
+        externalReference,
+        responseStatus: mpResponse.status,
+        details: mpData,
+      });
+
       return sendJson(response, mpResponse.status, {
         error: "Mercado Pago preference creation failed",
         details: mpData,
       });
     }
 
+    await updateTransactionByExternalReference(externalReference, {
+      preference_id: String(mpData?.id ?? ""),
+      raw_preference: mpData,
+    });
+
+    logCreatePreference("preference_created", {
+      userId,
+      planId,
+      externalReference,
+      preferenceId: mpData?.id ?? null,
+      hasInitPoint: Boolean(mpData?.init_point),
+    });
+
     return sendJson(response, 200, {
       id: mpData.id,
+      externalReference,
+      preferenceId: mpData.id,
       initPoint: mpData.init_point,
       sandboxInitPoint: mpData.sandbox_init_point,
     });
   } catch (error: any) {
+    logCreatePreference("unexpected_error", {
+      error: String(error?.message ?? error),
+    });
+
     return sendJson(response, 500, {
       error: "Unexpected Mercado Pago preference error",
       details: String(error?.message ?? error),
