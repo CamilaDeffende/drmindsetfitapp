@@ -15,6 +15,7 @@ type Plan = {
   id: PlanId;
   title: string;
   price: string;
+  totalPrice?: string;
   note?: string;
   kicker?: string;
   highlight?: boolean;
@@ -126,21 +127,23 @@ export default function Assinatura() {
       {
         id: "mensal",
         title: "Plano mensal",
-        price: "R$ 49,90",
+        price: "R$ 49,90/mes",
         note: "30 dias de acesso • Cancelamento a qualquer momento",
         kicker: "Ideal para comecar sem compromisso longo",
       },
       {
         id: "semestral",
         title: "Plano semestral",
-        price: "R$ 249,90",
-        note: "6 meses de acesso • Equivale a R$ 41,65/mes",
+        price: "R$ 41,65/mes*",
+        totalPrice: "ou R$ 249,90 por 6 meses",
+        note: "6 meses de acesso",
         kicker: "Melhor equilibrio entre valor e compromisso",
       },
       {
         id: "anual",
         title: "Plano anual",
-        price: "R$ 399,90",
+        price: "R$ 33,32/mes*",
+        totalPrice: "ou R$ 399,90 por 12 meses",
         note: "12 meses de acesso • 12x de R$ 39,90 ou R$ 399,90 a vista",
         kicker: "Apenas R$ 33,32/mes • Economize R$ 198,90 por ano",
         highlight: true,
@@ -455,6 +458,9 @@ export default function Assinatura() {
               <div className="mt-2 text-[26px] font-semibold tracking-tight text-white">
                 {pl.price}
               </div>
+              {pl.totalPrice ? (
+                <div className="mt-1 text-[13px] font-medium text-white/78">{pl.totalPrice}</div>
+              ) : null}
               <div className="mt-3 text-[12px] leading-6 text-white/60">{pl.note}</div>
 
               {pl.kicker ? (
@@ -500,6 +506,10 @@ export default function Assinatura() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-3 text-center text-[11px] text-white/45">
+          * Valor mensal equivalente ao periodo contratado.
         </div>
 
         <div className="mt-5 rounded-[24px] border border-white/10 bg-[rgba(8,10,18,0.82)] p-4 shadow-[0_0_32px_rgba(0,149,255,0.04)]">
