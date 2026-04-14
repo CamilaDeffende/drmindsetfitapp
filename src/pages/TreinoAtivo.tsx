@@ -105,6 +105,9 @@ type CanonicalExerciseView = {
   descanso: number;
   rpe?: string;
   observacoes?: string;
+  officialExerciseVideoUrl?: string;
+  officialExerciseSourceFile?: string;
+  videoUrl?: string;
 };
 
 type CanonicalWorkoutDayView = {
@@ -217,18 +220,24 @@ function normalizeCanonicalDays(): CanonicalWorkoutDayView[] {
   return options.map((opt, idx) => {
     const session = getCanonicalTrainingSessionByIndex(opt.index);
 
-    const exercises = getCanonicalTrainingExercises(session).map((ex) => ({
-      id: String(ex.exerciseId),
-      nome: String(ex.name),
-      equipamento: ex.equipment,
-      grupoMuscular: ex.muscleGroup,
-      descricao: ex.notes,
-      series: safeNum(ex.sets, 3),
-      repeticoes: String(ex.reps ?? "10-12"),
-      descanso: safeNum(ex.restSec, 60),
-      rpe: ex.rpe != null ? `RPE ${ex.rpe}` : undefined,
-      observacoes: ex.notes,
-    }));
+    const exercises = getCanonicalTrainingExercises(session).map((ex) => {
+      const exAny = ex as any;
+      return {
+        id: String(ex.exerciseId),
+        nome: String(ex.name),
+        equipamento: ex.equipment,
+        grupoMuscular: ex.muscleGroup,
+        descricao: ex.notes,
+        series: safeNum(ex.sets, 3),
+        repeticoes: String(ex.reps ?? "10-12"),
+        descanso: safeNum(ex.restSec, 60),
+        rpe: ex.rpe != null ? `RPE ${ex.rpe}` : undefined,
+        observacoes: ex.notes,
+        officialExerciseVideoUrl: exAny.officialExerciseVideoUrl,
+        officialExerciseSourceFile: exAny.officialExerciseSourceFile,
+        videoUrl: exAny.videoUrl,
+      };
+    });
 
     const grupamentos = Array.from(
       new Set(exercises.map((ex) => ex.grupoMuscular).filter(Boolean).map(String))
@@ -980,6 +989,24 @@ export function TreinoAtivo() {
                 {getExerciseContextLabel(treino, exercicio)}
               </Badge>
             </div>
+            {(exercicio.officialExerciseVideoUrl || exercicio.videoUrl) ? (
+              <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-black/30">
+                <video
+                  key={exercicio.officialExerciseVideoUrl || exercicio.videoUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full"
+                  src={exercicio.officialExerciseVideoUrl || exercicio.videoUrl}
+                />
+                <div className="border-t border-white/10 px-3 py-2 text-[11px] text-white/55">
+                  Fonte do vídeo:{" "}
+                  <span className="text-white/75">
+                    {exercicio.officialExerciseSourceFile || exercicio.officialExerciseVideoUrl || exercicio.videoUrl}
+                  </span>
+                </div>
+              </div>
+            ) : null}
           </CardHeader>
 
           <CardContent className="space-y-4">

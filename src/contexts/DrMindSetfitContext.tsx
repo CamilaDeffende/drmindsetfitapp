@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import type { DrMindSetfitState } from "@/types";
 import { adaptActivePlanNutrition } from "@/services/nutrition/nutrition.adapter";
-import { mergePassosDia, startNativeStepsTracking, toPassosDia } from "@/services/steps/nativeSteps";
 
 interface DrMindSetfitContextType {
   state: DrMindSetfitState;
@@ -41,11 +40,6 @@ const readActivePlan = (): any | null => {
     console.error("Erro ao carregar activePlan:", error);
     return null;
   }
-};
-
-const hasCompletedOnboardingData = (activePlan: any, onboardingDone: boolean): boolean => {
-  if (onboardingDone) return true;
-  return Boolean(activePlan);
 };
 
 const buildStateFromActivePlan = (activePlan: any): Partial<DrMindSetfitState> => {
@@ -164,7 +158,6 @@ const loadStateFromStorage = (): DrMindSetfitState => {
     const onboardingDone = readOnboardingDoneFlag();
     const activePlan = readActivePlan();
     const activePlanState = buildStateFromActivePlan(activePlan);
-    const hasCompletedData = hasCompletedOnboardingData(activePlan, onboardingDone);
 
     if (stored) {
       const parsed = JSON.parse(stored) as DrMindSetfitState;
@@ -172,11 +165,11 @@ const loadStateFromStorage = (): DrMindSetfitState => {
         ...initialState,
         ...parsed,
         ...activePlanState,
-        concluido: Boolean(parsed?.concluido) || hasCompletedData,
+        concluido: Boolean(parsed?.concluido) || onboardingDone,
       };
     }
 
-    if (hasCompletedData) {
+    if (onboardingDone) {
       return {
         ...initialState,
         ...activePlanState,
@@ -187,7 +180,7 @@ const loadStateFromStorage = (): DrMindSetfitState => {
     return {
       ...initialState,
       ...activePlanState,
-      concluido: hasCompletedData,
+      concluido: onboardingDone,
     };
   } catch (error) {
     console.error("Erro ao carregar estado:", error);
@@ -195,7 +188,7 @@ const loadStateFromStorage = (): DrMindSetfitState => {
 
   return {
     ...initialState,
-    concluido: hasCompletedOnboardingData(readActivePlan(), readOnboardingDoneFlag()),
+    concluido: readOnboardingDoneFlag(),
   };
 };
 
@@ -211,70 +204,57 @@ const saveStateToStorage = (state: DrMindSetfitState) => {
 export function DrMindSetfitProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DrMindSetfitState>(loadStateFromStorage);
 
-  // Mantém concluido sincronizado com o flag do onboarding
+  // Hidratação inicial controlada: executa apenas uma vez no boot
   useEffect(() => {
     const onboardingDone = readOnboardingDoneFlag();
     const activePlan = readActivePlan();
     const activePlanState = buildStateFromActivePlan(activePlan);
-    const hasCompletedData = hasCompletedOnboardingData(activePlan, onboardingDone);
 
-    if (hasCompletedData && !state.concluido) {
-      setState((prev) => ({
-        ...prev,
-        ...activePlanState,
-        concluido: true,
-      }));
-      return;
-    }
+    setState((prev) => {
+      const prevMeals = Array.isArray((prev as any)?.nutricao?.refeicoes)
+        ? (prev as any).nutricao.refeicoes.length
+        : 0;
 
-    // Se existir activePlan e o state ainda não estiver hidratado, sincroniza
-    const precisaHidratarDieta =
-      !!activePlan &&
-      (!state.dietaAtiva ||
-        !state.nutricao ||
-        !Array.isArray((state as any)?.nutricao?.refeicoes) ||
-        (state as any)?.nutricao?.refeicoes?.length === 0);
+      const nextMeals = Array.isArray((activePlanState as any)?.nutricao?.refeicoes)
+        ? (activePlanState as any).nutricao.refeicoes.length
+        : 0;
 
-    if (precisaHidratarDieta) {
-      setState((prev) => {
-        const merged = {
-          ...prev,
-          ...activePlanState,
-          concluido: prev.concluido || hasCompletedData,
-        };
-        saveStateToStorage(merged);
-        return merged;
-      });
-      return;
-    }
+      const shouldHydrateFromActivePlan =
+        !!activePlan &&
+        (
+          !prev.dietaAtiva ||
+          !prev.nutricao ||
+          !prev.treino ||
+          !prev.treinoAtivo ||
+          (prevMeals === 0 && nextMeals > 0)
+        );
 
+      const next = shouldHydrateFromActivePlan
+        ? {
+            ...prev,
+            ...activePlanState,
+            concluido: prev.concluido || onboardingDone,
+          }
+        : {
+            ...prev,
+            concluido: prev.concluido || onboardingDone,
+          };
+
+      const changed =
+        next.concluido !== prev.concluido ||
+        next.dietaAtiva !== prev.dietaAtiva ||
+        next.nutricao !== prev.nutricao ||
+        next.treino !== prev.treino ||
+        next.treinoAtivo !== prev.treinoAtivo;
+
+      return changed ? next : prev;
+    });
+  }, []);
+
+  // Persistência separada: salva quando o estado mudar, sem re-hidratar
+  useEffect(() => {
     saveStateToStorage(state);
   }, [state]);
-
-  useEffect(() => {
-    let disposed = false;
-    let cleanup: (() => Promise<void>) | null = null;
-
-    void (async () => {
-      cleanup = await startNativeStepsTracking((snapshot) => {
-        if (disposed || !snapshot.available || !snapshot.granted) return;
-
-        const today = toPassosDia(snapshot);
-        setState((prev) => {
-          const passosDiarios = mergePassosDia(prev.passosDiarios, today);
-          if (passosDiarios === prev.passosDiarios) return prev;
-          return { ...prev, passosDiarios };
-        });
-      });
-    })();
-
-    return () => {
-      disposed = true;
-      if (cleanup) {
-        void cleanup();
-      }
-    };
-  }, []);
 
   const updateState = (updates: Partial<DrMindSetfitState>) => {
     setState((prev) => {

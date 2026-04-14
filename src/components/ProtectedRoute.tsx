@@ -8,6 +8,25 @@ interface ProtectedRouteProps {
   requiresPremium?: boolean;
 }
 
+
+function mfAllowSeededTreinoInDev() {
+  if (!import.meta.env.DEV) return false;
+  try {
+    const pathname = window.location.pathname || "";
+    const isTreinoPath = pathname === "/treino" || pathname === "/treino-ativo";
+    if (!isTreinoPath) return false;
+
+    const done = window.localStorage.getItem("mf:onboarding:done:v1") === "1";
+    const raw = window.localStorage.getItem("mf:activePlan:v1");
+    const ap = raw ? JSON.parse(raw) : null;
+    const hasTraining = Array.isArray(ap?.training?.workouts) && ap.training.workouts.length > 0;
+
+    return done && hasTraining;
+  } catch {
+    return false;
+  }
+}
+
 export function ProtectedRoute({
   children,
   requiresPremium = false,
@@ -50,6 +69,12 @@ export function ProtectedRoute({
       </div>
     );
   }
+
+  if (mfAllowSeededTreinoInDev()) {
+    return <>{children}</>;
+  }
+
+
 
   if (!user) {
     return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname)}`} replace />;

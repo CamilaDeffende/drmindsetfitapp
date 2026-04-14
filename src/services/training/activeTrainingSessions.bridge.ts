@@ -17,6 +17,9 @@ export type ActiveWorkoutExercise = {
   rpe?: number;
   notes?: string;
   substitutions?: string[];
+  officialExerciseVideoUrl?: string;
+  officialExerciseSourceFile?: string;
+  videoUrl?: string;
 };
 
 export type ActiveWorkoutBlock = {

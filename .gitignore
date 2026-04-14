@@ -189,3 +189,5 @@ android/.idea
 
 # local assistant instructions
 AGENTS.md
+tmp-*.png
+tmp-*.txt
